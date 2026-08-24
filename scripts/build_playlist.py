@@ -988,6 +988,33 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         if existing is None or measured_score(channel) > measured_score(existing):
             best[key] = channel
 
+    # CCTV-5 is a user-tested exception: short probes from GitHub repeatedly
+    # favour raw IP/operator routes that buffer on the viewer's ISP. Force the
+    # published primary to a curated edge CDN even when a direct URL reports a
+    # higher burst rate. The adaptive Kua master is preferred for smoothness.
+    cctv5_edge = max(
+        (
+            channel for channel in channels
+            if channel_key(channel) == "cctv5"
+            and channel.curated
+            and any(
+                token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
+                for token in CCTV5_EDGE_HOSTS
+            )
+            and not is_placeholder_relay(channel)
+        ),
+        key=lambda channel: (
+            "kcdnvip.com" in (urllib.parse.urlsplit(channel.url).hostname or "").lower(),
+            bool(channel.probe.get("ok")),
+            measured_score(channel) if channel.probe.get("ok") else channel_static_score(channel),
+        ),
+        default=None,
+    )
+    if cctv5_edge is not None:
+        if not cctv5_edge.probe.get("ok"):
+            cctv5_edge.probe["unverified_edge_fallback"] = True
+        best["cctv5"] = cctv5_edge
+
     # Keep the fastest truly playable route for every requested CCTV station
     # and mainland satellite channel even if it narrowly misses the general
     # speed floor. Ordinary channels remain subject to the strict threshold.
