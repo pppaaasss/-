@@ -24,9 +24,9 @@ from pathlib import Path
 from typing import Iterable
 
 
-TARGET_STABLE = int(os.getenv("TARGET_STABLE", "400"))
-TARGET_ALL = int(os.getenv("TARGET_ALL", "650"))
-PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "28"))
+TARGET_STABLE = int(os.getenv("TARGET_STABLE", "600"))
+TARGET_ALL = int(os.getenv("TARGET_ALL", "800"))
+PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
 MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
 MAX_PROBE_BYTES = 768 * 1024
@@ -38,27 +38,30 @@ DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
 # the fastest remaining healthy streams, so a weak regional source cannot stop
 # the list from reaching the requested size.
 GROUP_TARGETS = {
-    "大陆": 175,
-    "中文纪录": 20,
-    "中文电影": 20,
-    "中文付费": 35,
-    "香港": 20,
+    "大陆": 235,
+    "中文综合": 50,
+    "中文纪录": 30,
+    "中文电影": 30,
+    "中文付费": 50,
+    "香港": 35,
     "澳门": 5,
-    "台湾": 35,
-    "新加坡": 12,
-    "马来西亚": 12,
-    "日本": 8,
-    "韩国": 8,
-    "纪录片": 20,
+    "台湾": 45,
+    "新加坡": 15,
+    "马来西亚": 15,
+    "日本": 10,
+    "韩国": 10,
+    "纪录片": 15,
     "电影": 15,
-    "新闻": 8,
-    "娱乐": 5,
-    "音乐": 2,
+    "新闻": 10,
+    "娱乐": 10,
+    "体育": 10,
+    "少儿": 5,
+    "音乐": 5,
 }
 
 GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
 CHINESE_GROUPS = {
-    "大陆", "中文纪录", "中文电影", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
+    "大陆", "中文综合", "中文纪录", "中文电影", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
 }
 
 SOURCES = [
@@ -76,10 +79,22 @@ SOURCES = [
     ("新闻", "https://iptv-org.github.io/iptv/categories/news.m3u", False),
     ("娱乐", "https://iptv-org.github.io/iptv/categories/entertainment.m3u", False),
     ("音乐", "https://iptv-org.github.io/iptv/categories/music.m3u", False),
+    ("体育", "https://iptv-org.github.io/iptv/categories/sports.m3u", False),
+    ("少儿", "https://iptv-org.github.io/iptv/categories/kids.m3u", False),
+    ("中文综合", "https://iptv-org.github.io/iptv/languages/zho.m3u", True),
+    ("中文综合", "https://iptv-org.github.io/iptv/categories/education.m3u", False),
+    ("中文综合", "https://iptv-org.github.io/iptv/categories/business.m3u", False),
 
     # Frequently refreshed Chinese IPv4 lists.  Multiple URLs for the same
     # channel are intentionally kept until *after* probing; the fastest healthy
     # variant wins instead of whichever URL happened to appear first.
+    # Independent web-hosted lists discovered outside GitHub search.
+    ("大陆", "https://myernestlu.github.io/zby.txt", False),
+    ("大陆", "https://xxy.free.hr/YIPTV.m3u", False),
+    ("大陆", "https://iptv.228088.xyz/cn.m3u", False),
+    ("中文综合", "https://yang-1989.eu.org/m3u/Gather", True),
+    ("大陆", "https://cdn.jsdelivr.net/gh/XiaoZhang5656/xiaozhang-5656.github.io@main/iptv-live.txt", False),
+    ("大陆", "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt", False),
     ("大陆", "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u", False),
     ("大陆", "https://iptv.burningc4.com/TV-IPV4.m3u", False),
     ("大陆", "https://live.zbds.top/tv/iptv4.txt", False),
@@ -88,6 +103,11 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8", False),
     ("中文付费", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay_status.m3u8", False),
+    ("中文付费", "https://raw.githubusercontent.com/Ftindy/IPTV-URL/main/bestv.m3u", False),
+    ("中文付费", "https://raw.githubusercontent.com/Ftindy/IPTV-URL/main/IPTV.m3u", False),
+    ("中文付费", "https://raw.githubusercontent.com/imDazui/Tvlist-awesome-m3u-m3u8/master/m3u/%E8%BD%AE%E6%92%AD_%E5%8D%8E%E6%95%B0.NewTV.SiTV.CIBN.m3u", False),
+    ("中文付费", "https://raw.githubusercontent.com/cjh19831115/Meroser/main/IPTV-tvbox.txt", False),
+    ("中文付费", "https://raw.githubusercontent.com/haiwx/m3u8/master/%E7%94%B5%E8%A7%86%E7%9B%B4%E6%92%AD%E5%88%97%E8%A1%A8%E5%81%A5%E5%BA%B7%E7%89%88.m3u8", False),
     ("大陆", "https://m3u.ibert.me/fmml_itv.m3u", False),
     ("大陆", "https://m3u.ibert.me/fmml_index.m3u", False),
     ("大陆", "https://m3u.ibert.me/y_g.m3u", False),
@@ -106,6 +126,12 @@ SOURCES = [
     # variants; the builder races them and keeps only the fastest working URL.
     # Large comma-delimited Chinese pools. parse_m3u accepts both M3U and
     # name,url TXT syntax, including multiple # separated backup routes.
+    ("大陆", "https://raw.githubusercontent.com/BigBigGrandG/IPTV-URL/release/Gather.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/Kimentanm/aptv/master/m3u/iptv.m3u", False),
+    ("中文综合", "https://raw.githubusercontent.com/YanG-1989/m3u/main/Gather.m3u", True),
+    ("中文综合", "https://raw.githubusercontent.com/joevess/IPTV/main/home.m3u8", True),
+    ("中文综合", "https://raw.githubusercontent.com/joevess/IPTV/main/iptv.m3u8", True),
+    ("大陆", "https://raw.githubusercontent.com/Nekori/TV/master/A_TV.txt", False),
     ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt", False),
     ("大陆", "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt", False),
     ("大陆", "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt", False),
@@ -145,6 +171,17 @@ EXTRAS = [
     ("CHC动作电影", "中文电影", "http://58.19.38.162:9901/tsfile/live/1005_1.m3u8?key=txiptv&playlive=1&authid=0"),
     ("CHC家庭影院", "中文电影", "http://58.19.38.162:9901/tsfile/live/1006_1.m3u8?key=txiptv&playlive=1&authid=0"),
     ("纪实科教8K", "中文纪录", "http://111.31.106.140/downflv.brtvcloud.com/8klive/8kliveok.m3u8"),
+    ("求索纪录 1080p", "中文纪录", "http://39.134.66.66/PLTV/88888888/224/3221225713/index.m3u8"),
+    ("求索科学 1080p", "中文纪录", "http://39.134.66.66/PLTV/88888888/224/3221225728/index.m3u8"),
+    ("求索生活 1080p", "中文纪录", "http://39.134.66.66/PLTV/88888888/224/3221225715/index.m3u8"),
+    ("CHC高清电影 1080p", "中文电影", "http://39.134.19.252:6610/yinhe/2/ch00000090990000002065/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC家庭影院 1080p", "中文电影", "http://39.134.19.252:6610/yinhe/2/ch00000090990000002085/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC动作电影 1080p", "中文电影", "http://111.20.33.93/PLTV/88888893/224/3221226465/index.m3u8"),
+    ("NewTV超级电影 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225717/index.m3u8"),
+    ("NewTV超级电视剧 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225716/index.m3u8"),
+    ("NewTV东北热剧 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225741/index.m3u8"),
+    ("NewTV欢乐剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225742/index.m3u8"),
+    ("NewTV超级体育 1080p", "中文付费", "http://111.13.111.242/otttv.bj.chinamobile.com/PLTV/88888888/224/3221226232/1.m3u8"),
 ]
 
 BLOCK_WORDS = [
@@ -165,7 +202,20 @@ STATION_NAME_HINTS = (
     "chc", "newtv", "sitv", "ihot", "龙华", "翡翠", "无线", "明珠", "cnn",
     "voa", "4k", "8k", "cetv", "brtv", "btv", "jstv", "gdtv",
 )
-NON_TELEVISION_HINTS = ("广播电台", "电台", "radio")
+NON_TELEVISION_HINTS = ("广播电台", "电台", "广播", "之声", "radio", " fm ", "fm-")
+PROGRAM_TITLE_RE = re.compile(
+    r"(?:第[一二三四五六七八九十百\d]+[季集期部]|[（(](?:上|下|完|\d+)[）)]$|(?:上|下)$)",
+    re.I,
+)
+CLEAR_STATION_RE = re.compile(
+    r"(?:cctv|cgtn|卫视|频道|电视|\btv\b|news|newtv|sitv|cibn|chc|求索|剧场|影院)",
+    re.I,
+)
+PUBLIC_PAY_HINTS = (
+    "求索", "chc", "newtv", "sitv", "ihot", "cibn", "百视通", "华数",
+    "第一剧场", "怀旧剧场", "风云足球", "风云剧场", "世界地理", "女性时尚",
+    "电视指南", "家庭影院", "动作电影", "超级电影", "超级电视剧", "精品大剧",
+)
 PREFERRED_HOSTS = [
     "akamaized.net", "akamaihd.net", "cloudfront.net", "alicdn.com", "myalicdn.com",
     "brtvcloud.com", "fastly", "cloudflare", "brightcove", "bcovlive", "rthk", "hoy.tv",
@@ -292,6 +342,14 @@ def channel_key(channel: Channel) -> str:
     if required:
         return required
     visible_name = normalized_name(channel.name)
+    if re.search(r"[\u4e00-\u9fff]", visible_name):
+        # Chinese lists frequently assign inconsistent numeric tvg-id values to
+        # the same station. Use the cleaned visible name to prevent fake count
+        # inflation through duplicate APTV tiles.
+        chinese_name = re.sub(r"\s*(?:高清|超清|蓝光|hd|fhd|uhd|4k|8k|1080p?|720p?)$", "", visible_name, flags=re.I)
+        chinese_key = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", chinese_name)
+        if chinese_key:
+            return chinese_key
     if "卫视" in visible_name:
         # Several lists assign different numeric tvg-id values to the same
         # satellite station. Use its display name so those routes race instead
@@ -322,15 +380,22 @@ def is_placeholder_relay(channel: Channel) -> bool:
 
 
 def is_station_like(channel: Channel) -> bool:
-    """Reject plain movie/episode titles that are not television stations."""
+    """Reject radio, movies, episodes and other entries that are not linear TV."""
     low = f"{channel.name} {channel.extinf}".lower()
     if any(token in low for token in NON_TELEVISION_HINTS) and not any(
-        token in low for token in ("电视", "频道", "tv")
+        token in low for token in ("广播电视", "电视", "频道", "tv")
     ):
+        return False
+    if PROGRAM_TITLE_RE.search(channel.name) and not CLEAR_STATION_RE.search(low):
         return False
     if re.search(r'tvg-(?:id|name|logo)="[^"]+"', channel.extinf, re.I):
         return True
     return any(token in low for token in STATION_NAME_HINTS)
+
+
+def is_public_pay_channel(channel: Channel) -> bool:
+    low = f"{channel.name} {channel.extinf}".lower()
+    return any(token in low for token in PUBLIC_PAY_HINTS)
 
 
 def labelled_height(channel: Channel) -> int:
@@ -368,11 +433,11 @@ def channel_static_score(channel: Channel) -> float:
         score -= 8
     height = labelled_height(channel)
     if height == 1080:
-        score += 20
+        score += 55
     elif height == 720:
-        score += 13
+        score += 15
     elif height > 1080:
-        score += 9  # 4K/8K is sharp, but less suitable for a no-buffer main list.
+        score += 25  # Keep UHD, while making 1080p the normal main-list target.
     elif 0 < height < 720:
         score -= 16
     if channel.group in CHINESE_GROUPS:
@@ -390,7 +455,9 @@ def channel_static_score(channel: Channel) -> float:
     elif any(token in low for token in MAJOR_MAINLAND):
         score += 55
     elif channel.group == "中文付费":
-        score += 25
+        score += 35
+    if is_public_pay_channel(channel):
+        score += 28
     return score
 
 
@@ -566,11 +633,11 @@ def measured_score(channel: Channel) -> float:
     height = int(probe.get("height") or labelled_height(channel))
     score += speed * 2.2 - latency * 7
     if height == 1080:
-        score += 25
+        score += 70
     elif height == 720:
-        score += 16
+        score += 20
     elif height > 1080:
-        score += 6
+        score += 25
     elif height and height < 720:
         score -= 30
     return score
@@ -871,6 +938,7 @@ def main() -> int:
 
     stable_groups = Counter(channel.group for channel in stable)
     stable_core = sum(is_core_channel(channel) for channel in stable)
+    stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
     relaxed_fallbacks = sum(not is_stable(channel) for channel in stable)
     stable_heights = Counter()
@@ -911,6 +979,7 @@ def main() -> int:
         f"stable_placeholder_relays={sum(is_placeholder_relay(channel) for channel in stable)}",
         f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
+        f"stable_public_pay_channels={stable_public_pay}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
