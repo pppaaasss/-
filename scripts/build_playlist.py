@@ -163,6 +163,10 @@ EXTRAS = [
     ("CCTV-8 电视剧 1080p", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv8_2/index.m3u8"),
     ("CCTV-8 电视剧", "大陆", "http://183.196.25.171:808/hls/77/index.m3u8"),
     ("CCTV-8 电视剧 1080p", "大陆", "https://live.v1.mk/aishang/cctv8hd"),
+    ("CCTV-11 戏曲 1080p", "大陆", "https://live.v1.mk/aishang/cctv11hd"),
+    ("CCTV-11 戏曲 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009"),
+    ("CCTV-11 戏曲 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd"),
+    ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
     ("湖南卫视 2160p", "大陆", "http://120.196.232.43:8088/rrs03.hw.gmcc.net/PLTV/651/224/3221226698/1.m3u8"),
     ("湖南卫视 2160p", "大陆", "http://hlsal-ldvt.qing.mgtv.com/nn_live/nn_x64/aWQ9SE5XU1pHU1Qmcz0yNDAwJmQ9OTkmaHNpemU9MzIwMDAwMDAw/n_index.m3u8"),
     ("湖南卫视 1080p", "大陆", "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0"),
@@ -353,7 +357,7 @@ MISLABELLED_STREAM_URLS = {
     "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
-CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv8", "湖南卫视", "山东卫视"}
+CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv8", "cctv11", "湖南卫视", "山东卫视"}
 
 MAINLAND_SATELLITE_NAMES = (
     "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
@@ -987,7 +991,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             best[key] = fallback
 
     # The overseas runner cannot consistently reach several domestic CDN/IPTV
-    # routes. Keep one current curated China-side route for these five popular
+    # routes. Keep one current curated China-side route for these priority
     # stations only when no segment-verified route exists in this build.
     for key in CHINA_SIDE_FALLBACK_IDS:
         if key in best:
