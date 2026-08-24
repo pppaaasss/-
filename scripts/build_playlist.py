@@ -743,7 +743,37 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             key=measured_score,
             reverse=True,
         )
-        selected.extend(overflow[: TARGET_STABLE - len(selected)])
+        for channel in overflow[: TARGET_STABLE - len(selected)]:
+            selected.append(channel)
+            selected_urls.add(channel.url)
+            selected_keys.add(channel_key(channel))
+
+    # If the strict HD/speed floor finishes just below the requested count,
+    # admit only successfully probed live stations through a conservative
+    # secondary floor. VOD playlists were already rejected during probing.
+    if len(selected) < TARGET_STABLE:
+        relaxed_best: dict[str, Channel] = {}
+        for channel in channels:
+            key = channel_key(channel)
+            probe = channel.probe
+            height = int(probe.get("height") or labelled_height(channel))
+            if (
+                key in selected_keys
+                or channel.url in selected_urls
+                or is_placeholder_relay(channel)
+                or not probe.get("ok")
+                or probe.get("geo_restricted")
+                or probe.get("header_required")
+                or (height and height < 720)
+                or float(probe.get("segment_mbps") or 0) < 1.5
+                or float(probe.get("manifest_s") or 99) > 6.0
+            ):
+                continue
+            existing = relaxed_best.get(key)
+            if existing is None or measured_score(channel) > measured_score(existing):
+                relaxed_best[key] = channel
+        relaxed = sorted(relaxed_best.values(), key=measured_score, reverse=True)
+        selected.extend(relaxed[: TARGET_STABLE - len(selected)])
     return selected[:TARGET_STABLE]
 
 
@@ -842,6 +872,7 @@ def main() -> int:
     stable_groups = Counter(channel.group for channel in stable)
     stable_core = sum(is_core_channel(channel) for channel in stable)
     core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
+    relaxed_fallbacks = sum(not is_stable(channel) for channel in stable)
     stable_heights = Counter()
     for channel in stable:
         height = int(channel.probe.get("height") or labelled_height(channel))
@@ -881,6 +912,7 @@ def main() -> int:
         f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
+        f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
