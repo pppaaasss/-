@@ -244,6 +244,14 @@ def channel_key(channel: Channel) -> str:
     required = required_core_id(channel)
     if required:
         return required
+    visible_name = normalized_name(channel.name)
+    if "卫视" in visible_name:
+        # Several lists assign different numeric tvg-id values to the same
+        # satellite station. Use its display name so those routes race instead
+        # of becoming duplicate APTV tiles.
+        visible_name = re.sub(r"^(?:brtv|btv)\s*", "", visible_name, flags=re.I)
+        visible_name = re.sub(r"\s*(?:高清|超清|hd)$", "", visible_name, flags=re.I)
+        return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", visible_name)
     tvg_id = re.search(r'tvg-id="([^"]+)"', channel.extinf, re.I)
     if tvg_id:
         value = re.sub(r"@.*$", "", tvg_id.group(1).lower())
