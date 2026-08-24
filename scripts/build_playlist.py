@@ -1007,39 +1007,34 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         if existing is None or measured_score(channel) > measured_score(existing):
             best[key] = channel
 
-    # CCTV-5 is a user-tested exception: short probes from GitHub repeatedly
-    # favour raw IP/operator routes that buffer on the viewer's ISP. Force the
-    # published primary to the current overseas 1080p mirror or a curated
-    # 1080p CDN. Domestic operator URLs and 720p routes never become primary.
-    cctv5_edge = max(
-        (
-            channel for channel in channels
-            if channel_key(channel) == "cctv5"
-            and channel.curated
-            and (
-                channel.url in CCTV5_PREFERRED_1080_URLS
-                or any(
+    # CCTV-5 is refreshed automatically: a preferred overseas route may stay
+    # primary only while its manifest and video segment pass this run. If it
+    # expires, the best double-checked 1080p candidate takes over immediately.
+    cctv5_verified = [
+        channel for channel in channels
+        if channel_key(channel) == "cctv5"
+        and channel.probe.get("ok")
+        and not channel.probe.get("header_required")
+        and int(channel.probe.get("height") or labelled_height(channel)) >= 1080
+        and "/audio/" not in urllib.parse.urlsplit(channel.url).path.lower()
+        and not is_placeholder_relay(channel)
+    ]
+    if cctv5_verified:
+        best["cctv5"] = max(
+            cctv5_verified,
+            key=lambda channel: (
+                int(channel.probe.get("checks_ok") or 1) >= 2,
+                channel.url == CCTV5_PREFERRED_1080_URLS[0],
+                channel.url in CCTV5_PREFERRED_1080_URLS,
+                not any(
                     token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-                    for token in CCTV5_EDGE_HOSTS
-                )
-            )
-            and labelled_height(channel) >= 1080
-            and not is_placeholder_relay(channel)
-        ),
-        key=lambda channel: (
-            channel.url == CCTV5_PREFERRED_1080_URLS[0],
-            channel.url in CCTV5_PREFERRED_1080_URLS,
-            channel.url.startswith("https://"),
-            "myalicdn.com" in (urllib.parse.urlsplit(channel.url).hostname or "").lower(),
-            bool(channel.probe.get("ok")),
-            measured_score(channel) if channel.probe.get("ok") else channel_static_score(channel),
-        ),
-        default=None,
-    )
-    if cctv5_edge is not None:
-        if not cctv5_edge.probe.get("ok"):
-            cctv5_edge.probe["unverified_edge_fallback"] = True
-        best["cctv5"] = cctv5_edge
+                    for token in CCTV5_OPERATOR_HINTS
+                ),
+                min(float(channel.probe.get("segment_mbps") or 0), 30),
+                -float(channel.probe.get("manifest_s") or 99),
+                measured_score(channel),
+            ),
+        )
 
     # Keep the fastest truly playable route for every requested CCTV station
     # and mainland satellite channel even if it narrowly misses the general
@@ -1478,6 +1473,18 @@ def main() -> int:
     full = select_all(candidates, stable)
     healthy = sum(1 for channel in probe_pool if channel.probe.get("ok"))
     geo = sum(1 for channel in probe_pool if channel.probe.get("geo_restricted"))
+    cctv5_primary = next(
+        (channel for channel in stable if canonical_display_name(channel) == "CCTV-5"),
+        None,
+    )
+    if (
+        cctv5_primary is None
+        or not cctv5_primary.probe.get("ok")
+        or int(cctv5_primary.probe.get("height") or labelled_height(cctv5_primary)) < 1080
+    ):
+        raise SystemExit(
+            "safety stop: no verified 1080p CCTV-5 primary; existing tv.m3u was not replaced"
+        )
     if len(stable) < min(120, TARGET_STABLE):
         raise SystemExit(f"safety stop: only {len(stable)} stable channels; existing tv.m3u was not replaced")
 
