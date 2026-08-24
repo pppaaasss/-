@@ -535,6 +535,16 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
         group_pool: list[Channel] = []
         for target in REQUIRED_CORE_IDS:
             group_pool.extend(by_channel.get(target, [])[:24])
+        for variants in by_channel.values():
+            if (
+                variants
+                and not required_core_id(variants[0])
+                and variants[0].group == "大陆"
+                and is_core_channel(variants[0])
+            ):
+                for channel in variants[:MAX_VARIANTS_PER_CHANNEL]:
+                    if channel not in group_pool:
+                        group_pool.append(channel)
 
         # Breadth first: test one URL for many different channels before using
         # remaining slots on alternate URLs for CCTV/卫视 and other duplicates.
@@ -582,16 +592,22 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         if existing is None or measured_score(channel) > measured_score(existing):
             best[key] = channel
 
-    # If a required station has working manifests and media segments but misses
-    # only the normal speed/latency floor, retain its fastest tested route.
-    # This is deliberately limited to the five explicitly requested channels.
-    for target in REQUIRED_CORE_IDS:
-        if target in best:
+    # Keep the fastest truly playable route for every requested CCTV station
+    # and mainland satellite channel even if it narrowly misses the general
+    # speed floor. Ordinary channels remain subject to the strict threshold.
+    fallback_keys = set(REQUIRED_CORE_IDS)
+    fallback_keys.update(
+        channel_key(channel)
+        for channel in channels
+        if channel.group == "大陆" and is_core_channel(channel)
+    )
+    for key in fallback_keys:
+        if key in best:
             continue
         fallback = max(
             (
                 channel for channel in channels
-                if required_core_id(channel) == target
+                if channel_key(channel) == key
                 and channel.probe.get("ok")
                 and not channel.probe.get("header_required")
             ),
@@ -599,7 +615,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             default=None,
         )
         if fallback is not None:
-            best[target] = fallback
+            best[key] = fallback
 
     eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
