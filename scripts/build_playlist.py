@@ -100,15 +100,30 @@ SOURCES = [
     # Core CCTV/provincial backups. CCSH publishes many alternate HTTPS
     # variants; the builder races them and keeps only the fastest working URL.
     ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
 ]
 
-# User-requested Chinese documentary/movie channels.  They are never lost:
-# successful probes may promote them to tv.m3u; otherwise they remain in
-# tv-all.m3u as explicit fallbacks.
+# Curated fallbacks.  The five required CCTV stations use multiple independent
+# routes; all variants are probed and only the fastest healthy URL reaches
+# tv.m3u.  Documentary/movie requests remain available in tv-all.m3u.
 EXTRAS = [
+    ("CCTV-5 体育", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226019/index.m3u8"),
+    ("CCTV-5 体育", "大陆", "http://newvideo.dangtutv.cn:8278/CCTVsports/playlist.m3u8"),
+    ("CCTV-5 体育", "大陆", "http://140.207.241.2:8080/live/program/live/cctv5hd/4000000/mnf.m3u8"),
+    ("CCTV-5+ 体育赛事", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225603/index.m3u8"),
+    ("CCTV-5+ 体育赛事", "大陆", "http://39.135.140.227:6610/PLTV/88888888/224/3221225649/2/index.m3u8?fmt=ts2hls"),
+    ("CCTV-5+ 体育赛事", "大陆", "http://69.30.246.194/live/cctv5p.m3u8"),
+    ("CCTV-9 纪录", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225734/index.m3u8"),
+    ("CCTV-9 纪录", "大陆", "http://125.210.152.18:9090/live/CCTVJLHD_H265.m3u8"),
+    ("CCTV-9 纪录", "大陆", "http://204.12.221.218:8181/3m1080p/cctv9.m3u8"),
+    ("CCTV-12 社会与法", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225731/index.m3u8"),
+    ("CCTV-12 社会与法", "大陆", "https://cctvalih5ca.v.myalicdn.com/live/cctv12_2/index.m3u8?contentid=2820180516001"),
+    ("CCTV-16 奥林匹克", "大陆", "http://liveop.cctv.cn/hls/CCTV16HD/playlist.m3u8"),
+    ("CCTV-16 奥林匹克", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226100/index.m3u8"),
+    ("CCTV-16 奥林匹克", "大陆", "https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8"),
     ("求索纪录", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000010.m3u8?cdn=hnbblive"),
     ("求索科学", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000011.m3u8?cdn=hnbblive"),
     ("求索生活", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000008.m3u8?cdn=hnbblive"),
@@ -130,6 +145,8 @@ PREFERRED_HOSTS = [
     "streamingfast.net", "cdn", "edge",
 ]
 UNSTABLE_HOST_HINTS = ["zzy", "wwang", "qqff", ".xyz", ".top", ".pw", ".work", ".icu"]
+REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
+
 MAJOR_MAINLAND = [
     "卫视", "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
     "安徽卫视", "山东卫视", "河南卫视", "湖北卫视", "辽宁卫视", "黑龙江卫视", "四川卫视",
@@ -211,8 +228,22 @@ def normalized_name(name: str) -> str:
     return re.sub(r"\s+", " ", value).strip().lower()
 
 
+def required_core_id(channel: Channel) -> str | None:
+    """Return the canonical id for the five user-required CCTV stations."""
+    value = f"{channel.name} {channel.extinf}".lower()
+    if re.search(r"cctv[\s_-]*0?5\s*(?:\+|plus|p)", value, re.I):
+        return "cctv5plus"
+    match = re.search(r"cctv[\s_-]*0?(5|9|12|16)(?!\d)", value, re.I)
+    return f"cctv{match.group(1)}" if match else None
+
+
 def channel_key(channel: Channel) -> str:
     """Canonical key used only after alternate URLs have been speed-tested."""
+    # Prefer the visible CCTV name. Some imported lists use numeric tvg-id="5"
+    # or tvg-id="6", which must not split CCTV-5/5+ into unrelated keys.
+    required = required_core_id(channel)
+    if required:
+        return required
     tvg_id = re.search(r'tvg-id="([^"]+)"', channel.extinf, re.I)
     if tvg_id:
         value = re.sub(r"@.*$", "", tvg_id.group(1).lower())
@@ -221,9 +252,6 @@ def channel_key(channel: Channel) -> str:
         if value:
             return value
     value = normalized_name(channel.name)
-    # CCTV-5 and CCTV-5+ are different channels.  Preserve the plus before
-    # punctuation stripping, otherwise they collapse into one APTV tile.
-    value = re.sub(r"cctv[\s_-]*0?5\s*(?:\+|plus|p)", "cctv5plus", value, flags=re.I)
     value = re.sub(r"cctv[\s_-]*0?(\d+)", r"cctv\1", value, flags=re.I)
     return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
 
@@ -483,7 +511,8 @@ def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
     result: list[Channel] = []
     for items in variants.values():
         items.sort(key=lambda item: (item.curated, item.static_score), reverse=True)
-        result.extend(items[:MAX_VARIANTS_PER_CHANNEL])
+        limit = 24 if required_core_id(items[0]) else MAX_VARIANTS_PER_CHANNEL
+        result.extend(items[:limit])
     return result
 
 
@@ -500,16 +529,25 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
         for variants in by_channel.values():
             variants.sort(key=lambda item: item.static_score, reverse=True)
 
+        # Probe up to 24 independent routes for each required CCTV station
+        # before the ordinary breadth-first pool. Domestic CDN routes often
+        # reject a US GitHub runner while another route remains healthy.
+        group_pool: list[Channel] = []
+        for target in REQUIRED_CORE_IDS:
+            group_pool.extend(by_channel.get(target, [])[:24])
+
         # Breadth first: test one URL for many different channels before using
         # remaining slots on alternate URLs for CCTV/卫视 and other duplicates.
-        # This prevents eight CCTV-1 URLs from crowding seven other channels out.
         unique_limit = max(45, quota * 4)
         ranked_keys = sorted(
             by_channel,
             key=lambda key: by_channel[key][0].static_score,
             reverse=True,
         )[:unique_limit]
-        group_pool = [by_channel[key][0] for key in ranked_keys]
+        for key in ranked_keys:
+            first = by_channel[key][0]
+            if first not in group_pool:
+                group_pool.append(first)
         group_limit = max(80, quota * 6)
         variant_index = 1
         while len(group_pool) < group_limit:
@@ -693,6 +731,17 @@ def main() -> int:
         else:
             stable_heights["unlabelled_but_probed"] += 1
     errors = Counter(channel.probe.get("error", "") for channel in probe_pool if not channel.probe.get("ok"))
+    required_status = {}
+    for target in REQUIRED_CORE_IDS:
+        tested = [channel for channel in probe_pool if required_core_id(channel) == target]
+        chosen = next((channel for channel in stable if required_core_id(channel) == target), None)
+        required_status[target] = {
+            "tested": len(tested),
+            "healthy": sum(bool(channel.probe.get("ok")) for channel in tested),
+            "in_stable": bool(chosen),
+            "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
+            "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
+        }
     report_lines = [
         f"generated_utc={TODAY}",
         f"source_candidates={len(candidates)}",
@@ -704,6 +753,7 @@ def main() -> int:
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
+        "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
