@@ -152,6 +152,20 @@ BLOCK_WORDS = [
     "teleshop", "home shopping", "shop lc", "gemporia", "购物", "購物", "珠宝", "珠寶", "导购", "導購",
 ]
 LOW_VALUE = ["radio", "weather", "天气", "氣象", "parliament", "council", "assembly", "legislature"]
+
+# Public Chinese lists sometimes mix individual films/episodes into the live-TV
+# section.  Real stations normally carry explicit tvg metadata or a clear
+# station/service marker; plain programme titles carry neither.
+STATION_NAME_HINTS = (
+    "cctv", "cgtn", "央视", "卫视", "频道", "电视", "tv", "news", "新闻",
+    "卡通", "少儿", "纪录", "电影", "影院", "剧场", "动漫", "体育", "足球",
+    "篮球", "网球", "高尔夫", "台球", "戏曲", "音乐", "财经", "法治", "公共",
+    "都市", "综合", "经济", "生活", "科教", "教育", "文化", "国际", "中文",
+    "资讯", "影视", "娱乐", "综艺", "农业", "农林", "农民", "健康", "凤凰",
+    "chc", "newtv", "sitv", "ihot", "龙华", "翡翠", "无线", "明珠", "cnn",
+    "voa", "4k", "8k", "cetv", "brtv", "btv", "jstv", "gdtv",
+)
+NON_TELEVISION_HINTS = ("广播电台", "电台", "radio")
 PREFERRED_HOSTS = [
     "akamaized.net", "akamaihd.net", "cloudfront.net", "alicdn.com", "myalicdn.com",
     "brtvcloud.com", "fastly", "cloudflare", "brightcove", "bcovlive", "rthk", "hoy.tv",
@@ -307,6 +321,18 @@ def is_placeholder_relay(channel: Channel) -> bool:
     return host in PLACEHOLDER_RELAY_HOSTS
 
 
+def is_station_like(channel: Channel) -> bool:
+    """Reject plain movie/episode titles that are not television stations."""
+    low = f"{channel.name} {channel.extinf}".lower()
+    if any(token in low for token in NON_TELEVISION_HINTS) and not any(
+        token in low for token in ("电视", "频道", "tv")
+    ):
+        return False
+    if re.search(r'tvg-(?:id|name|logo)="[^"]+"', channel.extinf, re.I):
+        return True
+    return any(token in low for token in STATION_NAME_HINTS)
+
+
 def labelled_height(channel: Channel) -> int:
     low = f"{channel.name} {channel.extinf}".lower()
     if "8k" in low or "4320" in low:
@@ -443,6 +469,12 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
         if "#EXTM3U" not in media_text:
             raise ValueError("bad_variant")
 
+    upper_media = media_text.upper()
+    if "#EXT-X-ENDLIST" in upper_media or re.search(
+        r"#EXT-X-PLAYLIST-TYPE\s*:\s*VOD", upper_media
+    ):
+        raise ValueError("vod_playlist")
+
     segment_url = first_media_uri(media_text, media_url)
     if not segment_url:
         raise ValueError("no_live_segment")
@@ -547,6 +579,8 @@ def measured_score(channel: Channel) -> float:
 def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
     best_by_url: dict[str, Channel] = {}
     for channel in channels:
+        if not is_station_like(channel):
+            continue
         channel.static_score = channel_static_score(channel)
         existing = best_by_url.get(channel.url)
         if existing is None or channel.static_score > existing.static_score:
@@ -780,6 +814,7 @@ def main() -> int:
         extinf = f'#EXTINF:-1 group-title="{group}",{name}'
         candidates.append(Channel(name, extinf, url, group, False, True, {}))
 
+    rejected_non_station = sum(not is_station_like(channel) for channel in candidates)
     candidates = deduplicate(candidates)
     probe_pool = select_probe_pool(candidates)
     print(f"candidates={len(candidates)} probe_pool={len(probe_pool)} workers={PROBE_WORKERS}")
@@ -835,6 +870,7 @@ def main() -> int:
     report_lines = [
         f"generated_utc={TODAY}",
         f"source_candidates={len(candidates)}",
+        f"rejected_non_station={rejected_non_station}",
         f"probed={len(probe_pool)}",
         f"probe_healthy={healthy}",
         f"geo_restricted={geo}",
