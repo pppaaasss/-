@@ -450,7 +450,7 @@ def required_core_id(channel: Channel) -> str | None:
 
 def is_cctv4k_label(channel: Channel) -> bool:
     label = normalized_name(channel.name)
-    return bool(re.search(r"cctv[\\s_-]*4[\\s_-]*k", label, re.I))
+    return bool(re.search(r"cctv[\s_-]*4[\s_-]*k", label, re.I))
 
 
 def channel_key(channel: Channel) -> str:
@@ -462,14 +462,14 @@ def channel_key(channel: Channel) -> str:
         return "cctv4k"
     # English and Chinese Hunan labels must race as alternate URLs, not become
     # two tiles (one of which has repeatedly been an unrelated ANT stream).
-    if re.search(r"(?:湖南卫视|\\bhunan\\s*tv\\b|hunantv)", visible_name, re.I):
+    if re.search(r"(?:湖南卫视|\bhunan\s*tv\b|hunantv)", visible_name, re.I):
         return "湖南卫视"
     # Prefer the visible CCTV name. Some imported lists use numeric tvg-id="5"
     # or tvg-id="6", which must not split CCTV-5/5+ into unrelated keys.
     required = required_core_id(channel)
     if required:
         return required
-    cctv_number = re.search(r"cctv[\\s_-]*0?(\\d{1,2})(?!\\d)", visible_name, re.I)
+    cctv_number = re.search(r"cctv[\s_-]*0?(\d{1,2})(?!\d)", visible_name, re.I)
     if cctv_number and 1 <= int(cctv_number.group(1)) <= 17:
         return f"cctv{int(cctv_number.group(1))}"
     # Lists often assign inconsistent tvg-id values to the same station. Use
@@ -515,7 +515,7 @@ def is_station_like(channel: Channel) -> bool:
     if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
         return False
     url_low = channel.url.lower()
-    if re.search(r"(?:[?&]id=cctv4k\\b|channel_cctv4k|/cctv4k(?:[/?.]|$))", url_low) and not is_cctv4k_label(channel):
+    if re.search(r"(?:[?&]id=cctv4k\b|channel_cctv4k|/cctv4k(?:[/?.]|$))", url_low) and not is_cctv4k_label(channel):
         return False
     if any(token in name_low for token in NON_TELEVISION_HINTS) and not any(
         token in name_low for token in ("广播电视", "电视", "频道")
@@ -776,6 +776,8 @@ def measured_score(channel: Channel) -> float:
     latency = float(probe.get("manifest_s") or 10)
     height = int(probe.get("height") or labelled_height(channel))
     score += speed * 2.2 - latency * 7
+    if int(probe.get("checks_ok") or 1) >= 2:
+        score += 35
     if height == 1080:
         score += 70
     elif height == 720:
@@ -1052,7 +1054,7 @@ def canonical_display_name(channel: Channel) -> str:
         return "CCTV-4K"
     if key == "cctv5plus":
         return "CCTV-5+"
-    numbered = re.fullmatch(r"cctv(\\d{1,2})", key)
+    numbered = re.fullmatch(r"cctv(\d{1,2})", key)
     if numbered:
         return f"CCTV-{int(numbered.group(1))}"
     if key == "湖南卫视":
@@ -1081,7 +1083,7 @@ def satellite_sort_key(channel: Channel) -> tuple:
         return (0, 18, 0)
     if key == "cctv5plus":
         return (0, 5, 1)
-    numbered = re.fullmatch(r"cctv(\\d{1,2})", key)
+    numbered = re.fullmatch(r"cctv(\d{1,2})", key)
     if numbered:
         return (0, int(numbered.group(1)), 0)
     identity = f"{channel.name} {channel.extinf}".lower()
@@ -1142,6 +1144,54 @@ def main() -> int:
                 channel.probe = {"ok": False, "error": type(exc).__name__ + ":" + str(exc)[:80]}
             if completed % 50 == 0:
                 print(f"probed={completed}/{len(probe_pool)}")
+
+    # High-availability pass for the complete CCTV/CGTN/provincial group.
+    # A route must fetch a second fresh manifest/media segment after the broad
+    # scan; one-shot successes are rejected before the final channel race.
+    recheck_targets = [
+        channel for channel in probe_pool
+        if display_group(channel) == "卫视台" and channel.probe.get("ok")
+    ]
+    satellite_recheck_failed = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PROBE_WORKERS) as executor:
+        future_map = {executor.submit(probe_channel, channel): channel for channel in recheck_targets}
+        for future in concurrent.futures.as_completed(future_map):
+            channel = future_map[future]
+            first = dict(channel.probe)
+            try:
+                second = future.result()
+            except Exception as exc:
+                second = {"ok": False, "error": type(exc).__name__ + ":" + str(exc)[:80]}
+            if not second.get("ok"):
+                channel.probe = {
+                    "ok": False,
+                    "checks_ok": 1,
+                    "error": "recheck:" + str(second.get("error") or "probe_failed")[:100],
+                }
+                satellite_recheck_failed += 1
+                continue
+            combined = dict(first)
+            combined["checks_ok"] = 2
+            combined["recheck_ok"] = True
+            combined["segment_mbps"] = min(
+                float(first.get("segment_mbps") or 0),
+                float(second.get("segment_mbps") or 0),
+            )
+            combined["manifest_s"] = max(
+                float(first.get("manifest_s") or 0),
+                float(second.get("manifest_s") or 0),
+            )
+            first_height = int(first.get("height") or 0)
+            second_height = int(second.get("height") or 0)
+            combined["height"] = min(
+                (height for height in (first_height, second_height) if height),
+                default=0,
+            )
+            channel.probe = combined
+    print(
+        f"satellite_rechecked={len(recheck_targets)} "
+        f"satellite_recheck_failed={satellite_recheck_failed}"
+    )
 
     stable = select_stable(probe_pool)
     full = select_all(candidates, stable)
@@ -1221,6 +1271,8 @@ def main() -> int:
         f"probed={len(probe_pool)}",
         f"probe_healthy={healthy}",
         f"geo_restricted={geo}",
+        f"satellite_rechecked={len(recheck_targets)}",
+        f"satellite_recheck_failed={satellite_recheck_failed}",
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
