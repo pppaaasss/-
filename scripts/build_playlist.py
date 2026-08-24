@@ -631,7 +631,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     # Guarantee every playable CCTV/major provincial station before filling
     # entertainment categories. Failed and dead URLs are still excluded.
     core = sorted((channel for channel in eligible if is_core_channel(channel)), key=measured_score, reverse=True)
-    for channel in core[:60]:
+    for channel in core:
         key = channel_key(channel)
         if key in selected_keys:
             continue
