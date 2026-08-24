@@ -607,7 +607,7 @@ def channel_static_score(channel: Channel) -> float:
         score -= 12
     if any(token in host for token in UNSTABLE_HOST_HINTS):
         score -= 28
-    if host in PLACEHOLDER_RELAY_HOSTS:
+    if is_placeholder_relay(channel):
         score -= 500
     if "not 24/7" in low:
         score -= 18
@@ -634,7 +634,7 @@ def channel_static_score(channel: Channel) -> float:
     # out of a 200-tile living-room playlist.
     if re.search(r"\bcctv[\s_-]*\d+", low, re.I) or "央视" in low:
         score += 110
-    elif any(token in low for token in MAJOR_MAINLAND):
+    elif canonical_mainland_satellite_name(channel):
         score += 55
     elif channel.group == "中文付费":
         score += 35
