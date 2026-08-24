@@ -1010,17 +1010,36 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     return selected[:TARGET_ALL]
 
 
+def display_group(channel: Channel) -> str:
+    """Collapse the old Mainland bucket into the two APTV groups requested."""
+    if channel.group != "大陆":
+        return channel.group
+    identity = f"{channel.name} {channel.extinf}".lower()
+    if is_core_channel(channel) or re.search(r"(?:cctv|cgtn|央视|卫视)", identity, re.I):
+        return "卫视台"
+    return "中文综合"
+
+
 def cleaned_extinf(channel: Channel) -> str:
     extinf = channel.extinf
+    group = display_group(channel)
     if "group-title=" in extinf:
-        extinf = re.sub(r'group-title="[^"]*"', f'group-title="{channel.group}"', extinf)
+        extinf = re.sub(r'group-title="[^"]*"', f'group-title="{group}"', extinf)
     else:
-        extinf = extinf.replace("#EXTINF:-1", f'#EXTINF:-1 group-title="{channel.group}"', 1)
+        extinf = extinf.replace("#EXTINF:-1", f'#EXTINF:-1 group-title="{group}"', 1)
     return extinf
 
 
 def sort_channels(channels: list[Channel]) -> list[Channel]:
-    return sorted(channels, key=lambda channel: (GROUP_ORDER.get(channel.group, 99), -measured_score(channel), channel.name.lower()))
+    output_order = {"卫视台": 0, "中文综合": 1}
+    return sorted(
+        channels,
+        key=lambda channel: (
+            output_order.get(display_group(channel), GROUP_ORDER.get(display_group(channel), 99) + 2),
+            -measured_score(channel),
+            channel.name.lower(),
+        ),
+    )
 
 
 def write_playlist(path: Path, channels: list[Channel], description: str) -> None:
@@ -1073,7 +1092,7 @@ def main() -> int:
     write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
 
-    stable_groups = Counter(channel.group for channel in stable)
+    stable_groups = Counter(display_group(channel) for channel in stable)
     stable_core = sum(is_core_channel(channel) for channel in stable)
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
