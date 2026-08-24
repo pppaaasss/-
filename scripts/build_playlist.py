@@ -408,6 +408,15 @@ def is_public_pay_channel(channel: Channel) -> bool:
     return any(token in low for token in PUBLIC_PAY_HINTS)
 
 
+def is_chinese_oriented(channel: Channel) -> bool:
+    identity = f"{channel.name} {channel.extinf}".lower()
+    return (
+        channel.group in CHINESE_GROUPS
+        or bool(re.search(r"[\u4e00-\u9fff]", channel.name))
+        or bool(re.search(r"(?:cctv|cgtn|tvb|phoenix|hoy|rthk|china|chinese|taiwan|hong\s*kong|macau)", identity, re.I))
+    )
+
+
 def labelled_height(channel: Channel) -> int:
     low = f"{channel.name} {channel.extinf}".lower()
     if "8k" in low or "4320" in low:
@@ -840,6 +849,9 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             key = channel_key(channel)
             probe = channel.probe
             height = int(probe.get("height") or labelled_height(channel))
+            chinese = is_chinese_oriented(channel)
+            min_speed = 0.8 if chinese else 1.5
+            max_latency = 10.0 if chinese else 6.0
             if (
                 key in selected_keys
                 or channel.url in selected_urls
@@ -848,14 +860,18 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
                 or probe.get("geo_restricted")
                 or probe.get("header_required")
                 or (height and height < 720)
-                or float(probe.get("segment_mbps") or 0) < 1.5
-                or float(probe.get("manifest_s") or 99) > 6.0
+                or float(probe.get("segment_mbps") or 0) < min_speed
+                or float(probe.get("manifest_s") or 99) > max_latency
             ):
                 continue
             existing = relaxed_best.get(key)
             if existing is None or measured_score(channel) > measured_score(existing):
                 relaxed_best[key] = channel
-        relaxed = sorted(relaxed_best.values(), key=measured_score, reverse=True)
+        relaxed = sorted(
+            relaxed_best.values(),
+            key=lambda channel: (is_chinese_oriented(channel), measured_score(channel)),
+            reverse=True,
+        )
         selected.extend(relaxed[: TARGET_STABLE - len(selected)])
     return selected[:TARGET_STABLE]
 
@@ -955,6 +971,7 @@ def main() -> int:
     stable_groups = Counter(channel.group for channel in stable)
     stable_core = sum(is_core_channel(channel) for channel in stable)
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
+    stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
     core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
     relaxed_fallbacks = sum(not is_stable(channel) for channel in stable)
     stable_heights = Counter()
@@ -996,6 +1013,7 @@ def main() -> int:
         f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_public_pay_channels={stable_public_pay}",
+        f"stable_chinese_oriented={stable_chinese_oriented}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
