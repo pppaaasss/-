@@ -24,8 +24,8 @@ from pathlib import Path
 from typing import Iterable
 
 
-TARGET_STABLE = int(os.getenv("TARGET_STABLE", "200"))
-TARGET_ALL = int(os.getenv("TARGET_ALL", "320"))
+TARGET_STABLE = int(os.getenv("TARGET_STABLE", "400"))
+TARGET_ALL = int(os.getenv("TARGET_ALL", "650"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "28"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
 MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
@@ -34,25 +34,26 @@ TODAY = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
 
 DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
 
-# Stable-list target distribution.  Missing groups are filled by the fastest
-# remaining healthy streams, so the final list can still reach 200 entries.
+# Chinese-first 400-channel target distribution. Missing groups are filled by
+# the fastest remaining healthy streams, so a weak regional source cannot stop
+# the list from reaching the requested size.
 GROUP_TARGETS = {
-    "大陆": 55,
-    "中文纪录": 8,
-    "中文电影": 6,
-    "中文付费": 8,
-    "香港": 15,
+    "大陆": 175,
+    "中文纪录": 20,
+    "中文电影": 20,
+    "中文付费": 35,
+    "香港": 20,
     "澳门": 5,
-    "台湾": 18,
-    "新加坡": 10,
-    "马来西亚": 10,
-    "日本": 10,
-    "韩国": 10,
-    "纪录片": 15,
-    "电影": 12,
+    "台湾": 35,
+    "新加坡": 12,
+    "马来西亚": 12,
+    "日本": 8,
+    "韩国": 8,
+    "纪录片": 20,
+    "电影": 15,
     "新闻": 8,
-    "娱乐": 6,
-    "音乐": 4,
+    "娱乐": 5,
+    "音乐": 2,
 }
 
 GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
@@ -80,6 +81,10 @@ SOURCES = [
     # channel are intentionally kept until *after* probing; the fastest healthy
     # variant wins instead of whichever URL happened to appear first.
     ("大陆", "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u", False),
+    ("大陆", "https://iptv.burningc4.com/TV-IPV4.m3u", False),
+    ("大陆", "https://live.zbds.top/tv/iptv4.txt", False),
+    ("大陆", "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/suxuang/myIPTV/main/APTV%E6%89%8B%E6%9C%BA%E4%B8%93%E4%BA%AB.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8", False),
     ("中文付费", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay_status.m3u8", False),
@@ -99,6 +104,12 @@ SOURCES = [
 
     # Core CCTV/provincial backups. CCSH publishes many alternate HTTPS
     # variants; the builder races them and keeps only the fastest working URL.
+    # Large comma-delimited Chinese pools. parse_m3u accepts both M3U and
+    # name,url TXT syntax, including multiple # separated backup routes.
+    ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt", False),
+    ("大陆", "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt", False),
+    ("大陆", "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt", False),
+    ("大陆", "https://raw.githubusercontent.com/wwb521/live/main/tv.txt", False),
     ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8", False),
@@ -199,8 +210,25 @@ def parse_headers(extinf: str) -> dict[str, str]:
 
 
 def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
+    """Parse ordinary M3U plus common Chinese name,url TXT playlists."""
     channels: list[Channel] = []
     extinf: str | None = None
+
+    def append_channel(name: str, item_extinf: str, url: str) -> None:
+        clean_url = url.split("$", 1)[0].strip()
+        if not clean_url.startswith(("http://", "https://")):
+            return
+        low = f"{name} {item_extinf}".lower()
+        if any(word in low for word in BLOCK_WORDS):
+            return
+        if "geo-blocked" in low and not allow_geo:
+            return
+        if ".mpd" in clean_url.lower():
+            return
+        channels.append(
+            Channel(name, item_extinf, clean_url, group, allow_geo, False, parse_headers(item_extinf))
+        )
+
     for raw in text.splitlines():
         line = raw.strip()
         if not line:
@@ -212,18 +240,18 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
             continue
         if extinf and line.startswith(("http://", "https://")):
             name = extinf.split(",", 1)[1].strip() if "," in extinf else "Unknown"
-            low = f"{name} {extinf}".lower()
-            if any(word in low for word in BLOCK_WORDS):
-                extinf = None
-                continue
-            if "geo-blocked" in low and not allow_geo:
-                extinf = None
-                continue
-            if ".mpd" in line.lower():
-                extinf = None
-                continue
-            channels.append(Channel(name, extinf, line, group, allow_geo, False, parse_headers(extinf)))
+            append_channel(name, extinf, line)
             extinf = None
+            continue
+
+        # Chinese TXT lists commonly use "频道名,url1#url2$metadata".
+        if "," in line:
+            name, url_blob = (part.strip() for part in line.split(",", 1))
+            if not name or "#genre#" in url_blob.lower() or re.match(r"^\d{8}(?:\s|$)", name):
+                continue
+            item_extinf = f'#EXTINF:-1 group-title="{group}",{name}'
+            for route in url_blob.split("#"):
+                append_channel(name, item_extinf, route)
     return channels
 
 
@@ -691,7 +719,10 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     keys = {channel_key(channel) for channel in selected}
     curated = [
         channel for channel in channels
-        if channel.curated and channel.url not in urls and channel_key(channel) not in keys
+        if channel.curated
+        and not is_placeholder_relay(channel)
+        and channel.url not in urls
+        and channel_key(channel) not in keys
     ]
     for channel in curated:
         selected.append(channel)
@@ -700,7 +731,7 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     best_remainder: dict[str, Channel] = {}
     for channel in channels:
         key = channel_key(channel)
-        if channel.url in urls or key in keys:
+        if channel.url in urls or key in keys or is_placeholder_relay(channel):
             continue
         existing = best_remainder.get(key)
         rank = (is_stable(channel), measured_score(channel), channel.static_score)
@@ -811,6 +842,7 @@ def main() -> int:
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
         f"stable_placeholder_relays={sum(is_placeholder_relay(channel) for channel in stable)}",
+        f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
