@@ -257,6 +257,30 @@ EXTRAS = [
     ("NewTV精品体育 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225526/index.m3u8"),
     ("NewTV农业致富 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225552/index.m3u8"),
     ("NewTV中国功夫 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225604/index.m3u8"),
+
+    # A second independent pass: China Telecom/Shaanxi and CQCCN routes.
+    ("CHC动作电影 1080p", "中文电影", "http://39.135.89.3:6610/yinhe/2/ch00000090990000002055/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC家庭影院 1080p", "中文电影", "http://39.135.89.3:6610/yinhe/2/ch00000090990000002085/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC高清电影 1080p", "中文电影", "http://39.135.89.3:6610/yinhe/2/ch00000090990000002065/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC高清电影 1080p", "中文电影", "http://111.20.105.60:6060/yinhe/2/ch00000090990000002065/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC家庭影院 1080p", "中文电影", "http://111.20.105.60:6060/yinhe/2/ch00000090990000002085/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC动作电影 1080p", "中文电影", "http://111.20.105.60:6060/yinhe/2/ch00000090990000002055/index.m3u8?virtualDomain=yinhe.live_hls.zte.com"),
+    ("CHC高清电影 1080p", "中文电影", "http://baidu.live.cqccn.com/__cl/cg:live/__c/chcgqdyHD/__op/default/__f//index.m3u8"),
+
+    ("第一剧场 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/diyijuchangHD/__op/default/__f//index.m3u8"),
+    ("风云剧场 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/fyjcHD/__op/default/__f//index.m3u8"),
+    ("风云音乐 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/fyyyHD/__op/default/__f//index.m3u8"),
+    ("风云足球 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/fyzqHD/__op/default/__f//index.m3u8"),
+    ("风云足球 1080p", "中文付费", "http://111.20.40.170/PLTV/88888893/224/3221226984/index.m3u8"),
+    ("风云足球 1080p", "中文付费", "http://220.177.175.45/tlivectfree-cdn.ysp.cctv.cn/001/2012514203.m3u8"),
+    ("风云足球 1080p", "中文付费", "http://42.176.185.28:9901/tsfile/live/1017_1.m3u8"),
+    ("世界地理 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/sjdlHD/__op/default/__f//index.m3u8"),
+    ("世界地理 1080p", "中文付费", "http://baidu.live.cqccn.com/__cl/cg:live/__c/shijiediliHD/__op/default/__f//index.m3u8"),
+
+    ("求索纪录 1080p", "中文纪录", "http://baidu.live.cqccn.com/__cl/cg:live/__c/qsjlHD/__op/default/__f//index.m3u8"),
+    ("求索动物 1080p", "中文纪录", "http://baidu.live.cqccn.com/__cl/cg:live/__c/qsdwHD/__op/default/__f//index.m3u8"),
+    ("求索科学 1080p", "中文纪录", "http://baidu.live.cqccn.com/__cl/cg:live/__c/qskxHD/__op/default/__f//index.m3u8"),
+    ("求索生活 1080p", "中文纪录", "http://baidu.live.cqccn.com/__cl/cg:live/__c/qsshHD/__op/default/__f//index.m3u8"),
 ]
 
 BLOCK_WORDS = [
@@ -300,6 +324,11 @@ UNSTABLE_HOST_HINTS = ["zzy", "wwang", "qqff", ".xyz", ".top", ".pw", ".work", "
 # These relays can return a valid HLS stream containing a static "signal
 # interrupted" slate. Segment downloads alone therefore produce false health.
 PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
+# Public indexes occasionally attach a valid unrelated station to the wrong
+# Chinese label. This URL is Tu Canal Musical, not NewTV Super Movie.
+MISLABELLED_STREAM_URLS = {
+    "https://cloudvideo.servers10.com:8081/8130/index.m3u8",
+}
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
 
 MAJOR_MAINLAND = [
@@ -466,6 +495,8 @@ def is_station_like(channel: Channel) -> bool:
     """Reject radio, movies, episodes and other entries that are not linear TV."""
     name_low = channel.name.lower()
     low = f"{channel.name} {channel.extinf}".lower()
+    if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
+        return False
     if any(token in name_low for token in NON_TELEVISION_HINTS) and not any(
         token in name_low for token in ("广播电视", "电视", "频道")
     ):
@@ -1073,7 +1104,7 @@ def main() -> int:
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
         }
-    pay_focus = re.compile(r"(?:求索|chc|newtv|第一剧场|世界地理|风云(?:剧场|足球|音乐))", re.I)
+    pay_focus = re.compile(r"(?:求索|(?<![a-z])chc|newtv|第一剧场|世界地理|风云(?:剧场|足球|音乐))", re.I)
     pay_variants: dict[str, list[Channel]] = defaultdict(list)
     for channel in probe_pool:
         if pay_focus.search(f"{channel.name} {channel.extinf}"):
