@@ -141,6 +141,8 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV1_GuoJi.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/HunanTV_AutoUpdate.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
     # Small HTTPS relay list with currently maintained CHC linear channels.
     ("中文付费", "https://cdn.jsdelivr.net/gh/jyoketsu/tv@main/live.txt", False),
@@ -150,6 +152,23 @@ SOURCES = [
 # routes; all variants are probed and only the fastest healthy URL reaches
 # tv.m3u.  Documentary/movie requests remain available in tv-all.m3u.
 EXTRAS = [
+    # China-side fallbacks for stations that are frequently unreachable from
+    # GitHub's overseas runner even though current Chinese indexes carry them.
+    ("CCTV-1 综合 1080p", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv1_2/index.m3u8?contentid=2820180516001"),
+    ("CCTV-1 综合", "大陆", "http://183.196.25.171:808/hls/1/index.m3u8"),
+    ("CCTV-1 综合 1080p", "大陆", "http://221.7.175.154:8445/tsfile/live/1000_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("CCTV-2 财经 1080p", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv2_2/index.m3u8?contentid=2820180516001"),
+    ("CCTV-2 财经", "大陆", "http://183.196.25.171:808/hls/2/index.m3u8"),
+    ("CCTV-2 财经 1080p", "大陆", "http://107.150.60.122/live/cctv2hd.m3u8"),
+    ("CCTV-8 电视剧 1080p", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv8_2/index.m3u8"),
+    ("CCTV-8 电视剧", "大陆", "http://183.196.25.171:808/hls/77/index.m3u8"),
+    ("CCTV-8 电视剧 1080p", "大陆", "https://live.v1.mk/aishang/cctv8hd"),
+    ("湖南卫视 2160p", "大陆", "http://120.196.232.43:8088/rrs03.hw.gmcc.net/PLTV/651/224/3221226698/1.m3u8"),
+    ("湖南卫视 2160p", "大陆", "http://hlsal-ldvt.qing.mgtv.com/nn_live/nn_x64/aWQ9SE5XU1pHU1Qmcz0yNDAwJmQ9OTkmaHNpemU9MzIwMDAwMDAw/n_index.m3u8"),
+    ("湖南卫视 1080p", "大陆", "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("山东卫视 1080p", "大陆", "http://183.251.61.207/PLTV/88888888/224/3221225843/index.m3u8"),
+    ("山东卫视 1080p", "大陆", "http://107.150.60.122/live/sdwshd.m3u8"),
+    ("山东卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/sdws.m3u8"),
     ("CCTV-5 体育", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226019/index.m3u8"),
     ("CCTV-5 体育", "大陆", "http://newvideo.dangtutv.cn:8278/CCTVsports/playlist.m3u8"),
     ("CCTV-5 体育", "大陆", "http://140.207.241.2:8080/live/program/live/cctv5hd/4000000/mnf.m3u8"),
@@ -334,6 +353,7 @@ MISLABELLED_STREAM_URLS = {
     "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
+CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv8", "湖南卫视", "山东卫视"}
 
 MAINLAND_SATELLITE_NAMES = (
     "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
@@ -961,6 +981,26 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         if fallback is not None:
             best[key] = fallback
 
+    # The overseas runner cannot consistently reach several domestic CDN/IPTV
+    # routes. Keep one current curated China-side route for these five popular
+    # stations only when no segment-verified route exists in this build.
+    for key in CHINA_SIDE_FALLBACK_IDS:
+        if key in best:
+            continue
+        fallback = max(
+            (
+                channel for channel in channels
+                if channel_key(channel) == key
+                and channel.curated
+                and not is_placeholder_relay(channel)
+            ),
+            key=channel_static_score,
+            default=None,
+        )
+        if fallback is not None:
+            fallback.probe["unverified_china_side_fallback"] = True
+            best[key] = fallback
+
     eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
     for channel in eligible:
@@ -1256,6 +1296,10 @@ def main() -> int:
         display_group(channel) == "卫视台" and bool(channel.probe.get("recheck_failed"))
         for channel in stable
     )
+    stable_satellite_china_side_fallbacks = sum(
+        display_group(channel) == "卫视台" and bool(channel.probe.get("unverified_china_side_fallback"))
+        for channel in stable
+    )
     core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
     relaxed_fallbacks = sum(not is_stable(channel) for channel in stable)
     stable_heights = Counter()
@@ -1324,6 +1368,7 @@ def main() -> int:
         f"satellite_recheck_failed={satellite_recheck_failed}",
         f"stable_satellite_double_checked={stable_satellite_double_checked}",
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
+        f"stable_satellite_china_side_fallbacks={stable_satellite_china_side_fallbacks}",
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
