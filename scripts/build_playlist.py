@@ -328,6 +328,7 @@ PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
 # Chinese label. This URL is Tu Canal Musical, not NewTV Super Movie.
 MISLABELLED_STREAM_URLS = {
     "https://cloudvideo.servers10.com:8081/8130/index.m3u8",
+    "http://antvlive.ab5c6921.cdnviet.com/antv/playlist.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
 
@@ -447,14 +448,30 @@ def required_core_id(channel: Channel) -> str | None:
     return f"cctv{match.group(1)}" if match else None
 
 
+def is_cctv4k_label(channel: Channel) -> bool:
+    label = normalized_name(channel.name)
+    return bool(re.search(r"cctv[\\s_-]*4[\\s_-]*k", label, re.I))
+
+
 def channel_key(channel: Channel) -> str:
     """Canonical key used only after alternate URLs have been speed-tested."""
+    visible_name = normalized_name(channel.name)
+    # CCTV-4 (Chinese International) and CCTV-4K are separate channels, while
+    # spelling variants such as CCTV4K / CCTV-4K HD are one channel.
+    if is_cctv4k_label(channel):
+        return "cctv4k"
+    # English and Chinese Hunan labels must race as alternate URLs, not become
+    # two tiles (one of which has repeatedly been an unrelated ANT stream).
+    if re.search(r"(?:湖南卫视|\\bhunan\\s*tv\\b|hunantv)", visible_name, re.I):
+        return "湖南卫视"
     # Prefer the visible CCTV name. Some imported lists use numeric tvg-id="5"
     # or tvg-id="6", which must not split CCTV-5/5+ into unrelated keys.
     required = required_core_id(channel)
     if required:
         return required
-    visible_name = normalized_name(channel.name)
+    cctv_number = re.search(r"cctv[\\s_-]*0?(\\d{1,2})(?!\\d)", visible_name, re.I)
+    if cctv_number and 1 <= int(cctv_number.group(1)) <= 17:
+        return f"cctv{int(cctv_number.group(1))}"
     # Lists often assign inconsistent tvg-id values to the same station. Use
     # the cleaned visible label for every language so alternate routes cannot
     # inflate the 600-channel count.
@@ -496,6 +513,9 @@ def is_station_like(channel: Channel) -> bool:
     name_low = channel.name.lower()
     low = f"{channel.name} {channel.extinf}".lower()
     if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
+        return False
+    url_low = channel.url.lower()
+    if re.search(r"(?:[?&]id=cctv4k\\b|channel_cctv4k|/cctv4k(?:[/?.]|$))", url_low) and not is_cctv4k_label(channel):
         return False
     if any(token in name_low for token in NON_TELEVISION_HINTS) and not any(
         token in name_low for token in ("广播电视", "电视", "频道")
@@ -1026,6 +1046,20 @@ def display_group(channel: Channel) -> str:
     return channel.group
 
 
+def canonical_display_name(channel: Channel) -> str:
+    key = channel_key(channel)
+    if key == "cctv4k":
+        return "CCTV-4K"
+    if key == "cctv5plus":
+        return "CCTV-5+"
+    numbered = re.fullmatch(r"cctv(\\d{1,2})", key)
+    if numbered:
+        return f"CCTV-{int(numbered.group(1))}"
+    if key == "湖南卫视":
+        return "湖南卫视"
+    return channel.name
+
+
 def cleaned_extinf(channel: Channel) -> str:
     extinf = channel.extinf
     group = display_group(channel)
@@ -1033,7 +1067,27 @@ def cleaned_extinf(channel: Channel) -> str:
         extinf = re.sub(r'group-title="[^"]*"', f'group-title="{group}"', extinf)
     else:
         extinf = extinf.replace("#EXTINF:-1", f'#EXTINF:-1 group-title="{group}"', 1)
+    display_name = canonical_display_name(channel)
+    if "," in extinf and display_name != channel.name:
+        extinf = extinf.rsplit(",", 1)[0] + "," + display_name
     return extinf
+
+
+def satellite_sort_key(channel: Channel) -> tuple:
+    if display_group(channel) != "卫视台":
+        return (9, 999, 9)
+    key = channel_key(channel)
+    if key == "cctv4k":
+        return (0, 18, 0)
+    if key == "cctv5plus":
+        return (0, 5, 1)
+    numbered = re.fullmatch(r"cctv(\\d{1,2})", key)
+    if numbered:
+        return (0, int(numbered.group(1)), 0)
+    identity = f"{channel.name} {channel.extinf}".lower()
+    if "cgtn" in identity:
+        return (1, 0, 0)
+    return (2, 0, 0)
 
 
 def sort_channels(channels: list[Channel]) -> list[Channel]:
@@ -1042,8 +1096,9 @@ def sort_channels(channels: list[Channel]) -> list[Channel]:
         channels,
         key=lambda channel: (
             output_order.get(display_group(channel), GROUP_ORDER.get(display_group(channel), 99) + 2),
+            satellite_sort_key(channel),
             -measured_score(channel),
-            channel.name.lower(),
+            canonical_display_name(channel).lower(),
         ),
     )
 
