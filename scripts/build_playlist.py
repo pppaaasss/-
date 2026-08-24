@@ -470,6 +470,11 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
             return
         low = f"{name} {item_extinf}".lower()
         assigned_group = group
+        # When carrying the last published playlist into the next health scan,
+        # preserve its real category instead of flattening all 600 channels.
+        declared_group = re.search(r'group-title="([^"]+)"', item_extinf, re.I)
+        if group == "现有订阅":
+            assigned_group = declared_group.group(1).strip() if declared_group else "中文综合"
         identity_extinf = re.sub(r'group-title="[^"]*"', "", item_extinf, flags=re.I)
         chinese_identity = bool(re.search(r"[\u4e00-\u9fff]", name)) or bool(
             re.search(r"(?:cctv|cgtn|tvb|phoenix|rthk|hoy|china|chinese|taiwan|hong\s*kong|macau)", f"{name} {identity_extinf}", re.I)
@@ -1395,6 +1400,21 @@ def write_playlist(path: Path, channels: list[Channel], description: str) -> Non
 def main() -> int:
     source_failures: list[str] = []
     candidates: list[Channel] = []
+    carried_forward_candidates = 0
+    existing_playlist = Path("tv.m3u")
+    if existing_playlist.exists():
+        existing_channels = parse_m3u(
+            existing_playlist.read_text(encoding="utf-8", errors="ignore"),
+            "现有订阅",
+            False,
+        )
+        # Always re-probe the last-known-good URLs even if an upstream index
+        # removes them. Curated=True only guarantees inclusion in probe_pool;
+        # dead routes still cannot pass the live/video checks.
+        for channel in existing_channels:
+            channel.curated = True
+        candidates.extend(existing_channels)
+        carried_forward_candidates = len(existing_channels)
     for group, url, allow_geo in SOURCES:
         try:
             candidates.extend(parse_m3u(fetch_text(url), group, allow_geo))
@@ -1420,15 +1440,14 @@ def main() -> int:
             if completed % 50 == 0:
                 print(f"probed={completed}/{len(probe_pool)}")
 
-    # High-availability pass for the complete CCTV/CGTN/provincial group.
-    # A route must fetch a second fresh manifest/media segment after the broad
-    # scan. A one-shot success remains a penalized last-resort fallback so a
-    # transient second timeout does not delete an otherwise playable station.
+    # High-availability pass for the entire playlist, not only CCTV/satellites.
+    # Every initially healthy route must fetch a second fresh manifest/video
+    # segment. One-shot successes remain penalized last-resort fallbacks.
     recheck_targets = [
         channel for channel in probe_pool
-        if display_group(channel) == "卫视台" and channel.probe.get("ok")
+        if channel.probe.get("ok")
     ]
-    satellite_recheck_failed = 0
+    route_recheck_failed = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=PROBE_WORKERS) as executor:
         future_map = {executor.submit(probe_channel, channel): channel for channel in recheck_targets}
         for future in concurrent.futures.as_completed(future_map):
@@ -1444,7 +1463,7 @@ def main() -> int:
                 fallback["recheck_failed"] = True
                 fallback["recheck_error"] = str(second.get("error") or "probe_failed")[:100]
                 channel.probe = fallback
-                satellite_recheck_failed += 1
+                route_recheck_failed += 1
                 continue
             combined = dict(first)
             combined["checks_ok"] = 2
@@ -1465,8 +1484,8 @@ def main() -> int:
             )
             channel.probe = combined
     print(
-        f"satellite_rechecked={len(recheck_targets)} "
-        f"satellite_recheck_failed={satellite_recheck_failed}"
+        f"routes_rechecked={len(recheck_targets)} "
+        f"route_recheck_failed={route_recheck_failed}"
     )
 
     stable = add_cctv5_backups(select_stable(probe_pool), probe_pool)
@@ -1485,8 +1504,16 @@ def main() -> int:
         raise SystemExit(
             "safety stop: no verified 1080p CCTV-5 primary; existing tv.m3u was not replaced"
         )
-    if len(stable) < min(120, TARGET_STABLE):
-        raise SystemExit(f"safety stop: only {len(stable)} stable channels; existing tv.m3u was not replaced")
+    if len(stable) < TARGET_STABLE:
+        raise SystemExit(
+            f"safety stop: only {len(stable)}/{TARGET_STABLE} stable channels; "
+            "existing tv.m3u was not replaced"
+        )
+    if len(full) < TARGET_ALL:
+        raise SystemExit(
+            f"safety stop: only {len(full)}/{TARGET_ALL} all-list channels; "
+            "existing playlists were not replaced"
+        )
 
     write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
@@ -1578,12 +1605,13 @@ def main() -> int:
     report_lines = [
         f"generated_utc={TODAY}",
         f"source_candidates={len(candidates)}",
+        f"carried_forward_candidates={carried_forward_candidates}",
         f"rejected_non_station={rejected_non_station}",
         f"probed={len(probe_pool)}",
         f"probe_healthy={healthy}",
         f"geo_restricted={geo}",
-        f"satellite_rechecked={len(recheck_targets)}",
-        f"satellite_recheck_failed={satellite_recheck_failed}",
+        f"routes_rechecked={len(recheck_targets)}",
+        f"route_recheck_failed={route_recheck_failed}",
         f"stable_satellite_double_checked={stable_satellite_double_checked}",
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
         f"stable_satellite_china_side_fallbacks={stable_satellite_china_side_fallbacks}",
