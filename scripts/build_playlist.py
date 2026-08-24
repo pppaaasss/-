@@ -1012,12 +1012,18 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
 
 def display_group(channel: Channel) -> str:
     """Collapse the old Mainland bucket into the two APTV groups requested."""
-    if channel.group != "大陆":
-        return channel.group
     identity = f"{channel.name} {channel.extinf}".lower()
-    if is_core_channel(channel) or re.search(r"(?:cctv|cgtn|央视|卫视)", identity, re.I):
+    # CCTV/CGTN can arrive through language/category feeds instead of the old
+    # Mainland feed, so classify them independently of their imported group.
+    if re.search(r"(?:cctv|cgtn|央视)", identity, re.I):
         return "卫视台"
-    return "中文综合"
+    if channel.group in {"大陆", "中文综合"} and (
+        is_core_channel(channel) or "卫视" in identity
+    ):
+        return "卫视台"
+    if channel.group == "大陆":
+        return "中文综合"
+    return channel.group
 
 
 def cleaned_extinf(channel: Channel) -> str:
