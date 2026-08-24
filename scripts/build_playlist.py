@@ -142,6 +142,8 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
+    # Small HTTPS relay list with currently maintained CHC linear channels.
+    ("中文付费", "https://cdn.jsdelivr.net/gh/jyoketsu/tv@main/live.txt", False),
 ]
 
 # Curated fallbacks.  The five required CCTV stations use multiple independent
@@ -183,6 +185,78 @@ EXTRAS = [
     ("NewTV东北热剧 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225741/index.m3u8"),
     ("NewTV欢乐剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225742/index.m3u8"),
     ("NewTV超级体育 1080p", "中文付费", "http://111.13.111.242/otttv.bj.chinamobile.com/PLTV/88888888/224/3221226232/1.m3u8"),
+
+    # Premium-channel alternatives collected from independent public indexes.
+    # Curated means every route is probed; only a real live HLS manifest plus a
+    # downloadable media segment can enter tv.m3u.
+    ("求索动物 1080p", "中文纪录", "http://39.134.66.66/PLTV/88888888/224/3221225730/index.m3u8"),
+    ("求索动物 1080p", "中文纪录", "http://39.134.134.87/000000001000/6000000002000010046/index.m3u8"),
+    ("求索纪录 1080p", "中文纪录", "http://39.134.134.87/000000001000/6000000002000032052/index.m3u8"),
+    ("求索科学 1080p", "中文纪录", "http://39.134.134.87/000000001000/6000000002000032344/index.m3u8"),
+    ("求索生活 1080p", "中文纪录", "http://39.134.134.87/000000001000/6000000002000003382/index.m3u8"),
+
+    ("CHC动作电影 1080p", "中文电影", "https://live.v1.mk/aishang/chcdzdy"),
+    ("CHC高清电影 1080p", "中文电影", "https://live.v1.mk/aishang/chcgqdy"),
+    ("CHC家庭影院 1080p", "中文电影", "https://live.v1.mk/aishang/chcjtyy"),
+    ("CHC动作电影 1080p", "中文电影", "http://38.75.136.137:98/gslb/dsdqpub/chcdz.m3u8?auth=testpub"),
+    ("CHC动作电影 1080p", "中文电影", "http://198.204.228.26/live/chcdz.m3u8"),
+    ("CHC家庭影院 1080p", "中文电影", "http://38.75.136.137:98/gslb/dsdqpub/chcjt.m3u8?auth=testpub"),
+    ("CHC家庭影院 1080p", "中文电影", "http://198.204.228.26/live/chcjt.m3u8"),
+    ("CHC影迷电影 1080p", "中文电影", "http://38.75.136.137:98/gslb/dsdqpub/chchd.m3u8?auth=testpub"),
+
+    ("第一剧场 1080p", "中文付费", "http://38.75.136.137:98/gslb/dsdqpub/dyjc.m3u8?auth=testpub"),
+    ("第一剧场 720p", "中文付费", "http://173.208.212.130:8181/720p/dyjc.m3u8"),
+    ("第一剧场 1080p", "中文付费", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=dyjc"),
+    ("世界地理 1080p", "中文付费", "http://38.75.136.137:98/gslb/dsdqpub/sjdl.m3u8?auth=testpub"),
+    ("世界地理 1080p", "中文付费", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=sjdl"),
+    ("风云剧场 1080p", "中文付费", "http://38.75.136.137:98/gslb/dsdqpub/fyjc.m3u8?auth=testpub"),
+    ("风云剧场 720p", "中文付费", "http://173.208.212.130:8181/720p/fyjc.m3u8"),
+    ("风云剧场 1080p", "中文付费", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=fyjc"),
+    ("风云足球 1080p", "中文付费", "http://38.75.136.137:98/gslb/dsdqpub/fyzq.m3u8?auth=testpub"),
+    ("风云足球 1080p", "中文付费", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=fyzq"),
+    ("风云音乐 1080p", "中文付费", "http://38.75.136.137:98/gslb/dsdqpub/fyyy.m3u8?auth=testpub"),
+    ("风云音乐 1080p", "中文付费", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=fyyy"),
+
+    # Complete NewTV family: two current China Mobile route families are raced.
+    ("NewTV中国功夫 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225681/index.m3u8"),
+    ("NewTV军事评论 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225668/index.m3u8"),
+    ("NewTV军旅剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225676/index.m3u8"),
+    ("NewTV农业致富 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225683/index.m3u8"),
+    ("NewTV动作电影 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225661/index.m3u8"),
+    ("NewTV古装剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225663/index.m3u8"),
+    ("NewTV家庭剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225677/index.m3u8"),
+    ("NewTV怡伴健康 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225673/index.m3u8"),
+    ("NewTV惊悚悬疑 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225665/index.m3u8"),
+    ("NewTV明星大片 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225664/index.m3u8"),
+    ("NewTV武搏世界 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225680/index.m3u8"),
+    ("NewTV海外剧场 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225671/index.m3u8"),
+    ("NewTV潮妈辣婆 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225685/index.m3u8"),
+    ("NewTV炫舞未来 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225719/index.m3u8"),
+    ("NewTV爱情喜剧 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225669/index.m3u8"),
+    ("NewTV精品体育 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225674/index.m3u8"),
+    ("NewTV精品大剧 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225670/index.m3u8"),
+    ("NewTV精品纪录 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225672/index.m3u8"),
+    ("NewTV精品萌宠 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226508/index.m3u8"),
+    ("NewTV超级综艺 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225714/index.m3u8"),
+    ("NewTV金牌综艺 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225666/index.m3u8"),
+    ("NewTV黑莓动画 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225662/index.m3u8"),
+    ("NewTV黑莓电影 1080p", "中文付费", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225743/index.m3u8"),
+
+    ("NewTV爱情喜剧 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225533/index.m3u8"),
+    ("NewTV超级电视剧 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225637/index.m3u8"),
+    ("NewTV超级电影 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225644/index.m3u8"),
+    ("NewTV超级体育 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225635/index.m3u8"),
+    ("NewTV超级综艺 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225642/index.m3u8"),
+    ("NewTV潮妈辣婆 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225542/index.m3u8"),
+    ("NewTV东北热剧 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225679/index.m3u8"),
+    ("NewTV欢乐剧场 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225682/index.m3u8"),
+    ("NewTV金牌综艺 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225525/index.m3u8"),
+    ("NewTV惊悚悬疑 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225553/index.m3u8"),
+    ("NewTV精品大剧 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225536/index.m3u8"),
+    ("NewTV精品纪录 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225545/index.m3u8"),
+    ("NewTV精品体育 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225526/index.m3u8"),
+    ("NewTV农业致富 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225552/index.m3u8"),
+    ("NewTV中国功夫 1080p", "中文付费", "http://39.134.65.162/PLTV/88888888/224/3221225604/index.m3u8"),
 ]
 
 BLOCK_WORDS = [
@@ -999,6 +1073,36 @@ def main() -> int:
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
         }
+    pay_focus = re.compile(r"(?:求索|chc|newtv|第一剧场|世界地理|风云(?:剧场|足球|音乐))", re.I)
+    pay_variants: dict[str, list[Channel]] = defaultdict(list)
+    for channel in probe_pool:
+        if pay_focus.search(f"{channel.name} {channel.extinf}"):
+            pay_variants[channel_key(channel)].append(channel)
+    pay_status = {}
+    for key, tested in sorted(pay_variants.items()):
+        chosen = next((channel for channel in stable if channel_key(channel) == key), None)
+        best_ok = max(
+            (channel for channel in tested if channel.probe.get("ok")),
+            key=measured_score,
+            default=None,
+        )
+        error_counts = Counter(
+            channel.probe.get("error", "unknown")
+            for channel in tested
+            if not channel.probe.get("ok")
+        )
+        measured = chosen or best_ok
+        pay_status[key] = {
+            "name": measured.name if measured else tested[0].name,
+            "tested": len(tested),
+            "healthy": sum(bool(channel.probe.get("ok")) for channel in tested),
+            "geo": sum(bool(channel.probe.get("geo_restricted")) for channel in tested),
+            "in_stable": bool(chosen),
+            "height": int((measured.probe.get("height") or labelled_height(measured)) if measured else 0),
+            "mbps": round(float(measured.probe.get("segment_mbps") or 0), 2) if measured else 0,
+            "errors": error_counts.most_common(3),
+        }
+
     report_lines = [
         f"generated_utc={TODAY}",
         f"source_candidates={len(candidates)}",
@@ -1013,6 +1117,11 @@ def main() -> int:
         f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_public_pay_channels={stable_public_pay}",
+        "stable_public_pay_names=" + json.dumps(
+            sorted(channel.name for channel in stable if is_public_pay_channel(channel)),
+            ensure_ascii=False,
+        ),
+        "public_pay_status=" + json.dumps(pay_status, ensure_ascii=False, sort_keys=True),
         f"stable_chinese_oriented={stable_chinese_oriented}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
