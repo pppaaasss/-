@@ -28,6 +28,7 @@ TARGET_STABLE = int(os.getenv("TARGET_STABLE", "200"))
 TARGET_ALL = int(os.getenv("TARGET_ALL", "320"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "28"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
+MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
 MAX_PROBE_BYTES = 768 * 1024
 TODAY = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
 
@@ -36,9 +37,10 @@ DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
 # Stable-list target distribution.  Missing groups are filled by the fastest
 # remaining healthy streams, so the final list can still reach 200 entries.
 GROUP_TARGETS = {
-    "大陆": 50,
+    "大陆": 55,
     "中文纪录": 8,
     "中文电影": 6,
+    "中文付费": 8,
     "香港": 15,
     "澳门": 5,
     "台湾": 18,
@@ -46,19 +48,20 @@ GROUP_TARGETS = {
     "马来西亚": 10,
     "日本": 10,
     "韩国": 10,
-    "纪录片": 18,
-    "电影": 15,
-    "新闻": 12,
-    "娱乐": 8,
-    "音乐": 5,
+    "纪录片": 15,
+    "电影": 12,
+    "新闻": 8,
+    "娱乐": 6,
+    "音乐": 4,
 }
 
 GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
 CHINESE_GROUPS = {
-    "大陆", "中文纪录", "中文电影", "香港", "澳门", "台湾", "新加坡", "马来西亚"
+    "大陆", "中文纪录", "中文电影", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
 }
 
 SOURCES = [
+    # Broad public directory used as the baseline.
     ("大陆", "https://iptv-org.github.io/iptv/countries/cn.m3u", False),
     ("香港", "https://iptv-org.github.io/iptv/countries/hk.m3u", True),
     ("澳门", "https://iptv-org.github.io/iptv/countries/mo.m3u", True),
@@ -72,6 +75,27 @@ SOURCES = [
     ("新闻", "https://iptv-org.github.io/iptv/categories/news.m3u", False),
     ("娱乐", "https://iptv-org.github.io/iptv/categories/entertainment.m3u", False),
     ("音乐", "https://iptv-org.github.io/iptv/categories/music.m3u", False),
+
+    # Frequently refreshed Chinese IPv4 lists.  Multiple URLs for the same
+    # channel are intentionally kept until *after* probing; the fastest healthy
+    # variant wins instead of whichever URL happened to appear first.
+    ("大陆", "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8", False),
+    ("中文付费", "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay_status.m3u8", False),
+    ("大陆", "https://m3u.ibert.me/fmml_itv.m3u", False),
+    ("大陆", "https://m3u.ibert.me/fmml_index.m3u", False),
+    ("大陆", "https://m3u.ibert.me/y_g.m3u", False),
+    ("大陆", "https://m3u.ibert.me/cn.m3u", False),
+    ("大陆", "https://m3u.ibert.me/cn_p.m3u", False),
+
+    # An independent FTA collection supplies additional regional CDN variants.
+    ("香港", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_hong_kong.m3u8", True),
+    ("香港", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_hongkong.m3u8", True),
+    ("澳门", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_macau.m3u8", True),
+    ("台湾", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_taiwan.m3u8", True),
+    ("日本", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_japan.m3u8", True),
+    ("韩国", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_korea.m3u8", True),
 ]
 
 # User-requested Chinese documentary/movie channels.  They are never lost:
@@ -166,6 +190,20 @@ def normalized_name(name: str) -> str:
     value = re.sub(r"\([^)]*(?:\d{3,4}[pi]|geo|not 24|hd|sd)[^)]*\)", "", name, flags=re.I)
     value = re.sub(r"\[[^]]*\]", "", value)
     return re.sub(r"\s+", " ", value).strip().lower()
+
+
+def channel_key(channel: Channel) -> str:
+    """Canonical key used only after alternate URLs have been speed-tested."""
+    tvg_id = re.search(r'tvg-id="([^"]+)"', channel.extinf, re.I)
+    if tvg_id:
+        value = re.sub(r"@.*$", "", tvg_id.group(1).lower())
+        value = re.sub(r"\.(?:cn|hk|mo|tw|sg|my|jp|kr)$", "", value)
+        value = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
+        if value:
+            return value
+    value = normalized_name(channel.name)
+    value = re.sub(r"cctv[\s_-]*0?(\d+)(?:[+p])?", r"cctv\1", value, flags=re.I)
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
 
 
 def labelled_height(channel: Channel) -> int:
@@ -377,20 +415,24 @@ def measured_score(channel: Channel) -> float:
 
 
 def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
-    by_url: set[str] = set()
-    best_by_name: dict[str, Channel] = {}
+    best_by_url: dict[str, Channel] = {}
     for channel in channels:
-        if channel.url in by_url:
-            continue
-        by_url.add(channel.url)
         channel.static_score = channel_static_score(channel)
-        key = normalized_name(channel.name)
-        if not key:
-            continue
-        existing = best_by_name.get(key)
+        existing = best_by_url.get(channel.url)
         if existing is None or channel.static_score > existing.static_score:
-            best_by_name[key] = channel
-    return list(best_by_name.values())
+            best_by_url[channel.url] = channel
+
+    variants: dict[str, list[Channel]] = defaultdict(list)
+    for channel in best_by_url.values():
+        key = channel_key(channel)
+        if key:
+            variants[key].append(channel)
+
+    result: list[Channel] = []
+    for items in variants.values():
+        items.sort(key=lambda item: (item.curated, item.static_score), reverse=True)
+        result.extend(items[:MAX_VARIANTS_PER_CHANNEL])
+    return result
 
 
 def select_probe_pool(channels: list[Channel]) -> list[Channel]:
@@ -410,7 +452,17 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
 
 
 def select_stable(channels: list[Channel]) -> list[Channel]:
-    eligible = [channel for channel in channels if is_stable(channel)]
+    # Keep the fastest measured URL for each actual channel.  URL alternatives
+    # are useful during probing but must not become duplicate APTV tiles.
+    best: dict[str, Channel] = {}
+    for channel in channels:
+        if not is_stable(channel):
+            continue
+        key = channel_key(channel)
+        existing = best.get(key)
+        if existing is None or measured_score(channel) > measured_score(existing):
+            best[key] = channel
+    eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
     for channel in eligible:
         grouped[channel.group].append(channel)
@@ -437,15 +489,25 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
 def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     selected = list(stable)
     urls = {channel.url for channel in selected}
-    curated = [channel for channel in channels if channel.curated and channel.url not in urls]
+    keys = {channel_key(channel) for channel in selected}
+    curated = [
+        channel for channel in channels
+        if channel.curated and channel.url not in urls and channel_key(channel) not in keys
+    ]
     for channel in curated:
         selected.append(channel)
         urls.add(channel.url)
-    remainder = sorted(
-        (channel for channel in channels if channel.url not in urls),
-        key=lambda channel: (channel.static_score, measured_score(channel)),
-        reverse=True,
-    )
+        keys.add(channel_key(channel))
+    best_remainder: dict[str, Channel] = {}
+    for channel in channels:
+        key = channel_key(channel)
+        if channel.url in urls or key in keys:
+            continue
+        existing = best_remainder.get(key)
+        rank = (is_stable(channel), measured_score(channel), channel.static_score)
+        if existing is None or rank > (is_stable(existing), measured_score(existing), existing.static_score):
+            best_remainder[key] = channel
+    remainder = sorted(best_remainder.values(), key=lambda channel: (is_stable(channel), measured_score(channel), channel.static_score), reverse=True)
     selected.extend(remainder[: max(0, TARGET_ALL - len(selected))])
     return selected[:TARGET_ALL]
 
