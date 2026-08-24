@@ -167,6 +167,13 @@ EXTRAS = [
     ("CCTV-11 戏曲 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
+    # CCTV-5 operator/CDN routes: prefer sustained domestic capacity over
+    # residential dynamic-DNS sources that can win a short overseas speed test.
+    ("CCTV-5 体育 1080p", "大陆", "http://dbiptv.sn.chinamobile.com/PLTV/88888890/224/3221226395/index.m3u8"),
+    ("CCTV-5 体育 1080p", "大陆", "http://39.134.24.161/dbiptv.sn.chinamobile.com/PLTV/88888890/224/3221226395/index.m3u8"),
+    ("CCTV-5 体育 1080p", "大陆", "http://39.134.24.162/dbiptv.sn.chinamobile.com/PLTV/88888888/224/3221226395/1.m3u8"),
+    ("CCTV-5 体育 1080p", "大陆", "http://120.196.232.31:8088/rrs03.hw.gmcc.net/PLTV/651/224/3221226731/1.m3u8"),
+    ("CCTV-5 体育 1080p", "大陆", "http://39.134.66.110/PLTV/88888888/224/3221225818/index.m3u8"),
     ("湖南卫视 2160p", "大陆", "http://120.196.232.43:8088/rrs03.hw.gmcc.net/PLTV/651/224/3221226698/1.m3u8"),
     ("湖南卫视 2160p", "大陆", "http://hlsal-ldvt.qing.mgtv.com/nn_live/nn_x64/aWQ9SE5XU1pHU1Qmcz0yNDAwJmQ9OTkmaHNpemU9MzIwMDAwMDAw/n_index.m3u8"),
     ("湖南卫视 1080p", "大陆", "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0"),
@@ -341,9 +348,12 @@ PUBLIC_PAY_HINTS = (
 PREFERRED_HOSTS = [
     "akamaized.net", "akamaihd.net", "cloudfront.net", "alicdn.com", "myalicdn.com",
     "brtvcloud.com", "fastly", "cloudflare", "brightcove", "bcovlive", "rthk", "hoy.tv",
-    "streamingfast.net", "cdn", "edge",
+    "streamingfast.net", "chinamobile.com", "gmcc.net", "gitv.tv", "cdn", "edge",
 ]
-UNSTABLE_HOST_HINTS = ["zzy", "wwang", "qqff", ".xyz", ".top", ".pw", ".work", ".icu"]
+UNSTABLE_HOST_HINTS = [
+    "zzy", "wwang", "qqff", "7766.org", "8866.org", "3322.org", "vicp.net",
+    ".xyz", ".top", ".pw", ".work", ".icu",
+]
 # These relays can return a valid HLS stream containing a static "signal
 # interrupted" slate. Segment downloads alone therefore produce false health.
 PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
@@ -355,9 +365,12 @@ MISLABELLED_STREAM_URLS = {
     # Public lists label this Zhejiang Shaoxing/Shengzhou local feed as
     # Shandong Satellite TV. Keep it out even when its HLS probe succeeds.
     "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
+    # User-tested: valid H.264 video but sustained throughput is too unstable
+    # for CCTV-5, despite passing short remote probes.
+    "http://gmxw.7766.org:808/hls/93/index.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
-CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv8", "cctv11", "湖南卫视", "山东卫视"}
+CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv5", "cctv8", "cctv11", "湖南卫视", "山东卫视"}
 
 MAINLAND_SATELLITE_NAMES = (
     "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
