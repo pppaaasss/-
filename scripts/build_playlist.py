@@ -147,6 +147,9 @@ PREFERRED_HOSTS = [
     "streamingfast.net", "cdn", "edge",
 ]
 UNSTABLE_HOST_HINTS = ["zzy", "wwang", "qqff", ".xyz", ".top", ".pw", ".work", ".icu"]
+# These relays can return a valid HLS stream containing a static "signal
+# interrupted" slate. Segment downloads alone therefore produce false health.
+PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
 
 MAJOR_MAINLAND = [
@@ -271,6 +274,11 @@ def is_core_channel(channel: Channel) -> bool:
     return bool(re.search(r"\bcctv[\s_-]*\d+", low, re.I)) or any(token in low for token in MAJOR_MAINLAND)
 
 
+def is_placeholder_relay(channel: Channel) -> bool:
+    host = (urllib.parse.urlsplit(channel.url).hostname or "").lower()
+    return host in PLACEHOLDER_RELAY_HOSTS
+
+
 def labelled_height(channel: Channel) -> int:
     low = f"{channel.name} {channel.extinf}".lower()
     if "8k" in low or "4320" in low:
@@ -298,6 +306,8 @@ def channel_static_score(channel: Channel) -> float:
         score -= 12
     if any(token in host for token in UNSTABLE_HOST_HINTS):
         score -= 28
+    if host in PLACEHOLDER_RELAY_HOSTS:
+        score -= 500
     if "not 24/7" in low:
         score -= 18
     if any(token in low for token in LOW_VALUE):
@@ -442,6 +452,8 @@ def probe_channel(channel: Channel) -> dict:
 
 
 def is_stable(channel: Channel) -> bool:
+    if is_placeholder_relay(channel):
+        return False
     probe = channel.probe
     if probe.get("geo_restricted"):
         # Official regional CDN streams can be valid behind the user's HK/JP/SG
@@ -467,7 +479,7 @@ def is_stable(channel: Channel) -> bool:
 
 def is_core_acceptable(channel: Channel) -> bool:
     """Slightly relaxed floor for must-have CCTV and provincial channels."""
-    if not is_core_channel(channel):
+    if not is_core_channel(channel) or is_placeholder_relay(channel):
         return False
     probe = channel.probe
     if probe.get("geo_restricted"):
@@ -618,6 +630,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             (
                 channel for channel in channels
                 if channel_key(channel) == key
+                and not is_placeholder_relay(channel)
                 and channel.probe.get("ok")
                 and not channel.probe.get("header_required")
             ),
@@ -797,6 +810,7 @@ def main() -> int:
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
+        f"stable_placeholder_relays={sum(is_placeholder_relay(channel) for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
