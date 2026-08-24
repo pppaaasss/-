@@ -171,6 +171,12 @@ EXTRAS = [
     # /audio/ feed that previously produced a black screen in APTV).
     ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub"),
     ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://207.56.13.146:81/cdnlive/cctv5.m3u8"),
+    ("CCTV-5 体育 1080p 高码", "大陆", "http://117.161.12.124/live/program/live/cctv5hd8m/8000000/mnf.m3u8"),
+    ("CCTV-5 体育 1080p 百视通", "大陆", "http://120.76.248.139/live/bfgd/4200000064.m3u8"),
+    ("CCTV-5 体育 1080p 教育网镜像", "大陆", "http://video.qd.sdu.edu.cn/liverespath/3f76badfb3a23d95f26ff573a93902bbdb8b8e98/index.m3u8"),
+    ("CCTV-5 体育 1080p 动态CDN", "大陆", "https://live.goodiptv.club/api/bestv.php?id=cctv5hd8m/8000000"),
+    ("CCTV-5 体育 1080p 百视通镜像", "大陆", "http://101.33.17.11/liveplay-kk.rtxapp.com/live/program/live/cctv5hd8m/8000000/mnf.m3u8"),
+    ("CCTV-5 体育 1080p 百视通镜像", "大陆", "http://180.97.247.27:8088/liveplay-kk.rtxapp.com/live/program/live/cctv5hd8m/8000000/mnf.m3u8"),
     ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
     ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
     ("CCTV-5 体育 1080p CDN", "大陆", "http://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8"),
@@ -431,6 +437,7 @@ class Channel:
     headers: dict[str, str] = field(default_factory=dict)
     static_score: float = 0.0
     probe: dict = field(default_factory=dict)
+    display_override: str | None = None
 
 
 def fetch_text(url: str, timeout: float = 25, headers: dict[str, str] | None = None, limit: int = 2_000_000) -> str:
@@ -609,6 +616,10 @@ def is_station_like(channel: Channel) -> bool:
     # HLS/segment checks but produce a black screen with sound in APTV.
     url_path = urllib.parse.urlsplit(channel.url).path.lower()
     if "/audio/" in url_path:
+        return False
+    # Public lists often mislabel CCTV-5+ paths (cctv5p/cctv5plus) as CCTV-5.
+    # Keep sports and sports-events routes separate even when both are live.
+    if re.search(r"cctv5(?:p|plus)", url_path, re.I) and required_core_id(channel) != "cctv5plus":
         return False
     url_low = channel.url.lower()
     if re.search(r"(?:[?&]id=cctv4k\b|channel_cctv4k|/cctv4k(?:[/?.]|$))", url_low) and not is_cctv4k_label(channel):
@@ -1189,6 +1200,84 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     return selected[:TARGET_STABLE]
 
 
+def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int = 2) -> list[Channel]:
+    """Publish two independently hosted 1080p CCTV-5 escape routes.
+
+    APTV does not fail over between alternate URLs hidden behind one tile. Two
+    clearly named backup tiles are therefore more useful than letting a remote
+    build runner guess which single route matches the viewer's ISP/VPN path.
+    """
+    primary = next((channel for channel in stable if channel_key(channel) == "cctv5"), None)
+    if primary is None:
+        return stable
+    used_urls = {primary.url}
+    used_hosts = {(urllib.parse.urlsplit(primary.url).hostname or "").lower()}
+    candidates = [
+        channel for channel in channels
+        if channel_key(channel) == "cctv5"
+        and channel.url not in used_urls
+        and channel.probe.get("ok")
+        and not channel.probe.get("header_required")
+        and int(channel.probe.get("height") or labelled_height(channel)) >= 1080
+        and "/audio/" not in urllib.parse.urlsplit(channel.url).path.lower()
+        and not is_placeholder_relay(channel)
+    ]
+    candidates.sort(
+        key=lambda channel: (
+            int(channel.probe.get("checks_ok") or 1) >= 2,
+            not bool(channel.probe.get("recheck_failed")),
+            min(float(channel.probe.get("segment_mbps") or 0), 30),
+            -float(channel.probe.get("manifest_s") or 99),
+            measured_score(channel),
+        ),
+        reverse=True,
+    )
+    backups: list[Channel] = []
+    for candidate in candidates:
+        host = (urllib.parse.urlsplit(candidate.url).hostname or "").lower()
+        if host in used_hosts:
+            continue
+        index = len(backups) + 1
+        display_name = f"CCTV-5 备用{index} 1080p"
+        extinf = candidate.extinf
+        if "," in extinf:
+            extinf = extinf.rsplit(",", 1)[0] + "," + display_name
+        backups.append(
+            Channel(
+                name=display_name,
+                extinf=extinf,
+                url=candidate.url,
+                group="大陆",
+                allow_geo=candidate.allow_geo,
+                curated=candidate.curated,
+                headers=dict(candidate.headers),
+                static_score=candidate.static_score,
+                probe=dict(candidate.probe),
+                display_override=display_name,
+            )
+        )
+        used_hosts.add(host)
+        if len(backups) >= count:
+            break
+    if not backups:
+        return stable
+
+    # Preserve the requested 600-channel size by replacing the lowest-scoring
+    # non-core/non-pay entries, favouring removal of non-Chinese overflow.
+    remove_count = max(0, len(stable) + len(backups) - TARGET_STABLE)
+    removable = sorted(
+        (
+            channel for channel in stable
+            if not is_core_channel(channel) and not is_public_pay_channel(channel)
+        ),
+        key=lambda channel: (is_chinese_oriented(channel), measured_score(channel)),
+    )
+    remove_urls = {channel.url for channel in removable[:remove_count]}
+    output = [channel for channel in stable if channel.url not in remove_urls]
+    output.extend(backups)
+    return output[:TARGET_STABLE]
+
+
 def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     selected = list(stable)
     urls = {channel.url for channel in selected}
@@ -1234,6 +1323,8 @@ def display_group(channel: Channel) -> str:
 
 
 def canonical_display_name(channel: Channel) -> str:
+    if channel.display_override:
+        return channel.display_override
     key = channel_key(channel)
     if key == "cctv4k":
         return "CCTV-4K"
@@ -1265,10 +1356,13 @@ def satellite_sort_key(channel: Channel) -> tuple:
     if display_group(channel) != "卫视台":
         return (9, 999, 9)
     key = channel_key(channel)
+    backup = re.search(r"CCTV-5\s*备用(\d+)", channel.display_override or "", re.I)
+    if backup:
+        return (0, 5, int(backup.group(1)))
     if key == "cctv4k":
         return (0, 18, 0)
     if key == "cctv5plus":
-        return (0, 5, 1)
+        return (0, 5, 3)
     numbered = re.fullmatch(r"cctv(\d{1,2})", key)
     if numbered:
         return (0, int(numbered.group(1)), 0)
@@ -1380,7 +1474,7 @@ def main() -> int:
         f"satellite_recheck_failed={satellite_recheck_failed}"
     )
 
-    stable = select_stable(probe_pool)
+    stable = add_cctv5_backups(select_stable(probe_pool), probe_pool)
     full = select_all(candidates, stable)
     healthy = sum(1 for channel in probe_pool if channel.probe.get("ok"))
     geo = sum(1 for channel in probe_pool if channel.probe.get("geo_restricted"))
@@ -1433,6 +1527,17 @@ def main() -> int:
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
         }
+    cctv5_output_routes = [
+        {
+            "name": canonical_display_name(channel),
+            "url": channel.url,
+            "height": int(channel.probe.get("height") or labelled_height(channel)),
+            "mbps": round(float(channel.probe.get("segment_mbps") or 0), 2),
+            "checks_ok": int(channel.probe.get("checks_ok") or 1),
+        }
+        for channel in stable
+        if channel_key(channel) == "cctv5"
+    ]
     pay_focus = re.compile(r"(?:求索|(?<![a-z])chc|newtv|第一剧场|世界地理|风云(?:剧场|足球|音乐))", re.I)
     pay_variants: dict[str, list[Channel]] = defaultdict(list)
     for channel in probe_pool:
@@ -1491,6 +1596,7 @@ def main() -> int:
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
+        "cctv5_output_routes=" + json.dumps(cctv5_output_routes, ensure_ascii=False),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
