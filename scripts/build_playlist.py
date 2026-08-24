@@ -83,8 +83,8 @@ SOURCES = [
     ("体育", "https://iptv-org.github.io/iptv/categories/sports.m3u", False),
     ("少儿", "https://iptv-org.github.io/iptv/categories/kids.m3u", False),
     ("中文综合", "https://iptv-org.github.io/iptv/languages/zho.m3u", True),
-    ("中文综合", "https://iptv-org.github.io/iptv/categories/education.m3u", False),
-    ("中文综合", "https://iptv-org.github.io/iptv/categories/business.m3u", False),
+    ("教育", "https://iptv-org.github.io/iptv/categories/education.m3u", False),
+    ("财经", "https://iptv-org.github.io/iptv/categories/business.m3u", False),
 
     # Frequently refreshed Chinese IPv4 lists.  Multiple URLs for the same
     # channel are intentionally kept until *after* probing; the fastest healthy
@@ -284,6 +284,15 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
         if not clean_url.startswith(("http://", "https://")):
             return
         low = f"{name} {item_extinf}".lower()
+        assigned_group = group
+        identity_extinf = re.sub(r'group-title="[^"]*"', "", item_extinf, flags=re.I)
+        chinese_identity = bool(re.search(r"[\u4e00-\u9fff]", name)) or bool(
+            re.search(r"(?:cctv|cgtn|tvb|phoenix|rthk|hoy|china|chinese|taiwan|hong\s*kong|macau)", f"{name} {identity_extinf}", re.I)
+        )
+        if group == "中文付费" and not any(token in low for token in PUBLIC_PAY_HINTS):
+            assigned_group = "大陆" if chinese_identity else "娱乐"
+        elif group == "中文综合" and not chinese_identity:
+            assigned_group = "娱乐"
         if any(word in low for word in BLOCK_WORDS):
             return
         if "geo-blocked" in low and not allow_geo:
@@ -291,7 +300,7 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
         if ".mpd" in clean_url.lower():
             return
         channels.append(
-            Channel(name, item_extinf, clean_url, group, allow_geo, False, parse_headers(item_extinf))
+            Channel(name, item_extinf, clean_url, assigned_group, allow_geo, False, parse_headers(item_extinf))
         )
 
     for raw in text.splitlines():
@@ -343,14 +352,13 @@ def channel_key(channel: Channel) -> str:
     if required:
         return required
     visible_name = normalized_name(channel.name)
-    if re.search(r"[\u4e00-\u9fff]", visible_name):
-        # Chinese lists frequently assign inconsistent numeric tvg-id values to
-        # the same station. Use the cleaned visible name to prevent fake count
-        # inflation through duplicate APTV tiles.
-        chinese_name = re.sub(r"\s*(?:高清|超清|蓝光|hd|fhd|uhd|4k|8k|1080p?|720p?)$", "", visible_name, flags=re.I)
-        chinese_key = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", chinese_name)
-        if chinese_key:
-            return chinese_key
+    # Lists often assign inconsistent tvg-id values to the same station. Use
+    # the cleaned visible label for every language so alternate routes cannot
+    # inflate the 600-channel count.
+    visible_clean = re.sub(r"\s*(?:高清|超清|蓝光|hd|fhd|uhd|4k|8k|1080p?|720p?)$", "", visible_name, flags=re.I)
+    visible_key = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", visible_clean)
+    if visible_key and visible_key not in {"unknown", "channel", "tv"}:
+        return visible_key
     if "卫视" in visible_name:
         # Several lists assign different numeric tvg-id values to the same
         # satellite station. Use its display name so those routes race instead
@@ -382,9 +390,10 @@ def is_placeholder_relay(channel: Channel) -> bool:
 
 def is_station_like(channel: Channel) -> bool:
     """Reject radio, movies, episodes and other entries that are not linear TV."""
+    name_low = channel.name.lower()
     low = f"{channel.name} {channel.extinf}".lower()
-    if any(token in low for token in NON_TELEVISION_HINTS) and not any(
-        token in low for token in ("广播电视", "电视", "频道", "tv")
+    if any(token in name_low for token in NON_TELEVISION_HINTS) and not any(
+        token in name_low for token in ("广播电视", "电视", "频道")
     ):
         return False
     if PROGRAM_TITLE_RE.search(channel.name) and not CLEAR_STATION_RE.search(low):
@@ -442,9 +451,9 @@ def channel_static_score(channel: Channel) -> float:
     elif 0 < height < 720:
         score -= 16
     if channel.group in CHINESE_GROUPS:
-        score += 13
+        score += 28
     if re.search(r"[\u4e00-\u9fff]", channel.name):
-        score += 7
+        score += 22
     if channel.headers:
         score -= 8
     if channel.curated:
@@ -752,6 +761,12 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         channel_key(channel)
         for channel in channels
         if channel.group == "大陆" and is_core_channel(channel)
+    )
+    # Publicly shared linear pay channels get the same real-segment fallback:
+    # they may miss the general speed floor, but dead/VOD/header-only routes do
+    # not pass because probe.ok is mandatory below.
+    fallback_keys.update(
+        channel_key(channel) for channel in channels if is_public_pay_channel(channel)
     )
     for key in fallback_keys:
         if key in best:
