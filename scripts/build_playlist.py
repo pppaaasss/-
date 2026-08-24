@@ -123,6 +123,18 @@ PREFERRED_HOSTS = [
     "streamingfast.net", "cdn", "edge",
 ]
 UNSTABLE_HOST_HINTS = ["zzy", "wwang", "qqff", ".xyz", ".top", ".pw", ".work", ".icu"]
+MAJOR_MAINLAND = [
+    "卫视", "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
+    "安徽卫视", "山东卫视", "河南卫视", "湖北卫视", "辽宁卫视", "黑龙江卫视", "四川卫视",
+    "重庆卫视", "天津卫视", "河北卫视", "江西卫视", "广西卫视", "贵州卫视", "云南卫视",
+    "陕西卫视", "山西卫视", "吉林卫视", "内蒙古卫视", "新疆卫视", "西藏卫视", "青海卫视",
+    "甘肃卫视", "宁夏卫视", "海南卫视", "凤凰中文", "凤凰资讯", "凤凰香港",
+    "beijingsatellitetv", "hunantv", "zhejiangtv", "jiangsusatellitetv", "dragontv",
+    "guangdongsatellitetv", "shenzhensatellitetv", "anhuitv", "shandongtv", "henantv",
+    "hubeitv", "liaoningtv", "heilongjiangtv", "sichuantv", "chongqingtv", "tianjintv",
+    "hebeitv", "jiangxitv", "guangxitv", "guizhoutv", "yunnansatellitetv", "jilintv",
+    "xinjiangtv", "hainantv", "phoenixchinesechannel", "phoenixinfonewschannel",
+]
 
 
 @dataclass
@@ -254,6 +266,14 @@ def channel_static_score(channel: Channel) -> float:
         score -= 8
     if channel.curated:
         score += 6
+    # A fast county station must not crowd CCTV and major satellite channels
+    # out of a 200-tile living-room playlist.
+    if re.search(r"\bcctv[\s_-]*\d+", low, re.I) or "央视" in low:
+        score += 110
+    elif any(token in low for token in MAJOR_MAINLAND):
+        score += 55
+    elif channel.group == "中文付费":
+        score += 25
     return score
 
 
@@ -604,6 +624,11 @@ def main() -> int:
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
 
     stable_groups = Counter(channel.group for channel in stable)
+    stable_core = sum(
+        bool(re.search(r"\bcctv[\s_-]*\d+", f"{channel.name} {channel.extinf}", re.I))
+        or any(token in f"{channel.name} {channel.extinf}".lower() for token in MAJOR_MAINLAND)
+        for channel in stable
+    )
     stable_heights = Counter()
     for channel in stable:
         height = int(channel.probe.get("height") or labelled_height(channel))
@@ -625,6 +650,7 @@ def main() -> int:
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
+        f"stable_cctv_or_major_satellite={stable_core}",
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
