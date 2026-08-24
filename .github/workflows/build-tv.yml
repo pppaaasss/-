@@ -19,14 +19,14 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Probe and build playlists
         env:
-          TARGET_STABLE: '400'
-          TARGET_ALL: '650'
-          PROBE_WORKERS: '36'
+          TARGET_STABLE: '600'
+          TARGET_ALL: '800'
+          PROBE_WORKERS: '48'
           PROBE_TIMEOUT: '8'
         run: python3 scripts/build_playlist.py
       - name: Publish refreshed playlists
