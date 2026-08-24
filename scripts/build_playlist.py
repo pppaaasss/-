@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Iterable
 
 
+# Keep tv.m3u as the permanent APTV subscription path; only its contents change.
 TARGET_STABLE = int(os.getenv("TARGET_STABLE", "600"))
 TARGET_ALL = int(os.getenv("TARGET_ALL", "800"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
