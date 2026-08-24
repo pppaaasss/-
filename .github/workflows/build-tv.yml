@@ -1,164 +1,42 @@
-name: Rebuild IPTV source
+name: Rebuild APTV playlists
 
 on:
   push:
     paths:
+      - 'scripts/build_playlist.py'
       - '.github/workflows/build-tv.yml'
   schedule:
-    - cron: '17 4 * * *'
+    - cron: '17 4,16 * * *'
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: rebuild-aptv-playlists
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Build speed-first playlist
-        shell: bash
+      - name: Probe and build playlists
+        env:
+          TARGET_STABLE: '200'
+          TARGET_ALL: '320'
+          PROBE_WORKERS: '28'
+          PROBE_TIMEOUT: '9'
+        run: python3 scripts/build_playlist.py
+      - name: Publish refreshed playlists
         run: |
-          python3 - <<'PY'
-          import re, urllib.request, urllib.parse
-
-          TARGET = 320
-          UA = {'User-Agent':'Mozilla/5.0 IPTV-curator/1.0'}
-
-          sources = [
-            ('大陆', 'https://iptv-org.github.io/iptv/countries/cn.m3u', 95, False),
-            ('香港', 'https://iptv-org.github.io/iptv/countries/hk.m3u', 28, True),
-            ('澳门', 'https://iptv-org.github.io/iptv/countries/mo.m3u', 6, True),
-            ('台湾', 'https://iptv-org.github.io/iptv/countries/tw.m3u', 25, False),
-            ('新加坡', 'https://iptv-org.github.io/iptv/countries/sg.m3u', 22, True),
-            ('马来西亚', 'https://iptv-org.github.io/iptv/countries/my.m3u', 32, True),
-            ('日本', 'https://iptv-org.github.io/iptv/countries/jp.m3u', 18, True),
-            ('韩国', 'https://iptv-org.github.io/iptv/countries/kr.m3u', 12, True),
-            ('纪录片', 'https://iptv-org.github.io/iptv/categories/documentary.m3u', 32, False),
-            ('电影', 'https://iptv-org.github.io/iptv/categories/movies.m3u', 22, False),
-            ('新闻', 'https://iptv-org.github.io/iptv/categories/news.m3u', 18, False),
-            ('娱乐', 'https://iptv-org.github.io/iptv/categories/entertainment.m3u', 15, False),
-            ('音乐', 'https://iptv-org.github.io/iptv/categories/music.m3u', 10, False),
-          ]
-
-          BLOCK = ['shopping','shop ',' shop','qvc','hsn','jewelry','jewellery','teleshop','home shopping','shop lc','gemporia','购物','購物','珠宝','珠寶','导购','導購']
-          LOW_VALUE = ['radio','weather','天气','氣象','parliament','council','assembly','legislature']
-          PREFERRED_CDN = ['akamaized.net','akamaihd.net','cloudfront.net','myalicdn.com','alicdn.com','brtvcloud.com','googlevideo.com','fastly','cloudflare','brightcove','bcovlive','rthk','hoy.tv','streamingfast.net','wanfudaluye.com','cdn','edge']
-          BAD_HOST_HINTS = ['php','zzy','wwang','qqff','.xyz','.top','.pw','.work','.icu']
-
-          extras = [
-            ('求索纪录','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000010.m3u8?cdn=hnbblive'),
-            ('求索科学','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000011.m3u8?cdn=hnbblive'),
-            ('求索生活','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000008.m3u8?cdn=hnbblive'),
-            ('求索动物','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000009.m3u8?cdn=hnbblive'),
-            ('CHC影迷电影','中文电影','http://58.19.38.162:9901/tsfile/live/1004_1.m3u8?key=txiptv&playlive=1&authid=0'),
-            ('CHC动作电影','中文电影','http://58.19.38.162:9901/tsfile/live/1005_1.m3u8?key=txiptv&playlive=1&authid=0'),
-            ('CHC家庭影院','中文电影','http://58.19.38.162:9901/tsfile/live/1006_1.m3u8?key=txiptv&playlive=1&authid=0'),
-            ('纪实科教8K','中文纪录','http://111.31.106.140/downflv.brtvcloud.com/8klive/8kliveok.m3u8'),
-          ]
-
-          def fetch(url):
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=25) as r:
-              return r.read().decode('utf-8','ignore')
-
-          def parse_m3u(text, group, allow_geo):
-            out=[]; ext=None
-            for raw in text.splitlines():
-              line=raw.strip()
-              if not line: continue
-              if line.startswith('#EXTINF'):
-                ext=line; continue
-              if line.startswith('#'): continue
-              if ext and (line.startswith('http://') or line.startswith('https://')):
-                name=ext.split(',',1)[1].strip() if ',' in ext else 'Unknown'
-                low=(name+' '+ext).lower()
-                if any(k in low for k in BLOCK): ext=None; continue
-                if ('geo-blocked' in low) and not allow_geo: ext=None; continue
-                if line.endswith('.mpd') or '.mpd?' in line: ext=None; continue
-                out.append((name, ext, line, group)); ext=None
-            return out
-
-          def norm_name(name):
-            s=re.sub(r'\([^)]*(?:\d{3,4}[pi]|geo|not 24|hd|sd)[^)]*\)','',name,flags=re.I)
-            s=re.sub(r'\[[^]]*\]','',s)
-            return re.sub(r'\s+',' ',s).strip().lower()
-
-          def score(item):
-            name, ext, url, group=item
-            low=(name+' '+ext).lower(); p=urllib.parse.urlparse(url); host=(p.hostname or '').lower(); s=0
-            if url.startswith('https://'): s += 28
-            if any(x in host for x in PREFERRED_CDN): s += 55
-            if re.fullmatch(r'\d+\.\d+\.\d+\.\d+', host or ''): s -= 28
-            if ':' in p.netloc and not url.startswith('https://'): s -= 12
-            if any(x in host for x in BAD_HOST_HINTS): s -= 35
-            if 'not 24/7' in low: s -= 18
-            if any(x in low for x in LOW_VALUE): s -= 8
-            if '2160' in low or '4k' in low: s += 16
-            elif '1080' in low: s += 12
-            elif '720' in low: s += 7
-            elif '576' in low: s -= 7
-            elif '480' in low or '360' in low: s -= 15
-            if group in {'大陆','香港','澳门','台湾','新加坡','马来西亚'}: s += 12
-            if re.search(r'[\u4e00-\u9fff]', name): s += 8
-            return s
-
-          selected=[]; seen_names=set(); seen_urls=set(); failures=[]
-          for group,url,quota,allow_geo in sources:
-            try: items=parse_m3u(fetch(url),group,allow_geo)
-            except Exception as e: failures.append((group,str(e))); continue
-            items.sort(key=score, reverse=True); taken=0
-            for it in items:
-              n=norm_name(it[0]); u=it[2]
-              if not n or n in seen_names or u in seen_urls or score(it) < -10: continue
-              selected.append(it); seen_names.add(n); seen_urls.add(u); taken += 1
-              if taken >= quota or len(selected) >= TARGET: break
-            if len(selected) >= TARGET: break
-
-          if len(selected) < TARGET:
-            pool=[]
-            for g,u in [('纪录片','https://iptv-org.github.io/iptv/categories/documentary.m3u'),('电影','https://iptv-org.github.io/iptv/categories/movies.m3u'),('新闻','https://iptv-org.github.io/iptv/categories/news.m3u'),('娱乐','https://iptv-org.github.io/iptv/categories/entertainment.m3u'),('音乐','https://iptv-org.github.io/iptv/categories/music.m3u')]:
-              try: pool += parse_m3u(fetch(u),g,False)
-              except Exception: pass
-            pool.sort(key=score, reverse=True)
-            for it in pool:
-              n=norm_name(it[0]); u=it[2]
-              if n in seen_names or u in seen_urls or score(it) < 0: continue
-              selected.append(it); seen_names.add(n); seen_urls.add(u)
-              if len(selected) >= TARGET: break
-
-          extra_names={e[0] for e in extras}
-          for name,group,url in extras:
-            n=norm_name(name)
-            if n not in seen_names:
-              selected.append((name,f'#EXTINF:-1 group-title="{group}",{name}',url,group)); seen_names.add(n); seen_urls.add(url)
-
-          core=[x for x in selected if x[0] not in extra_names]
-          core.sort(key=score, reverse=True)
-          extra_items=[x for x in selected if x[0] in extra_names]
-          selected=core[:max(0,TARGET-len(extra_items))] + extra_items
-
-          order={'大陆':0,'中文纪录':1,'中文电影':2,'香港':3,'澳门':4,'台湾':5,'新加坡':6,'马来西亚':7,'日本':8,'韩国':9,'纪录片':10,'电影':11,'新闻':12,'娱乐':13,'音乐':14}
-          selected.sort(key=lambda x:(order.get(x[3],99), -score(x), x[0].lower()))
-
-          lines=['#EXTM3U','# 速度第一 / 画质第二 / 中文优先 / 购物台剔除','# 自动每日重建；港台地区限制源只在有对应出口时保留。',f'# channels={len(selected)}']
-          for name,ext,url,group in selected:
-            if 'group-title=' in ext:
-              ext=re.sub(r'group-title="[^"]*"', f'group-title="{group}"', ext)
-            else:
-              ext=ext.replace('#EXTINF:-1', f'#EXTINF:-1 group-title="{group}"', 1)
-            lines += [ext,url]
-          open('tv.m3u','w',encoding='utf-8',newline='\n').write('\n'.join(lines)+'\n')
-          open('build-report.txt','w',encoding='utf-8').write('channels='+str(len(selected))+'\nfailures='+repr(failures)+'\n')
-          print('built',len(selected),'channels; failures=',failures)
-          PY
-
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv.m3u build-report.txt
+          git add tv.m3u tv-all.m3u build-report.txt
           if git diff --cached --quiet; then
-            echo 'No changes'
+            echo 'No playlist changes'
           else
-            git commit -m 'Auto-refresh speed-first IPTV source'
+            git commit -m 'Refresh measured APTV playlists'
             git push
           fi
