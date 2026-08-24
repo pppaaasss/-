@@ -1,9 +1,11 @@
-name: Build IPTV source
+name: Rebuild IPTV source
 
 on:
   push:
     paths:
       - '.github/workflows/build-tv.yml'
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -14,19 +16,149 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Rebuild tv.m3u
+      - name: Build speed-first playlist
         shell: bash
         run: |
-          cat > /tmp/tv.m3u.gz.b64 <<'EOF'
-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
-EOF
-          base64 -d /tmp/tv.m3u.gz.b64 | gzip -d > tv.m3u
+          python3 - <<'PY'
+          import re, urllib.request, urllib.parse
+
+          TARGET = 320
+          UA = {'User-Agent':'Mozilla/5.0 IPTV-curator/1.0'}
+
+          sources = [
+            ('大陆', 'https://iptv-org.github.io/iptv/countries/cn.m3u', 95, False),
+            ('香港', 'https://iptv-org.github.io/iptv/countries/hk.m3u', 28, True),
+            ('澳门', 'https://iptv-org.github.io/iptv/countries/mo.m3u', 6, True),
+            ('台湾', 'https://iptv-org.github.io/iptv/countries/tw.m3u', 25, False),
+            ('新加坡', 'https://iptv-org.github.io/iptv/countries/sg.m3u', 22, True),
+            ('马来西亚', 'https://iptv-org.github.io/iptv/countries/my.m3u', 32, True),
+            ('日本', 'https://iptv-org.github.io/iptv/countries/jp.m3u', 18, True),
+            ('韩国', 'https://iptv-org.github.io/iptv/countries/kr.m3u', 12, True),
+            ('纪录片', 'https://iptv-org.github.io/iptv/categories/documentary.m3u', 32, False),
+            ('电影', 'https://iptv-org.github.io/iptv/categories/movies.m3u', 22, False),
+            ('新闻', 'https://iptv-org.github.io/iptv/categories/news.m3u', 18, False),
+            ('娱乐', 'https://iptv-org.github.io/iptv/categories/entertainment.m3u', 15, False),
+            ('音乐', 'https://iptv-org.github.io/iptv/categories/music.m3u', 10, False),
+          ]
+
+          BLOCK = ['shopping','shop ',' shop','qvc','hsn','jewelry','jewellery','teleshop','home shopping','shop lc','gemporia','购物','購物','珠宝','珠寶','导购','導購']
+          LOW_VALUE = ['radio','weather','天气','氣象','parliament','council','assembly','legislature']
+          PREFERRED_CDN = ['akamaized.net','akamaihd.net','cloudfront.net','myalicdn.com','alicdn.com','brtvcloud.com','googlevideo.com','fastly','cloudflare','brightcove','bcovlive','rthk','hoy.tv','streamingfast.net','wanfudaluye.com','cdn','edge']
+          BAD_HOST_HINTS = ['php','zzy','wwang','qqff','.xyz','.top','.pw','.work','.icu']
+
+          extras = [
+            ('求索纪录','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000010.m3u8?cdn=hnbblive'),
+            ('求索科学','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000011.m3u8?cdn=hnbblive'),
+            ('求索生活','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000008.m3u8?cdn=hnbblive'),
+            ('求索动物','中文纪录','http://home.wwang.pw:35455/itv/2000000004000000009.m3u8?cdn=hnbblive'),
+            ('CHC影迷电影','中文电影','http://58.19.38.162:9901/tsfile/live/1004_1.m3u8?key=txiptv&playlive=1&authid=0'),
+            ('CHC动作电影','中文电影','http://58.19.38.162:9901/tsfile/live/1005_1.m3u8?key=txiptv&playlive=1&authid=0'),
+            ('CHC家庭影院','中文电影','http://58.19.38.162:9901/tsfile/live/1006_1.m3u8?key=txiptv&playlive=1&authid=0'),
+            ('纪实科教8K','中文纪录','http://111.31.106.140/downflv.brtvcloud.com/8klive/8kliveok.m3u8'),
+          ]
+
+          def fetch(url):
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=25) as r:
+              return r.read().decode('utf-8','ignore')
+
+          def parse_m3u(text, group, allow_geo):
+            out=[]; ext=None
+            for raw in text.splitlines():
+              line=raw.strip()
+              if not line: continue
+              if line.startswith('#EXTINF'):
+                ext=line; continue
+              if line.startswith('#'): continue
+              if ext and (line.startswith('http://') or line.startswith('https://')):
+                name=ext.split(',',1)[1].strip() if ',' in ext else 'Unknown'
+                low=(name+' '+ext).lower()
+                if any(k in low for k in BLOCK): ext=None; continue
+                if ('geo-blocked' in low) and not allow_geo: ext=None; continue
+                if line.endswith('.mpd') or '.mpd?' in line: ext=None; continue
+                out.append((name, ext, line, group)); ext=None
+            return out
+
+          def norm_name(name):
+            s=re.sub(r'\([^)]*(?:\d{3,4}[pi]|geo|not 24|hd|sd)[^)]*\)','',name,flags=re.I)
+            s=re.sub(r'\[[^]]*\]','',s)
+            return re.sub(r'\s+',' ',s).strip().lower()
+
+          def score(item):
+            name, ext, url, group=item
+            low=(name+' '+ext).lower(); p=urllib.parse.urlparse(url); host=(p.hostname or '').lower(); s=0
+            if url.startswith('https://'): s += 28
+            if any(x in host for x in PREFERRED_CDN): s += 55
+            if re.fullmatch(r'\d+\.\d+\.\d+\.\d+', host or ''): s -= 28
+            if ':' in p.netloc and not url.startswith('https://'): s -= 12
+            if any(x in host for x in BAD_HOST_HINTS): s -= 35
+            if 'not 24/7' in low: s -= 18
+            if any(x in low for x in LOW_VALUE): s -= 8
+            if '2160' in low or '4k' in low: s += 16
+            elif '1080' in low: s += 12
+            elif '720' in low: s += 7
+            elif '576' in low: s -= 7
+            elif '480' in low or '360' in low: s -= 15
+            if group in {'大陆','香港','澳门','台湾','新加坡','马来西亚'}: s += 12
+            if re.search(r'[\u4e00-\u9fff]', name): s += 8
+            return s
+
+          selected=[]; seen_names=set(); seen_urls=set(); failures=[]
+          for group,url,quota,allow_geo in sources:
+            try: items=parse_m3u(fetch(url),group,allow_geo)
+            except Exception as e: failures.append((group,str(e))); continue
+            items.sort(key=score, reverse=True); taken=0
+            for it in items:
+              n=norm_name(it[0]); u=it[2]
+              if not n or n in seen_names or u in seen_urls or score(it) < -10: continue
+              selected.append(it); seen_names.add(n); seen_urls.add(u); taken += 1
+              if taken >= quota or len(selected) >= TARGET: break
+            if len(selected) >= TARGET: break
+
+          if len(selected) < TARGET:
+            pool=[]
+            for g,u in [('纪录片','https://iptv-org.github.io/iptv/categories/documentary.m3u'),('电影','https://iptv-org.github.io/iptv/categories/movies.m3u'),('新闻','https://iptv-org.github.io/iptv/categories/news.m3u'),('娱乐','https://iptv-org.github.io/iptv/categories/entertainment.m3u'),('音乐','https://iptv-org.github.io/iptv/categories/music.m3u')]:
+              try: pool += parse_m3u(fetch(u),g,False)
+              except Exception: pass
+            pool.sort(key=score, reverse=True)
+            for it in pool:
+              n=norm_name(it[0]); u=it[2]
+              if n in seen_names or u in seen_urls or score(it) < 0: continue
+              selected.append(it); seen_names.add(n); seen_urls.add(u)
+              if len(selected) >= TARGET: break
+
+          extra_names={e[0] for e in extras}
+          for name,group,url in extras:
+            n=norm_name(name)
+            if n not in seen_names:
+              selected.append((name,f'#EXTINF:-1 group-title="{group}",{name}',url,group)); seen_names.add(n); seen_urls.add(url)
+
+          core=[x for x in selected if x[0] not in extra_names]
+          core.sort(key=score, reverse=True)
+          extra_items=[x for x in selected if x[0] in extra_names]
+          selected=core[:max(0,TARGET-len(extra_items))] + extra_items
+
+          order={'大陆':0,'中文纪录':1,'中文电影':2,'香港':3,'澳门':4,'台湾':5,'新加坡':6,'马来西亚':7,'日本':8,'韩国':9,'纪录片':10,'电影':11,'新闻':12,'娱乐':13,'音乐':14}
+          selected.sort(key=lambda x:(order.get(x[3],99), -score(x), x[0].lower()))
+
+          lines=['#EXTM3U','# 速度第一 / 画质第二 / 中文优先 / 购物台剔除','# 自动每日重建；港台地区限制源只在有对应出口时保留。',f'# channels={len(selected)}']
+          for name,ext,url,group in selected:
+            if 'group-title=' in ext:
+              ext=re.sub(r'group-title="[^"]*"', f'group-title="{group}"', ext)
+            else:
+              ext=ext.replace('#EXTINF:-1', f'#EXTINF:-1 group-title="{group}"', 1)
+            lines += [ext,url]
+          open('tv.m3u','w',encoding='utf-8',newline='\n').write('\n'.join(lines)+'\n')
+          open('build-report.txt','w',encoding='utf-8').write('channels='+str(len(selected))+'\nfailures='+repr(failures)+'\n')
+          print('built',len(selected),'channels; failures=',failures)
+          PY
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv.m3u
+          git add tv.m3u build-report.txt
           if git diff --cached --quiet; then
             echo 'No changes'
           else
-            git commit -m 'Update tv.m3u'
+            git commit -m 'Auto-refresh speed-first IPTV source'
             git push
           fi
