@@ -24,10 +24,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Probe and build playlists
         env:
-          TARGET_STABLE: '200'
-          TARGET_ALL: '320'
-          PROBE_WORKERS: '28'
-          PROBE_TIMEOUT: '9'
+          TARGET_STABLE: '400'
+          TARGET_ALL: '650'
+          PROBE_WORKERS: '36'
+          PROBE_TIMEOUT: '8'
         run: python3 scripts/build_playlist.py
       - name: Publish refreshed playlists
         run: |
