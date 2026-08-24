@@ -581,6 +581,26 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         existing = best.get(key)
         if existing is None or measured_score(channel) > measured_score(existing):
             best[key] = channel
+
+    # If a required station has working manifests and media segments but misses
+    # only the normal speed/latency floor, retain its fastest tested route.
+    # This is deliberately limited to the five explicitly requested channels.
+    for target in REQUIRED_CORE_IDS:
+        if target in best:
+            continue
+        fallback = max(
+            (
+                channel for channel in channels
+                if required_core_id(channel) == target
+                and channel.probe.get("ok")
+                and not channel.probe.get("header_required")
+            ),
+            key=measured_score,
+            default=None,
+        )
+        if fallback is not None:
+            best[target] = fallback
+
     eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
     for channel in eligible:
