@@ -169,6 +169,8 @@ EXTRAS = [
     ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
     # CCTV-5 must remain 1080p. These are video-CDN paths (not the AAC-only
     # /audio/ feed that previously produced a black screen in APTV).
+    ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub"),
+    ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://207.56.13.146:81/cdnlive/cctv5.m3u8"),
     ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
     ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
     ("CCTV-5 体育 1080p CDN", "大陆", "http://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8"),
@@ -359,6 +361,10 @@ PREFERRED_HOSTS = [
     "streamingfast.net", "cdn", "edge",
 ]
 CCTV5_EDGE_HOSTS = ("myalicdn.com", "wscdns.com")
+CCTV5_PREFERRED_1080_URLS = (
+    "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub",
+    "http://207.56.13.146:81/cdnlive/cctv5.m3u8",
+)
 CCTV5_OPERATOR_HINTS = ("chinamobile.com", "gmcc.net", "cmvideo.cn", "gitv.tv")
 UNSTABLE_HOST_HINTS = [
     "zzy", "wwang", "qqff", "7766.org", "8866.org", "3322.org", "vicp.net",
@@ -664,6 +670,8 @@ def channel_static_score(channel: Channel) -> float:
         # label or one short segment burst measured in GitHub Actions.
         if any(token in host for token in CCTV5_EDGE_HOSTS):
             score += 190
+        if channel.url in CCTV5_PREFERRED_1080_URLS:
+            score += 260
         if any(token in host for token in CCTV5_OPERATOR_HINTS):
             score -= 90
     if is_placeholder_relay(channel):
@@ -990,21 +998,26 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
 
     # CCTV-5 is a user-tested exception: short probes from GitHub repeatedly
     # favour raw IP/operator routes that buffer on the viewer's ISP. Force the
-    # published primary to a curated 1080p edge CDN even when a direct URL
-    # reports a higher burst rate. A 720p route is never published as CCTV-5.
+    # published primary to the current overseas 1080p mirror or a curated
+    # 1080p CDN. Domestic operator URLs and 720p routes never become primary.
     cctv5_edge = max(
         (
             channel for channel in channels
             if channel_key(channel) == "cctv5"
             and channel.curated
-            and any(
-                token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-                for token in CCTV5_EDGE_HOSTS
+            and (
+                channel.url in CCTV5_PREFERRED_1080_URLS
+                or any(
+                    token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
+                    for token in CCTV5_EDGE_HOSTS
+                )
             )
             and labelled_height(channel) >= 1080
             and not is_placeholder_relay(channel)
         ),
         key=lambda channel: (
+            channel.url == CCTV5_PREFERRED_1080_URLS[0],
+            channel.url in CCTV5_PREFERRED_1080_URLS,
             channel.url.startswith("https://"),
             "myalicdn.com" in (urllib.parse.urlsplit(channel.url).hostname or "").lower(),
             bool(channel.probe.get("ok")),
@@ -1055,17 +1068,20 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     for key in CHINA_SIDE_FALLBACK_IDS:
         if key in best:
             continue
-        # For CCTV-5, only a labelled 1080p public edge CDN is acceptable as
-        # an unverified primary. Regional/operator and 720p routes stay behind.
+        # For CCTV-5, only a labelled 1080p overseas mirror/public edge CDN is
+        # acceptable as an unverified primary. Operator and 720p stay behind.
         if key == "cctv5":
             edge_fallback = max(
                 (
                     channel for channel in channels
                     if channel_key(channel) == key
                     and channel.curated
-                    and any(
-                        token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-                        for token in CCTV5_EDGE_HOSTS
+                    and (
+                        channel.url in CCTV5_PREFERRED_1080_URLS
+                        or any(
+                            token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
+                            for token in CCTV5_EDGE_HOSTS
+                        )
                     )
                     and labelled_height(channel) >= 1080
                     and not is_placeholder_relay(channel)
