@@ -96,6 +96,13 @@ SOURCES = [
     ("台湾", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_taiwan.m3u8", True),
     ("日本", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_japan.m3u8", True),
     ("韩国", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_korea.m3u8", True),
+
+    # Core CCTV/provincial backups. CCSH publishes many alternate HTTPS
+    # variants; the builder races them and keeps only the fastest working URL.
+    ("大陆", "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
 ]
 
 # User-requested Chinese documentary/movie channels.  They are never lost:
@@ -214,8 +221,16 @@ def channel_key(channel: Channel) -> str:
         if value:
             return value
     value = normalized_name(channel.name)
-    value = re.sub(r"cctv[\s_-]*0?(\d+)(?:[+p])?", r"cctv\1", value, flags=re.I)
+    # CCTV-5 and CCTV-5+ are different channels.  Preserve the plus before
+    # punctuation stripping, otherwise they collapse into one APTV tile.
+    value = re.sub(r"cctv[\s_-]*0?5\s*(?:\+|plus|p)", "cctv5plus", value, flags=re.I)
+    value = re.sub(r"cctv[\s_-]*0?(\d+)", r"cctv\1", value, flags=re.I)
     return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
+
+
+def is_core_channel(channel: Channel) -> bool:
+    low = f"{channel.name} {channel.extinf}".lower()
+    return bool(re.search(r"\bcctv[\s_-]*\d+", low, re.I)) or any(token in low for token in MAJOR_MAINLAND)
 
 
 def labelled_height(channel: Channel) -> int:
@@ -412,6 +427,23 @@ def is_stable(channel: Channel) -> bool:
     return True
 
 
+def is_core_acceptable(channel: Channel) -> bool:
+    """Slightly relaxed floor for must-have CCTV and provincial channels."""
+    if not is_core_channel(channel):
+        return False
+    probe = channel.probe
+    if probe.get("geo_restricted"):
+        return False
+    if not probe.get("ok") or probe.get("header_required"):
+        return False
+    height = int(probe.get("height") or labelled_height(channel))
+    speed = float(probe.get("segment_mbps") or 0)
+    latency = float(probe.get("manifest_s") or 99)
+    # CCTV-5+ currently has public 576i fallbacks; accept those only for the
+    # core guarantee, while ordinary channels still require the HD threshold.
+    return (not height or height >= 540) and speed >= 1.2 and latency <= 8.0
+
+
 def measured_score(channel: Channel) -> float:
     score = channel.static_score
     probe = channel.probe
@@ -505,7 +537,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     # are useful during probing but must not become duplicate APTV tiles.
     best: dict[str, Channel] = {}
     for channel in channels:
-        if not is_stable(channel):
+        if not (is_stable(channel) or is_core_acceptable(channel)):
             continue
         key = channel_key(channel)
         existing = best.get(key)
@@ -520,14 +552,35 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
 
     selected: list[Channel] = []
     selected_urls: set[str] = set()
+    selected_keys: set[str] = set()
+
+    # Guarantee every playable CCTV/major provincial station before filling
+    # entertainment categories. Failed and dead URLs are still excluded.
+    core = sorted((channel for channel in eligible if is_core_channel(channel)), key=measured_score, reverse=True)
+    for channel in core[:60]:
+        key = channel_key(channel)
+        if key in selected_keys:
+            continue
+        selected.append(channel)
+        selected_urls.add(channel.url)
+        selected_keys.add(key)
+
     for group, quota in GROUP_TARGETS.items():
-        for channel in grouped.get(group, [])[:quota]:
+        already = sum(channel.group == group for channel in selected)
+        for channel in grouped.get(group, []):
+            if already >= quota:
+                break
+            key = channel_key(channel)
+            if key in selected_keys:
+                continue
             selected.append(channel)
             selected_urls.add(channel.url)
+            selected_keys.add(key)
+            already += 1
 
     if len(selected) < TARGET_STABLE:
         overflow = sorted(
-            (channel for channel in eligible if channel.url not in selected_urls),
+            (channel for channel in eligible if channel.url not in selected_urls and channel_key(channel) not in selected_keys),
             key=measured_score,
             reverse=True,
         )
@@ -624,11 +677,8 @@ def main() -> int:
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
 
     stable_groups = Counter(channel.group for channel in stable)
-    stable_core = sum(
-        bool(re.search(r"\bcctv[\s_-]*\d+", f"{channel.name} {channel.extinf}", re.I))
-        or any(token in f"{channel.name} {channel.extinf}".lower() for token in MAJOR_MAINLAND)
-        for channel in stable
-    )
+    stable_core = sum(is_core_channel(channel) for channel in stable)
+    core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
     stable_heights = Counter()
     for channel in stable:
         height = int(channel.probe.get("height") or labelled_height(channel))
@@ -638,6 +688,8 @@ def main() -> int:
             stable_heights["1080"] += 1
         elif height >= 720:
             stable_heights["720"] += 1
+        elif height and height < 720:
+            stable_heights["core_fallback_below_720"] += 1
         else:
             stable_heights["unlabelled_but_probed"] += 1
     errors = Counter(channel.probe.get("error", "") for channel in probe_pool if not channel.probe.get("ok"))
@@ -651,6 +703,7 @@ def main() -> int:
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
+        f"stable_core_relaxed_fallbacks={core_fallbacks}",
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
