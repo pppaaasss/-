@@ -441,9 +441,38 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
         grouped[channel.group].append(channel)
     pool: list[Channel] = []
     for group, items in grouped.items():
-        items.sort(key=lambda item: item.static_score, reverse=True)
         quota = GROUP_TARGETS.get(group, 5)
-        pool.extend(items[: max(35, quota * 4)])
+        by_channel: dict[str, list[Channel]] = defaultdict(list)
+        for item in items:
+            by_channel[channel_key(item)].append(item)
+        for variants in by_channel.values():
+            variants.sort(key=lambda item: item.static_score, reverse=True)
+
+        # Breadth first: test one URL for many different channels before using
+        # remaining slots on alternate URLs for CCTV/卫视 and other duplicates.
+        # This prevents eight CCTV-1 URLs from crowding seven other channels out.
+        unique_limit = max(45, quota * 4)
+        ranked_keys = sorted(
+            by_channel,
+            key=lambda key: by_channel[key][0].static_score,
+            reverse=True,
+        )[:unique_limit]
+        group_pool = [by_channel[key][0] for key in ranked_keys]
+        group_limit = max(80, quota * 6)
+        variant_index = 1
+        while len(group_pool) < group_limit:
+            added = False
+            for key in ranked_keys:
+                variants = by_channel[key]
+                if variant_index < len(variants):
+                    group_pool.append(variants[variant_index])
+                    added = True
+                    if len(group_pool) >= group_limit:
+                        break
+            if not added:
+                break
+            variant_index += 1
+        pool.extend(group_pool)
     # Curated entries must always be checked, even when their static score is low.
     for channel in channels:
         if channel.curated and channel not in pool:
@@ -575,6 +604,17 @@ def main() -> int:
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
 
     stable_groups = Counter(channel.group for channel in stable)
+    stable_heights = Counter()
+    for channel in stable:
+        height = int(channel.probe.get("height") or labelled_height(channel))
+        if height >= 2160:
+            stable_heights["2160+"] += 1
+        elif height >= 1080:
+            stable_heights["1080"] += 1
+        elif height >= 720:
+            stable_heights["720"] += 1
+        else:
+            stable_heights["unlabelled_but_probed"] += 1
     errors = Counter(channel.probe.get("error", "") for channel in probe_pool if not channel.probe.get("ok"))
     report_lines = [
         f"generated_utc={TODAY}",
@@ -584,6 +624,8 @@ def main() -> int:
         f"geo_restricted={geo}",
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
+        f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
+        "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
         "top_probe_errors=" + json.dumps(errors.most_common(12), ensure_ascii=False),
