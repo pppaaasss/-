@@ -167,8 +167,14 @@ EXTRAS = [
     ("CCTV-11 戏曲 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
-    # CCTV-5 operator/CDN routes: prefer sustained domestic capacity over
-    # residential dynamic-DNS sources that can win a short overseas speed test.
+    # CCTV-5 edge-CDN routes come first. The Kua CDN master is adaptive up to
+    # 720p, which is deliberately preferred over a nominal 1080p operator route
+    # that buffers on a different ISP/region. Ali CDN remains the HD alternate.
+    ("CCTV-5 体育 720p 自适应 CDN", "大陆", "https://ldcctvwbcdks.v.kcdnvip.com/ldcctvwbcd/cdrmldcctv5_1/index.m3u8?b=200-2100"),
+    ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
+    ("CCTV-5 体育 1080p CDN", "大陆", "http://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8"),
+    # Operator/regional routes are last-resort alternatives only. They can win
+    # a short GitHub probe while remaining slow across the user's actual ISP.
     ("CCTV-5 体育 1080p", "大陆", "http://dbiptv.sn.chinamobile.com/PLTV/88888890/224/3221226395/index.m3u8"),
     ("CCTV-5 体育 1080p", "大陆", "http://39.134.24.161/dbiptv.sn.chinamobile.com/PLTV/88888890/224/3221226395/index.m3u8"),
     ("CCTV-5 体育 1080p", "大陆", "http://39.134.24.162/dbiptv.sn.chinamobile.com/PLTV/88888888/224/3221226395/1.m3u8"),
@@ -348,8 +354,10 @@ PUBLIC_PAY_HINTS = (
 PREFERRED_HOSTS = [
     "akamaized.net", "akamaihd.net", "cloudfront.net", "alicdn.com", "myalicdn.com",
     "brtvcloud.com", "fastly", "cloudflare", "brightcove", "bcovlive", "rthk", "hoy.tv",
-    "streamingfast.net", "chinamobile.com", "gmcc.net", "gitv.tv", "cdn", "edge",
+    "streamingfast.net", "cdn", "edge",
 ]
+CCTV5_EDGE_HOSTS = ("kcdnvip.com", "myalicdn.com", "qnqcdn.net")
+CCTV5_OPERATOR_HINTS = ("chinamobile.com", "gmcc.net", "cmvideo.cn", "gitv.tv")
 UNSTABLE_HOST_HINTS = [
     "zzy", "wwang", "qqff", "7766.org", "8866.org", "3322.org", "vicp.net",
     ".xyz", ".top", ".pw", ".work", ".icu",
@@ -649,6 +657,15 @@ def channel_static_score(channel: Channel) -> float:
         score -= 12
     if any(token in host for token in UNSTABLE_HOST_HINTS):
         score -= 28
+    if channel_key(channel) == "cctv5":
+        # Smoothness on the viewer's route matters more than the resolution
+        # label or one short segment burst measured in GitHub Actions.
+        if any(token in host for token in CCTV5_EDGE_HOSTS):
+            score += 190
+        if "kcdnvip.com" in host:
+            score += 160  # adaptive master: APTV can step down instead of buffering
+        if any(token in host for token in CCTV5_OPERATOR_HINTS):
+            score -= 90
     if is_placeholder_relay(channel):
         score -= 500
     if "not 24/7" in low:
@@ -1009,6 +1026,27 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     for key in CHINA_SIDE_FALLBACK_IDS:
         if key in best:
             continue
+        # For CCTV-5, an adaptive/public edge CDN is the only acceptable
+        # unverified primary. Regional/operator routes stay behind it.
+        if key == "cctv5":
+            edge_fallback = max(
+                (
+                    channel for channel in channels
+                    if channel_key(channel) == key
+                    and channel.curated
+                    and any(
+                        token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
+                        for token in CCTV5_EDGE_HOSTS
+                    )
+                    and not is_placeholder_relay(channel)
+                ),
+                key=channel_static_score,
+                default=None,
+            )
+            if edge_fallback is not None:
+                edge_fallback.probe["unverified_edge_fallback"] = True
+                best[key] = edge_fallback
+                continue
         fallback = max(
             (
                 channel for channel in channels
