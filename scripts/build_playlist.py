@@ -329,21 +329,42 @@ PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
 MISLABELLED_STREAM_URLS = {
     "https://cloudvideo.servers10.com:8081/8130/index.m3u8",
     "http://antvlive.ab5c6921.cdnviet.com/antv/playlist.m3u8",
+    # Public lists label this Zhejiang Shaoxing/Shengzhou local feed as
+    # Shandong Satellite TV. Keep it out even when its HLS probe succeeds.
+    "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
 
-MAJOR_MAINLAND = [
-    "卫视", "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
+MAINLAND_SATELLITE_NAMES = (
+    "北京卫视", "东方卫视", "湖南卫视", "浙江卫视", "江苏卫视", "广东卫视", "深圳卫视",
     "安徽卫视", "山东卫视", "河南卫视", "湖北卫视", "辽宁卫视", "黑龙江卫视", "四川卫视",
     "重庆卫视", "天津卫视", "河北卫视", "江西卫视", "广西卫视", "贵州卫视", "云南卫视",
     "陕西卫视", "山西卫视", "吉林卫视", "内蒙古卫视", "新疆卫视", "西藏卫视", "青海卫视",
-    "甘肃卫视", "宁夏卫视", "海南卫视", "凤凰中文", "凤凰资讯", "凤凰香港",
-    "beijingsatellitetv", "hunantv", "zhejiangtv", "jiangsusatellitetv", "dragontv",
-    "guangdongsatellitetv", "shenzhensatellitetv", "anhuitv", "shandongtv", "henantv",
-    "hubeitv", "liaoningtv", "heilongjiangtv", "sichuantv", "chongqingtv", "tianjintv",
-    "hebeitv", "jiangxitv", "guangxitv", "guizhoutv", "yunnansatellitetv", "jilintv",
-    "xinjiangtv", "hainantv", "phoenixchinesechannel", "phoenixinfonewschannel",
-]
+    "甘肃卫视", "宁夏卫视", "海南卫视", "东南卫视", "延边卫视", "海峡卫视", "兵团卫视",
+    "安多卫视", "农林卫视", "三沙卫视",
+)
+MAINLAND_SATELLITE_CHINESE_ALIASES = {
+    "上海卫视": "东方卫视",
+    "内蒙卫视": "内蒙古卫视",
+    "旅游卫视": "海南卫视",
+}
+MAINLAND_SATELLITE_ENGLISH_ALIASES = {
+    "beijingsatellitetv": "北京卫视", "beijingtv": "北京卫视",
+    "dragontv": "东方卫视", "shanghaitv": "东方卫视",
+    "hunantv": "湖南卫视", "zhejiangtv": "浙江卫视",
+    "jiangsusatellitetv": "江苏卫视", "jiangsutv": "江苏卫视",
+    "guangdongsatellitetv": "广东卫视", "guangdongtv": "广东卫视",
+    "shenzhensatellitetv": "深圳卫视", "shenzhentv": "深圳卫视",
+    "anhuitv": "安徽卫视", "shandongtv": "山东卫视", "henantv": "河南卫视",
+    "hubeitv": "湖北卫视", "liaoningtv": "辽宁卫视", "heilongjiangtv": "黑龙江卫视",
+    "sichuantv": "四川卫视", "chongqingtv": "重庆卫视", "tianjintv": "天津卫视",
+    "hebeitv": "河北卫视", "jiangxitv": "江西卫视", "guangxitv": "广西卫视",
+    "guizhoutv": "贵州卫视", "yunnansatellitetv": "云南卫视", "yunnantv": "云南卫视",
+    "shanxitv": "山西卫视", "shaanxitv": "陕西卫视", "jilintv": "吉林卫视",
+    "xinjiangtv": "新疆卫视", "hainantv": "海南卫视", "qinghaitv": "青海卫视",
+    "gansutv": "甘肃卫视", "ningxiatv": "宁夏卫视", "xizangtv": "西藏卫视",
+    "tibettv": "西藏卫视", "innermongoliatv": "内蒙古卫视",
+}
 
 
 @dataclass
@@ -439,6 +460,24 @@ def normalized_name(name: str) -> str:
     return re.sub(r"\s+", " ", value).strip().lower()
 
 
+def canonical_mainland_satellite_name(channel: Channel) -> str | None:
+    """Map only a visible provincial satellite label to its canonical name.
+
+    Imported group-title metadata is intentionally ignored: many source lists
+    put local, sports and VOD entries in a generic satellite section.
+    """
+    visible = normalized_name(channel.name)
+    for alias, canonical in MAINLAND_SATELLITE_CHINESE_ALIASES.items():
+        if alias in visible:
+            return canonical
+    for canonical in MAINLAND_SATELLITE_NAMES:
+        if canonical in visible:
+            return canonical
+    compact = re.sub(r"[^a-z0-9]+", "", visible)
+    compact = re.sub(r"(?:uhd|fhd|hd|sd|4k|8k|2160p?|1080p?|720p?)$", "", compact)
+    return MAINLAND_SATELLITE_ENGLISH_ALIASES.get(compact)
+
+
 def required_core_id(channel: Channel) -> str | None:
     """Return the canonical id for the five user-required CCTV stations."""
     value = f"{channel.name} {channel.extinf}".lower()
@@ -460,10 +499,9 @@ def channel_key(channel: Channel) -> str:
     # spelling variants such as CCTV4K / CCTV-4K HD are one channel.
     if is_cctv4k_label(channel):
         return "cctv4k"
-    # English and Chinese Hunan labels must race as alternate URLs, not become
-    # two tiles (one of which has repeatedly been an unrelated ANT stream).
-    if re.search(r"(?:湖南卫视|\bhunan\s*tv\b|hunantv)", visible_name, re.I):
-        return "湖南卫视"
+    satellite_name = canonical_mainland_satellite_name(channel)
+    if satellite_name:
+        return satellite_name
     # Prefer the visible CCTV name. Some imported lists use numeric tvg-id="5"
     # or tvg-id="6", which must not split CCTV-5/5+ into unrelated keys.
     required = required_core_id(channel)
@@ -499,13 +537,13 @@ def channel_key(channel: Channel) -> str:
 
 
 def is_core_channel(channel: Channel) -> bool:
-    low = f"{channel.name} {channel.extinf}".lower()
-    return bool(re.search(r"\bcctv[\s_-]*\d+", low, re.I)) or any(token in low for token in MAJOR_MAINLAND)
+    visible = normalized_name(channel.name)
+    return bool(re.search(r"\bcctv[\s_-]*\d+", visible, re.I)) or canonical_mainland_satellite_name(channel) is not None
 
 
 def is_placeholder_relay(channel: Channel) -> bool:
     host = (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-    return host in PLACEHOLDER_RELAY_HOSTS
+    return host in PLACEHOLDER_RELAY_HOSTS or host == "freetv.fun" or host.endswith(".freetv.fun")
 
 
 def is_station_like(channel: Channel) -> bool:
@@ -778,6 +816,8 @@ def measured_score(channel: Channel) -> float:
     score += speed * 2.2 - latency * 7
     if int(probe.get("checks_ok") or 1) >= 2:
         score += 35
+    elif probe.get("recheck_failed"):
+        score -= 65
     if height == 1080:
         score += 70
     elif height == 720:
@@ -1034,14 +1074,13 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
 
 def display_group(channel: Channel) -> str:
     """Collapse the old Mainland bucket into the two APTV groups requested."""
-    identity = f"{channel.name} {channel.extinf}".lower()
+    identity_extinf = re.sub(r'group-title="[^"]*"', "", channel.extinf, flags=re.I)
+    identity = f"{channel.name} {identity_extinf}".lower()
     # CCTV/CGTN can arrive through language/category feeds instead of the old
     # Mainland feed, so classify them independently of their imported group.
     if re.search(r"(?:cctv|cgtn|央视)", identity, re.I):
         return "卫视台"
-    if channel.group in {"大陆", "中文综合"} and (
-        is_core_channel(channel) or "卫视" in identity
-    ):
+    if channel.group in {"大陆", "中文综合"} and canonical_mainland_satellite_name(channel):
         return "卫视台"
     if channel.group == "大陆":
         return "中文综合"
@@ -1057,8 +1096,9 @@ def canonical_display_name(channel: Channel) -> str:
     numbered = re.fullmatch(r"cctv(\d{1,2})", key)
     if numbered:
         return f"CCTV-{int(numbered.group(1))}"
-    if key == "湖南卫视":
-        return "湖南卫视"
+    satellite_name = canonical_mainland_satellite_name(channel)
+    if satellite_name:
+        return satellite_name
     return channel.name
 
 
@@ -1147,7 +1187,8 @@ def main() -> int:
 
     # High-availability pass for the complete CCTV/CGTN/provincial group.
     # A route must fetch a second fresh manifest/media segment after the broad
-    # scan; one-shot successes are rejected before the final channel race.
+    # scan. A one-shot success remains a penalized last-resort fallback so a
+    # transient second timeout does not delete an otherwise playable station.
     recheck_targets = [
         channel for channel in probe_pool
         if display_group(channel) == "卫视台" and channel.probe.get("ok")
@@ -1163,11 +1204,11 @@ def main() -> int:
             except Exception as exc:
                 second = {"ok": False, "error": type(exc).__name__ + ":" + str(exc)[:80]}
             if not second.get("ok"):
-                channel.probe = {
-                    "ok": False,
-                    "checks_ok": 1,
-                    "error": "recheck:" + str(second.get("error") or "probe_failed")[:100],
-                }
+                fallback = dict(first)
+                fallback["checks_ok"] = 1
+                fallback["recheck_failed"] = True
+                fallback["recheck_error"] = str(second.get("error") or "probe_failed")[:100]
+                channel.probe = fallback
                 satellite_recheck_failed += 1
                 continue
             combined = dict(first)
@@ -1207,6 +1248,14 @@ def main() -> int:
     stable_core = sum(is_core_channel(channel) for channel in stable)
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
+    stable_satellite_double_checked = sum(
+        display_group(channel) == "卫视台" and int(channel.probe.get("checks_ok") or 1) >= 2
+        for channel in stable
+    )
+    stable_satellite_single_check_fallbacks = sum(
+        display_group(channel) == "卫视台" and bool(channel.probe.get("recheck_failed"))
+        for channel in stable
+    )
     core_fallbacks = sum(is_core_channel(channel) and not is_stable(channel) for channel in stable)
     relaxed_fallbacks = sum(not is_stable(channel) for channel in stable)
     stable_heights = Counter()
@@ -1273,6 +1322,8 @@ def main() -> int:
         f"geo_restricted={geo}",
         f"satellite_rechecked={len(recheck_targets)}",
         f"satellite_recheck_failed={satellite_recheck_failed}",
+        f"stable_satellite_double_checked={stable_satellite_double_checked}",
+        f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
         f"stable_channels={len(stable)}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
