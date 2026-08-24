@@ -167,12 +167,14 @@ EXTRAS = [
     ("CCTV-11 戏曲 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
-    # CCTV-5 edge-CDN routes come first. The Kua CDN master is adaptive up to
-    # 720p, which is deliberately preferred over a nominal 1080p operator route
-    # that buffers on a different ISP/region. Ali CDN remains the HD alternate.
-    ("CCTV-5 体育 720p 自适应 CDN", "大陆", "https://ldcctvwbcdks.v.kcdnvip.com/ldcctvwbcd/cdrmldcctv5_1/index.m3u8?b=200-2100"),
+    # CCTV-5 must remain 1080p. These are video-CDN paths (not the AAC-only
+    # /audio/ feed that previously produced a black screen in APTV).
     ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
+    ("CCTV-5 体育 1080p CDN", "大陆", "https://cctvcnch5ca.v.wscdns.com/live/cctv5_2/index.m3u8?contentid=2820180516001"),
     ("CCTV-5 体育 1080p CDN", "大陆", "http://cctvalih5ca.v.myalicdn.com/live/cctv5_2/index.m3u8"),
+    # The adaptive Kua route tops out at 720p and is retained only as source
+    # research; the 1080p-only publishing rule below prevents it becoming main.
+    ("CCTV-5 体育 720p 自适应 CDN", "大陆", "https://ldcctvwbcdks.v.kcdnvip.com/ldcctvwbcd/cdrmldcctv5_1/index.m3u8?b=200-2100"),
     # Operator/regional routes are last-resort alternatives only. They can win
     # a short GitHub probe while remaining slow across the user's actual ISP.
     ("CCTV-5 体育 1080p", "大陆", "http://dbiptv.sn.chinamobile.com/PLTV/88888890/224/3221226395/index.m3u8"),
@@ -356,7 +358,7 @@ PREFERRED_HOSTS = [
     "brtvcloud.com", "fastly", "cloudflare", "brightcove", "bcovlive", "rthk", "hoy.tv",
     "streamingfast.net", "cdn", "edge",
 ]
-CCTV5_EDGE_HOSTS = ("kcdnvip.com", "myalicdn.com", "qnqcdn.net")
+CCTV5_EDGE_HOSTS = ("myalicdn.com", "wscdns.com")
 CCTV5_OPERATOR_HINTS = ("chinamobile.com", "gmcc.net", "cmvideo.cn", "gitv.tv")
 UNSTABLE_HOST_HINTS = [
     "zzy", "wwang", "qqff", "7766.org", "8866.org", "3322.org", "vicp.net",
@@ -662,8 +664,6 @@ def channel_static_score(channel: Channel) -> float:
         # label or one short segment burst measured in GitHub Actions.
         if any(token in host for token in CCTV5_EDGE_HOSTS):
             score += 190
-        if "kcdnvip.com" in host:
-            score += 160  # adaptive master: APTV can step down instead of buffering
         if any(token in host for token in CCTV5_OPERATOR_HINTS):
             score -= 90
     if is_placeholder_relay(channel):
@@ -990,8 +990,8 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
 
     # CCTV-5 is a user-tested exception: short probes from GitHub repeatedly
     # favour raw IP/operator routes that buffer on the viewer's ISP. Force the
-    # published primary to a curated edge CDN even when a direct URL reports a
-    # higher burst rate. The adaptive Kua master is preferred for smoothness.
+    # published primary to a curated 1080p edge CDN even when a direct URL
+    # reports a higher burst rate. A 720p route is never published as CCTV-5.
     cctv5_edge = max(
         (
             channel for channel in channels
@@ -1001,10 +1001,12 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
                 token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
                 for token in CCTV5_EDGE_HOSTS
             )
+            and labelled_height(channel) >= 1080
             and not is_placeholder_relay(channel)
         ),
         key=lambda channel: (
-            "kcdnvip.com" in (urllib.parse.urlsplit(channel.url).hostname or "").lower(),
+            channel.url.startswith("https://"),
+            "myalicdn.com" in (urllib.parse.urlsplit(channel.url).hostname or "").lower(),
             bool(channel.probe.get("ok")),
             measured_score(channel) if channel.probe.get("ok") else channel_static_score(channel),
         ),
@@ -1053,8 +1055,8 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     for key in CHINA_SIDE_FALLBACK_IDS:
         if key in best:
             continue
-        # For CCTV-5, an adaptive/public edge CDN is the only acceptable
-        # unverified primary. Regional/operator routes stay behind it.
+        # For CCTV-5, only a labelled 1080p public edge CDN is acceptable as
+        # an unverified primary. Regional/operator and 720p routes stay behind.
         if key == "cctv5":
             edge_fallback = max(
                 (
@@ -1065,6 +1067,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
                         token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
                         for token in CCTV5_EDGE_HOSTS
                     )
+                    and labelled_height(channel) >= 1080
                     and not is_placeholder_relay(channel)
                 ),
                 key=channel_static_score,
