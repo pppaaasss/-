@@ -572,6 +572,11 @@ def is_station_like(channel: Channel) -> bool:
     low = f"{channel.name} {channel.extinf}".lower()
     if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
         return False
+    # Some public lists attach AAC-only feeds to CCTV video labels. They pass
+    # HLS/segment checks but produce a black screen with sound in APTV.
+    url_path = urllib.parse.urlsplit(channel.url).path.lower()
+    if "/audio/" in url_path:
+        return False
     url_low = channel.url.lower()
     if re.search(r"(?:[?&]id=cctv4k\b|channel_cctv4k|/cctv4k(?:[/?.]|$))", url_low) and not is_cctv4k_label(channel):
         return False
