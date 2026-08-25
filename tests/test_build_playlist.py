@@ -14,12 +14,33 @@ SPEC.loader.exec_module(builder)
 
 
 class BuildPlaylistTests(unittest.TestCase):
-    def test_default_targets_are_expanded(self):
-        self.assertEqual(builder.TARGET_STABLE, 800)
-        self.assertEqual(builder.MIN_STABLE, 760)
-        self.assertEqual(builder.TARGET_ALL, 1000)
-        self.assertEqual(builder.TARGET_EASY, 200)
+    def test_default_targets_match_local_first_profile(self):
+        self.assertEqual(builder.TARGET_STABLE, 420)
+        self.assertEqual(builder.MIN_STABLE, 280)
+        self.assertEqual(builder.TARGET_ALL, 560)
+        self.assertEqual(builder.TARGET_EASY, 180)
         self.assertEqual(builder.MIN_EASY, 55)
+
+    def test_viewer_profile_rejects_category_and_english_contamination(self):
+        fixtures = (
+            ("BBC Earth", "纪录片", False),
+            ("VOA美国之音", "中文综合", False),
+            ("CNA亚洲新闻台", "新加坡", False),
+            ("Channel 8", "新加坡", True),
+            ("JOTX-DTV", "日本", True),
+            ("NHK WORLD-JAPAN", "日本", False),
+            ("TVBS新闻台", "台湾", True),
+            ("CCTV-13", "卫视台", True),
+        )
+        for name, group, expected in fixtures:
+            with self.subTest(name=name, group=group):
+                channel = builder.Channel(
+                    name,
+                    f'#EXTINF:-1 group-title="{group}",{name}',
+                    "https://example.com/live.m3u8",
+                    group,
+                )
+                self.assertEqual(builder.is_viewer_wanted_channel(channel), expected)
 
     def test_parser_preserves_source_and_normalizes_group(self):
         playlist = """#EXTM3U
@@ -361,6 +382,39 @@ segments/live-001.ts
                 "manifest_s": 1.0,
             }
         self.assertGreater(builder.measured_score(high), builder.measured_score(low))
+
+    def test_core_route_requires_download_headroom_for_high_bitrate(self):
+        overloaded = builder.Channel(
+            "北京卫视 1080p",
+            '#EXTINF:-1 group-title="大陆",北京卫视 1080p',
+            "https://overloaded.example/beijing.m3u8",
+            "大陆",
+        )
+        balanced = builder.Channel(
+            "北京卫视 1080p",
+            '#EXTINF:-1 group-title="大陆",北京卫视 1080p',
+            "https://balanced.example/beijing.m3u8",
+            "大陆",
+        )
+        overloaded.probe = {
+            "ok": True,
+            "checks_ok": 3,
+            "height": 1080,
+            "segment_mbps": 5.0,
+            "stream_mbps": 6.0,
+            "manifest_s": 1.0,
+        }
+        balanced.probe = {
+            "ok": True,
+            "checks_ok": 3,
+            "height": 1080,
+            "segment_mbps": 10.0,
+            "stream_mbps": 4.5,
+            "manifest_s": 1.0,
+        }
+        self.assertFalse(builder.is_stable(overloaded))
+        self.assertTrue(builder.is_stable(balanced))
+        self.assertGreater(builder.measured_score(balanced), builder.measured_score(overloaded))
 
     def test_literal_ip_family_detection_is_offline_and_exact(self):
         self.assertEqual(builder.host_ip_families("192.0.2.1"), (True, False))
