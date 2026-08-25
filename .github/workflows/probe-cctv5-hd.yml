@@ -1,0 +1,41 @@
+name: Probe CCTV5 HD candidates
+
+on:
+  push:
+    paths:
+      - 'scripts/probe_cctv5_hd.py'
+      - '.github/workflows/probe-cctv5-hd.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe-cctv5-hd
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ffprobe is available
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Probe CCTV5 HD candidates
+        run: python3 scripts/probe_cctv5_hd.py
+      - name: Publish probe report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cctv5-probe-report.txt
+          if git diff --cached --quiet; then
+            echo 'No probe report changes'
+          else
+            git commit -m 'Refresh CCTV5 HD probe report'
+            git push
+          fi
