@@ -19,7 +19,7 @@ class BuildPlaylistTests(unittest.TestCase):
         self.assertEqual(builder.MIN_STABLE, 760)
         self.assertEqual(builder.TARGET_ALL, 1000)
         self.assertEqual(builder.TARGET_EASY, 200)
-        self.assertEqual(builder.MIN_EASY, 150)
+        self.assertEqual(builder.MIN_EASY, 55)
 
     def test_parser_preserves_source_and_normalizes_group(self):
         playlist = """#EXTM3U
@@ -94,6 +94,15 @@ https://example.com/notice.m3u8
         )
         self.assertFalse(builder.is_station_like(cctv4k))
         self.assertFalse(builder.is_station_like(cctv15))
+
+    def test_user_confirmed_guangdong_route_is_not_used_for_cctv15(self):
+        channel = builder.Channel(
+            "CCTV-15 音乐",
+            '#EXTINF:-1 group-title="大陆",CCTV-15 音乐',
+            "http://112.123.243.37:50085/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(channel))
 
     def test_jade_mislabelled_as_cctv4k_is_rejected(self):
         channel = builder.Channel(
@@ -195,6 +204,7 @@ https://example.com/notice.m3u8
             "segment_mbps": 12.0,
             "manifest_s": 0.8,
             "height": 1080,
+            "stream_mbps": 5.5,
             "ipv4_dns": True,
         }
         later = {
@@ -202,13 +212,50 @@ https://example.com/notice.m3u8
             "segment_mbps": 7.5,
             "manifest_s": 1.6,
             "height": 1080,
+            "stream_mbps": 4.8,
             "ipv6_dns": True,
         }
         merged = builder.merge_probe_results(first, later, checks_ok=3)
         self.assertEqual(merged["checks_ok"], 3)
         self.assertEqual(merged["segment_mbps"], 7.5)
         self.assertEqual(merged["manifest_s"], 1.6)
+        self.assertEqual(merged["stream_mbps"], 4.8)
         self.assertTrue(merged["dual_stack_dns"])
+
+    def test_media_segment_duration_is_parsed_for_bitrate_measurement(self):
+        playlist = """#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:5.76,
+segments/live-001.ts
+"""
+        url, duration = builder.first_media_segment(playlist, "https://cdn.example/live/index.m3u8")
+        self.assertEqual(url, "https://cdn.example/live/segments/live-001.ts")
+        self.assertAlmostEqual(duration, 5.76)
+
+    def test_core_selection_prefers_higher_programme_bitrate(self):
+        low = builder.Channel(
+            "CCTV-10 科教",
+            '#EXTINF:-1 group-title="大陆",CCTV-10 科教',
+            "https://low.example/cctv10.m3u8",
+            "大陆",
+        )
+        high = builder.Channel(
+            "CCTV-10 科教",
+            '#EXTINF:-1 group-title="大陆",CCTV-10 科教',
+            "https://high.example/cctv10.m3u8",
+            "大陆",
+        )
+        for channel, stream_mbps in ((low, 0.8), (high, 4.5)):
+            channel.static_score = builder.channel_static_score(channel)
+            channel.probe = {
+                "ok": True,
+                "checks_ok": 3,
+                "height": 0,
+                "segment_mbps": 10.0,
+                "stream_mbps": stream_mbps,
+                "manifest_s": 1.0,
+            }
+        self.assertGreater(builder.measured_score(high), builder.measured_score(low))
 
     def test_literal_ip_family_detection_is_offline_and_exact(self):
         self.assertEqual(builder.host_ip_families("192.0.2.1"), (True, False))

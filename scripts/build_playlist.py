@@ -31,7 +31,9 @@ TARGET_STABLE = int(os.getenv("TARGET_STABLE", "800"))
 MIN_STABLE = int(os.getenv("MIN_STABLE", "760"))
 TARGET_ALL = int(os.getenv("TARGET_ALL", "1000"))
 TARGET_EASY = int(os.getenv("TARGET_EASY", "200"))
-MIN_EASY = int(os.getenv("MIN_EASY", "150"))
+# The family list may shrink to the CCTV + satellite essentials when unrelated
+# sources are weak. Movie/music/overseas availability must never block it.
+MIN_EASY = int(os.getenv("MIN_EASY", "55"))
 SOURCE_WORKERS = int(os.getenv("SOURCE_WORKERS", "12"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
@@ -205,6 +207,14 @@ EXTRAS = [
     ("CCTV-11 戏曲 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd"),
     ("CCTV-11 戏曲 1080p", "大陆", "http://120.76.248.139/live/bfgd/4200000130.m3u8"),
+    # CCTV-10 quality fallbacks. Direct operator playlists often omit a
+    # resolution tag, so these explicitly labelled HD siblings compete using
+    # both real segment bitrate and download headroom.
+    ("CCTV-10 科教 1080p", "大陆", "http://107.150.60.122/live/cctv10hd.m3u8"),
+    ("CCTV-10 科教 1080p", "大陆", "http://74.91.26.218:82/live/cctv10hd.m3u8"),
+    ("CCTV-10 科教 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv10hd"),
+    ("CCTV-10 科教 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv10hd.m3u8?auth=test20251009"),
+    ("CCTV-10 科教 1080p", "大陆", "http://207.56.13.146:81/cdnlive/cctv10.m3u8"),
     # CCTV-5 must remain 1080p. These are video-CDN paths (not the AAC-only
     # /audio/ feed that previously produced a black screen in APTV).
     ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub"),
@@ -233,6 +243,15 @@ EXTRAS = [
     ("湖南卫视 1080p", "大陆", "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0"),
     ("山东卫视 1080p", "大陆", "http://183.251.61.207/PLTV/88888888/224/3221225843/index.m3u8"),
     ("山东卫视 1080p", "大陆", "http://107.150.60.122/live/sdwshd.m3u8"),
+    # Shanxi Satellite TV was the sole missing provincial service in the
+    # August 2026 family-list audit. Keep independent IPv4 plus native-IPv6
+    # candidates; only routes that pass the normal live-segment checks publish.
+    ("山西卫视 1080p", "大陆", "http://115.225.31.114:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0"),
+    ("山西卫视 540p", "大陆", "http://39.135.253.53/hwcdntest.hb.chinamobile.com/PLTV/88888888/224/3221226174/1.m3u8"),
+    ("山西卫视 540p", "大陆", "http://39.135.253.53/hwcdntest.hb.chinamobile.com/PLTV/88888888/224/3221226174/2.m3u8"),
+    ("山西卫视 1080p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/270000001128/9900000053/index.m3u8"),
+    ("山西卫视 720p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/000000001000PLTV/88888888/224/3221226543/index.m3u8"),
+    ("山西卫视 720p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/270000001322/69900158041111100000002214/index.m3u8"),
     ("山东卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/sdws.m3u8"),
     ("CCTV-5 体育", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226019/index.m3u8"),
     ("CCTV-5 体育", "大陆", "http://newvideo.dangtutv.cn:8278/CCTVsports/playlist.m3u8"),
@@ -446,6 +465,9 @@ MISLABELLED_STREAM_URLS = {
     # User-tested: valid H.264 video but sustained throughput is too unstable
     # for CCTV-5, despite passing short remote probes.
     "http://gmxw.7766.org:808/hls/93/index.m3u8",
+    # User-confirmed on the living-room television: this operator route is
+    # Guangdong Satellite TV, although public indexes label it as CCTV-15.
+    "http://112.123.243.37:50085/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0",
 }
 USER_REJECTED_ROUTE_PREFIXES = (
     # User-tested on the actual APTV route: signed CCTV 4K URLs expire or fail
@@ -832,6 +854,7 @@ def update_health_history(channels: Iterable[Channel], previous: dict) -> dict:
             "last_ok": success,
             "last_checks_ok": int(probe.get("checks_ok") or 0),
             "last_mbps": round(float(probe.get("segment_mbps") or 0), 2),
+            "last_stream_mbps": round(float(probe.get("stream_mbps") or 0), 2),
             "last_manifest_s": round(float(probe.get("manifest_s") or 0), 3),
             "ipv4_dns": bool(probe.get("ipv4_dns")),
             "ipv6_dns": bool(probe.get("ipv6_dns")),
@@ -1018,17 +1041,31 @@ def choose_variant(rows: list[tuple[int, int, int, str]]) -> tuple[int, int, int
     return min(rows, key=lambda row: (row[1] or 99999, row[2] or 999999999))
 
 
-def first_media_uri(text: str, base_url: str) -> str | None:
+def first_media_segment(text: str, base_url: str) -> tuple[str | None, float]:
+    duration = 0.0
     for raw in text.splitlines():
         line = raw.strip()
+        if line.upper().startswith("#EXTINF:"):
+            match = re.match(r"#EXTINF:([0-9.]+)", line, re.I)
+            duration = float(match.group(1)) if match else 0.0
+            continue
         if not line or line.startswith("#"):
             continue
         if line.startswith(("http://", "https://")) or not urllib.parse.urlsplit(line).scheme:
-            return urllib.parse.urljoin(base_url, line)
-    return None
+            return urllib.parse.urljoin(base_url, line), duration
+    return None, 0.0
 
 
-def timed_read(url: str, headers: dict[str, str], limit: int, timeout: float) -> tuple[bytes, float, str]:
+def first_media_uri(text: str, base_url: str) -> str | None:
+    return first_media_segment(text, base_url)[0]
+
+
+def timed_read_with_size(
+    url: str,
+    headers: dict[str, str],
+    limit: int,
+    timeout: float,
+) -> tuple[bytes, float, str, int]:
     request_headers = {"User-Agent": DEFAULT_UA, "Accept": "*/*"}
     request_headers.update(headers)
     request_headers["Range"] = f"bytes=0-{limit - 1}"
@@ -1037,7 +1074,24 @@ def timed_read(url: str, headers: dict[str, str], limit: int, timeout: float) ->
     with urllib.request.urlopen(req, timeout=timeout) as response:
         final_url = response.geturl()
         data = response.read(limit)
-    return data, max(time.monotonic() - started, 0.001), final_url
+        resource_size = 0
+        content_range = response.headers.get("Content-Range", "")
+        range_match = re.search(r"/([0-9]+)$", content_range)
+        if range_match:
+            resource_size = int(range_match.group(1))
+        elif response.headers.get("Content-Length"):
+            try:
+                resource_size = int(response.headers["Content-Length"])
+            except (TypeError, ValueError):
+                resource_size = 0
+        if not resource_size and len(data) < limit:
+            resource_size = len(data)
+    return data, max(time.monotonic() - started, 0.001), final_url, resource_size
+
+
+def timed_read(url: str, headers: dict[str, str], limit: int, timeout: float) -> tuple[bytes, float, str]:
+    data, elapsed, final_url, _ = timed_read_with_size(url, headers, limit, timeout)
+    return data, elapsed, final_url
 
 
 @functools.lru_cache(maxsize=2048)
@@ -1090,13 +1144,20 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
     ):
         raise ValueError("vod_playlist")
 
-    segment_url = first_media_uri(media_text, media_url)
+    segment_url, segment_duration = first_media_segment(media_text, media_url)
     if not segment_url:
         raise ValueError("no_live_segment")
-    segment, segment_seconds, _ = timed_read(segment_url, headers, MAX_PROBE_BYTES, PROBE_TIMEOUT)
+    segment, segment_seconds, _, segment_resource_bytes = timed_read_with_size(
+        segment_url, headers, MAX_PROBE_BYTES, PROBE_TIMEOUT
+    )
     if len(segment) < 16 * 1024:
         raise ValueError("short_segment")
     speed_mbps = len(segment) * 8 / segment_seconds / 1_000_000
+    stream_mbps = (
+        segment_resource_bytes * 8 / segment_duration / 1_000_000
+        if segment_resource_bytes and segment_duration > 0
+        else 0.0
+    )
     manifest_ipv4, manifest_ipv6 = url_ip_families(final_url)
     segment_ipv4, segment_ipv6 = url_ip_families(segment_url)
     return {
@@ -1104,6 +1165,7 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
         "manifest_s": round(manifest_seconds + (media_seconds if selected_variant else 0), 3),
         "segment_mbps": round(speed_mbps, 2),
         "segment_bytes": len(segment),
+        "stream_mbps": round(stream_mbps, 2),
         "width": width,
         "height": height,
         "bandwidth": bandwidth,
@@ -1143,6 +1205,12 @@ def merge_probe_results(first: dict, later: dict, checks_ok: int) -> dict:
         float(first.get("manifest_s") or 0),
         float(later.get("manifest_s") or 0),
     )
+    stream_rates = [
+        float(value)
+        for value in (first.get("stream_mbps"), later.get("stream_mbps"))
+        if value is not None and float(value) > 0
+    ]
+    combined["stream_mbps"] = min(stream_rates, default=0.0)
     first_height = int(first.get("height") or 0)
     later_height = int(later.get("height") or 0)
     combined["height"] = min(
@@ -1263,6 +1331,7 @@ def measured_score(channel: Channel) -> float:
     speed = min(float(probe.get("segment_mbps") or 0), 40)
     latency = float(probe.get("manifest_s") or 10)
     height = int(probe.get("height") or labelled_height(channel))
+    stream_mbps = float(probe.get("stream_mbps") or 0)
     score += speed * 2.2 - latency * 7
     if int(probe.get("checks_ok") or 1) >= 2:
         score += 35
@@ -1276,6 +1345,14 @@ def measured_score(channel: Channel) -> float:
         score += 25
     elif height and height < 720:
         score -= 30
+    # Download throughput answers "will it buffer?"; HLS segment bitrate
+    # answers "how clear is the programme?". Give CCTV/satellite selection a
+    # real quality signal even when an operator serves a direct media playlist
+    # without RESOLUTION/BANDWIDTH tags (the CCTV-10 case reported at home).
+    if stream_mbps:
+        score += min(stream_mbps, 12.0) * (14 if is_core_channel(channel) else 5)
+        if is_core_channel(channel) and stream_mbps < 1.2:
+            score -= 90
     # The viewer has native IPv6. Prefer dual-stack CDN/domain routes modestly,
     # while retaining IPv4 fallback; DNS capability alone never overrides a
     # failed HLS/video-segment probe.
@@ -2033,6 +2110,17 @@ def main() -> int:
     easy = select_easy(probe_pool)
     easy_keys = {channel_key(channel) for channel in easy}
     easy_missing_cctv = [target for target in CCTV_AUDIT_IDS if target not in easy_keys]
+    easy_satellite_names = sorted(
+        {
+            name
+            for channel in easy
+            if (name := canonical_mainland_satellite_name(channel))
+        }
+    )
+    easy_missing_satellites = [
+        target for target in MAINLAND_SATELLITE_NAMES
+        if target not in set(easy_satellite_names)
+    ]
     stable = add_cctv5_backups(stable_primary, probe_pool)
     full = select_all(candidates, stable)
     history_payload = update_health_history(probe_pool, previous_history)
@@ -2045,24 +2133,20 @@ def main() -> int:
         (channel for channel in stable if canonical_display_name(channel) == "CCTV-5"),
         None,
     )
+    legacy_safety_reasons: list[str] = []
     if (
         cctv5_primary is None
         or not cctv5_primary.probe.get("ok")
         or int(cctv5_primary.probe.get("height") or labelled_height(cctv5_primary)) < 1080
     ):
-        raise SystemExit(
-            "safety stop: no verified 1080p CCTV-5 primary; existing tv.m3u was not replaced"
-        )
+        legacy_safety_reasons.append("no verified 1080p CCTV-5 primary")
     if len(stable) < MIN_STABLE:
-        raise SystemExit(
-            f"safety stop: only {len(stable)}/{MIN_STABLE} minimum stable channels "
-            f"(target {TARGET_STABLE}); "
-            "existing tv.m3u was not replaced"
+        legacy_safety_reasons.append(
+            f"only {len(stable)}/{MIN_STABLE} minimum stable channels (target {TARGET_STABLE})"
         )
     if len(full) < TARGET_ALL:
-        raise SystemExit(
-            f"safety stop: only {len(full)}/{TARGET_ALL} all-list channels; "
-            "existing playlists were not replaced"
+        legacy_safety_reasons.append(
+            f"only {len(full)}/{TARGET_ALL} all-list channels"
         )
     if len(easy) < MIN_EASY:
         raise SystemExit(
@@ -2075,14 +2159,26 @@ def main() -> int:
             + ",".join(easy_missing_cctv)
             + "; existing playlists were not replaced"
         )
+    if easy_missing_satellites:
+        raise SystemExit(
+            "safety stop: family easy-view list is missing required satellite channels "
+            + ",".join(easy_missing_satellites)
+            + "; existing playlists were not replaced"
+        )
 
-    write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
     write_playlist(
         Path("tv-easy.m3u"),
         easy,
         "APTV 无脑稳定版：三轮实测、历史稳定度与 IPv6/IPv4 双栈优选",
     )
-    write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
+    if legacy_safety_reasons:
+        print(
+            "legacy playlists preserved while family list can update: "
+            + "; ".join(legacy_safety_reasons)
+        )
+    else:
+        write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
+        write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
     HISTORY_PATH.write_text(
         json.dumps(history_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -2093,11 +2189,6 @@ def main() -> int:
     stable_core = sum(is_core_channel(channel) for channel in stable)
     easy_core = sum(is_core_channel(channel) for channel in easy)
     easy_core_fallbacks = sum(bool(channel.probe.get("easy_core_fallback")) for channel in easy)
-    easy_satellite_names = sorted(
-        canonical_mainland_satellite_name(channel)
-        for channel in easy
-        if canonical_mainland_satellite_name(channel)
-    )
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
     stable_extinfs = [cleaned_extinf(channel) for channel in stable]
@@ -2141,6 +2232,7 @@ def main() -> int:
             "in_stable": bool(chosen),
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
+            "stream_mbps": round(float(chosen.probe.get("stream_mbps") or 0), 2) if chosen else 0,
         }
     all_cctv_status = {}
     for target in CCTV_AUDIT_IDS:
@@ -2153,6 +2245,7 @@ def main() -> int:
             "url": chosen.url if chosen else "",
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": round(float(chosen.probe.get("segment_mbps") or 0), 2) if chosen else 0,
+            "stream_mbps": round(float(chosen.probe.get("stream_mbps") or 0), 2) if chosen else 0,
             "checks_ok": int(chosen.probe.get("checks_ok") or 0) if chosen else 0,
         }
     satellite_status = {}
@@ -2172,6 +2265,7 @@ def main() -> int:
             "url": chosen.url if chosen else "",
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": round(float(chosen.probe.get("segment_mbps") or 0), 2) if chosen else 0,
+            "stream_mbps": round(float(chosen.probe.get("stream_mbps") or 0), 2) if chosen else 0,
             "checks_ok": int(chosen.probe.get("checks_ok") or 0) if chosen else 0,
         }
     satellite_group_audit = [
@@ -2180,6 +2274,7 @@ def main() -> int:
             "url": channel.url,
             "height": int(channel.probe.get("height") or labelled_height(channel)),
             "mbps": round(float(channel.probe.get("segment_mbps") or 0), 2),
+            "stream_mbps": round(float(channel.probe.get("stream_mbps") or 0), 2),
             "checks_ok": int(channel.probe.get("checks_ok") or 1),
         }
         for channel in stable
@@ -2247,7 +2342,10 @@ def main() -> int:
         f"easy_cctv_or_major_satellite={easy_core}",
         f"easy_core_relaxed_fallbacks={easy_core_fallbacks}",
         "easy_missing_cctv=" + json.dumps(easy_missing_cctv, ensure_ascii=False),
+        "easy_missing_mainland_satellites=" + json.dumps(easy_missing_satellites, ensure_ascii=False),
         "easy_mainland_satellite_names=" + json.dumps(easy_satellite_names, ensure_ascii=False),
+        "legacy_playlists_preserved=" + json.dumps(bool(legacy_safety_reasons)),
+        "legacy_safety_reasons=" + json.dumps(legacy_safety_reasons, ensure_ascii=False),
         f"history_routes={len(history_payload.get('routes', {}))}",
         f"stable_satellite_double_checked={stable_satellite_double_checked}",
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
