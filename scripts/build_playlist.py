@@ -318,6 +318,13 @@ EXTRAS = [
     ("CCTV-16 奥林匹克", "大陆", "http://liveop.cctv.cn/hls/CCTV16HD/playlist.m3u8"),
     ("CCTV-16 奥林匹克", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226100/index.m3u8"),
     ("CCTV-16 奥林匹克", "大陆", "https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://107.150.60.122/live/cctv16hd.m3u8"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://198.204.228.26/live/cctv16hd.m3u8"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://74.91.26.218:82/live/cctv16hd.m3u8"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv16hd"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv16hd.m3u8?auth=testpub"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/cctv16.m3u8"),
+    ("CCTV-16 奥林匹克 1080p", "大陆", "http://69.30.246.194/live/cctv16hd.m3u8"),
     # User-route replacements for an expiring signed CCTV-4K URL and a
     # buffering CCTV-15 GitHub Pages relay. Every candidate still must pass
     # two live-manifest and media-segment probes before publication.
