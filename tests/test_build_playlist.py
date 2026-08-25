@@ -460,6 +460,42 @@ segments/live-001.ts
         )
         self.assertTrue(all(channel.probe.get("easy_core_fallback") for channel in selected))
 
+    def test_existing_easy_core_is_carried_when_no_fast_replacement_exists(self):
+        ordinary = builder.Channel(
+            "天津地方频道",
+            '#EXTINF:-1 group-title="中文综合",天津地方频道',
+            "https://example.com/tianjin-local.m3u8",
+            "中文综合",
+        )
+        ordinary.probe = {
+            "ok": True,
+            "checks_ok": 3,
+            "height": 1080,
+            "segment_mbps": 12.0,
+            "stream_mbps": 4.0,
+            "manifest_s": 1.0,
+        }
+        existing = [
+            builder.Channel(
+                "CCTV-13",
+                '#EXTINF:-1 group-title="卫视台",CCTV-13',
+                "https://existing.example/cctv13.m3u8",
+                "大陆",
+            ),
+            builder.Channel(
+                "江苏卫视",
+                '#EXTINF:-1 group-title="卫视台",江苏卫视',
+                "https://existing.example/jiangsu.m3u8",
+                "大陆",
+            ),
+        ]
+        restored = builder.restore_existing_family_core([ordinary], existing, target=2)
+        self.assertEqual(
+            {builder.channel_key(channel) for channel in restored},
+            {"cctv13", "江苏卫视"},
+        )
+        self.assertTrue(all(channel.probe.get("carried_family_fallback") for channel in restored))
+
 
 if __name__ == "__main__":
     unittest.main()
