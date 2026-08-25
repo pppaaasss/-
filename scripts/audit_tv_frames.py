@@ -52,6 +52,8 @@ def run_capture(entry: Entry, output_dir: Path, timeout: int) -> dict[str, str |
         "8000000",
         "-probesize",
         "8000000",
+        "-user_agent",
+        "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)",
         "-i",
         entry.url,
         "-map",

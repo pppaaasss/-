@@ -104,6 +104,31 @@ https://example.com/notice.m3u8
         )
         self.assertFalse(builder.is_station_like(channel))
 
+    def test_frame_audit_rejects_wrong_slate_and_corrupt_satellite_routes(self):
+        fixtures = (
+            (
+                "广东卫视",
+                "https://h5cul1yar48um3t.wcetv.com/hls/gdsatellite.m3u8",
+            ),
+            (
+                "内蒙古卫视",
+                "https://ali-m-l.cztv.com/channels/lantian/channel007/1080p.m3u8",
+            ),
+            (
+                "广西卫视",
+                "https://hlscdn.liangtv.cn/live/0c4ef3a44b934cacb8b47121dfada66c/d7e04258157b480dae53883cc6f8123b.m3u8",
+            ),
+        )
+        for name, url in fixtures:
+            with self.subTest(name=name):
+                channel = builder.Channel(
+                    name,
+                    f'#EXTINF:-1 group-title="大陆",{name}',
+                    url,
+                    "大陆",
+                )
+                self.assertFalse(builder.is_station_like(channel))
+
     def test_jade_mislabelled_as_cctv4k_is_rejected(self):
         channel = builder.Channel(
             "CCTV-4K",

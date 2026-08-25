@@ -485,6 +485,15 @@ MISLABELLED_STREAM_URLS = {
     # User-confirmed on the living-room television: this operator route is
     # Guangdong Satellite TV, although public indexes label it as CCTV-15.
     "http://112.123.243.37:50085/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0",
+    # Frame audit 2026-08-25: this Guangdong route displays a permanent source
+    # warning card instead of the live satellite programme.
+    "https://h5cul1yar48um3t.wcetv.com/hls/gdsatellite.m3u8",
+    # Frame audit 2026-08-25: public indexes call this Inner Mongolia, but the
+    # captured programme and logo are Zhejiang/China Blue News.
+    "https://ali-m-l.cztv.com/channels/lantian/channel007/1080p.m3u8",
+    # Frame audit 2026-08-25: this Guangxi route decodes into a full-screen
+    # vertical-stripe corruption frame even though HLS segment reads pass.
+    "https://hlscdn.liangtv.cn/live/0c4ef3a44b934cacb8b47121dfada66c/d7e04258157b480dae53883cc6f8123b.m3u8",
 }
 USER_REJECTED_ROUTE_PREFIXES = (
     # User-tested on the actual APTV route: signed CCTV 4K URLs expire or fail
@@ -2442,6 +2451,10 @@ def main() -> int:
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
         "all_cctv_status=" + json.dumps(all_cctv_status, ensure_ascii=False, sort_keys=True),
+        "cctv10_candidate_diagnostics=" + json.dumps(
+            core_candidate_diagnostics(probe_pool, ["cctv10"]),
+            ensure_ascii=False,
+        ),
         "mainland_satellite_status=" + json.dumps(satellite_status, ensure_ascii=False),
         "satellite_group_audit=" + json.dumps(satellite_group_audit, ensure_ascii=False),
         "cctv5_output_routes=" + json.dumps(cctv5_output_routes, ensure_ascii=False),
