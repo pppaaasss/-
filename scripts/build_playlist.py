@@ -215,6 +215,20 @@ EXTRAS = [
     ("CCTV-10 科教 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv10hd"),
     ("CCTV-10 科教 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv10hd.m3u8?auth=test20251009"),
     ("CCTV-10 科教 1080p", "大陆", "http://207.56.13.146:81/cdnlive/cctv10.m3u8"),
+    # CCTV-15 alternatives on independently hosted mirrors. The previously
+    # selected operator /0016_1 route is intentionally absent: it is Guangdong
+    # Satellite TV on the family's actual television.
+    ("CCTV-15 音乐 1080p", "大陆", "http://107.150.60.122/live/cctv15hd.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://74.91.26.218:82/live/cctv15hd.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv15hd"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://198.204.228.26/live/cctv15hd.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://207.56.13.146:81/cdnlive/cctv15.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://113.57.140.161:10081/newlive/live/hls/16/live.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://58.56.162.102:4466/newlive/live/hls/16/live.m3u8"),
+    ("CCTV-15 音乐 1080p", "大陆", "http://219.147.245.238:25480/newlive/live/hls/16/live.m3u8"),
+    ("CCTV-15 音乐", "大陆", "http://183.196.25.171:808/hls/15/index.m3u8"),
+    ("CCTV-15 音乐", "大陆", "http://hwrr.jx.chinamobile.com:8080/PLTV/88888888/224/3221225641/index.m3u8"),
     # CCTV-5 must remain 1080p. These are video-CDN paths (not the AAC-only
     # /audio/ feed that previously produced a black screen in APTV).
     ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub"),
@@ -247,6 +261,9 @@ EXTRAS = [
     # August 2026 family-list audit. Keep independent IPv4 plus native-IPv6
     # candidates; only routes that pass the normal live-segment checks publish.
     ("山西卫视 1080p", "大陆", "http://115.225.31.114:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0"),
+    ("山西卫视 1080p", "大陆", "http://101.66.198.179:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0"),
+    ("山西卫视 1080p", "大陆", "http://153.0.171.163:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("山西卫视 1080p", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225624/index.m3u8"),
     ("山西卫视 540p", "大陆", "http://39.135.253.53/hwcdntest.hb.chinamobile.com/PLTV/88888888/224/3221226174/1.m3u8"),
     ("山西卫视 540p", "大陆", "http://39.135.253.53/hwcdntest.hb.chinamobile.com/PLTV/88888888/224/3221226174/2.m3u8"),
     ("山西卫视 1080p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/270000001128/9900000053/index.m3u8"),
@@ -1363,6 +1380,39 @@ def measured_score(channel: Channel) -> float:
     return score
 
 
+def core_candidate_diagnostics(channels: Iterable[Channel], targets: Iterable[str]) -> dict[str, list[dict]]:
+    """Compact failure evidence for a core safety stop in Actions logs."""
+    output: dict[str, list[dict]] = {}
+    for target in targets:
+        if target in CCTV_AUDIT_IDS:
+            tested = [channel for channel in channels if channel_key(channel) == target]
+        else:
+            tested = [
+                channel for channel in channels
+                if canonical_mainland_satellite_name(channel) == target
+            ]
+        tested.sort(key=measured_score, reverse=True)
+        output[target] = [
+            {
+                "name": channel.name,
+                "url": channel.url,
+                "ok": bool(channel.probe.get("ok")),
+                "checks_ok": int(channel.probe.get("checks_ok") or 0),
+                "height": int(channel.probe.get("height") or labelled_height(channel)),
+                "download_mbps": round(float(channel.probe.get("segment_mbps") or 0), 2),
+                "stream_mbps": round(float(channel.probe.get("stream_mbps") or 0), 2),
+                "error": str(
+                    channel.probe.get("easy_check_error")
+                    or channel.probe.get("recheck_error")
+                    or channel.probe.get("error")
+                    or ""
+                )[:100],
+            }
+            for channel in tested[:12]
+        ]
+    return output
+
+
 def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
     best_by_url: dict[str, Channel] = {}
     for channel in channels:
@@ -2154,12 +2204,26 @@ def main() -> int:
             f"(target {TARGET_EASY}); existing playlists were not replaced"
         )
     if easy_missing_cctv:
+        print(
+            "missing_core_diagnostics="
+            + json.dumps(
+                core_candidate_diagnostics(probe_pool, easy_missing_cctv),
+                ensure_ascii=False,
+            )
+        )
         raise SystemExit(
             "safety stop: family easy-view list is missing required CCTV channels "
             + ",".join(easy_missing_cctv)
             + "; existing playlists were not replaced"
         )
     if easy_missing_satellites:
+        print(
+            "missing_core_diagnostics="
+            + json.dumps(
+                core_candidate_diagnostics(probe_pool, easy_missing_satellites),
+                ensure_ascii=False,
+            )
+        )
         raise SystemExit(
             "safety stop: family easy-view list is missing required satellite channels "
             + ",".join(easy_missing_satellites)
