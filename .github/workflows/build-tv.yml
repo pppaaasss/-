@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/build_playlist.py'
       - 'scripts/repair_cctv5.py'
+      - 'scripts/upgrade_core_50fps.py'
       - 'scripts/clean_single_station.py'
       - 'tests/test_build_playlist.py'
       - '.github/workflows/build-tv.yml'
@@ -35,7 +36,7 @@ jobs:
         id: playlist_build
         # A broad rebuild can fail its family-channel safety gate while the
         # currently published playlists are still usable. Keep going so the
-        # rescue and final de-dup pass can repair the checked-in playlist.
+        # rescue, 1080p50 promotion and final de-dup passes can repair it.
         continue-on-error: true
         env:
           TARGET_STABLE: '800'
@@ -52,6 +53,17 @@ jobs:
       - name: Reinforce CCTV-5 rescue routes
         if: always()
         run: python3 scripts/repair_cctv5.py
+      - name: Ensure ffprobe is available for 1080p50 verification
+        if: always()
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Promote verified 1080p50 CCTV and satellite routes
+        if: always()
+        continue-on-error: true
+        run: python3 scripts/upgrade_core_50fps.py
       - name: Keep one visible tile per CCTV and satellite station
         if: always()
         run: python3 scripts/clean_single_station.py
@@ -76,7 +88,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u health-history.json build-report.txt
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u health-history.json build-report.txt fps-report.txt
           if git diff --cached --quiet; then
             echo 'No playlist changes'
           else
