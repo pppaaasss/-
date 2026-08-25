@@ -59,6 +59,30 @@ class RepairCctv5PairTests(unittest.TestCase):
             selected["cctv5plus"].probe.host,
         )
 
+    def test_pair_optimizer_does_not_waste_best_plus_route(self):
+        five_fast_host = repair.CANDIDATES["cctv5"][1]
+        five_alternate = repair.CANDIDATES["cctv5"][2]
+        plus_fast_host = repair.CANDIDATES["cctv5plus"][0]
+        plus_alternate = repair.CANDIDATES["cctv5plus"][1]
+        results = []
+        for url in repair.CANDIDATES["cctv5"]:
+            if url == five_fast_host:
+                results.append(repair.Probe("cctv5", url, True, 56.0, 2.26))
+            elif url == five_alternate:
+                results.append(repair.Probe("cctv5", url, True, 15.0, 2.26))
+            else:
+                results.append(repair.Probe("cctv5", url, False))
+        for url in repair.CANDIDATES["cctv5plus"]:
+            if url == plus_fast_host:
+                results.append(repair.Probe("cctv5plus", url, True, 99.0, 3.38))
+            elif url == plus_alternate:
+                results.append(repair.Probe("cctv5plus", url, True, 25.0, 1.62))
+            else:
+                results.append(repair.Probe("cctv5plus", url, False))
+        selected = repair.choose_routes(results, {})
+        self.assertEqual(selected["cctv5"].url, five_alternate)
+        self.assertEqual(selected["cctv5plus"].url, plus_fast_host)
+
     def test_segment_duration_supports_real_stream_bitrate(self):
         text = """#EXTM3U
 #EXTINF:5.5,
