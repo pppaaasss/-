@@ -1,0 +1,30 @@
+name: Hotfix CCTV5 pair
+
+on:
+  push:
+    paths:
+      - 'scripts/hotfix_cctv5_pair.py'
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply CCTV5 pair and clean station names
+        run: python3 scripts/hotfix_cctv5_pair.py
+      - name: Publish hotfix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          if git diff --cached --quiet; then
+            echo 'No playlist changes'
+          else
+            git commit -m 'Hotfix CCTV5 pair and clean station labels'
+            git pull --rebase origin master
+            git push
+          fi
