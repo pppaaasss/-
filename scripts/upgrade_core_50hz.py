@@ -25,6 +25,7 @@ from dataclasses import dataclass
 import upgrade_core_50fps as base
 
 FEI_50FPS_SOURCE = "https://raw.githubusercontent.com/fei699/zb/main/%E8%82%A5%E7%BE%8A%E7%9B%B4%E6%92%AD.txt"
+HUNAN_MOBILE_V4_SOURCE = "https://raw.githubusercontent.com/wind005/TVlive/main/txt/itv-%E6%B9%96%E5%8D%97%E7%A7%BB%E5%8A%A8v4.txt"
 
 
 @dataclass
@@ -79,11 +80,11 @@ class HzResult:
 def cmvideo_50fps_candidates(text: str) -> list[base.Candidate]:
     """Turn current FeiYang localhost proxy IDs into public CMVideo GSLB URLs.
 
-    The upstream list intentionally targets a local proxy at 127.0.0.1:35455,
-    e.g. /itv/<ContentID>.m3u8?cdn=<channel-id>$ITV 50FPS.  The same service is
-    publicly addressed through gslbserv.itv.cmvideo.cn.  We only generate a
-    candidate here: ffprobe + HLS segment tests below still decide whether it
-    is usable today, so a changed/locked CMVideo route cannot be published.
+    The upstream list targets a local proxy at 127.0.0.1:35455, e.g.
+    /itv/<ContentID>.m3u8?cdn=<channel-id>$ITV 50FPS. Current public CMVideo
+    indexes expose the same content as /<ContentID>/1.m3u8 on
+    gslbserv.itv.cmvideo.cn. We only generate candidates here: ffprobe + live
+    HLS segment tests still decide whether a route can be published.
     """
     output: list[base.Candidate] = []
     pattern = re.compile(
@@ -106,7 +107,7 @@ def cmvideo_50fps_candidates(text: str) -> list[base.Candidate]:
                 "stbId": "IPTV",
             }
         )
-        url = f"http://gslbserv.itv.cmvideo.cn/index.m3u8?{query}"
+        url = f"http://gslbserv.itv.cmvideo.cn:80/{content_id}/1.m3u8?{query}"
         output.append(base.Candidate(key, name.strip(), url, "fei699-cmvideo-50fps", True, False))
     return output
 
@@ -208,6 +209,13 @@ def main() -> int:
         source_status.append(f"fei699-cmvideo-50fps:ok:{len(fei)}")
     except Exception as exc:
         source_status.append(f"fei699-cmvideo-50fps:fail:{type(exc).__name__}")
+
+    try:
+        hunan = base.parse_source(base.fetch_text(HUNAN_MOBILE_V4_SOURCE), "wind005-hunan-mobile-v4")
+        candidates.extend(hunan)
+        source_status.append(f"wind005-hunan-mobile-v4:ok:{len(hunan)}")
+    except Exception as exc:
+        source_status.append(f"wind005-hunan-mobile-v4:fail:{type(exc).__name__}")
 
     unique: dict[tuple[str, str], base.Candidate] = {}
     for candidate in candidates:
