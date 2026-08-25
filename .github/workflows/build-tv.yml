@@ -7,8 +7,8 @@ on:
       - 'tests/test_build_playlist.py'
       - '.github/workflows/build-tv.yml'
   schedule:
-    # 00:17 and 12:17 in Beijing/Singapore (UTC+8).
-    - cron: '17 4,16 * * *'
+    # Every four hours, offset from the top-of-hour Actions rush.
+    - cron: '17 */4 * * *'
   workflow_dispatch:
 
 permissions:
@@ -31,6 +31,8 @@ jobs:
           TARGET_STABLE: '800'
           MIN_STABLE: '760'
           TARGET_ALL: '1000'
+          TARGET_EASY: '200'
+          MIN_EASY: '150'
           SOURCE_WORKERS: '12'
           PROBE_WORKERS: '56'
           PROBE_TIMEOUT: '8'
@@ -39,7 +41,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv.m3u tv-all.m3u build-report.txt
+          git add tv-easy.m3u tv.m3u tv-all.m3u health-history.json build-report.txt
           if git diff --cached --quiet; then
             echo 'No playlist changes'
           else

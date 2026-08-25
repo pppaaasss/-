@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime as dt
+import functools
+import ipaddress
 import json
 import os
 import re
@@ -28,13 +30,18 @@ from typing import Iterable
 TARGET_STABLE = int(os.getenv("TARGET_STABLE", "800"))
 MIN_STABLE = int(os.getenv("MIN_STABLE", "760"))
 TARGET_ALL = int(os.getenv("TARGET_ALL", "1000"))
+TARGET_EASY = int(os.getenv("TARGET_EASY", "200"))
+MIN_EASY = int(os.getenv("MIN_EASY", "150"))
 SOURCE_WORKERS = int(os.getenv("SOURCE_WORKERS", "12"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
 MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
 CORE_VARIANTS_PER_CHANNEL = int(os.getenv("CORE_VARIANTS_PER_CHANNEL", "16"))
 MAX_PROBE_BYTES = 768 * 1024
-TODAY = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
+NOW_UTC = dt.datetime.now(dt.timezone.utc)
+GENERATED_AT = NOW_UTC.isoformat(timespec="seconds").replace("+00:00", "Z")
+HISTORY_PATH = Path("health-history.json")
+HISTORY_WINDOW = int(os.getenv("HISTORY_WINDOW", "12"))
 
 DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
 EPG_URL = "https://live.fanmingming.cn/e.xml"
@@ -69,6 +76,24 @@ GROUP_TARGETS = {
 GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
 CHINESE_GROUPS = {
     "大陆", "中文综合", "中文纪录", "中文电影", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
+}
+
+# The living-room list is deliberately much smaller than the 800-channel
+# catalogue. It contains only routes that survive a third fresh segment test.
+# Missing groups never get padded with marginal streams merely to hit 200.
+EASY_GROUP_TARGETS = {
+    "卫视台": 72,
+    "中文综合": 58,
+    "香港": 12,
+    "澳门": 4,
+    "台湾": 12,
+    "新加坡": 4,
+    "纪录片": 10,
+    "电影": 8,
+    "新闻": 6,
+    "体育": 6,
+    "少儿": 4,
+    "音乐": 4,
 }
 
 SOURCES = [
@@ -521,6 +546,19 @@ class Channel:
     probe: dict = field(default_factory=dict)
     display_override: str | None = None
     source: str = ""
+    history: dict = field(default_factory=dict)
+
+
+def load_health_history(path: Path = HISTORY_PATH) -> dict:
+    """Load the bounded rolling route history written by earlier builds."""
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return {}
+    routes = payload.get("routes", payload) if isinstance(payload, dict) else {}
+    return routes if isinstance(routes, dict) else {}
 
 
 def fetch_text(url: str, timeout: float = 25, headers: dict[str, str] | None = None, limit: int = 2_000_000) -> str:
@@ -730,6 +768,92 @@ def channel_key(channel: Channel) -> str:
     return re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", value)
 
 
+def route_history_key(channel: Channel) -> str:
+    """Keep history across rotating auth query strings for the same route."""
+    parsed = urllib.parse.urlsplit(channel.url)
+    host = (parsed.hostname or "").lower()
+    try:
+        port_number = parsed.port
+    except ValueError:
+        port_number = None
+    port = f":{port_number}" if port_number else ""
+    path = re.sub(r"/+", "/", urllib.parse.unquote(parsed.path or "/"))
+    return f"{channel_key(channel)}|{parsed.scheme.lower()}://{host}{port}{path}"
+
+
+def attach_health_history(channels: Iterable[Channel], history: dict) -> None:
+    for channel in channels:
+        record = history.get(route_history_key(channel), {})
+        channel.history = record if isinstance(record, dict) else {}
+
+
+def historical_score(channel: Channel) -> float:
+    """Reward routes that keep passing across builds, not one lucky segment."""
+    recent = [1 if value else 0 for value in channel.history.get("recent", [])][-HISTORY_WINDOW:]
+    if not recent:
+        return 0.0
+    success_ratio = sum(recent) / len(recent)
+    score = (success_ratio - 0.5) * 150
+    streak = 0
+    for value in reversed(recent):
+        if not value:
+            break
+        streak += 1
+    score += min(streak, 6) * 9
+    if len(recent) >= 4 and success_ratio < 0.6:
+        score -= 80
+    if not recent[-1]:
+        score -= 45
+    return score
+
+
+def update_health_history(channels: Iterable[Channel], previous: dict) -> dict:
+    """Return a compact history document for routes actually tested today."""
+    routes = {
+        key: dict(value)
+        for key, value in previous.items()
+        if isinstance(value, dict)
+    }
+    for channel in channels:
+        key = route_history_key(channel)
+        record = routes.get(key, {})
+        recent = [1 if value else 0 for value in record.get("recent", [])][-HISTORY_WINDOW + 1:]
+        probe = channel.probe
+        success = bool(
+            probe.get("ok")
+            and int(probe.get("checks_ok") or 1) >= 2
+            and not probe.get("recheck_failed")
+            and not probe.get("easy_check_failed")
+        )
+        recent.append(1 if success else 0)
+        routes[key] = {
+            "recent": recent[-HISTORY_WINDOW:],
+            "last_seen_utc": GENERATED_AT,
+            "last_ok": success,
+            "last_checks_ok": int(probe.get("checks_ok") or 0),
+            "last_mbps": round(float(probe.get("segment_mbps") or 0), 2),
+            "last_manifest_s": round(float(probe.get("manifest_s") or 0), 3),
+            "ipv4_dns": bool(probe.get("ipv4_dns")),
+            "ipv6_dns": bool(probe.get("ipv6_dns")),
+        }
+
+    # A removed public route should not grow this generated file forever.
+    if len(routes) > 6000:
+        routes = dict(
+            sorted(
+                routes.items(),
+                key=lambda item: item[1].get("last_seen_utc", ""),
+                reverse=True,
+            )[:6000]
+        )
+    return {
+        "version": 1,
+        "generated_utc": GENERATED_AT,
+        "window": HISTORY_WINDOW,
+        "routes": routes,
+    }
+
+
 def is_core_channel(channel: Channel) -> bool:
     visible = normalized_name(channel.name)
     return bool(re.search(r"\bcctv[\s_-]*\d+", visible, re.I)) or canonical_mainland_satellite_name(channel) is not None
@@ -916,6 +1040,30 @@ def timed_read(url: str, headers: dict[str, str], limit: int, timeout: float) ->
     return data, max(time.monotonic() - started, 0.001), final_url
 
 
+@functools.lru_cache(maxsize=2048)
+def host_ip_families(host: str) -> tuple[bool, bool]:
+    """Return DNS availability as (IPv4, IPv6), including literal hosts."""
+    try:
+        literal = ipaddress.ip_address(host)
+    except ValueError:
+        literal = None
+    if literal is not None:
+        return literal.version == 4, literal.version == 6
+    try:
+        families = {
+            info[0]
+            for info in socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+        }
+    except (OSError, socket.gaierror):
+        return False, False
+    return socket.AF_INET in families, socket.AF_INET6 in families
+
+
+def url_ip_families(url: str) -> tuple[bool, bool]:
+    host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    return host_ip_families(host) if host else (False, False)
+
+
 def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
     headers = channel.headers if use_declared_headers else {}
     manifest_bytes, manifest_seconds, final_url = timed_read(channel.url, headers, 512 * 1024, PROBE_TIMEOUT)
@@ -949,6 +1097,8 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
     if len(segment) < 16 * 1024:
         raise ValueError("short_segment")
     speed_mbps = len(segment) * 8 / segment_seconds / 1_000_000
+    manifest_ipv4, manifest_ipv6 = url_ip_families(final_url)
+    segment_ipv4, segment_ipv6 = url_ip_families(segment_url)
     return {
         "ok": True,
         "manifest_s": round(manifest_seconds + (media_seconds if selected_variant else 0), 3),
@@ -958,6 +1108,9 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
         "height": height,
         "bandwidth": bandwidth,
         "header_required": use_declared_headers,
+        "ipv4_dns": manifest_ipv4 or segment_ipv4,
+        "ipv6_dns": manifest_ipv6 or segment_ipv6,
+        "dual_stack_dns": (manifest_ipv4 or segment_ipv4) and (manifest_ipv6 or segment_ipv6),
     }
 
 
@@ -976,6 +1129,32 @@ def probe_channel(channel: Channel) -> dict:
         except (urllib.error.URLError, socket.timeout, TimeoutError, ValueError, OSError) as exc:
             errors.append(type(exc).__name__ + ":" + str(exc)[:80])
     return {"ok": False, "error": errors[-1] if errors else "probe_failed"}
+
+
+def merge_probe_results(first: dict, later: dict, checks_ok: int) -> dict:
+    """Keep the slowest observed speed and worst startup across fresh checks."""
+    combined = dict(first)
+    combined["checks_ok"] = checks_ok
+    combined["segment_mbps"] = min(
+        float(first.get("segment_mbps") or 0),
+        float(later.get("segment_mbps") or 0),
+    )
+    combined["manifest_s"] = max(
+        float(first.get("manifest_s") or 0),
+        float(later.get("manifest_s") or 0),
+    )
+    first_height = int(first.get("height") or 0)
+    later_height = int(later.get("height") or 0)
+    combined["height"] = min(
+        (height for height in (first_height, later_height) if height),
+        default=0,
+    )
+    combined["ipv4_dns"] = bool(first.get("ipv4_dns") or later.get("ipv4_dns"))
+    combined["ipv6_dns"] = bool(first.get("ipv6_dns") or later.get("ipv6_dns"))
+    combined["dual_stack_dns"] = bool(
+        combined["ipv4_dns"] and combined["ipv6_dns"]
+    )
+    return combined
 
 
 def is_stable(channel: Channel) -> bool:
@@ -1021,8 +1200,39 @@ def is_core_acceptable(channel: Channel) -> bool:
     return (not height or height >= 540) and speed >= 1.2 and latency <= 8.0
 
 
+def is_easy_ready(channel: Channel) -> bool:
+    """Strict living-room gate: three fresh checks plus ample speed headroom."""
+    probe = channel.probe
+    if (
+        not is_stable(channel)
+        or int(probe.get("checks_ok") or 0) < 3
+        or probe.get("recheck_failed")
+        or probe.get("easy_check_failed")
+        or probe.get("header_required")
+        or probe.get("geo_restricted")
+        or probe.get("unverified_china_side_fallback")
+        or probe.get("unverified_edge_fallback")
+    ):
+        return False
+    height = int(probe.get("height") or labelled_height(channel))
+    speed = float(probe.get("segment_mbps") or 0)
+    latency = float(probe.get("manifest_s") or 99)
+    bandwidth_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
+    required_speed = max(2.5, bandwidth_mbps * 1.5)
+    if height >= 2160:
+        required_speed = max(required_speed, 10.0)
+    elif height >= 1080:
+        required_speed = max(required_speed, 3.0)
+    if latency > 4.0 or speed < required_speed:
+        return False
+    recent = [1 if value else 0 for value in channel.history.get("recent", [])][-HISTORY_WINDOW:]
+    if len(recent) >= 4 and sum(recent) / len(recent) < 0.75:
+        return False
+    return True
+
+
 def measured_score(channel: Channel) -> float:
-    score = channel.static_score
+    score = channel.static_score + historical_score(channel)
     probe = channel.probe
     if probe.get("geo_restricted"):
         return score - 25
@@ -1044,6 +1254,13 @@ def measured_score(channel: Channel) -> float:
         score += 25
     elif height and height < 720:
         score -= 30
+    # The viewer has native IPv6. Prefer dual-stack CDN/domain routes modestly,
+    # while retaining IPv4 fallback; DNS capability alone never overrides a
+    # failed HLS/video-segment probe.
+    if probe.get("ipv6_dns"):
+        score += 18
+    if probe.get("dual_stack_dns"):
+        score += 8
     return score
 
 
@@ -1341,6 +1558,64 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     return selected[:TARGET_STABLE]
 
 
+def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Channel]:
+    """Build the one-click list without padding it with marginal routes."""
+    best: dict[str, Channel] = {}
+    for channel in channels:
+        if not is_easy_ready(channel) or channel.display_override:
+            continue
+        key = channel_key(channel)
+        existing = best.get(key)
+        if existing is None or measured_score(channel) > measured_score(existing):
+            best[key] = channel
+
+    eligible = list(best.values())
+    grouped: dict[str, list[Channel]] = defaultdict(list)
+    for channel in eligible:
+        grouped[display_group(channel)].append(channel)
+    for items in grouped.values():
+        items.sort(key=measured_score, reverse=True)
+
+    selected: list[Channel] = []
+    selected_keys: set[str] = set()
+
+    # CCTV and provincial satellite stations are the living-room essentials.
+    for channel in sorted(
+        (item for item in eligible if is_core_channel(item)),
+        key=measured_score,
+        reverse=True,
+    ):
+        key = channel_key(channel)
+        if key not in selected_keys:
+            selected.append(channel)
+            selected_keys.add(key)
+
+    for group, quota in EASY_GROUP_TARGETS.items():
+        already = sum(display_group(channel) == group for channel in selected)
+        for channel in grouped.get(group, []):
+            if already >= quota or len(selected) >= target:
+                break
+            key = channel_key(channel)
+            if key in selected_keys:
+                continue
+            selected.append(channel)
+            selected_keys.add(key)
+            already += 1
+
+    if len(selected) < target:
+        overflow = sorted(
+            (channel for channel in eligible if channel_key(channel) not in selected_keys),
+            key=lambda channel: (
+                is_chinese_oriented(channel),
+                bool(channel.probe.get("ipv6_dns")),
+                measured_score(channel),
+            ),
+            reverse=True,
+        )
+        selected.extend(overflow[: target - len(selected)])
+    return selected[:target]
+
+
 def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int = 2) -> list[Channel]:
     """Publish two independently hosted 1080p CCTV-5 escape routes.
 
@@ -1566,7 +1841,7 @@ def write_playlist(path: Path, channels: list[Channel], description: str) -> Non
     lines = [
         f'#EXTM3U x-tvg-url="{EPG_URL}"',
         f"# {description}",
-        f"# generated_utc={TODAY}",
+        f"# generated_utc={GENERATED_AT}",
         f"# channels={len(channels)}",
     ]
     for channel in sort_channels(channels):
@@ -1585,6 +1860,7 @@ def load_source(spec: tuple[str, str, bool]) -> tuple[list[Channel], str | None]
 def main() -> int:
     source_failures: list[str] = []
     candidates: list[Channel] = []
+    previous_history = load_health_history()
     carried_forward_candidates = 0
     existing_playlist = Path("tv.m3u")
     if existing_playlist.exists():
@@ -1618,6 +1894,7 @@ def main() -> int:
     rejected_non_station = sum(not is_station_like(channel) for channel in candidates)
     raw_source_candidates = Counter(channel.source or "unknown" for channel in candidates)
     candidates = deduplicate(candidates)
+    attach_health_history(candidates, previous_history)
     probe_pool = select_probe_pool(candidates)
     print(
         f"candidates={len(candidates)} probe_pool={len(probe_pool)} "
@@ -1659,31 +1936,55 @@ def main() -> int:
                 channel.probe = fallback
                 route_recheck_failed += 1
                 continue
-            combined = dict(first)
+            combined = merge_probe_results(first, second, checks_ok=2)
             combined["checks_ok"] = 2
             combined["recheck_ok"] = True
-            combined["segment_mbps"] = min(
-                float(first.get("segment_mbps") or 0),
-                float(second.get("segment_mbps") or 0),
-            )
-            combined["manifest_s"] = max(
-                float(first.get("manifest_s") or 0),
-                float(second.get("manifest_s") or 0),
-            )
-            first_height = int(first.get("height") or 0)
-            second_height = int(second.get("height") or 0)
-            combined["height"] = min(
-                (height for height in (first_height, second_height) if height),
-                default=0,
-            )
             channel.probe = combined
     print(
         f"routes_rechecked={len(recheck_targets)} "
         f"route_recheck_failed={route_recheck_failed}"
     )
 
-    stable = add_cctv5_backups(select_stable(probe_pool), probe_pool)
+    # A third fresh manifest/segment pass is reserved for the one-click list.
+    # Test every route that cleared the ordinary stable gate so a channel can
+    # fall back to another independently hosted URL before disappearing.
+    easy_recheck_targets = [
+        channel for channel in probe_pool
+        if int(channel.probe.get("checks_ok") or 0) >= 2 and is_stable(channel)
+    ]
+    easy_recheck_failed = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=PROBE_WORKERS) as executor:
+        future_map = {
+            executor.submit(probe_channel, channel): channel
+            for channel in easy_recheck_targets
+        }
+        for future in concurrent.futures.as_completed(future_map):
+            channel = future_map[future]
+            first = dict(channel.probe)
+            try:
+                third = future.result()
+            except Exception as exc:
+                third = {"ok": False, "error": type(exc).__name__ + ":" + str(exc)[:80]}
+            if not third.get("ok"):
+                failed = dict(first)
+                failed["easy_check_failed"] = True
+                failed["easy_check_error"] = str(third.get("error") or "probe_failed")[:100]
+                channel.probe = failed
+                easy_recheck_failed += 1
+                continue
+            combined = merge_probe_results(first, third, checks_ok=3)
+            combined["easy_recheck_ok"] = True
+            channel.probe = combined
+    print(
+        f"easy_routes_rechecked={len(easy_recheck_targets)} "
+        f"easy_route_recheck_failed={easy_recheck_failed}"
+    )
+
+    stable_primary = select_stable(probe_pool)
+    easy = select_easy(probe_pool)
+    stable = add_cctv5_backups(stable_primary, probe_pool)
     full = select_all(candidates, stable)
+    history_payload = update_health_history(probe_pool, previous_history)
     healthy = sum(1 for channel in probe_pool if channel.probe.get("ok"))
     healthy_by_source = Counter(
         channel.source or "unknown" for channel in probe_pool if channel.probe.get("ok")
@@ -1712,12 +2013,28 @@ def main() -> int:
             f"safety stop: only {len(full)}/{TARGET_ALL} all-list channels; "
             "existing playlists were not replaced"
         )
+    if len(easy) < MIN_EASY:
+        raise SystemExit(
+            f"safety stop: only {len(easy)}/{MIN_EASY} triple-checked easy channels "
+            f"(target {TARGET_EASY}); existing playlists were not replaced"
+        )
 
     write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
+    write_playlist(
+        Path("tv-easy.m3u"),
+        easy,
+        "APTV 无脑稳定版：三轮实测、历史稳定度与 IPv6/IPv4 双栈优选",
+    )
     write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
+    HISTORY_PATH.write_text(
+        json.dumps(history_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
     stable_groups = Counter(display_group(channel) for channel in stable)
+    easy_groups = Counter(display_group(channel) for channel in easy)
     stable_core = sum(is_core_channel(channel) for channel in stable)
+    easy_core = sum(is_core_channel(channel) for channel in easy)
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
     stable_extinfs = [cleaned_extinf(channel) for channel in stable]
@@ -1847,7 +2164,7 @@ def main() -> int:
         }
 
     report_lines = [
-        f"generated_utc={TODAY}",
+        f"generated_utc={GENERATED_AT}",
         f"source_candidates={len(candidates)}",
         f"carried_forward_candidates={carried_forward_candidates}",
         f"rejected_non_station={rejected_non_station}",
@@ -1856,6 +2173,16 @@ def main() -> int:
         f"geo_restricted={geo}",
         f"routes_rechecked={len(recheck_targets)}",
         f"route_recheck_failed={route_recheck_failed}",
+        f"easy_routes_rechecked={len(easy_recheck_targets)}",
+        f"easy_route_recheck_failed={easy_recheck_failed}",
+        f"easy_channels={len(easy)}",
+        f"easy_target={TARGET_EASY}",
+        f"easy_minimum={MIN_EASY}",
+        f"easy_triple_checked={sum(int(channel.probe.get('checks_ok') or 0) >= 3 for channel in easy)}",
+        f"easy_ipv6_dns={sum(bool(channel.probe.get('ipv6_dns')) for channel in easy)}",
+        f"easy_dual_stack_dns={sum(bool(channel.probe.get('dual_stack_dns')) for channel in easy)}",
+        f"easy_cctv_or_major_satellite={easy_core}",
+        f"history_routes={len(history_payload.get('routes', {}))}",
         f"stable_satellite_double_checked={stable_satellite_double_checked}",
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
         f"stable_satellite_china_side_fallbacks={stable_satellite_china_side_fallbacks}",
@@ -1892,6 +2219,7 @@ def main() -> int:
         "cctv5_output_routes=" + json.dumps(cctv5_output_routes, ensure_ascii=False),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
+        "easy_groups=" + json.dumps(dict(easy_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
         "top_probe_errors=" + json.dumps(errors.most_common(12), ensure_ascii=False),
     ]

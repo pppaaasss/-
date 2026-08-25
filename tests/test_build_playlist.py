@@ -18,6 +18,8 @@ class BuildPlaylistTests(unittest.TestCase):
         self.assertEqual(builder.TARGET_STABLE, 800)
         self.assertEqual(builder.MIN_STABLE, 760)
         self.assertEqual(builder.TARGET_ALL, 1000)
+        self.assertEqual(builder.TARGET_EASY, 200)
+        self.assertEqual(builder.MIN_EASY, 150)
 
     def test_parser_preserves_source_and_normalizes_group(self):
         playlist = """#EXTM3U
@@ -129,6 +131,88 @@ https://example.com/notice.m3u8
             text = output.read_text(encoding="utf-8")
         self.assertTrue(text.startswith(f'#EXTM3U x-tvg-url="{builder.EPG_URL}"'))
         self.assertIn('/%E5%8C%97%E4%BA%AC%E5%8D%AB%E8%A7%86.png"', text)
+
+    def test_route_history_ignores_rotating_auth_query(self):
+        first = builder.Channel(
+            "CCTV-1 综合",
+            '#EXTINF:-1 group-title="大陆",CCTV-1 综合',
+            "https://cdn.example/live/cctv1.m3u8?auth=old",
+            "大陆",
+        )
+        second = builder.Channel(
+            "CCTV-1 综合",
+            '#EXTINF:-1 group-title="大陆",CCTV-1 综合',
+            "https://cdn.example/live/cctv1.m3u8?auth=new",
+            "大陆",
+        )
+        self.assertEqual(builder.route_history_key(first), builder.route_history_key(second))
+
+    def test_history_rewards_repeated_success(self):
+        reliable = builder.Channel(
+            "北京卫视",
+            '#EXTINF:-1 group-title="大陆",北京卫视',
+            "https://example.com/beijing.m3u8",
+            "大陆",
+            history={"recent": [1, 1, 1, 1, 1]},
+        )
+        flaky = builder.Channel(
+            "湖南卫视",
+            '#EXTINF:-1 group-title="大陆",湖南卫视',
+            "https://example.com/hunan.m3u8",
+            "大陆",
+            history={"recent": [1, 0, 1, 0, 0]},
+        )
+        self.assertGreater(builder.historical_score(reliable), builder.historical_score(flaky))
+
+    def test_easy_gate_requires_three_checks_and_headroom(self):
+        channel = builder.Channel(
+            "CCTV-1 综合 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-1 综合 1080p',
+            "https://dual.example/cctv1.m3u8",
+            "大陆",
+        )
+        channel.probe = {
+            "ok": True,
+            "checks_ok": 3,
+            "height": 1080,
+            "segment_mbps": 8.0,
+            "manifest_s": 1.0,
+            "bandwidth": 4_000_000,
+            "ipv4_dns": True,
+            "ipv6_dns": True,
+            "dual_stack_dns": True,
+        }
+        self.assertTrue(builder.is_easy_ready(channel))
+        channel.probe["checks_ok"] = 2
+        self.assertFalse(builder.is_easy_ready(channel))
+        channel.probe["checks_ok"] = 3
+        channel.probe["segment_mbps"] = 2.0
+        self.assertFalse(builder.is_easy_ready(channel))
+
+    def test_merge_probe_uses_worst_observed_network_values(self):
+        first = {
+            "ok": True,
+            "segment_mbps": 12.0,
+            "manifest_s": 0.8,
+            "height": 1080,
+            "ipv4_dns": True,
+        }
+        later = {
+            "ok": True,
+            "segment_mbps": 7.5,
+            "manifest_s": 1.6,
+            "height": 1080,
+            "ipv6_dns": True,
+        }
+        merged = builder.merge_probe_results(first, later, checks_ok=3)
+        self.assertEqual(merged["checks_ok"], 3)
+        self.assertEqual(merged["segment_mbps"], 7.5)
+        self.assertEqual(merged["manifest_s"], 1.6)
+        self.assertTrue(merged["dual_stack_dns"])
+
+    def test_literal_ip_family_detection_is_offline_and_exact(self):
+        self.assertEqual(builder.host_ip_families("192.0.2.1"), (True, False))
+        self.assertEqual(builder.host_ip_families("2001:db8::1"), (False, True))
 
 
 if __name__ == "__main__":
