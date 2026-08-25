@@ -22,7 +22,7 @@ PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV CCTV5 pair rescue/2.0)"
 TIMEOUT = 7.0
 READ_LIMIT = 512 * 1024
-SEGMENT_READ_LIMIT = 12 * 1024 * 1024
+SEGMENT_SAMPLE_LIMIT = 1024 * 1024
 
 # This single host was hard-pinned for both stations and the viewer confirmed
 # that both routes stopped playing on 2026-08-25.  Never preserve it as a
@@ -81,7 +81,7 @@ class Selection:
     probe: Probe | None = None
 
 
-def fetch(url: str, limit: int = READ_LIMIT) -> tuple[bytes, str, float]:
+def fetch(url: str, limit: int = READ_LIMIT) -> tuple[bytes, str, float, int]:
     request = urllib.request.Request(
         url,
         headers={
@@ -92,8 +92,18 @@ def fetch(url: str, limit: int = READ_LIMIT) -> tuple[bytes, str, float]:
     )
     started = time.monotonic()
     with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+        total_size = 0
+        content_range = response.headers.get("Content-Range", "")
+        range_match = re.search(r"/([0-9]+)$", content_range)
+        if range_match:
+            total_size = int(range_match.group(1))
+        elif getattr(response, "status", 200) != 206:
+            content_length = response.headers.get("Content-Length", "")
+            if content_length.isdigit():
+                total_size = int(content_length)
         data = response.read(limit)
-        return data, response.geturl(), max(time.monotonic() - started, 0.001)
+        total_size = max(total_size, len(data))
+        return data, response.geturl(), max(time.monotonic() - started, 0.001), total_size
 
 
 def choose_variant(text: str, base_url: str) -> tuple[str, int] | None:
@@ -131,7 +141,7 @@ def first_media_segment(text: str, base_url: str) -> tuple[str | None, float]:
 
 
 def probe_once(url: str) -> tuple[float, float, int]:
-    manifest, final_url, _ = fetch(url)
+    manifest, final_url, _, _ = fetch(url)
     text = manifest.decode("utf-8", "ignore")
     if "#EXTM3U" not in text:
         raise ValueError("not_hls")
@@ -140,7 +150,7 @@ def probe_once(url: str) -> tuple[float, float, int]:
     variant = choose_variant(text, final_url)
     if variant:
         variant_url, height = variant
-        manifest, final_url, _ = fetch(variant_url)
+        manifest, final_url, _, _ = fetch(variant_url)
         text = manifest.decode("utf-8", "ignore")
         if "#EXTM3U" not in text:
             raise ValueError("bad_variant")
@@ -151,14 +161,15 @@ def probe_once(url: str) -> tuple[float, float, int]:
     segment_url, duration = first_media_segment(text, final_url)
     if not segment_url:
         raise ValueError("no_segment")
-    # Manifests are tiny, but a 1080p50 high-bitrate TS segment can exceed
-    # 512 KiB. Read enough of the media object for EXTINF-based bitrate to be
-    # meaningful instead of reporting the read cap as a fake ~0.4 Mbps rate.
-    segment, _, seconds = fetch(segment_url, SEGMENT_READ_LIMIT)
+    # Read a bounded sample for throughput, while Content-Range/Length reveals
+    # the complete media-object size for EXTINF-based programme bitrate. This
+    # avoids both the old 512 KiB bitrate cap and multi-minute reads on a slow
+    # candidate that should be rejected anyway.
+    segment, _, seconds, total_size = fetch(segment_url, SEGMENT_SAMPLE_LIMIT)
     if len(segment) < 32 * 1024:
         raise ValueError("short_segment")
     download_mbps = len(segment) * 8 / seconds / 1_000_000
-    stream_mbps = len(segment) * 8 / duration / 1_000_000 if duration else 0.0
+    stream_mbps = total_size * 8 / duration / 1_000_000 if duration else 0.0
     return download_mbps, stream_mbps, height
 
 
