@@ -33,6 +33,7 @@ HUNAN_MOBILE_V4_SOURCE = "https://raw.githubusercontent.com/wind005/TVlive/main/
 USER_BLOCKED_HOSTS = {
     "111.32.21.78",   # Tianjin regional PLTV pool
     "39.134.13.35",   # Hunan Mobile regional IPTV pool
+    "129.226.107.225", # Public 50FPS pool stalls on viewer home line
 }
 
 
