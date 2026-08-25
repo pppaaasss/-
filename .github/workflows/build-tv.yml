@@ -8,7 +8,10 @@ on:
       - 'scripts/upgrade_core_50fps.py'
       - 'scripts/upgrade_core_50hz.py'
       - 'scripts/clean_single_station.py'
+      - 'scripts/apply_viewer_profile.py'
       - 'tests/test_build_playlist.py'
+      - 'tests/test_apply_viewer_profile.py'
+      - 'tests/test_clean_single_station.py'
       - '.github/workflows/build-tv.yml'
   schedule:
     # Baseline refresh every four hours, offset from the top-of-hour Actions rush.
@@ -40,10 +43,10 @@ jobs:
         # rescue, 50 Hz promotion and final de-dup passes can repair it.
         continue-on-error: true
         env:
-          TARGET_STABLE: '800'
-          MIN_STABLE: '760'
-          TARGET_ALL: '1000'
-          TARGET_EASY: '200'
+          TARGET_STABLE: '420'
+          MIN_STABLE: '280'
+          TARGET_ALL: '560'
+          TARGET_EASY: '180'
           MIN_EASY: '55'
           SOURCE_WORKERS: '12'
           PROBE_WORKERS: '56'
@@ -51,9 +54,6 @@ jobs:
           CORE_VARIANTS_PER_CHANNEL: '24'
           HISTORY_WINDOW: '24'
         run: python3 scripts/build_playlist.py
-      - name: Reinforce CCTV-5 rescue routes
-        if: always()
-        run: python3 scripts/repair_cctv5.py
       - name: Ensure ffprobe is available for 1080p50/1080i50 verification
         if: always()
         run: |
@@ -83,6 +83,12 @@ jobs:
       - name: Keep one visible tile per CCTV and satellite station
         if: always()
         run: python3 scripts/clean_single_station.py
+      - name: Enforce local Chinese, Taiwan, Japan and no-English profile
+        if: always()
+        run: python3 scripts/apply_viewer_profile.py
+      - name: Final independent CCTV-5 and CCTV-5+ rescue
+        if: always()
+        run: python3 scripts/repair_cctv5.py
       - name: Install frame-audit image dependency
         if: github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]')
         run: |
