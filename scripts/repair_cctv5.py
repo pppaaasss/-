@@ -64,6 +64,8 @@ class Probe:
     url: str
     ok: bool
     mbps: float = 0.0
+    stream_mbps: float = 0.0
+    height: int = 0
     error: str = ""
 
     @property
@@ -93,7 +95,7 @@ def fetch(url: str, limit: int = READ_LIMIT) -> tuple[bytes, str, float]:
         return data, response.geturl(), max(time.monotonic() - started, 0.001)
 
 
-def choose_variant(text: str, base_url: str) -> str | None:
+def choose_variant(text: str, base_url: str) -> tuple[str, int] | None:
     rows: list[tuple[int, int, str]] = []
     lines = [line.strip() for line in text.splitlines()]
     for index, line in enumerate(lines):
@@ -110,26 +112,34 @@ def choose_variant(text: str, base_url: str) -> str | None:
     if not rows:
         return None
     normal = [row for row in rows if 540 <= row[0] <= 1080]
-    return max(normal or rows, key=lambda row: (row[0], row[1]))[2]
+    height, _, url = max(normal or rows, key=lambda row: (row[0], row[1]))
+    return url, height
 
 
-def first_media_uri(text: str, base_url: str) -> str | None:
-    for raw in reversed(text.splitlines()):
+def first_media_segment(text: str, base_url: str) -> tuple[str | None, float]:
+    duration = 0.0
+    candidate: tuple[str, float] | None = None
+    for raw in text.splitlines():
         line = raw.strip()
-        if line and not line.startswith("#"):
-            return urllib.parse.urljoin(base_url, line)
-    return None
+        if line.upper().startswith("#EXTINF:"):
+            match = re.search(r"#EXTINF:([0-9.]+)", line, re.I)
+            duration = float(match.group(1)) if match else 0.0
+        elif line and not line.startswith("#"):
+            candidate = (urllib.parse.urljoin(base_url, line), duration)
+    return candidate or (None, 0.0)
 
 
-def probe_once(url: str) -> float:
+def probe_once(url: str) -> tuple[float, float, int]:
     manifest, final_url, _ = fetch(url)
     text = manifest.decode("utf-8", "ignore")
     if "#EXTM3U" not in text:
         raise ValueError("not_hls")
 
+    height = 0
     variant = choose_variant(text, final_url)
     if variant:
-        manifest, final_url, _ = fetch(variant)
+        variant_url, height = variant
+        manifest, final_url, _ = fetch(variant_url)
         text = manifest.decode("utf-8", "ignore")
         if "#EXTM3U" not in text:
             raise ValueError("bad_variant")
@@ -137,13 +147,15 @@ def probe_once(url: str) -> float:
     upper = text.upper().replace(" ", "")
     if "#EXT-X-ENDLIST" in upper or "#EXT-X-PLAYLIST-TYPE:VOD" in upper:
         raise ValueError("vod_playlist")
-    segment_url = first_media_uri(text, final_url)
+    segment_url, duration = first_media_segment(text, final_url)
     if not segment_url:
         raise ValueError("no_segment")
     segment, _, seconds = fetch(segment_url)
     if len(segment) < 32 * 1024:
         raise ValueError("short_segment")
-    return len(segment) * 8 / seconds / 1_000_000
+    download_mbps = len(segment) * 8 / seconds / 1_000_000
+    stream_mbps = len(segment) * 8 / duration / 1_000_000 if duration else 0.0
+    return download_mbps, stream_mbps, height
 
 
 def probe_candidate(station: str, url: str) -> Probe:
@@ -156,7 +168,14 @@ def probe_candidate(station: str, url: str) -> Probe:
     try:
         first = probe_once(url)
         second = probe_once(url)
-        return Probe(station, url, True, min(first, second))
+        return Probe(
+            station,
+            url,
+            True,
+            min(first[0], second[0]),
+            min(first[1], second[1]),
+            max(first[2], second[2]),
+        )
     except Exception as exc:  # Public regional routes fail normally.
         return Probe(station, url, False, error=f"{type(exc).__name__}:{str(exc)[:100]}")
 
@@ -245,6 +264,17 @@ def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, S
             for url in CANDIDATES[station]
             if by_pair[(station, url)].ok
         ]
+        order = {url: index for index, url in enumerate(CANDIDATES[station])}
+        healthy.sort(
+            key=lambda probe: (
+                probe.mbps >= max(5.0, probe.stream_mbps * 1.35),
+                probe.height >= 1080,
+                min(probe.stream_mbps, 12.0),
+                min(probe.mbps, 40.0),
+                -order[probe.url],
+            ),
+            reverse=True,
+        )
         route = next((probe for probe in healthy if probe.host not in used_hosts), None)
         route = route or (healthy[0] if healthy else None)
         if route:
@@ -317,7 +347,12 @@ def update_report(selections: dict[str, Selection]) -> None:
             "url": selected.url,
             "selection": selected.reason,
             "runner_ok": bool(selected.probe and selected.probe.ok),
-            "runner_mbps": round(selected.probe.mbps, 2) if selected.probe else 0.0,
+            "download_mbps": round(selected.probe.mbps, 2) if selected.probe else 0.0,
+            "stream_mbps": round(selected.probe.stream_mbps, 2) if selected.probe else 0.0,
+            "height": selected.probe.height if selected.probe else 0,
+            "headroom": round(
+                selected.probe.mbps / selected.probe.stream_mbps, 2
+            ) if selected.probe and selected.probe.stream_mbps else 0.0,
         }
         for station, selected in selections.items()
     }
@@ -343,7 +378,11 @@ def main() -> int:
 
     for result in results:
         state = "ok" if result.ok else f"fail:{result.error}"
-        print(f"probe {result.station} {result.url} -> {state} {result.mbps:.2f} Mbps")
+        print(
+            f"probe {result.station} {result.url} -> {state} "
+            f"download={result.mbps:.2f} stream={result.stream_mbps:.2f} Mbps "
+            f"height={result.height}"
+        )
 
     previous = existing_routes(Path("tv-easy.m3u"))
     selections = choose_routes(results, previous)
