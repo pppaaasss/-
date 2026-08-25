@@ -214,6 +214,46 @@ https://example.com/notice.m3u8
         self.assertEqual(builder.host_ip_families("192.0.2.1"), (True, False))
         self.assertEqual(builder.host_ip_families("2001:db8::1"), (False, True))
 
+    def test_easy_list_keeps_usable_cctv_and_satellite_before_other_channels(self):
+        cctv15 = builder.Channel(
+            "CCTV-15 音乐 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-15 音乐 1080p',
+            "http://192.0.2.15/live.m3u8",
+            "大陆",
+        )
+        satellite = builder.Channel(
+            "北京卫视 1080p",
+            '#EXTINF:-1 group-title="大陆",北京卫视 1080p',
+            "http://192.0.2.16/live.m3u8",
+            "大陆",
+        )
+        ordinary = builder.Channel(
+            "测试电视 1080p",
+            '#EXTINF:-1 group-title="中文综合",测试电视 1080p',
+            "https://dual.example/ordinary.m3u8",
+            "中文综合",
+        )
+        for channel, speed, checks in (
+            (cctv15, 1.0, 2),
+            (satellite, 0.8, 2),
+            (ordinary, 12.0, 3),
+        ):
+            channel.probe = {
+                "ok": True,
+                "checks_ok": checks,
+                "height": 1080,
+                "segment_mbps": speed,
+                "manifest_s": 1.0,
+                "bandwidth": 0,
+            }
+        self.assertFalse(builder.is_easy_ready(cctv15))
+        selected = builder.select_easy([ordinary, cctv15, satellite], target=2)
+        self.assertEqual(
+            {builder.channel_key(channel) for channel in selected},
+            {"cctv15", "北京卫视"},
+        )
+        self.assertTrue(all(channel.probe.get("easy_core_fallback") for channel in selected))
+
 
 if __name__ == "__main__":
     unittest.main()

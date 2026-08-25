@@ -1231,6 +1231,28 @@ def is_easy_ready(channel: Channel) -> bool:
     return True
 
 
+def is_family_core_usable(channel: Channel) -> bool:
+    """Availability floor for elderly-family CCTV and satellite essentials."""
+    if not is_core_channel(channel) or is_placeholder_relay(channel):
+        return False
+    probe = channel.probe
+    if (
+        not probe.get("ok")
+        or int(probe.get("checks_ok") or 0) < 2
+        or probe.get("recheck_failed")
+        or probe.get("header_required")
+        or probe.get("geo_restricted")
+    ):
+        return False
+    # Core channels may use a lower-bitrate domestic route when no strict
+    # three-check route exists. Two successful fresh segment reads are still
+    # mandatory; a completely dead route never receives a family exemption.
+    return (
+        float(probe.get("segment_mbps") or 0) >= 0.6
+        and float(probe.get("manifest_s") or 99) <= 10.0
+    )
+
+
 def measured_score(channel: Channel) -> float:
     score = channel.static_score + historical_score(channel)
     probe = channel.probe
@@ -1567,6 +1589,32 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
         key = channel_key(channel)
         existing = best.get(key)
         if existing is None or measured_score(channel) > measured_score(existing):
+            best[key] = channel
+
+    # Family rule: every currently usable CCTV/provincial satellite channel
+    # outranks movies, music and overseas overflow. Prefer the strict route,
+    # but never omit an essential merely because its best domestic source is
+    # slower than the general living-room headroom threshold.
+    family_fallbacks: dict[str, Channel] = {}
+    for channel in channels:
+        if not is_family_core_usable(channel) or channel.display_override:
+            continue
+        key = channel_key(channel)
+        existing = family_fallbacks.get(key)
+        rank = (
+            not bool(channel.probe.get("easy_check_failed")),
+            int(channel.probe.get("checks_ok") or 0),
+            measured_score(channel),
+        )
+        if existing is None or rank > (
+            not bool(existing.probe.get("easy_check_failed")),
+            int(existing.probe.get("checks_ok") or 0),
+            measured_score(existing),
+        ):
+            family_fallbacks[key] = channel
+    for key, channel in family_fallbacks.items():
+        if key not in best:
+            channel.probe["easy_core_fallback"] = True
             best[key] = channel
 
     eligible = list(best.values())
@@ -1950,7 +1998,8 @@ def main() -> int:
     # fall back to another independently hosted URL before disappearing.
     easy_recheck_targets = [
         channel for channel in probe_pool
-        if int(channel.probe.get("checks_ok") or 0) >= 2 and is_stable(channel)
+        if int(channel.probe.get("checks_ok") or 0) >= 2
+        and (is_stable(channel) or is_core_acceptable(channel))
     ]
     easy_recheck_failed = 0
     with concurrent.futures.ThreadPoolExecutor(max_workers=PROBE_WORKERS) as executor:
@@ -1982,6 +2031,8 @@ def main() -> int:
 
     stable_primary = select_stable(probe_pool)
     easy = select_easy(probe_pool)
+    easy_keys = {channel_key(channel) for channel in easy}
+    easy_missing_cctv = [target for target in CCTV_AUDIT_IDS if target not in easy_keys]
     stable = add_cctv5_backups(stable_primary, probe_pool)
     full = select_all(candidates, stable)
     history_payload = update_health_history(probe_pool, previous_history)
@@ -2018,6 +2069,12 @@ def main() -> int:
             f"safety stop: only {len(easy)}/{MIN_EASY} triple-checked easy channels "
             f"(target {TARGET_EASY}); existing playlists were not replaced"
         )
+    if easy_missing_cctv:
+        raise SystemExit(
+            "safety stop: family easy-view list is missing required CCTV channels "
+            + ",".join(easy_missing_cctv)
+            + "; existing playlists were not replaced"
+        )
 
     write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
     write_playlist(
@@ -2035,6 +2092,12 @@ def main() -> int:
     easy_groups = Counter(display_group(channel) for channel in easy)
     stable_core = sum(is_core_channel(channel) for channel in stable)
     easy_core = sum(is_core_channel(channel) for channel in easy)
+    easy_core_fallbacks = sum(bool(channel.probe.get("easy_core_fallback")) for channel in easy)
+    easy_satellite_names = sorted(
+        canonical_mainland_satellite_name(channel)
+        for channel in easy
+        if canonical_mainland_satellite_name(channel)
+    )
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
     stable_extinfs = [cleaned_extinf(channel) for channel in stable]
@@ -2182,6 +2245,9 @@ def main() -> int:
         f"easy_ipv6_dns={sum(bool(channel.probe.get('ipv6_dns')) for channel in easy)}",
         f"easy_dual_stack_dns={sum(bool(channel.probe.get('dual_stack_dns')) for channel in easy)}",
         f"easy_cctv_or_major_satellite={easy_core}",
+        f"easy_core_relaxed_fallbacks={easy_core_fallbacks}",
+        "easy_missing_cctv=" + json.dumps(easy_missing_cctv, ensure_ascii=False),
+        "easy_mainland_satellite_names=" + json.dumps(easy_satellite_names, ensure_ascii=False),
         f"history_routes={len(history_payload.get('routes', {}))}",
         f"stable_satellite_double_checked={stable_satellite_double_checked}",
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
