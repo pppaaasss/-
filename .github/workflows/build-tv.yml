@@ -56,14 +56,14 @@ jobs:
           HISTORY_WINDOW: '24'
         run: python3 scripts/build_playlist.py
       - name: Ensure ffprobe is available for 1080p50/1080i50 verification
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           if ! command -v ffprobe >/dev/null 2>&1; then
             sudo apt-get update -qq
             sudo apt-get install -y -qq ffmpeg
           fi
       - name: Apply viewer-confirmed blocked hosts
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -78,36 +78,36 @@ jobs:
               p.write_text(text.replace(needle, insert), encoding='utf-8', newline='\n')
           PY
       - name: Promote verified 1080p50 and native 1080i50 routes
-        if: always()
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: python3 scripts/upgrade_core_50hz.py
       - name: Keep one visible tile per CCTV and satellite station
-        if: always()
+        if: ${{ !cancelled() }}
         run: python3 scripts/clean_single_station.py
       - name: Enforce local Chinese, Taiwan, Japan and no-English profile
-        if: always()
+        if: ${{ !cancelled() }}
         run: python3 scripts/apply_viewer_profile.py
       - name: Final independent CCTV-5 and CCTV-5+ rescue
-        if: always()
+        if: ${{ !cancelled() }}
         run: python3 scripts/repair_cctv5.py
       - name: Install frame-audit image dependency
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]')
+        if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
           python3 -m pip install --quiet pillow
       - name: Capture CCTV and satellite frames for identity review
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]')
+        if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         run: python3 scripts/audit_tv_frames.py --playlist tv-easy.m3u --output frame-audit --workers 8 --timeout 30 || true
       - name: Upload family-channel frame audit
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]')
+        if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         uses: actions/upload-artifact@v4
         with:
           name: family-channel-frame-audit
           path: frame-audit/
           retention-days: 3
       - name: Publish refreshed playlists
-        if: always()
+        if: ${{ !cancelled() }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -123,5 +123,5 @@ jobs:
             git push
           fi
       - name: Propagate broad playlist build failure after rescue publish
-        if: steps.playlist_build.outcome == 'failure'
+        if: ${{ !cancelled() && steps.playlist_build.outcome == 'failure' }}
         run: exit 1
