@@ -32,6 +32,7 @@ SOURCE_WORKERS = int(os.getenv("SOURCE_WORKERS", "12"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
 MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
+CORE_VARIANTS_PER_CHANNEL = int(os.getenv("CORE_VARIANTS_PER_CHANNEL", "16"))
 MAX_PROBE_BYTES = 768 * 1024
 TODAY = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
 
@@ -398,6 +399,10 @@ PLACEHOLDER_RELAY_HOSTS = {"t.freetv.fun", "epg.pw"}
 MISLABELLED_STREAM_URLS = {
     "https://cloudvideo.servers10.com:8081/8130/index.m3u8",
     "http://antvlive.ab5c6921.cdnviet.com/antv/playlist.m3u8",
+    # User-tested: this Hebei TV event route currently returns a VU Networks
+    # calibration/test card, although public indexes label it as CCTV-13.
+    "https://event.pull.hebtv.com/jishi/cp1.m3u8",
+    "https://event.pull.hebtv.com/jishi/cp2.m3u8",
     # Public lists label this Zhejiang Shaoxing/Shengzhou local feed as
     # Shandong Satellite TV. Keep it out even when its HLS probe succeeds.
     "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
@@ -406,6 +411,7 @@ MISLABELLED_STREAM_URLS = {
     "http://gmxw.7766.org:808/hls/93/index.m3u8",
 }
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
+NUMBERED_CCTV_IDS = tuple(f"cctv{number}" for number in range(1, 18))
 CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv5", "cctv8", "cctv11", "湖南卫视", "山东卫视"}
 
 MAINLAND_SATELLITE_NAMES = (
@@ -631,6 +637,32 @@ def is_cctv4k_label(channel: Channel) -> bool:
     return bool(re.search(r"cctv[\s_-]*4[\s_-]*k", label, re.I))
 
 
+def numbered_cctv_id(channel: Channel) -> str | None:
+    """Return CCTV-1..17 from the visible label, excluding CCTV-4K."""
+    if is_cctv4k_label(channel):
+        return None
+    match = re.search(r"cctv[\s_-]*0?(\d{1,2})(?!\d)", normalized_name(channel.name), re.I)
+    if match and 1 <= int(match.group(1)) <= 17:
+        return f"cctv{int(match.group(1))}"
+    return None
+
+
+def cctv_url_conflicts_with_label(channel: Channel) -> bool:
+    """Reject obvious CCTV label/path conflicts before expensive probes."""
+    expected = numbered_cctv_id(channel)
+    if expected is None:
+        return False
+    url_low = urllib.parse.unquote(channel.url).lower()
+    if "cgtn-america.m3u8" in url_low:
+        return True
+    url_numbers = {
+        f"cctv{int(number)}"
+        for number in re.findall(r"cctv[\s_/-]*0?(\d{1,2})(?!\d)", url_low, re.I)
+        if 1 <= int(number) <= 17
+    }
+    return bool(url_numbers and expected not in url_numbers)
+
+
 def channel_key(channel: Channel) -> str:
     """Canonical key used only after alternate URLs have been speed-tested."""
     visible_name = normalized_name(channel.name)
@@ -646,9 +678,9 @@ def channel_key(channel: Channel) -> str:
     required = required_core_id(channel)
     if required:
         return required
-    cctv_number = re.search(r"cctv[\s_-]*0?(\d{1,2})(?!\d)", visible_name, re.I)
-    if cctv_number and 1 <= int(cctv_number.group(1)) <= 17:
-        return f"cctv{int(cctv_number.group(1))}"
+    cctv_id = numbered_cctv_id(channel)
+    if cctv_id:
+        return cctv_id
     # Lists often assign inconsistent tvg-id values to the same station. Use
     # the cleaned visible label for every language so alternate routes cannot
     # inflate the published channel count.
@@ -690,6 +722,8 @@ def is_station_like(channel: Channel) -> bool:
     name_low = channel.name.lower()
     low = f"{channel.name} {channel.extinf}".lower()
     if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
+        return False
+    if cctv_url_conflicts_with_label(channel):
         return False
     # Some public lists attach AAC-only feeds to CCTV video labels. They pass
     # HLS/segment checks but produce a black screen with sound in APTV.
@@ -1005,7 +1039,12 @@ def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
     result: list[Channel] = []
     for items in variants.values():
         items.sort(key=lambda item: (item.curated, item.static_score), reverse=True)
-        limit = 24 if required_core_id(items[0]) else MAX_VARIANTS_PER_CHANNEL
+        if required_core_id(items[0]):
+            limit = 24
+        elif is_core_channel(items[0]):
+            limit = CORE_VARIANTS_PER_CHANNEL
+        else:
+            limit = MAX_VARIANTS_PER_CHANNEL
         result.extend(items[:limit])
     return result
 
@@ -1023,9 +1062,10 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
         for variants in by_channel.values():
             variants.sort(key=lambda item: item.static_score, reverse=True)
 
-        # Probe up to 24 independent routes for each required CCTV station
-        # before the ordinary breadth-first pool. Domestic CDN routes often
-        # reject a US GitHub runner while another route remains healthy.
+        # Probe up to 24 independent routes for the five critical CCTV stations
+        # and up to 16 for every other CCTV/provincial satellite station before
+        # the ordinary breadth-first pool. Domestic CDN routes often reject a
+        # US GitHub runner while another route remains healthy.
         group_pool: list[Channel] = []
         for target in REQUIRED_CORE_IDS:
             group_pool.extend(by_channel.get(target, [])[:24])
@@ -1036,7 +1076,7 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
                 and variants[0].group == "大陆"
                 and is_core_channel(variants[0])
             ):
-                for channel in variants[:MAX_VARIANTS_PER_CHANNEL]:
+                for channel in variants[:CORE_VARIANTS_PER_CHANNEL]:
                     if channel not in group_pool:
                         group_pool.append(channel)
 
@@ -1695,6 +1735,49 @@ def main() -> int:
             "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
         }
+    all_cctv_status = {}
+    for target in NUMBERED_CCTV_IDS:
+        tested = [channel for channel in probe_pool if channel_key(channel) == target]
+        chosen = next((channel for channel in stable if channel_key(channel) == target), None)
+        all_cctv_status[target] = {
+            "tested": len(tested),
+            "healthy": sum(bool(channel.probe.get("ok")) for channel in tested),
+            "in_stable": bool(chosen),
+            "url": chosen.url if chosen else "",
+            "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
+            "mbps": round(float(chosen.probe.get("segment_mbps") or 0), 2) if chosen else 0,
+            "checks_ok": int(chosen.probe.get("checks_ok") or 0) if chosen else 0,
+        }
+    satellite_status = {}
+    for target in MAINLAND_SATELLITE_NAMES:
+        tested = [
+            channel for channel in probe_pool
+            if canonical_mainland_satellite_name(channel) == target
+        ]
+        chosen = next(
+            (channel for channel in stable if canonical_mainland_satellite_name(channel) == target),
+            None,
+        )
+        satellite_status[target] = {
+            "tested": len(tested),
+            "healthy": sum(bool(channel.probe.get("ok")) for channel in tested),
+            "in_stable": bool(chosen),
+            "url": chosen.url if chosen else "",
+            "height": int((chosen.probe.get("height") or labelled_height(chosen)) if chosen else 0),
+            "mbps": round(float(chosen.probe.get("segment_mbps") or 0), 2) if chosen else 0,
+            "checks_ok": int(chosen.probe.get("checks_ok") or 0) if chosen else 0,
+        }
+    satellite_group_audit = [
+        {
+            "name": canonical_display_name(channel),
+            "url": channel.url,
+            "height": int(channel.probe.get("height") or labelled_height(channel)),
+            "mbps": round(float(channel.probe.get("segment_mbps") or 0), 2),
+            "checks_ok": int(channel.probe.get("checks_ok") or 1),
+        }
+        for channel in stable
+        if display_group(channel) == "卫视台"
+    ]
     cctv5_output_routes = [
         {
             "name": canonical_display_name(channel),
@@ -1776,6 +1859,9 @@ def main() -> int:
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),
+        "all_cctv_status=" + json.dumps(all_cctv_status, ensure_ascii=False, sort_keys=True),
+        "mainland_satellite_status=" + json.dumps(satellite_status, ensure_ascii=False),
+        "satellite_group_audit=" + json.dumps(satellite_group_audit, ensure_ascii=False),
         "cctv5_output_routes=" + json.dumps(cctv5_output_routes, ensure_ascii=False),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),

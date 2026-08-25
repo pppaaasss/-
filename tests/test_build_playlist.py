@@ -36,6 +36,47 @@ https://example.com/notice.m3u8
 """
         self.assertEqual(builder.parse_m3u(playlist, "中文综合", False), [])
 
+    def test_user_confirmed_test_card_is_rejected(self):
+        channel = builder.Channel(
+            "CCTV-13 新闻",
+            '#EXTINF:-1 group-title="大陆",CCTV-13 新闻',
+            "https://event.pull.hebtv.com/jishi/cp1.m3u8",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(channel))
+
+    def test_adjacent_hebtv_test_card_is_rejected(self):
+        channel = builder.Channel(
+            "CCTV-14 少儿",
+            '#EXTINF:-1 group-title="大陆",CCTV-14 少儿',
+            "https://event.pull.hebtv.com/jishi/cp2.m3u8",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(channel))
+
+    def test_cctv_label_and_url_conflicts_are_rejected(self):
+        wrong_station = builder.Channel(
+            "CCTV-4 中文国际",
+            '#EXTINF:-1 group-title="大陆",CCTV-4 中文国际',
+            "https://global.cgtn.example/master/cgtn-america.m3u8",
+            "大陆",
+        )
+        wrong_number = builder.Channel(
+            "CCTV-13 新闻",
+            '#EXTINF:-1 group-title="大陆",CCTV-13 新闻',
+            "https://example.com/live/cctv14hd.m3u8",
+            "大陆",
+        )
+        correct = builder.Channel(
+            "CCTV-13 新闻",
+            '#EXTINF:-1 group-title="大陆",CCTV-13 新闻',
+            "https://example.com/live/cctv13hd.m3u8",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(wrong_station))
+        self.assertFalse(builder.is_station_like(wrong_number))
+        self.assertTrue(builder.is_station_like(correct))
+
     def test_core_metadata_is_canonical(self):
         channel = builder.Channel(
             "CCTV-5 体育",
