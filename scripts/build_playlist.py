@@ -28,10 +28,10 @@ from typing import Iterable
 
 
 # Keep tv.m3u as the permanent APTV subscription path; only its contents change.
-TARGET_STABLE = int(os.getenv("TARGET_STABLE", "800"))
-MIN_STABLE = int(os.getenv("MIN_STABLE", "760"))
-TARGET_ALL = int(os.getenv("TARGET_ALL", "1000"))
-TARGET_EASY = int(os.getenv("TARGET_EASY", "200"))
+TARGET_STABLE = int(os.getenv("TARGET_STABLE", "420"))
+MIN_STABLE = int(os.getenv("MIN_STABLE", "280"))
+TARGET_ALL = int(os.getenv("TARGET_ALL", "560"))
+TARGET_EASY = int(os.getenv("TARGET_EASY", "180"))
 # The family list may shrink to the CCTV + satellite essentials when unrelated
 # sources are weak. Movie/music/overseas availability must never block it.
 MIN_EASY = int(os.getenv("MIN_EASY", "55"))
@@ -50,53 +50,70 @@ DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
 EPG_URL = "https://live.fanmingming.cn/e.xml"
 LOGO_BASE_URL = "https://live.fanmingming.cn/tv"
 
-# Chinese-first 800-channel target distribution. Missing groups are filled by
-# the fastest remaining healthy streams, so a weak regional source cannot stop
-# the list from reaching the requested size.
+# Viewer profile: local Chinese, Taiwan and Japan replace the former bulk
+# documentary/movie/news catalogue. Missing groups are filled only by another
+# wanted language/region; foreign English overflow is never used as padding.
 GROUP_TARGETS = {
-    "大陆": 300,
-    "中文综合": 70,
-    "中文纪录": 35,
-    "中文电影": 35,
-    "中文付费": 55,
-    "香港": 40,
+    "大陆": 220,
+    "中文综合": 80,
+    "中文付费": 30,
+    "香港": 30,
     "澳门": 5,
-    "台湾": 55,
-    "新加坡": 15,
-    "马来西亚": 15,
-    "日本": 20,
-    "韩国": 15,
-    "国际": 20,
-    "纪录片": 25,
-    "电影": 25,
-    "新闻": 20,
-    "娱乐": 20,
+    "台湾": 80,
+    "新加坡": 4,
+    "马来西亚": 4,
+    "日本": 30,
+    "娱乐": 10,
     "体育": 15,
     "少儿": 10,
     "音乐": 5,
+    "教育": 5,
+    "财经": 5,
 }
 
 GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
 CHINESE_GROUPS = {
-    "大陆", "中文综合", "中文纪录", "中文电影", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
+    "大陆", "中文综合", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
 }
 
-# The living-room list is deliberately much smaller than the 800-channel
+BLOCKED_OUTPUT_GROUPS = {"纪录片", "中文纪录", "电影", "中文电影", "新闻", "国际", "韩国"}
+
+# Explicit English services are removed even when an upstream list files them
+# under "中文综合" or a Chinese region. Word boundaries prevent short brands
+# such as ABC from matching an unrelated Japanese call sign.
+ENGLISH_SERVICE_RE = re.compile(
+    r"(?:(?<![a-z])(?:bbc|cnn|fox\s*news|nbc(?:lx|\s*news)?|cbs\s*news|abc\s*news|"
+    r"bloomberg|cnbc|reuters|sky\s*news|euronews|i24news|voa|newsmax|"
+    r"cheddar\s*news|channel\s*newsasia|al\s*jazeera|france\s*24)(?![a-z])|"
+    r"\bdw(?:\s+(?:english|news))?\b|nhk\s*world|kbs\s*world|arirang|"
+    r"taiwan\s*(?:\+|plus)|viutv\s*six|viutvsix|tvb\s*pearl|\bpearl\b|"
+    r"明珠台|英语|英語|英文|(?<![a-z])cna(?![a-z])|hoy\s+international\s+business)",
+    re.I,
+)
+
+CJK_RE = re.compile(r"[\u3400-\u9fff\u3040-\u30ff]")
+REGIONAL_BRAND_RE = re.compile(
+    r"\b(?:brtv|btv|cetv|jstv|gdtv|grt|tvb|rthk|hoy|viutv|"
+    r"phoenix|鳳凰|凤凰|tdm|tvbs|ttv|ctv|cts|ftv|set|ebc|momo|ntd)\b",
+    re.I,
+)
+
+# The living-room list is deliberately much smaller than the regional catalogue.
 # catalogue. It contains only routes that survive a third fresh segment test.
 # Missing groups never get padded with marginal streams merely to hit 200.
 EASY_GROUP_TARGETS = {
     "卫视台": 72,
-    "中文综合": 58,
-    "香港": 12,
+    "中文综合": 60,
+    "香港": 10,
     "澳门": 4,
-    "台湾": 12,
-    "新加坡": 4,
-    "纪录片": 10,
-    "电影": 8,
-    "新闻": 6,
-    "体育": 6,
+    "台湾": 20,
+    "新加坡": 2,
+    "日本": 8,
+    "中文付费": 5,
+    "体育": 5,
     "少儿": 4,
-    "音乐": 4,
+    "音乐": 3,
+    "教育": 2,
 }
 
 SOURCES = [
@@ -108,10 +125,6 @@ SOURCES = [
     ("新加坡", "https://iptv-org.github.io/iptv/countries/sg.m3u", True),
     ("马来西亚", "https://iptv-org.github.io/iptv/countries/my.m3u", True),
     ("日本", "https://iptv-org.github.io/iptv/countries/jp.m3u", True),
-    ("韩国", "https://iptv-org.github.io/iptv/countries/kr.m3u", True),
-    ("纪录片", "https://iptv-org.github.io/iptv/categories/documentary.m3u", False),
-    ("电影", "https://iptv-org.github.io/iptv/categories/movies.m3u", False),
-    ("新闻", "https://iptv-org.github.io/iptv/categories/news.m3u", False),
     ("娱乐", "https://iptv-org.github.io/iptv/categories/entertainment.m3u", False),
     ("音乐", "https://iptv-org.github.io/iptv/categories/music.m3u", False),
     ("体育", "https://iptv-org.github.io/iptv/categories/sports.m3u", False),
@@ -155,7 +168,6 @@ SOURCES = [
     ("澳门", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_macau.m3u8", True),
     ("台湾", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_taiwan.m3u8", True),
     ("日本", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_japan.m3u8", True),
-    ("韩国", "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_korea.m3u8", True),
 
     # Core CCTV/provincial backups. CCSH publishes many alternate HTTPS
     # variants; the builder races them and keeps only the fastest working URL.
@@ -182,7 +194,6 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/index.m3u", False),
     ("大陆", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/itv.m3u", False),
     ("中文综合", "https://raw.githubusercontent.com/YueChan/Live/main/GNTV.m3u", True),
-    ("国际", "https://raw.githubusercontent.com/YueChan/Live/main/Global.m3u", True),
     ("中文付费", "https://raw.githubusercontent.com/YueChan/Live/main/Hunan.txt", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/JinnLynn/iptv/dist/live-ipv4.txt", False),
@@ -190,9 +201,8 @@ SOURCES = [
     ("中文付费", "https://cdn.jsdelivr.net/gh/jyoketsu/tv@main/live.txt", False),
 ]
 
-# Curated fallbacks.  The five required CCTV stations use multiple independent
-# routes; all variants are probed and only the fastest healthy URL reaches
-# tv.m3u.  Documentary/movie requests remain available in tv-all.m3u.
+# Curated fallbacks. The required CCTV stations use multiple independent
+# routes; blocked programme categories below are discarded before probing.
 EXTRAS = [
     # China-side fallbacks for stations that are frequently unreachable from
     # GitHub's overseas runner even though current Chinese indexes carry them.
@@ -653,6 +663,8 @@ IMPORTED_GROUP_ALIASES = (
     (("台湾", "taiwan"), "台湾"),
     (("新加坡", "singapore"), "新加坡"),
     (("马来西亚", "malaysia"), "马来西亚"),
+    (("日本", "japan"), "日本"),
+    (("韩国", "korea"), "韩国"),
     (("中文纪录",), "中文纪录"),
     (("中文电影",), "中文电影"),
     (("中文付费",), "中文付费"),
@@ -663,6 +675,9 @@ IMPORTED_GROUP_ALIASES = (
     (("音乐", "music"), "音乐"),
     (("电影", "movies"), "电影"),
     (("国际", "global"), "国际"),
+    (("娱乐", "entertainment"), "娱乐"),
+    (("教育", "education"), "教育"),
+    (("财经", "business"), "财经"),
 )
 
 FANMINGMING_LOGO_ALIASES = (
@@ -1012,6 +1027,34 @@ def update_health_history(channels: Iterable[Channel], previous: dict) -> dict:
 def is_core_channel(channel: Channel) -> bool:
     visible = normalized_name(channel.name)
     return bool(re.search(r"\bcctv[\s_-]*\d+", visible, re.I)) or canonical_mainland_satellite_name(channel) is not None
+
+
+def is_viewer_wanted_channel(channel: Channel) -> bool:
+    """Enforce the requested Chinese/Taiwan/Japan, no-English profile."""
+    if channel.group in BLOCKED_OUTPUT_GROUPS:
+        return False
+    identity = f"{channel.name} {channel.extinf}"
+    if re.search(r"(?<![a-z])cgtn(?![a-z])", identity, re.I):
+        return False
+    if ENGLISH_SERVICE_RE.search(identity):
+        return False
+    if is_core_channel(channel):
+        return True
+    if channel.group == "新加坡":
+        return bool(
+            re.search(
+                r"(?:channel\s*(?:8|u)\b|8\s*频道|8頻道|u\s*频道|u頻道|华语|華語|中文)",
+                identity,
+                re.I,
+            )
+        )
+    if channel.group in {"台湾", "日本"}:
+        return True
+    if channel.group == "香港":
+        return bool(CJK_RE.search(identity) or REGIONAL_BRAND_RE.search(identity))
+    if channel.group == "澳门":
+        return bool(CJK_RE.search(identity) or re.search(r"\btdm\b", identity, re.I))
+    return bool(CJK_RE.search(identity) or REGIONAL_BRAND_RE.search(identity))
 
 
 def is_placeholder_relay(channel: Channel) -> bool:
@@ -1428,6 +1471,12 @@ def is_stable(channel: Channel) -> bool:
     latency = float(probe.get("manifest_s") or 99)
     bandwidth_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
     required_speed = max(2.2, bandwidth_mbps * 1.25)
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    if stream_mbps:
+        required_speed = max(
+            required_speed,
+            stream_mbps * (1.35 if is_core_channel(channel) else 1.20),
+        )
     if height and height < 720:
         return False
     if latency > 5.0 or speed < required_speed:
@@ -1455,9 +1504,11 @@ def is_core_acceptable(channel: Channel) -> bool:
     height = int(probe.get("height") or labelled_height(channel))
     speed = float(probe.get("segment_mbps") or 0)
     latency = float(probe.get("manifest_s") or 99)
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    required_speed = max(1.2, stream_mbps * 1.15 if stream_mbps else 0)
     # CCTV-5+ currently has public 576i fallbacks; accept those only for the
     # core guarantee, while ordinary channels still require the HD threshold.
-    return (not height or height >= 540) and speed >= 1.2 and latency <= 8.0
+    return (not height or height >= 540) and speed >= required_speed and latency <= 8.0
 
 
 def is_easy_ready(channel: Channel) -> bool:
@@ -1480,6 +1531,9 @@ def is_easy_ready(channel: Channel) -> bool:
     latency = float(probe.get("manifest_s") or 99)
     bandwidth_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
     required_speed = max(2.5, bandwidth_mbps * 1.5)
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    if stream_mbps:
+        required_speed = max(required_speed, stream_mbps * 1.5)
     if height >= 2160:
         required_speed = max(required_speed, 10.0)
     elif height >= 1080:
@@ -1511,6 +1565,9 @@ def is_family_core_usable(channel: Channel) -> bool:
     # mandatory; a completely dead route never receives a family exemption.
     lower_floor_urls = VISUALLY_CONFIRMED_CORE_URLS | DOMESTIC_FRAME_AUDIT_CORE_URLS
     minimum_speed = 0.35 if channel.url in lower_floor_urls else 0.6
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    if stream_mbps:
+        minimum_speed = max(minimum_speed, stream_mbps * 1.05)
     return (
         float(probe.get("segment_mbps") or 0) >= minimum_speed
         and float(probe.get("manifest_s") or 99) <= 10.0
@@ -1546,9 +1603,23 @@ def measured_score(channel: Channel) -> float:
     # real quality signal even when an operator serves a direct media playlist
     # without RESOLUTION/BANDWIDTH tags (the CCTV-10 case reported at home).
     if stream_mbps:
-        score += min(stream_mbps, 12.0) * (14 if is_core_channel(channel) else 5)
-        if is_core_channel(channel) and stream_mbps < 1.2:
-            score -= 90
+        quality = min(stream_mbps, 12.0)
+        headroom = speed / stream_mbps
+        if is_core_channel(channel):
+            if stream_mbps < 1.2:
+                score -= 90
+            elif headroom >= 1.50:
+                score += quality * 18 + min(headroom, 4.0) * 8
+            elif headroom >= 1.25:
+                score += quality * 14
+            elif headroom >= 1.05:
+                score += quality * 6 - 35
+            else:
+                score -= 170
+        else:
+            score += quality * 5
+            if headroom < 1.05:
+                score -= 70
     # The viewer has native IPv6. Prefer dual-stack CDN/domain routes modestly,
     # while retaining IPv4 fallback; DNS capability alone never overrides a
     # failed HLS/video-segment probe.
@@ -1598,7 +1669,7 @@ def core_candidate_diagnostics(channels: Iterable[Channel], targets: Iterable[st
 def deduplicate(channels: Iterable[Channel]) -> list[Channel]:
     best_by_url: dict[str, Channel] = {}
     for channel in channels:
-        if not is_station_like(channel):
+        if not is_station_like(channel) or not is_viewer_wanted_channel(channel):
             continue
         channel.static_score = channel_static_score(channel)
         existing = best_by_url.get(channel.url)
@@ -1718,15 +1789,19 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             cctv5_verified,
             key=lambda channel: (
                 int(channel.probe.get("checks_ok") or 1) >= 2,
-                channel.url == CCTV5_PREFERRED_1080_URLS[0],
-                channel.url in CCTV5_PREFERRED_1080_URLS,
+                float(channel.probe.get("segment_mbps") or 0)
+                >= max(
+                    6.0,
+                    float(channel.probe.get("stream_mbps") or 0) * 1.35,
+                ),
                 not any(
                     token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
                     for token in CCTV5_OPERATOR_HINTS
                 ),
+                measured_score(channel),
                 min(float(channel.probe.get("segment_mbps") or 0), 30),
                 -float(channel.probe.get("manifest_s") or 99),
-                measured_score(channel),
+                channel.url in CCTV5_PREFERRED_1080_URLS,
             ),
         )
 
@@ -1901,7 +1976,7 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
             best[key] = channel
 
     # Family rule: every currently usable CCTV/provincial satellite channel
-    # outranks movies, music and overseas overflow. Prefer the strict route,
+    # outranks music and regional overflow. Prefer the strict route,
     # but never omit an essential merely because its best domestic source is
     # slower than the general living-room headroom threshold.
     family_fallbacks: dict[str, Channel] = {}
@@ -2085,8 +2160,8 @@ def display_group(channel: Channel) -> str:
     """Collapse the old Mainland bucket into the two APTV groups requested."""
     identity_extinf = re.sub(r'group-title="[^"]*"', "", channel.extinf, flags=re.I)
     identity = f"{channel.name} {identity_extinf}".lower()
-    # CCTV/CGTN can arrive through language/category feeds instead of the old
-    # Mainland feed, so classify them independently of their imported group.
+    # CCTV can arrive through language/category feeds instead of the old
+    # Mainland feed, so classify it independently of the imported group.
     if re.search(r"(?:cctv|cgtn|央视)", identity, re.I):
         return "卫视台"
     if channel.group in {"大陆", "中文综合"} and canonical_mainland_satellite_name(channel):
@@ -2378,12 +2453,15 @@ def main() -> int:
         None,
     )
     legacy_safety_reasons: list[str] = []
+    cctv5_download = float(cctv5_primary.probe.get("segment_mbps") or 0) if cctv5_primary else 0
+    cctv5_stream = float(cctv5_primary.probe.get("stream_mbps") or 0) if cctv5_primary else 0
     if (
         cctv5_primary is None
         or not cctv5_primary.probe.get("ok")
-        or int(cctv5_primary.probe.get("height") or labelled_height(cctv5_primary)) < 1080
+        or int(cctv5_primary.probe.get("height") or labelled_height(cctv5_primary)) < 720
+        or cctv5_download < max(2.0, cctv5_stream * 1.15)
     ):
-        legacy_safety_reasons.append("no verified 1080p CCTV-5 primary")
+        legacy_safety_reasons.append("no verified HD CCTV-5 route with download headroom")
     if len(stable) < MIN_STABLE:
         legacy_safety_reasons.append(
             f"only {len(stable)}/{MIN_STABLE} minimum stable channels (target {TARGET_STABLE})"
