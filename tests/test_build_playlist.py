@@ -93,6 +93,15 @@ https://example.com/notice.m3u8
         self.assertFalse(builder.is_station_like(cctv4k))
         self.assertFalse(builder.is_station_like(cctv15))
 
+    def test_jade_mislabelled_as_cctv4k_is_rejected(self):
+        channel = builder.Channel(
+            "CCTV-4K",
+            '#EXTINF:-1 group-title="大陆",CCTV-4K',
+            "http://r.jdshipin.com/krMB5",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(channel))
+
     def test_core_metadata_is_canonical(self):
         channel = builder.Channel(
             "CCTV-5 体育",

@@ -412,6 +412,9 @@ MISLABELLED_STREAM_URLS = {
     # calibration/test card, although public indexes label it as CCTV-13.
     "https://event.pull.hebtv.com/jishi/cp1.m3u8",
     "https://event.pull.hebtv.com/jishi/cp2.m3u8",
+    # User-tested: public indexes label this redirect as CCTV-4K, but its
+    # actual programme is TVB Jade (翡翠台).
+    "http://r.jdshipin.com/krMB5",
     # Public lists label this Zhejiang Shaoxing/Shengzhou local feed as
     # Shandong Satellite TV. Keep it out even when its HLS probe succeeds.
     "http://l.cztvcloud.com/channels/lantian/SXshengzhou1/720p.m3u8",
