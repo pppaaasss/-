@@ -22,6 +22,7 @@ PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV CCTV5 pair rescue/2.0)"
 TIMEOUT = 7.0
 READ_LIMIT = 512 * 1024
+SEGMENT_READ_LIMIT = 12 * 1024 * 1024
 
 # This single host was hard-pinned for both stations and the viewer confirmed
 # that both routes stopped playing on 2026-08-25.  Never preserve it as a
@@ -150,7 +151,10 @@ def probe_once(url: str) -> tuple[float, float, int]:
     segment_url, duration = first_media_segment(text, final_url)
     if not segment_url:
         raise ValueError("no_segment")
-    segment, _, seconds = fetch(segment_url)
+    # Manifests are tiny, but a 1080p50 high-bitrate TS segment can exceed
+    # 512 KiB. Read enough of the media object for EXTINF-based bitrate to be
+    # meaningful instead of reporting the read cap as a fake ~0.4 Mbps rate.
+    segment, _, seconds = fetch(segment_url, SEGMENT_READ_LIMIT)
     if len(segment) < 32 * 1024:
         raise ValueError("short_segment")
     download_mbps = len(segment) * 8 / seconds / 1_000_000
@@ -268,6 +272,7 @@ def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, S
         healthy.sort(
             key=lambda probe: (
                 probe.mbps >= max(5.0, probe.stream_mbps * 1.35),
+                probe.mbps / probe.stream_mbps >= 1.05 if probe.stream_mbps else False,
                 probe.height >= 1080,
                 min(probe.stream_mbps, 12.0),
                 min(probe.mbps, 40.0),
