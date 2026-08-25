@@ -68,6 +68,28 @@ segment-1.ts
         self.assertEqual(url, "https://cdn.example/live/segment-1.ts")
         self.assertEqual(duration, 5.5)
 
+    def test_probe_reads_a_full_sized_media_segment_for_bitrate(self):
+        calls = []
+        manifest = b"#EXTM3U\n#EXTINF:4.0,\nsegment.ts\n"
+        segment = b"x" * 1_000_000
+        original_fetch = repair.fetch
+
+        def fake_fetch(url, limit=repair.READ_LIMIT):
+            calls.append((url, limit))
+            if url.endswith("segment.ts"):
+                return segment, url, 0.5
+            return manifest, url, 0.01
+
+        repair.fetch = fake_fetch
+        try:
+            download, stream, height = repair.probe_once("https://cdn.example/live.m3u8")
+        finally:
+            repair.fetch = original_fetch
+        self.assertEqual(calls[-1][1], repair.SEGMENT_READ_LIMIT)
+        self.assertAlmostEqual(download, 16.0)
+        self.assertAlmostEqual(stream, 2.0)
+        self.assertEqual(height, 0)
+
     def test_rewrite_removes_dead_pair_and_duplicate_backup(self):
         original = """#EXTM3U
 # channels=4
