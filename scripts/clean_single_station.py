@@ -13,19 +13,36 @@ from pathlib import Path
 
 PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 
+# Viewer-side hotfix: keep the sports pair on a China Telecom route and stop
+# later automated promotion/rescue passes from putting the stuttering route back.
+PINNED_URLS = {
+    "cctv5": "http://219.140.56.34:3333/tsfile/live/1005_1.m3u8",
+    "cctv5plus": "http://219.140.56.34:3333/tsfile/live/0016_1.m3u8",
+}
+
+TECH_SUFFIX = re.compile(
+    r"(?:\s*[-_/]?\s*(?:备用\s*IPv4|IPv4\s*备用|备用\s*IPv6|IPv6\s*备用|"
+    r"IPv[46](?:主线|备用)?|主线|备用(?:\s*\d+)?(?:\s*1080p\d*)?|"
+    r"1080[pi]?\s*50|1080p50|1080i50|50\s*FPS))+\s*$",
+    re.I,
+)
+
 
 def visible_name(extinf: str) -> str:
     return extinf.rsplit(",", 1)[-1].strip() if "," in extinf else extinf.strip()
 
 
+def strip_technical_suffix(name: str) -> str:
+    clean = name.strip()
+    old = None
+    while clean != old:
+        old = clean
+        clean = TECH_SUFFIX.sub("", clean).strip()
+    return clean
+
+
 def station_key(name: str) -> str | None:
-    # Strip every generated/legacy route-quality suffix before identity matching.
-    clean = re.sub(
-        r"\s+(?:IPv[46](?:主线|备用)?|主线|备用\s*\d*(?:\s*1080p\d*)?|1080[pi]?\s*50|1080p50|1080i50|50\s*FPS)$",
-        "",
-        name,
-        flags=re.I,
-    ).strip()
+    clean = strip_technical_suffix(name)
     if re.search(r"cctv[\s_-]*4[\s_-]*k", clean, re.I):
         return "cctv4k"
     if re.search(r"cctv[\s_-]*0?5\s*(?:\+|plus|p)", clean, re.I):
@@ -50,9 +67,10 @@ def canonical_name(key: str) -> str:
     return key
 
 
-def canonicalize_extinf(extinf: str, key: str) -> str:
+def canonicalize_extinf(extinf: str, key: str | None) -> str:
     """Keep EPG/logo metadata but make the visible APTV label plain."""
-    name = canonical_name(key)
+    current = visible_name(extinf)
+    name = canonical_name(key) if key else strip_technical_suffix(current)
     if "," in extinf:
         return extinf.rsplit(",", 1)[0] + "," + name
     return extinf + "," + name
@@ -60,8 +78,6 @@ def canonicalize_extinf(extinf: str, key: str) -> str:
 
 def preference(name: str) -> tuple[int, int]:
     low = name.lower()
-    # Plain canonical tile wins. If an old reinforced list is being rescued,
-    # prefer its IPv4 fallback over an unverified cross-operator IPv6 tile.
     tagged = bool(re.search(r"ipv[46]|主线|备用", low, re.I))
     if not tagged:
         return (3, 0)
@@ -85,6 +101,8 @@ def clean(path: Path) -> tuple[int, int, int]:
             entries.append((line, lines[i + 1]))
             i += 2
             continue
+        if "IPv6主线 / 实测备用" in line:
+            line = line.replace("IPv6主线 / 实测备用", "单台单源 / 流畅优先")
         header.append(line)
         i += 1
 
@@ -109,24 +127,34 @@ def clean(path: Path) -> tuple[int, int, int]:
     for extinf, url in entries:
         key = station_key(visible_name(extinf))
         if key is None:
-            output_entries.append((extinf, url))
+            clean_extinf = canonicalize_extinf(extinf, None)
+            if clean_extinf != extinf:
+                renamed += 1
+            output_entries.append((clean_extinf, url))
             continue
         if key in used or best.get(key) != (extinf, url):
             continue
         clean_extinf = canonicalize_extinf(extinf, key)
         if clean_extinf != extinf:
             renamed += 1
+        if key in PINNED_URLS:
+            url = PINNED_URLS[key]
         output_entries.append((clean_extinf, url))
         used.add(key)
 
-    # Keep generated M3U header/comments. Entry-adjacent directives are not
-    # emitted by this project and are intentionally ignored, matching builder behavior.
-    leading: list[str] = []
+    count = len(output_entries)
+    output_header: list[str] = []
+    count_done = False
     for line in header:
-        if not leading and not line.startswith("#"):
-            continue
-        leading.append(line)
-    rendered = leading[:]
+        if line.startswith("# channels="):
+            output_header.append(f"# channels={count}")
+            count_done = True
+        else:
+            output_header.append(line)
+    if not count_done:
+        output_header.append(f"# channels={count}")
+
+    rendered = output_header[:]
     for extinf, url in output_entries:
         rendered.extend((extinf, url))
     path.write_text("\n".join(rendered).rstrip() + "\n", encoding="utf-8", newline="\n")
@@ -138,7 +166,7 @@ def main() -> int:
         total, removed, renamed = clean(Path(name))
         print(
             f"{name}: entries={total} duplicate_core_tiles_removed={removed} "
-            f"core_names_canonicalized={renamed}"
+            f"station_names_canonicalized={renamed}"
         )
     return 0
 
