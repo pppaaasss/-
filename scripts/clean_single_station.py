@@ -13,13 +13,6 @@ from pathlib import Path
 
 PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 
-# Viewer-side hotfix: keep the sports pair on a China Telecom route and stop
-# later automated promotion/rescue passes from putting the stuttering route back.
-PINNED_URLS = {
-    "cctv5": "http://219.140.56.34:3333/tsfile/live/1005_1.m3u8",
-    "cctv5plus": "http://219.140.56.34:3333/tsfile/live/0016_1.m3u8",
-}
-
 TECH_SUFFIX = re.compile(
     r"(?:\s*[-_/]?\s*(?:备用\s*IPv4|IPv4\s*备用|备用\s*IPv6|IPv6\s*备用|"
     r"IPv[46](?:主线|备用)?|主线|备用(?:\s*\d+)?(?:\s*1080p\d*)?|"
@@ -137,8 +130,6 @@ def clean(path: Path) -> tuple[int, int, int]:
         clean_extinf = canonicalize_extinf(extinf, key)
         if clean_extinf != extinf:
             renamed += 1
-        if key in PINNED_URLS:
-            url = PINNED_URLS[key]
         output_entries.append((clean_extinf, url))
         used.add(key)
 
