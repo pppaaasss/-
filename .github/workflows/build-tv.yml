@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'scripts/build_playlist.py'
+      - 'scripts/repair_cctv5.py'
       - 'tests/test_build_playlist.py'
       - '.github/workflows/build-tv.yml'
   schedule:
@@ -28,7 +29,10 @@ jobs:
         run: python3 -m unittest discover -s tests -v
       - name: Probe and build playlists
         id: playlist_build
-        continue-on-error: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
+        # A broad rebuild can fail its family-channel safety gate while the
+        # currently published playlists are still usable. Keep going so the
+        # CCTV-5 rescue pass can repair the checked-in playlist independently.
+        continue-on-error: true
         env:
           TARGET_STABLE: '800'
           MIN_STABLE: '760'
@@ -39,6 +43,9 @@ jobs:
           PROBE_WORKERS: '56'
           PROBE_TIMEOUT: '8'
         run: python3 scripts/build_playlist.py
+      - name: Reinforce CCTV-5 rescue routes
+        if: always()
+        run: python3 scripts/repair_cctv5.py
       - name: Install frame-audit image dependency
         if: github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]')
         run: |
@@ -55,10 +62,8 @@ jobs:
           name: family-channel-frame-audit
           path: frame-audit/
           retention-days: 3
-      - name: Propagate playlist build failure after audit upload
-        if: steps.playlist_build.outcome == 'failure'
-        run: exit 1
       - name: Publish refreshed playlists
+        if: always()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -69,3 +74,6 @@ jobs:
             git commit -m 'Refresh measured APTV playlists'
             git push
           fi
+      - name: Propagate broad playlist build failure after rescue publish
+        if: steps.playlist_build.outcome == 'failure'
+        run: exit 1
