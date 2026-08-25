@@ -61,6 +61,21 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y -qq ffmpeg
           fi
+      - name: Apply viewer-confirmed blocked hosts
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/upgrade_core_50hz.py')
+          text = p.read_text(encoding='utf-8')
+          host = '129.226.107.225'
+          if host not in text:
+              needle = '    "39.134.13.35",   # Hunan Mobile regional IPTV pool\n'
+              insert = needle + '    "129.226.107.225", # Public 50FPS pool stalls on viewer home line\n'
+              if needle not in text:
+                  raise SystemExit('viewer blocklist insertion point not found')
+              p.write_text(text.replace(needle, insert), encoding='utf-8', newline='\n')
+          PY
       - name: Promote verified 1080p50 and native 1080i50 routes
         if: always()
         continue-on-error: true
@@ -94,6 +109,10 @@ jobs:
             echo 'No playlist changes'
           else
             git commit -m 'Refresh measured APTV playlists'
+            # Independent probe/report workflows may advance master while this
+            # long build is running. Rebase the generated playlist commit so a
+            # harmless concurrent report push cannot make publication fail.
+            git pull --rebase origin master
             git push
           fi
       - name: Propagate broad playlist build failure after rescue publish
