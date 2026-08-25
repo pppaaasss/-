@@ -225,6 +225,15 @@ EXTRAS = [
     ("CCTV-16 奥林匹克", "大陆", "http://liveop.cctv.cn/hls/CCTV16HD/playlist.m3u8"),
     ("CCTV-16 奥林匹克", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226100/index.m3u8"),
     ("CCTV-16 奥林匹克", "大陆", "https://epg.pw/stream/c1beb2abcba5aef09c2f58efc3ca84b76de2c7b9cf60762b0d79772d9e70d454.m3u8"),
+    # User-route replacements for an expiring signed CCTV-4K URL and a
+    # buffering CCTV-15 GitHub Pages relay. Every candidate still must pass
+    # two live-manifest and media-segment probes before publication.
+    ("CCTV-4K 超高清", "大陆", "http://27.222.3.214/liveali-tp4k.cctv.cn/live/4K10M.stream/playlist.m3u8"),
+    ("CCTV-4K 超高清", "大陆", "http://101.35.240.114:88/live.php?id=CCTV4K"),
+    ("CCTV-4K 超高清", "大陆", "http://116.52.173.151:1234/624878970"),
+    ("CCTV-15 音乐", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225601/index.m3u8"),
+    ("CCTV-15 音乐", "大陆", "http://61.136.172.236:9901/tsfile/live/0015_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("CCTV-15 音乐", "大陆", "http://113.57.140.161:10081/newlive/live/hls/16/live.m3u8"),
     ("求索纪录", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000010.m3u8?cdn=hnbblive"),
     ("求索科学", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000011.m3u8?cdn=hnbblive"),
     ("求索生活", "中文纪录", "http://home.wwang.pw:35455/itv/2000000004000000008.m3u8?cdn=hnbblive"),
@@ -410,8 +419,19 @@ MISLABELLED_STREAM_URLS = {
     # for CCTV-5, despite passing short remote probes.
     "http://gmxw.7766.org:808/hls/93/index.m3u8",
 }
+USER_REJECTED_ROUTE_PREFIXES = (
+    # User-tested on the actual APTV route: signed CCTV 4K URLs expire or fail
+    # even after a fast GitHub probe; the xykt CCTV-15 route buffers heavily.
+    "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_",
+    "https://xykt-fix.github.io/play/a02e/",
+)
+USER_PREFERRED_ROUTE_PREFIXES = (
+    "http://27.222.3.214/liveali-tp4k.cctv.cn/live/4K10M.stream/playlist.m3u8",
+    "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221225601/index.m3u8",
+)
 REQUIRED_CORE_IDS = ("cctv5", "cctv5plus", "cctv9", "cctv12", "cctv16")
 NUMBERED_CCTV_IDS = tuple(f"cctv{number}" for number in range(1, 18))
+CCTV_AUDIT_IDS = NUMBERED_CCTV_IDS + ("cctv4k", "cctv5plus")
 CHINA_SIDE_FALLBACK_IDS = {"cctv1", "cctv2", "cctv5", "cctv8", "cctv11", "湖南卫视", "山东卫视"}
 
 MAINLAND_SATELLITE_NAMES = (
@@ -723,6 +743,8 @@ def is_station_like(channel: Channel) -> bool:
     low = f"{channel.name} {channel.extinf}".lower()
     if channel.url.rstrip("/") in {url.rstrip("/") for url in MISLABELLED_STREAM_URLS}:
         return False
+    if channel.url.startswith(USER_REJECTED_ROUTE_PREFIXES):
+        return False
     if cctv_url_conflicts_with_label(channel):
         return False
     # Some public lists attach AAC-only feeds to CCTV video labels. They pass
@@ -821,6 +843,8 @@ def channel_static_score(channel: Channel) -> float:
         score -= 8
     if channel.curated:
         score += 6
+    if channel.url.startswith(USER_PREFERRED_ROUTE_PREFIXES):
+        score += 220
     # A fast county station must not crowd CCTV and major satellite channels
     # out of a 200-tile living-room playlist.
     if re.search(r"\bcctv[\s_-]*\d+", low, re.I) or "央视" in low:
@@ -1736,7 +1760,7 @@ def main() -> int:
             "mbps": float(chosen.probe.get("segment_mbps") or 0) if chosen else 0,
         }
     all_cctv_status = {}
-    for target in NUMBERED_CCTV_IDS:
+    for target in CCTV_AUDIT_IDS:
         tested = [channel for channel in probe_pool if channel_key(channel) == target]
         chosen = next((channel for channel in stable if channel_key(channel) == target), None)
         all_cctv_status[target] = {

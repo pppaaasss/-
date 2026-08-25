@@ -77,6 +77,22 @@ https://example.com/notice.m3u8
         self.assertFalse(builder.is_station_like(wrong_number))
         self.assertTrue(builder.is_station_like(correct))
 
+    def test_user_rejected_4k_and_music_routes_are_rejected(self):
+        cctv4k = builder.Channel(
+            "CCTV-4K",
+            '#EXTINF:-1 group-title="大陆",CCTV-4K',
+            "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_mbd.m3u8?auth_key=expired",
+            "大陆",
+        )
+        cctv15 = builder.Channel(
+            "CCTV-15 音乐",
+            '#EXTINF:-1 group-title="大陆",CCTV-15 音乐',
+            "https://xykt-fix.github.io/play/a02e/index.m3u8",
+            "大陆",
+        )
+        self.assertFalse(builder.is_station_like(cctv4k))
+        self.assertFalse(builder.is_station_like(cctv15))
+
     def test_core_metadata_is_canonical(self):
         channel = builder.Channel(
             "CCTV-5 体育",
