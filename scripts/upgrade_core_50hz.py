@@ -24,6 +24,8 @@ from dataclasses import dataclass
 
 import upgrade_core_50fps as base
 
+FEI_50FPS_SOURCE = "https://raw.githubusercontent.com/fei699/zb/main/%E8%82%A5%E7%BE%8A%E7%9B%B4%E6%92%AD.txt"
+
 
 @dataclass
 class HzResult:
@@ -72,6 +74,41 @@ class HzResult:
     @property
     def promotable(self) -> bool:
         return self.ok and self.temporal50 and self.headroom_ok
+
+
+def cmvideo_50fps_candidates(text: str) -> list[base.Candidate]:
+    """Turn current FeiYang localhost proxy IDs into public CMVideo GSLB URLs.
+
+    The upstream list intentionally targets a local proxy at 127.0.0.1:35455,
+    e.g. /itv/<ContentID>.m3u8?cdn=<channel-id>$ITV 50FPS.  The same service is
+    publicly addressed through gslbserv.itv.cmvideo.cn.  We only generate a
+    candidate here: ffprobe + HLS segment tests below still decide whether it
+    is usable today, so a changed/locked CMVideo route cannot be published.
+    """
+    output: list[base.Candidate] = []
+    pattern = re.compile(
+        r"^([^,#]+),http://127\.0\.0\.1:\d+/itv/(\d+)\.m3u8\?cdn=([^$&\s]+).*\$ITV\s+50FPS\s*$",
+        re.I,
+    )
+    for raw in text.splitlines():
+        match = pattern.match(raw.strip())
+        if not match:
+            continue
+        name, content_id, channel_id = match.groups()
+        key = base.canonical_key(name, raw)
+        if not key or key == "cctv4k":
+            continue
+        query = urllib.parse.urlencode(
+            {
+                "channel-id": channel_id,
+                "Contentid": content_id,
+                "livemode": "1",
+                "stbId": "IPTV",
+            }
+        )
+        url = f"http://gslbserv.itv.cmvideo.cn/index.m3u8?{query}"
+        output.append(base.Candidate(key, name.strip(), url, "fei699-cmvideo-50fps", True, False))
+    return output
 
 
 def probe_meta(url: str) -> tuple[int, int, float, float, str, str, float]:
@@ -164,6 +201,13 @@ def main() -> int:
             source_status.append(f"{source}:ok:{len(parsed)}")
         except Exception as exc:
             source_status.append(f"{source}:fail:{type(exc).__name__}")
+
+    try:
+        fei = cmvideo_50fps_candidates(base.fetch_text(FEI_50FPS_SOURCE))
+        candidates.extend(fei)
+        source_status.append(f"fei699-cmvideo-50fps:ok:{len(fei)}")
+    except Exception as exc:
+        source_status.append(f"fei699-cmvideo-50fps:fail:{type(exc).__name__}")
 
     unique: dict[tuple[str, str], base.Candidate] = {}
     for candidate in candidates:
