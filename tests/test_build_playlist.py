@@ -129,6 +129,22 @@ https://example.com/notice.m3u8
                 )
                 self.assertFalse(builder.is_station_like(channel))
 
+    def test_frame_audit_rejects_poisoned_relay_families(self):
+        fixtures = (
+            ("吉林卫视", "http://t.061899.xyz/mg/jlws"),
+            ("青海卫视", "http://cdn6.bkpcp.top/tl/tuiliu.php?id=qhws"),
+            ("北京卫视", "http://go.bkpcp.top/mg/bjws"),
+        )
+        for name, url in fixtures:
+            with self.subTest(name=name):
+                channel = builder.Channel(
+                    name,
+                    f'#EXTINF:-1 group-title="大陆",{name}',
+                    url,
+                    "大陆",
+                )
+                self.assertFalse(builder.is_station_like(channel))
+
     def test_jade_mislabelled_as_cctv4k_is_rejected(self):
         channel = builder.Channel(
             "CCTV-4K",
@@ -246,6 +262,51 @@ https://example.com/notice.m3u8
         self.assertEqual(merged["manifest_s"], 1.6)
         self.assertEqual(merged["stream_mbps"], 4.8)
         self.assertTrue(merged["dual_stack_dns"])
+
+    def test_duplicate_core_video_is_rejected_across_channel_labels(self):
+        channels = []
+        for index, name in enumerate(("CCTV-1 综合", "CCTV-2 财经", "北京卫视", "湖南卫视")):
+            channel = builder.Channel(
+                name,
+                f'#EXTINF:-1 group-title="大陆",{name}',
+                f"https://relay.example/{index}.m3u8",
+                "大陆",
+            )
+            channel.probe = {
+                "ok": True,
+                "checks_ok": 3,
+                "height": 1080,
+                "segment_mbps": 8.0,
+                "manifest_s": 1.0,
+                "segment_fingerprints": ["same-video-segment"],
+            }
+            channels.append(channel)
+
+        collisions = builder.mark_duplicate_core_content(channels)
+
+        self.assertEqual(len(collisions), 1)
+        self.assertEqual(collisions[0]["distinct_keys"], 4)
+        self.assertTrue(all(channel.probe["duplicate_core_content"] for channel in channels))
+        self.assertTrue(all(not builder.is_family_core_usable(channel) for channel in channels))
+
+    def test_visually_confirmed_shanxi_route_keeps_two_probe_fallback(self):
+        url = next(iter(builder.VISUALLY_CONFIRMED_CORE_URLS))
+        channel = builder.Channel(
+            "山西卫视 1080p",
+            '#EXTINF:-1 group-title="大陆",山西卫视 1080p',
+            url,
+            "大陆",
+        )
+        channel.probe = {
+            "ok": True,
+            "checks_ok": 2,
+            "height": 1080,
+            "segment_mbps": 0.4,
+            "manifest_s": 2.0,
+        }
+        self.assertTrue(builder.is_family_core_usable(channel))
+        channel.probe["segment_mbps"] = 0.3
+        self.assertFalse(builder.is_family_core_usable(channel))
 
     def test_media_segment_duration_is_parsed_for_bitrate_measurement(self):
         playlist = """#EXTM3U

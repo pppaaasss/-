@@ -11,6 +11,7 @@ from __future__ import annotations
 import concurrent.futures
 import datetime as dt
 import functools
+import hashlib
 import ipaddress
 import json
 import os
@@ -215,6 +216,9 @@ EXTRAS = [
     ("CCTV-10 科教 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv10hd"),
     ("CCTV-10 科教 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqbv/cctv10hd.m3u8?auth=test20251009"),
     ("CCTV-10 科教 1080p", "大陆", "http://207.56.13.146:81/cdnlive/cctv10.m3u8"),
+    ("CCTV-10 科教 1080p", "大陆", "http://198.204.228.26/live/cctv10hd.m3u8"),
+    ("CCTV-10 科教 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/cctv10.m3u8"),
+    ("CCTV-10 科教 1080p 高码", "大陆", "http://117.161.12.124/live/program/live/cctv10hd8m/8000000/mnf.m3u8"),
     # CCTV-15 alternatives on independently hosted mirrors. The previously
     # selected operator /0016_1 route is intentionally absent: it is Guangdong
     # Satellite TV on the family's actual television.
@@ -269,6 +273,34 @@ EXTRAS = [
     ("山西卫视 1080p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/270000001128/9900000053/index.m3u8"),
     ("山西卫视 720p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/000000001000PLTV/88888888/224/3221226543/index.m3u8"),
     ("山西卫视 720p IPv6", "大陆", "http://[2409:8087:74d9:21::6]/270000001322/69900158041111100000002214/index.m3u8"),
+    ("山西卫视 1080p", "大陆", "http://198.204.228.26/live/sxwshd.m3u8"),
+    ("山西卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/sxws.m3u8"),
+    ("山西卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=sxwshd"),
+    ("山西卫视 1080p", "大陆", "http://119.39.9.8:9901/tsfile/live/0118_1.m3u8"),
+    # Replacements for satellite routes removed by the visual frame audit.
+    # These mirrors are independent candidates; none is published unless it
+    # survives the normal repeated manifest and media-segment probes.
+    ("北京卫视 1080p", "大陆", "http://198.204.228.26/live/bjwshd.m3u8"),
+    ("北京卫视 1080p", "大陆", "http://107.150.60.122/live/bjwshd.m3u8"),
+    ("北京卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=bjwshd"),
+    ("内蒙古卫视 1080p", "大陆", "http://198.204.228.26/live/nmgws.m3u8"),
+    ("内蒙古卫视 1080p", "大陆", "http://107.150.60.122/live/nmgws.m3u8"),
+    ("内蒙古卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=nmgws"),
+    ("内蒙古卫视 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/nmgws.m3u8?auth=testpub"),
+    ("内蒙古卫视 1080p", "大陆", "http://61.178.227.57:9901/tsfile/live/0109_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("内蒙古卫视 1080p", "大陆", "http://120.238.84.45:9901/tsfile/live/1072_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("新疆卫视 1080p", "大陆", "http://198.204.228.26/live/xjws.m3u8"),
+    ("新疆卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=xjws"),
+    ("新疆卫视 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/xjws.m3u8?auth=testpub"),
+    ("新疆卫视 1080p", "大陆", "http://113.25.252.226:9901/tsfile/live/1044_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("新疆卫视 1080p", "大陆", "http://58.57.40.22:9901/tsfile/live/1055_1.m3u8"),
+    ("新疆卫视 1080p", "大陆", "http://36.32.174.67:60080/newlive/live/hls/47/live.m3u8"),
+    ("青海卫视 1080p", "大陆", "http://198.204.228.26/live/qhws.m3u8"),
+    ("青海卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=qhws"),
+    ("青海卫视 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/qhws.m3u8?auth=testpub"),
+    ("青海卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/qhws.m3u8"),
+    ("青海卫视 1080p", "大陆", "http://61.178.227.57:9901/tsfile/live/0140_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("青海卫视 1080p", "大陆", "http://112.27.5.218:9901/tsfile/live/0140_2.m3u8?key=txiptv&playlive=1&authid=0"),
     ("山东卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/sdws.m3u8"),
     ("CCTV-5 体育", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226019/index.m3u8"),
     ("CCTV-5 体育", "大陆", "http://newvideo.dangtutv.cn:8278/CCTVsports/playlist.m3u8"),
@@ -500,6 +532,11 @@ USER_REJECTED_ROUTE_PREFIXES = (
     # even after a fast GitHub probe; the xykt CCTV-15 route buffers heavily.
     "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_",
     "https://xykt-fix.github.io/play/a02e/",
+    # Frame audit 2026-08-25: these relay families returned CCTV-1 under many
+    # different satellite labels (and a suspicious Beijing/Qinghai feed).
+    "http://t.061899.xyz/",
+    "http://cdn6.bkpcp.top/",
+    "http://go.bkpcp.top/",
 )
 USER_PREFERRED_ROUTE_PREFIXES = (
     "http://27.222.3.214/liveali-tp4k.cctv.cn/live/4K10M.stream/playlist.m3u8",
@@ -518,6 +555,13 @@ MAINLAND_SATELLITE_NAMES = (
     "甘肃卫视", "宁夏卫视", "海南卫视", "东南卫视", "延边卫视", "海峡卫视", "兵团卫视",
     "安多卫视", "农林卫视", "三沙卫视",
 )
+# The exact Shanxi route below was decoded and visually confirmed as 山西卫视.
+# Domestic operator paths occasionally download slowly from the overseas
+# Actions runner, so it may use a 0.35 Mbps *download* floor after two fresh
+# reads. Its programme bitrate and picture remain independently measured.
+VISUALLY_CONFIRMED_CORE_URLS = {
+    "http://153.0.171.163:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=1&authid=0",
+}
 MAINLAND_SATELLITE_CHINESE_ALIASES = {
     "上海卫视": "东方卫视",
     "内蒙卫视": "内蒙古卫视",
@@ -872,6 +916,7 @@ def update_health_history(channels: Iterable[Channel], previous: dict) -> dict:
             and int(probe.get("checks_ok") or 1) >= 2
             and not probe.get("recheck_failed")
             and not probe.get("easy_check_failed")
+            and not probe.get("duplicate_core_content")
         )
         recent.append(1 if success else 0)
         routes[key] = {
@@ -1191,6 +1236,7 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
         "manifest_s": round(manifest_seconds + (media_seconds if selected_variant else 0), 3),
         "segment_mbps": round(speed_mbps, 2),
         "segment_bytes": len(segment),
+        "segment_sha256": hashlib.sha256(segment).hexdigest(),
         "stream_mbps": round(stream_mbps, 2),
         "width": width,
         "height": height,
@@ -1248,7 +1294,58 @@ def merge_probe_results(first: dict, later: dict, checks_ok: int) -> dict:
     combined["dual_stack_dns"] = bool(
         combined["ipv4_dns"] and combined["ipv6_dns"]
     )
+    fingerprints = {
+        str(value)
+        for probe in (first, later)
+        for value in (
+            list(probe.get("segment_fingerprints") or [])
+            + ([probe.get("segment_sha256")] if probe.get("segment_sha256") else [])
+        )
+        if value
+    }
+    combined["segment_fingerprints"] = sorted(fingerprints)
     return combined
+
+
+def mark_duplicate_core_content(
+    channels: Iterable[Channel], min_distinct_keys: int = 4
+) -> list[dict]:
+    """Reject one video feed relabelled as many CCTV/satellite channels.
+
+    A legitimate simulcast can occasionally share a commercial, so a pair is
+    not enough. Four distinct canonical core stations returning an identical
+    media segment is treated as a poisoned relay and blocks every matching
+    candidate before selection.
+    """
+    by_fingerprint: dict[str, list[Channel]] = defaultdict(list)
+    for channel in channels:
+        channel.probe.pop("duplicate_core_content", None)
+        channel.probe.pop("duplicate_content_keys", None)
+        if not is_core_channel(channel) or not channel.probe.get("ok"):
+            continue
+        fingerprints = set(channel.probe.get("segment_fingerprints") or [])
+        if channel.probe.get("segment_sha256"):
+            fingerprints.add(str(channel.probe["segment_sha256"]))
+        for fingerprint in fingerprints:
+            by_fingerprint[fingerprint].append(channel)
+
+    collisions: list[dict] = []
+    for fingerprint, matches in by_fingerprint.items():
+        keys = sorted({channel_key(channel) for channel in matches if channel_key(channel)})
+        if len(keys) < min_distinct_keys:
+            continue
+        for channel in matches:
+            channel.probe["duplicate_core_content"] = True
+            channel.probe["duplicate_content_keys"] = keys
+        collisions.append(
+            {
+                "fingerprint": fingerprint[:16],
+                "distinct_keys": len(keys),
+                "keys": keys,
+                "urls": sorted({channel.url for channel in matches}),
+            }
+        )
+    return sorted(collisions, key=lambda item: (-item["distinct_keys"], item["fingerprint"]))
 
 
 def is_stable(channel: Channel) -> bool:
@@ -1259,7 +1356,11 @@ def is_stable(channel: Channel) -> bool:
         # Official regional CDN streams can be valid behind the user's HK/JP/SG
         # exit even when GitHub's US runner receives a geo error.
         return channel.allow_geo and channel.static_score >= 55 and labelled_height(channel) >= 720
-    if not probe.get("ok") or probe.get("header_required"):
+    if (
+        not probe.get("ok")
+        or probe.get("header_required")
+        or probe.get("duplicate_core_content")
+    ):
         return False
     height = probe.get("height") or labelled_height(channel)
     speed = float(probe.get("segment_mbps") or 0)
@@ -1284,7 +1385,11 @@ def is_core_acceptable(channel: Channel) -> bool:
     probe = channel.probe
     if probe.get("geo_restricted"):
         return False
-    if not probe.get("ok") or probe.get("header_required"):
+    if (
+        not probe.get("ok")
+        or probe.get("header_required")
+        or probe.get("duplicate_core_content")
+    ):
         return False
     height = int(probe.get("height") or labelled_height(channel))
     speed = float(probe.get("segment_mbps") or 0)
@@ -1306,6 +1411,7 @@ def is_easy_ready(channel: Channel) -> bool:
         or probe.get("geo_restricted")
         or probe.get("unverified_china_side_fallback")
         or probe.get("unverified_edge_fallback")
+        or probe.get("duplicate_core_content")
     ):
         return False
     height = int(probe.get("height") or labelled_height(channel))
@@ -1336,13 +1442,15 @@ def is_family_core_usable(channel: Channel) -> bool:
         or probe.get("recheck_failed")
         or probe.get("header_required")
         or probe.get("geo_restricted")
+        or probe.get("duplicate_core_content")
     ):
         return False
     # Core channels may use a lower-bitrate domestic route when no strict
     # three-check route exists. Two successful fresh segment reads are still
     # mandatory; a completely dead route never receives a family exemption.
+    minimum_speed = 0.35 if channel.url in VISUALLY_CONFIRMED_CORE_URLS else 0.6
     return (
-        float(probe.get("segment_mbps") or 0) >= 0.6
+        float(probe.get("segment_mbps") or 0) >= minimum_speed
         and float(probe.get("manifest_s") or 99) <= 10.0
     )
 
@@ -1352,7 +1460,7 @@ def measured_score(channel: Channel) -> float:
     probe = channel.probe
     if probe.get("geo_restricted"):
         return score - 25
-    if not probe.get("ok"):
+    if not probe.get("ok") or probe.get("duplicate_core_content"):
         return -9999
     speed = min(float(probe.get("segment_mbps") or 0), 40)
     latency = float(probe.get("manifest_s") or 10)
@@ -1410,6 +1518,9 @@ def core_candidate_diagnostics(channels: Iterable[Channel], targets: Iterable[st
                 "height": int(channel.probe.get("height") or labelled_height(channel)),
                 "download_mbps": round(float(channel.probe.get("segment_mbps") or 0), 2),
                 "stream_mbps": round(float(channel.probe.get("stream_mbps") or 0), 2),
+                "duplicate_core_content": bool(
+                    channel.probe.get("duplicate_core_content")
+                ),
                 "error": str(
                     channel.probe.get("easy_check_error")
                     or channel.probe.get("recheck_error")
@@ -2165,6 +2276,12 @@ def main() -> int:
         f"easy_route_recheck_failed={easy_recheck_failed}"
     )
 
+    duplicate_core_content_collisions = mark_duplicate_core_content(probe_pool)
+    print(
+        "duplicate_core_content_collisions="
+        + json.dumps(duplicate_core_content_collisions, ensure_ascii=False)
+    )
+
     stable_primary = select_stable(probe_pool)
     easy = select_easy(probe_pool)
     easy_keys = {channel_key(channel) for channel in easy}
@@ -2183,9 +2300,15 @@ def main() -> int:
     stable = add_cctv5_backups(stable_primary, probe_pool)
     full = select_all(candidates, stable)
     history_payload = update_health_history(probe_pool, previous_history)
-    healthy = sum(1 for channel in probe_pool if channel.probe.get("ok"))
+    healthy = sum(
+        1
+        for channel in probe_pool
+        if channel.probe.get("ok") and not channel.probe.get("duplicate_core_content")
+    )
     healthy_by_source = Counter(
-        channel.source or "unknown" for channel in probe_pool if channel.probe.get("ok")
+        channel.source or "unknown"
+        for channel in probe_pool
+        if channel.probe.get("ok") and not channel.probe.get("duplicate_core_content")
     )
     geo = sum(1 for channel in probe_pool if channel.probe.get("geo_restricted"))
     cctv5_primary = next(
@@ -2454,6 +2577,9 @@ def main() -> int:
         "cctv10_candidate_diagnostics=" + json.dumps(
             core_candidate_diagnostics(probe_pool, ["cctv10"]),
             ensure_ascii=False,
+        ),
+        "duplicate_core_content_collisions=" + json.dumps(
+            duplicate_core_content_collisions, ensure_ascii=False
         ),
         "mainland_satellite_status=" + json.dumps(satellite_status, ensure_ascii=False),
         "satellite_group_audit=" + json.dumps(satellite_group_audit, ensure_ascii=False),
