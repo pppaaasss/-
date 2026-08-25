@@ -37,6 +37,37 @@ class RepairCctv5PairTests(unittest.TestCase):
             repair.urllib.parse.urlsplit(selected["cctv5plus"].url).hostname,
         )
 
+    def test_selection_prefers_high_bitrate_with_download_headroom(self):
+        low_quality = repair.CANDIDATES["cctv5"][0]
+        high_quality = repair.CANDIDATES["cctv5"][1]
+        results = []
+        for url in repair.CANDIDATES["cctv5"]:
+            if url == low_quality:
+                results.append(repair.Probe("cctv5", url, True, 30.0, 2.0, 1080))
+            elif url == high_quality:
+                results.append(repair.Probe("cctv5", url, True, 15.0, 6.0, 1080))
+            else:
+                results.append(repair.Probe("cctv5", url, False))
+        for index, url in enumerate(repair.CANDIDATES["cctv5plus"]):
+            results.append(
+                repair.Probe("cctv5plus", url, index < 2, 12.0, 4.0, 1080)
+            )
+        selected = repair.choose_routes(results, {})
+        self.assertEqual(selected["cctv5"].url, high_quality)
+        self.assertNotEqual(
+            selected["cctv5"].probe.host,
+            selected["cctv5plus"].probe.host,
+        )
+
+    def test_segment_duration_supports_real_stream_bitrate(self):
+        text = """#EXTM3U
+#EXTINF:5.5,
+segment-1.ts
+"""
+        url, duration = repair.first_media_segment(text, "https://cdn.example/live/index.m3u8")
+        self.assertEqual(url, "https://cdn.example/live/segment-1.ts")
+        self.assertEqual(duration, 5.5)
+
     def test_rewrite_removes_dead_pair_and_duplicate_backup(self):
         original = """#EXTM3U
 # channels=4
