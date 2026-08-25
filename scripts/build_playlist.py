@@ -185,6 +185,7 @@ SOURCES = [
     ("国际", "https://raw.githubusercontent.com/YueChan/Live/main/Global.m3u", True),
     ("中文付费", "https://raw.githubusercontent.com/YueChan/Live/main/Hunan.txt", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
+    ("大陆", "https://raw.githubusercontent.com/JinnLynn/iptv/dist/live-ipv4.txt", False),
     # Small HTTPS relay list with currently maintained CHC linear channels.
     ("中文付费", "https://cdn.jsdelivr.net/gh/jyoketsu/tv@main/live.txt", False),
 ]
@@ -328,6 +329,23 @@ EXTRAS = [
     ("海南卫视 1080p", "大陆", "http://107.150.60.122/live/lyws.m3u8"),
     ("海南卫视 1080p", "大陆", "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=lyws"),
     ("海南卫视 1080p", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/lyws.m3u8?auth=testpub"),
+    # Fresh operator-address candidates from the 2026-08-21 IPv4 catalogue.
+    ("湖北卫视 1080p", "大陆", "http://39.134.67.108/PLTV/88888888/224/3221225975/1.m3u8"),
+    ("湖北卫视 1080p", "大陆", "http://39.134.65.162/PLTV/88888888/224/3221225569/1.m3u8"),
+    ("湖北卫视 1080p", "大陆", "http://14.29.76.30:9901/tsfile/live/0132_1.m3u8?key=txiptv"),
+    ("陕西卫视 1080p", "大陆", "http://39.164.160.249:9901/tsfile/live/0136_1.m3u8"),
+    ("陕西卫视 576p", "大陆", "http://39.134.144.6:8089/PLTV/88888888/224/3221226035/index.m3u8"),
+    ("陕西卫视 1080p", "大陆", "http://stream.snrtv.com/sxtvs-star.m3u8"),
+    ("吉林卫视 1080p", "大陆", "http://39.134.67.108/PLTV/88888888/224/3221226013/1.m3u8"),
+    ("吉林卫视 1080p", "大陆", "http://117.27.190.42:9998/tsfile/live/23258_1.m3u8?key=txiptv&playlive=1&authid=0"),
+    ("吉林卫视 1080p", "大陆", "http://175.18.189.238:9902/tsfile/live/0116_1.m3u8"),
+    ("甘肃卫视 1080p", "大陆", "http://live.nctv.top/886/sxg.php?id=gsws_4000"),
+    ("甘肃卫视 1080p", "大陆", "http://14.29.76.30:9901/tsfile/live/0141_1.m3u8?key=txiptv"),
+    ("甘肃卫视 1080p", "大陆", "http://218.13.170.98:9901/tsfile/live/0141_1.m3u8"),
+    ("甘肃卫视 1080p", "大陆", "http://222.240.82.92:9901/tsfile/live/0141_1.m3u8"),
+    ("海南卫视 1080p", "大陆", "http://39.134.67.108/PLTV/88888888/224/3221226026/1.m3u8"),
+    ("海南卫视 1080p", "大陆", "http://119.62.36.174:9901/tsfile/live/1003_1.m3u8?key=txiptv&playlive=0&authid=0"),
+    ("海南卫视 1080p", "大陆", "http://117.27.190.42:9998/tsfile/live/23273_1.m3u8?key=txiptv&playlive=1&authid=0"),
     ("山东卫视 1080p", "大陆", "http://204.12.221.218:8181/3m1080p/sdws.m3u8"),
     ("CCTV-5 体育", "大陆", "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226019/index.m3u8"),
     ("CCTV-5 体育", "大陆", "http://newvideo.dangtutv.cn:8278/CCTVsports/playlist.m3u8"),
@@ -595,6 +613,15 @@ MAINLAND_SATELLITE_NAMES = (
 # reads. Its programme bitrate and picture remain independently measured.
 VISUALLY_CONFIRMED_CORE_URLS = {
     "http://153.0.171.163:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=1&authid=0",
+}
+# These domestic routes have repeatedly delivered two full media segments but
+# appear slow only from GitHub's overseas runner. They may reach the temporary
+# family fallback at 0.35 Mbps download speed so the subsequent frame audit
+# can verify their picture; one-shot routes and failed segments remain barred.
+DOMESTIC_FRAME_AUDIT_CORE_URLS = {
+    "http://120.198.95.220:9901/tsfile/live/1056_1.m3u8?key=txiptv&playlive=1&down=1",
+    "http://112.123.243.37:50085/tsfile/live/1001_1.m3u8?key=txiptv&playlive=0&authid=0",
+    "https://liveout.xntv.tv/a65jur/96iln2.m3u8",
 }
 MAINLAND_SATELLITE_CHINESE_ALIASES = {
     "上海卫视": "东方卫视",
@@ -1482,7 +1509,8 @@ def is_family_core_usable(channel: Channel) -> bool:
     # Core channels may use a lower-bitrate domestic route when no strict
     # three-check route exists. Two successful fresh segment reads are still
     # mandatory; a completely dead route never receives a family exemption.
-    minimum_speed = 0.35 if channel.url in VISUALLY_CONFIRMED_CORE_URLS else 0.6
+    lower_floor_urls = VISUALLY_CONFIRMED_CORE_URLS | DOMESTIC_FRAME_AUDIT_CORE_URLS
+    minimum_speed = 0.35 if channel.url in lower_floor_urls else 0.6
     return (
         float(probe.get("segment_mbps") or 0) >= minimum_speed
         and float(probe.get("manifest_s") or 99) <= 10.0

@@ -308,6 +308,25 @@ https://example.com/notice.m3u8
         channel.probe["segment_mbps"] = 0.3
         self.assertFalse(builder.is_family_core_usable(channel))
 
+    def test_domestic_frame_audit_candidate_uses_overseas_runner_floor(self):
+        url = next(iter(builder.DOMESTIC_FRAME_AUDIT_CORE_URLS))
+        channel = builder.Channel(
+            "云南卫视 1080p",
+            '#EXTINF:-1 group-title="大陆",云南卫视 1080p',
+            url,
+            "大陆",
+        )
+        channel.probe = {
+            "ok": True,
+            "checks_ok": 2,
+            "height": 1080,
+            "segment_mbps": 0.4,
+            "manifest_s": 2.0,
+        }
+        self.assertTrue(builder.is_family_core_usable(channel))
+        channel.probe["checks_ok"] = 1
+        self.assertFalse(builder.is_family_core_usable(channel))
+
     def test_media_segment_duration_is_parsed_for_bitrate_measurement(self):
         playlist = """#EXTM3U
 #EXT-X-TARGETDURATION:6
