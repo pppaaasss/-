@@ -33,24 +33,20 @@ DEAD_HOSTS = {"219.140.56.34"}
 # cannot remove CCTV-5 and CCTV-5+ together again.
 CANDIDATES = {
     "cctv5": (
-        "http://1.24.39.180:9003/hls/5/index.m3u8",
-        "http://120.76.248.139/live/bfgd/4200000064.m3u8",
-        "http://107.150.60.122/live/cctv5hd.m3u8",
         "http://207.56.13.146:81/cdnlive/cctv5.m3u8",
+        "http://107.150.60.122/live/cctv5hd.m3u8",
         "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub",
         "http://198.204.228.26/live/cctv5hd.m3u8",
-        "http://74.91.26.218:82/live/cctv5hd.m3u8",
+        "http://1.24.39.180:9003/hls/5/index.m3u8",
+        "http://120.76.248.139/live/bfgd/4200000064.m3u8",
         "http://58.56.162.102:4466/newlive/live/hls/5/live.m3u8",
     ),
     "cctv5plus": (
         "http://107.150.60.122/live/cctv5p.m3u8",
         "http://207.56.13.146:81/cdnlive/cctv5p.m3u8",
         "http://198.204.228.26/live/cctv5p.m3u8",
-        "http://74.91.26.218:82/live/cctv5p.m3u8",
         "http://38.75.136.137:98/gslb/dsdqpub/cctv5p.m3u8?auth=testpub",
-        "http://69.30.246.194/live/cctv5p.m3u8",
         "http://173.208.212.130:8181/720p/cctv5p.m3u8",
-        "http://183.129.255.66:8480/hls/6/index.m3u8",
     ),
 }
 
