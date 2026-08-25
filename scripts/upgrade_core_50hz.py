@@ -27,6 +27,14 @@ import upgrade_core_50fps as base
 FEI_50FPS_SOURCE = "https://raw.githubusercontent.com/fei699/zb/main/%E8%82%A5%E7%BE%8A%E7%9B%B4%E6%92%AD.txt"
 HUNAN_MOBILE_V4_SOURCE = "https://raw.githubusercontent.com/wind005/TVlive/main/txt/itv-%E6%B9%96%E5%8D%97%E7%A7%BB%E5%8A%A8v4.txt"
 
+# Viewer-side tests are authoritative for reachability. These hosts failed on
+# the user's actual home network, so never promote them even if an overseas
+# runner or third-party list reports them healthy.
+USER_BLOCKED_HOSTS = {
+    "111.32.21.78",   # Tianjin regional PLTV pool
+    "39.134.13.35",   # Hunan Mobile regional IPTV pool
+}
+
 
 @dataclass
 class HzResult:
@@ -218,7 +226,12 @@ def main() -> int:
         source_status.append(f"wind005-hunan-mobile-v4:fail:{type(exc).__name__}")
 
     unique: dict[tuple[str, str], base.Candidate] = {}
+    blocked_count = 0
     for candidate in candidates:
+        host = (urllib.parse.urlsplit(candidate.url).hostname or "").lower()
+        if host in USER_BLOCKED_HOSTS:
+            blocked_count += 1
+            continue
         marker = (candidate.key, candidate.url)
         old = unique.get(marker)
         if old is None or base.prelim_rank(candidate) > base.prelim_rank(old):
@@ -300,6 +313,8 @@ def main() -> int:
         f"generated_utc={dt.datetime.now(dt.timezone.utc).isoformat(timespec='seconds').replace('+00:00', 'Z')}",
         "selection_mode=1080p50_then_native_1080i50",
         "source_status=" + json.dumps(source_status, ensure_ascii=False),
+        "user_blocked_hosts=" + json.dumps(sorted(USER_BLOCKED_HOSTS), ensure_ascii=False),
+        f"user_blocked_candidates={blocked_count}",
         f"candidate_routes={len(unique)}",
         f"probed_routes={len(results)}",
         f"probe_ok={sum(r.ok for r in results)}",
@@ -347,7 +362,7 @@ def main() -> int:
         ], ensure_ascii=False),
     ]
     base.REPORT.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-    print("\n".join(report_lines[:12]))
+    print("\n".join(report_lines[:14]))
     return 0
 
 
