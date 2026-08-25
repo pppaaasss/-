@@ -25,8 +25,10 @@ from typing import Iterable
 
 
 # Keep tv.m3u as the permanent APTV subscription path; only its contents change.
-TARGET_STABLE = int(os.getenv("TARGET_STABLE", "600"))
-TARGET_ALL = int(os.getenv("TARGET_ALL", "800"))
+TARGET_STABLE = int(os.getenv("TARGET_STABLE", "800"))
+MIN_STABLE = int(os.getenv("MIN_STABLE", "760"))
+TARGET_ALL = int(os.getenv("TARGET_ALL", "1000"))
+SOURCE_WORKERS = int(os.getenv("SOURCE_WORKERS", "12"))
 PROBE_WORKERS = int(os.getenv("PROBE_WORKERS", "44"))
 PROBE_TIMEOUT = float(os.getenv("PROBE_TIMEOUT", "9"))
 MAX_VARIANTS_PER_CHANNEL = int(os.getenv("MAX_VARIANTS_PER_CHANNEL", "8"))
@@ -34,29 +36,32 @@ MAX_PROBE_BYTES = 768 * 1024
 TODAY = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
 
 DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV playlist health-check/2.0)"
+EPG_URL = "https://live.fanmingming.cn/e.xml"
+LOGO_BASE_URL = "https://live.fanmingming.cn/tv"
 
-# Chinese-first 400-channel target distribution. Missing groups are filled by
+# Chinese-first 800-channel target distribution. Missing groups are filled by
 # the fastest remaining healthy streams, so a weak regional source cannot stop
 # the list from reaching the requested size.
 GROUP_TARGETS = {
-    "大陆": 235,
-    "中文综合": 50,
-    "中文纪录": 30,
-    "中文电影": 30,
-    "中文付费": 50,
-    "香港": 35,
+    "大陆": 300,
+    "中文综合": 70,
+    "中文纪录": 35,
+    "中文电影": 35,
+    "中文付费": 55,
+    "香港": 40,
     "澳门": 5,
-    "台湾": 45,
+    "台湾": 55,
     "新加坡": 15,
     "马来西亚": 15,
-    "日本": 10,
-    "韩国": 10,
-    "纪录片": 15,
-    "电影": 15,
-    "新闻": 10,
-    "娱乐": 10,
-    "体育": 10,
-    "少儿": 5,
+    "日本": 20,
+    "韩国": 15,
+    "国际": 20,
+    "纪录片": 25,
+    "电影": 25,
+    "新闻": 20,
+    "娱乐": 20,
+    "体育": 15,
+    "少儿": 10,
     "音乐": 5,
 }
 
@@ -143,6 +148,13 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV1_GuoJi.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/HunanTV_AutoUpdate.m3u8", False),
+    # Active, metadata-rich lists reviewed in August 2026.  Their routes still
+    # go through the same manifest + media-segment probes as every other source.
+    ("大陆", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/index.m3u", False),
+    ("大陆", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/itv.m3u", False),
+    ("中文综合", "https://raw.githubusercontent.com/YueChan/Live/main/GNTV.m3u", True),
+    ("国际", "https://raw.githubusercontent.com/YueChan/Live/main/Global.m3u", True),
+    ("中文付费", "https://raw.githubusercontent.com/YueChan/Live/main/Hunan.txt", False),
     ("大陆", "https://raw.githubusercontent.com/jura00/vms/main/hd.m3u8", False),
     # Small HTTPS relay list with currently maintained CHC linear channels.
     ("中文付费", "https://cdn.jsdelivr.net/gh/jyoketsu/tv@main/live.txt", False),
@@ -332,6 +344,8 @@ EXTRAS = [
 BLOCK_WORDS = [
     "shopping", "shop ", " shop", "qvc", "hsn", "jewelry", "jewellery",
     "teleshop", "home shopping", "shop lc", "gemporia", "购物", "購物", "珠宝", "珠寶", "导购", "導購",
+    "免费订阅", "请勿贩卖", "维护时间", "维护内容", "公告说明", "使用说明",
+    "douyu", "斗鱼", "虎牙直播",
 ]
 LOW_VALUE = ["radio", "weather", "天气", "氣象", "parliament", "council", "assembly", "legislature"]
 
@@ -425,6 +439,45 @@ MAINLAND_SATELLITE_ENGLISH_ALIASES = {
     "tibettv": "西藏卫视", "innermongoliatv": "内蒙古卫视",
 }
 
+IMPORTED_GROUP_ALIASES = (
+    (("央视", "央视频道", "卫视台", "卫视频道", "卫视高清", "央视高清"), "大陆"),
+    (("香港", "hong kong"), "香港"),
+    (("澳门", "macao", "macau"), "澳门"),
+    (("台湾", "taiwan"), "台湾"),
+    (("新加坡", "singapore"), "新加坡"),
+    (("马来西亚", "malaysia"), "马来西亚"),
+    (("中文纪录",), "中文纪录"),
+    (("中文电影",), "中文电影"),
+    (("中文付费",), "中文付费"),
+    (("纪录片", "documentary"), "纪录片"),
+    (("少儿", "儿童", "kids"), "少儿"),
+    (("体育", "sports"), "体育"),
+    (("新闻", "news"), "新闻"),
+    (("音乐", "music"), "音乐"),
+    (("电影", "movies"), "电影"),
+    (("国际", "global"), "国际"),
+)
+
+FANMINGMING_LOGO_ALIASES = (
+    (("cgtn纪录", "cgtn documentary", "cgtn doc"), "CGTN纪录"),
+    (("cgtn俄语", "cgtn russian"), "CGTN俄语"),
+    (("cgtn法语", "cgtn french"), "CGTN法语"),
+    (("cgtn西语", "cgtn spanish", "cgtn espanol"), "CGTN西语"),
+    (("cgtn阿语", "cgtn arabic"), "CGTN阿语"),
+    (("cgtn",), "CGTN"),
+    (("凤凰卫视中文", "凤凰中文"), "凤凰卫视中文台"),
+    (("凤凰卫视资讯", "凤凰资讯"), "凤凰卫视资讯台"),
+    (("凤凰卫视香港", "凤凰香港"), "凤凰卫视香港台"),
+    (("tvb翡翠", "翡翠台"), "翡翠台"),
+    (("tvb明珠", "明珠台"), "明珠台"),
+    (("rthk31", "港台电视31"), "RTHK31"),
+    (("rthk32", "港台电视32"), "RTHK32"),
+    (("香港卫视",), "香港卫视"),
+    (("澳门莲花", "莲花卫视"), "澳门莲花"),
+    (("澳视澳门",), "澳视澳门"),
+    (("澳亚卫视",), "澳亚卫视"),
+)
+
 
 @dataclass
 class Channel:
@@ -438,6 +491,7 @@ class Channel:
     static_score: float = 0.0
     probe: dict = field(default_factory=dict)
     display_override: str | None = None
+    source: str = ""
 
 
 def fetch_text(url: str, timeout: float = 25, headers: dict[str, str] | None = None, limit: int = 2_000_000) -> str:
@@ -459,7 +513,15 @@ def parse_headers(extinf: str) -> dict[str, str]:
     return headers
 
 
-def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
+def normalized_imported_group(value: str, fallback: str) -> str:
+    low = re.sub(r"\s+", " ", value).strip().lower()
+    for aliases, canonical in IMPORTED_GROUP_ALIASES:
+        if any(alias in low for alias in aliases):
+            return canonical
+    return fallback
+
+
+def parse_m3u(text: str, group: str, allow_geo: bool, source: str = "") -> list[Channel]:
     """Parse ordinary M3U plus common Chinese name,url TXT playlists."""
     channels: list[Channel] = []
     extinf: str | None = None
@@ -473,8 +535,11 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
         # When carrying the last published playlist into the next health scan,
         # preserve its real category instead of flattening all 600 channels.
         declared_group = re.search(r'group-title="([^"]+)"', item_extinf, re.I)
-        if group == "现有订阅":
-            assigned_group = declared_group.group(1).strip() if declared_group else "中文综合"
+        if declared_group:
+            fallback = "中文综合" if group == "现有订阅" else group
+            assigned_group = normalized_imported_group(declared_group.group(1), fallback)
+        elif group == "现有订阅":
+            assigned_group = "中文综合"
         identity_extinf = re.sub(r'group-title="[^"]*"', "", item_extinf, flags=re.I)
         chinese_identity = bool(re.search(r"[\u4e00-\u9fff]", name)) or bool(
             re.search(r"(?:cctv|cgtn|tvb|phoenix|rthk|hoy|china|chinese|taiwan|hong\s*kong|macau)", f"{name} {identity_extinf}", re.I)
@@ -490,7 +555,16 @@ def parse_m3u(text: str, group: str, allow_geo: bool) -> list[Channel]:
         if ".mpd" in clean_url.lower():
             return
         channels.append(
-            Channel(name, item_extinf, clean_url, assigned_group, allow_geo, False, parse_headers(item_extinf))
+            Channel(
+                name,
+                item_extinf,
+                clean_url,
+                assigned_group,
+                allow_geo,
+                False,
+                parse_headers(item_extinf),
+                source=source,
+            )
         )
 
     for raw in text.splitlines():
@@ -577,7 +651,7 @@ def channel_key(channel: Channel) -> str:
         return f"cctv{int(cctv_number.group(1))}"
     # Lists often assign inconsistent tvg-id values to the same station. Use
     # the cleaned visible label for every language so alternate routes cannot
-    # inflate the 600-channel count.
+    # inflate the published channel count.
     visible_clean = re.sub(r"\s*(?:高清|超清|蓝光|hd|fhd|uhd|4k|8k|1080p?|720p?)$", "", visible_name, flags=re.I)
     visible_key = re.sub(r"[^a-z0-9\u4e00-\u9fff]+", "", visible_clean)
     if visible_key and visible_key not in {"unknown", "channel", "tv"}:
@@ -1254,6 +1328,7 @@ def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int
                 static_score=candidate.static_score,
                 probe=dict(candidate.probe),
                 display_override=display_name,
+                source=candidate.source,
             )
         )
         used_hosts.add(host)
@@ -1262,7 +1337,7 @@ def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int
     if not backups:
         return stable
 
-    # Preserve the requested 600-channel size by replacing the lowest-scoring
+    # Preserve the requested main-list size by replacing the lowest-scoring
     # non-core/non-pay entries, favouring removal of non-Chinese overflow.
     remove_count = max(0, len(stable) + len(backups) - TARGET_STABLE)
     removable = sorted(
@@ -1339,6 +1414,35 @@ def canonical_display_name(channel: Channel) -> str:
     return channel.name
 
 
+def fanmingming_logo_name(channel: Channel) -> str | None:
+    """Return a verified fanmingming logo/EPG key for common Chinese stations."""
+    key = channel_key(channel)
+    if key == "cctv4k":
+        return "CCTV4K"
+    if key == "cctv5plus":
+        return "CCTV5+"
+    numbered = re.fullmatch(r"cctv(\d{1,2})", key)
+    if numbered:
+        return f"CCTV{int(numbered.group(1))}"
+    satellite_name = canonical_mainland_satellite_name(channel)
+    if satellite_name:
+        return satellite_name
+    identity = normalized_name(f"{canonical_display_name(channel)} {channel.name}")
+    for aliases, logo_name in FANMINGMING_LOGO_ALIASES:
+        if any(alias in identity for alias in aliases):
+            return logo_name
+    return None
+
+
+def set_extinf_attribute(extinf: str, name: str, value: str) -> str:
+    escaped = value.replace('"', "")
+    pattern = rf'\s+{re.escape(name)}="[^"]*"'
+    replacement = f' {name}="{escaped}"'
+    if re.search(pattern, extinf, re.I):
+        return re.sub(pattern, replacement, extinf, count=1, flags=re.I)
+    return extinf.replace("#EXTINF:-1", f"#EXTINF:-1{replacement}", 1)
+
+
 def cleaned_extinf(channel: Channel) -> str:
     extinf = channel.extinf
     group = display_group(channel)
@@ -1349,6 +1453,12 @@ def cleaned_extinf(channel: Channel) -> str:
     display_name = canonical_display_name(channel)
     if "," in extinf and display_name != channel.name:
         extinf = extinf.rsplit(",", 1)[0] + "," + display_name
+    metadata_name = fanmingming_logo_name(channel)
+    if metadata_name:
+        logo_name = urllib.parse.quote(metadata_name, safe="+")
+        extinf = set_extinf_attribute(extinf, "tvg-id", metadata_name)
+        extinf = set_extinf_attribute(extinf, "tvg-name", metadata_name)
+        extinf = set_extinf_attribute(extinf, "tvg-logo", f"{LOGO_BASE_URL}/{logo_name}.png")
     return extinf
 
 
@@ -1387,7 +1497,7 @@ def sort_channels(channels: list[Channel]) -> list[Channel]:
 
 def write_playlist(path: Path, channels: list[Channel], description: str) -> None:
     lines = [
-        "#EXTM3U",
+        f'#EXTM3U x-tvg-url="{EPG_URL}"',
         f"# {description}",
         f"# generated_utc={TODAY}",
         f"# channels={len(channels)}",
@@ -1395,6 +1505,14 @@ def write_playlist(path: Path, channels: list[Channel], description: str) -> Non
     for channel in sort_channels(channels):
         lines.extend((cleaned_extinf(channel), channel.url))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
+def load_source(spec: tuple[str, str, bool]) -> tuple[list[Channel], str | None]:
+    group, url, allow_geo = spec
+    try:
+        return parse_m3u(fetch_text(url), group, allow_geo, source=url), None
+    except Exception as exc:
+        return [], f"{group}:{url}:{type(exc).__name__}:{str(exc)[:100]}"
 
 
 def main() -> int:
@@ -1407,6 +1525,7 @@ def main() -> int:
             existing_playlist.read_text(encoding="utf-8", errors="ignore"),
             "现有订阅",
             False,
+            source="carried:tv.m3u",
         )
         # Always re-probe the last-known-good URLs even if an upstream index
         # removes them. Curated=True only guarantees inclusion in probe_pool;
@@ -1415,20 +1534,28 @@ def main() -> int:
             channel.curated = True
         candidates.extend(existing_channels)
         carried_forward_candidates = len(existing_channels)
-    for group, url, allow_geo in SOURCES:
-        try:
-            candidates.extend(parse_m3u(fetch_text(url), group, allow_geo))
-        except Exception as exc:  # keep other source lists usable
-            source_failures.append(f"{group}:{type(exc).__name__}:{str(exc)[:100]}")
+    # Source indexes are independent. Fetch them concurrently, while
+    # executor.map preserves SOURCES order for reproducible tie-breaking.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(SOURCE_WORKERS, len(SOURCES))) as executor:
+        for parsed_channels, failure in executor.map(load_source, SOURCES):
+            candidates.extend(parsed_channels)
+            if failure:
+                source_failures.append(failure)
 
     for name, group, url in EXTRAS:
         extinf = f'#EXTINF:-1 group-title="{group}",{name}'
-        candidates.append(Channel(name, extinf, url, group, False, True, {}))
+        candidates.append(
+            Channel(name, extinf, url, group, False, True, {}, source="curated:extras")
+        )
 
     rejected_non_station = sum(not is_station_like(channel) for channel in candidates)
+    raw_source_candidates = Counter(channel.source or "unknown" for channel in candidates)
     candidates = deduplicate(candidates)
     probe_pool = select_probe_pool(candidates)
-    print(f"candidates={len(candidates)} probe_pool={len(probe_pool)} workers={PROBE_WORKERS}")
+    print(
+        f"candidates={len(candidates)} probe_pool={len(probe_pool)} "
+        f"source_workers={SOURCE_WORKERS} probe_workers={PROBE_WORKERS}"
+    )
     with concurrent.futures.ThreadPoolExecutor(max_workers=PROBE_WORKERS) as executor:
         future_map = {executor.submit(probe_channel, channel): channel for channel in probe_pool}
         for completed, future in enumerate(concurrent.futures.as_completed(future_map), 1):
@@ -1491,6 +1618,9 @@ def main() -> int:
     stable = add_cctv5_backups(select_stable(probe_pool), probe_pool)
     full = select_all(candidates, stable)
     healthy = sum(1 for channel in probe_pool if channel.probe.get("ok"))
+    healthy_by_source = Counter(
+        channel.source or "unknown" for channel in probe_pool if channel.probe.get("ok")
+    )
     geo = sum(1 for channel in probe_pool if channel.probe.get("geo_restricted"))
     cctv5_primary = next(
         (channel for channel in stable if canonical_display_name(channel) == "CCTV-5"),
@@ -1504,9 +1634,10 @@ def main() -> int:
         raise SystemExit(
             "safety stop: no verified 1080p CCTV-5 primary; existing tv.m3u was not replaced"
         )
-    if len(stable) < TARGET_STABLE:
+    if len(stable) < MIN_STABLE:
         raise SystemExit(
-            f"safety stop: only {len(stable)}/{TARGET_STABLE} stable channels; "
+            f"safety stop: only {len(stable)}/{MIN_STABLE} minimum stable channels "
+            f"(target {TARGET_STABLE}); "
             "existing tv.m3u was not replaced"
         )
     if len(full) < TARGET_ALL:
@@ -1522,6 +1653,9 @@ def main() -> int:
     stable_core = sum(is_core_channel(channel) for channel in stable)
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
+    stable_extinfs = [cleaned_extinf(channel) for channel in stable]
+    stable_with_logo = sum('tvg-logo="' in extinf for extinf in stable_extinfs)
+    stable_with_epg_id = sum('tvg-id="' in extinf for extinf in stable_extinfs)
     stable_satellite_double_checked = sum(
         display_group(channel) == "卫视台" and int(channel.probe.get("checks_ok") or 1) >= 2
         for channel in stable
@@ -1616,18 +1750,29 @@ def main() -> int:
         f"stable_satellite_single_check_fallbacks={stable_satellite_single_check_fallbacks}",
         f"stable_satellite_china_side_fallbacks={stable_satellite_china_side_fallbacks}",
         f"stable_channels={len(stable)}",
+        f"stable_target={TARGET_STABLE}",
+        f"stable_minimum={MIN_STABLE}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
         f"stable_placeholder_relays={sum(is_placeholder_relay(channel) for channel in stable)}",
         f"stable_chinese_groups={sum(channel.group in CHINESE_GROUPS for channel in stable)}",
         f"stable_cctv_or_major_satellite={stable_core}",
         f"stable_public_pay_channels={stable_public_pay}",
+        f"stable_with_logo={stable_with_logo}",
+        f"stable_with_epg_id={stable_with_epg_id}",
+        f"epg_url={EPG_URL}",
         "stable_public_pay_names=" + json.dumps(
             sorted(channel.name for channel in stable if is_public_pay_channel(channel)),
             ensure_ascii=False,
         ),
         "public_pay_status=" + json.dumps(pay_status, ensure_ascii=False, sort_keys=True),
         f"stable_chinese_oriented={stable_chinese_oriented}",
+        "source_candidate_counts=" + json.dumps(
+            dict(raw_source_candidates.most_common()), ensure_ascii=False
+        ),
+        "source_probe_healthy=" + json.dumps(
+            dict(healthy_by_source.most_common()), ensure_ascii=False
+        ),
         f"stable_core_relaxed_fallbacks={core_fallbacks}",
         f"stable_total_relaxed_fallbacks={relaxed_fallbacks}",
         "required_cctv_status=" + json.dumps(required_status, ensure_ascii=False, sort_keys=True),

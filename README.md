@@ -4,19 +4,21 @@
 
 ## 订阅地址
 
-- 高清稳定版（推荐，600 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u`
-- 完整备用版（800 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv-all.m3u`
+- 高清稳定版（推荐，约 800 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u`
+- 完整备用版（约 1000 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv-all.m3u`
 
 ## “高清稳定版”怎么选
 
 GitHub Actions 每天北京时间/新加坡时间 00:17 和 12:17 自动重建：
 
-1. 全网汇总 iptv-org、vbskycn、best-fan、HerbertHe/ibert、Free-TV、CCSH、Suxuang、BurningC4，以及 `myernestlu.github.io`、`xxy.free.hr`、`iptv.228088.xyz`、`yang-1989.eu.org`、`live.zbds.top` 等站外公开清单；重点扩充中国大陆、港台、中文地方台和线性付费频道。
+1. 并发汇总 iptv-org、fanmingming、YueChan、YanG-1989、vbskycn、best-fan、HerbertHe/ibert、Free-TV、CCSH、Suxuang、BurningC4 等持续维护的公开清单；重点扩充中国大陆、港台、中文地方台和线性付费频道。被下架、只含空结果、依赖运营商内网或 RTSP/组播的仓库不会作为生产源。
 2. 只保留真正的线性电视台：去掉广播、电台、购物、网课、单片/单集、VOD/ENDLIST 点播和 MPD；`rtp://239.x` 一类只能在特定运营商局域网使用的组播源不会收录。
 3. 普通频道最多保留 8 条候选 URL；CCTV-5、5+、9、12、16 各保留并优先测试最多 24 条线路，省卫视也会测试多条备线。
-4. 实际请求 HLS 主清单、720p/1080p 变体清单和一个视频分片，测首开耗时与分片下载速度后选最快的一条；主清单按中文优先配额扩展到 600 台，并继续优先 1080p/720p、HTTPS 和 CDN。
+4. 实际请求 HLS 主清单、720p/1080p 变体清单和一个视频分片，测首开耗时与分片下载速度后选最快的一条；主清单按中文优先配额扩展到约 800 台，并继续优先 1080p/720p、HTTPS 和 CDN。若少量源站临时波动，达到 760 条实测可播频道即可安全发布，避免整次刷新被短时故障卡住。
 5. 求索、CHC、NewTV、SiTV/CIBN、风云/剧场等网上公开分享且无需账号、无 DRM 的线性频道会参与测速；1080p 权重最高。完整备用版保留更多真电视台候选。
 
 CCTV 与主要省级卫视使用核心保底规则：CCTV-5、CCTV-5+、CCTV-9、CCTV-12、CCTV-16 分别独立识别；所有成功拉到真实视频分片的大陆卫视优先进入稳定版，不受普通分组配额限制。同名卫视会合并为一个 APTV 频道，后台多线路只用于竞争最快地址。普通高清门槛不通过时，核心频道可采用已经完成分片验证、但速度或清晰度略低的保底源；完全打不开的死源仍不会写入稳定版。
 
-`build-report.txt` 会记录每次构建的候选数、实测通过数、地区限制数、主清单中文分组数量、占位中转数量，以及这 5 个指定 CCTV 台各自的候选数、可播数、清晰度和速度。`t.freetv.fun`、`epg.pw` 等会返回“信号中断”画面的中转源不会进入任何输出播放单。需要注意：测速发生在 GitHub Actions 线路，最终体验仍会受 Apple TV 所用代理出口和晚高峰影响。
+清单统一接入 fanmingming 的 EPG，并为 CCTV、CGTN、主要卫视和常见港澳频道补齐规范 `tvg-id`、`tvg-name` 与台标；上游已经提供的其它有效台标仍会保留。
+
+`build-report.txt` 会记录每次构建的候选数、各来源候选/实测通过数、地区限制数、台标与 EPG 覆盖率、主清单中文分组数量，以及这 5 个指定 CCTV 台各自的候选数、可播数、清晰度和速度。`t.freetv.fun`、`epg.pw` 等会返回“信号中断”画面的中转源不会进入任何输出播放单。需要注意：测速发生在 GitHub Actions 线路，最终体验仍会受 Apple TV 所用代理出口和晚高峰影响。

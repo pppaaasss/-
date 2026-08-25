@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'scripts/build_playlist.py'
+      - 'tests/test_build_playlist.py'
       - '.github/workflows/build-tv.yml'
   schedule:
-    - cron: '17 */6 * * *'
+    # 00:17 and 12:17 in Beijing/Singapore (UTC+8).
+    - cron: '17 4,16 * * *'
   workflow_dispatch:
 
 permissions:
@@ -19,14 +21,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
+      - name: Run offline tests
+        run: python3 -m unittest discover -s tests -v
       - name: Probe and build playlists
         env:
-          TARGET_STABLE: '600'
-          TARGET_ALL: '800'
-          PROBE_WORKERS: '48'
+          TARGET_STABLE: '800'
+          MIN_STABLE: '760'
+          TARGET_ALL: '1000'
+          SOURCE_WORKERS: '12'
+          PROBE_WORKERS: '56'
           PROBE_TIMEOUT: '8'
         run: python3 scripts/build_playlist.py
       - name: Publish refreshed playlists
