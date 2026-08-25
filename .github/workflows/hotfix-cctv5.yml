@@ -11,6 +11,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: hotfix-cctv5-pair
+  cancel-in-progress: true
+
 jobs:
   hotfix:
     runs-on: ubuntu-latest
