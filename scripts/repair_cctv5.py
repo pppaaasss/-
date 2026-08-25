@@ -258,28 +258,69 @@ def existing_routes(path: Path) -> dict[str, str]:
     return routes
 
 
+def has_playback_headroom(probe: Probe) -> bool:
+    return probe.mbps >= max(5.0, probe.stream_mbps * 1.35)
+
+
+def probe_rank(probe: Probe, order: dict[str, int]) -> tuple:
+    return (
+        has_playback_headroom(probe),
+        probe.mbps / probe.stream_mbps >= 1.05 if probe.stream_mbps else False,
+        probe.height >= 1080,
+        min(probe.stream_mbps, 12.0),
+        min(probe.mbps, 40.0),
+        -order[probe.url],
+    )
+
+
 def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, Selection]:
     by_pair = {(probe.station, probe.url): probe for probe in results}
-    chosen: dict[str, Selection] = {}
-    used_hosts: set[str] = set()
+    healthy_by_station: dict[str, list[Probe]] = {}
     for station in ("cctv5", "cctv5plus"):
+        order = {url: index for index, url in enumerate(CANDIDATES[station])}
         healthy = [
             by_pair[(station, url)]
             for url in CANDIDATES[station]
             if by_pair[(station, url)].ok
         ]
-        order = {url: index for index, url in enumerate(CANDIDATES[station])}
-        healthy.sort(
-            key=lambda probe: (
-                probe.mbps >= max(5.0, probe.stream_mbps * 1.35),
-                probe.mbps / probe.stream_mbps >= 1.05 if probe.stream_mbps else False,
-                probe.height >= 1080,
-                min(probe.stream_mbps, 12.0),
-                min(probe.mbps, 40.0),
-                -order[probe.url],
+        healthy.sort(key=lambda probe: probe_rank(probe, order), reverse=True)
+        healthy_by_station[station] = healthy
+
+    # Optimize the two stations as a pair. Greedily giving the fastest host to
+    # CCTV-5 can force CCTV-5+ onto a much lower-bitrate backup even though an
+    # equally clear CCTV-5 route exists on a third host.
+    if all(healthy_by_station.values()):
+        pairs = [
+            (cctv5, cctv5plus)
+            for cctv5 in healthy_by_station["cctv5"]
+            for cctv5plus in healthy_by_station["cctv5plus"]
+            if cctv5.host != cctv5plus.host
+        ]
+        if not pairs:
+            pairs = [
+                (cctv5, cctv5plus)
+                for cctv5 in healthy_by_station["cctv5"]
+                for cctv5plus in healthy_by_station["cctv5plus"]
+            ]
+        cctv5, cctv5plus = max(
+            pairs,
+            key=lambda pair: (
+                has_playback_headroom(pair[0]) and has_playback_headroom(pair[1]),
+                int(has_playback_headroom(pair[0])) + int(has_playback_headroom(pair[1])),
+                int(pair[0].height >= 1080) + int(pair[1].height >= 1080),
+                min(pair[0].stream_mbps, 12.0) + min(pair[1].stream_mbps, 12.0),
+                min(pair[0].mbps, 40.0) + min(pair[1].mbps, 40.0),
             ),
-            reverse=True,
         )
+        return {
+            "cctv5": Selection(cctv5.url, "fresh_pair_probe", cctv5),
+            "cctv5plus": Selection(cctv5plus.url, "fresh_pair_probe", cctv5plus),
+        }
+
+    chosen: dict[str, Selection] = {}
+    used_hosts: set[str] = set()
+    for station in ("cctv5", "cctv5plus"):
+        healthy = healthy_by_station[station]
         route = next((probe for probe in healthy if probe.host not in used_hosts), None)
         route = route or (healthy[0] if healthy else None)
         if route:
