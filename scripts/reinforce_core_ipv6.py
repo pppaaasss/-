@@ -119,11 +119,24 @@ def count_header(header,count):
     if not done: out.append(f"# channels={count}")
     return out
 
+def restore_previous(entries):
+    backup_keys={canonical(visible(meta)) for meta,_ in entries if "IPv4备用" in visible(meta) or "IPv6备用" in visible(meta)}
+    out=[]
+    for meta,url in entries:
+        name=visible(meta); key=canonical(name)
+        if "IPv6主线" in name:
+            if key in backup_keys: continue
+            out.append((renamed(meta,key or name.replace(" IPv6主线","")),url)); continue
+        if "IPv4备用" in name or "IPv6备用" in name:
+            out.append((renamed(meta,key or re.sub(r"\s+IPv[46]备用$","",name)),url)); continue
+        out.append((meta,url))
+    return out
+
 def reinforce(path, pool):
     if not path.exists(): return False,0
     original=path.read_text(encoding="utf-8",errors="ignore")
     header,entries=parse_playlist(original)
-    entries=[e for e in entries if not any(m in visible(e[0]) for m in MARKERS)]
+    entries=restore_previous(entries)
     first={}
     for i,(meta,_) in enumerate(entries):
         key=canonical(visible(meta))
