@@ -5,8 +5,9 @@ import collections, ipaddress, json, re, urllib.parse, urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
-UA = "Mozilla/5.0 (AppleTV; APTV core IPv6 reinforcement/1.1)"
+UA = "Mozilla/5.0 (AppleTV; APTV core IPv6 reinforcement/1.2)"
 TIMEOUT = 12.0
+HOST_REUSE_PENALTY = 28
 FEEDS = (
     ("fanmingming", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/ipv6.m3u", 30),
     ("xjt1995", "https://raw.githubusercontent.com/xjt1995/iptv/main/cn.txt", 28),
@@ -21,7 +22,6 @@ SATELLITES = {
     "浙江卫视","海南卫视","海峡卫视","深圳卫视","湖北卫视","湖南卫视","甘肃卫视","西藏卫视",
     "贵州卫视","辽宁卫视","重庆卫视","陕西卫视","青海卫视","黑龙江卫视",
 }
-MARKERS = ("IPv6主线", "IPv6备用", "IPv4备用")
 
 @dataclass
 class Candidate:
@@ -133,7 +133,7 @@ def restore_previous(entries):
     return out
 
 def reinforce(path, pool):
-    if not path.exists(): return False,0
+    if not path.exists(): return False,0,{}
     original=path.read_text(encoding="utf-8",errors="ignore")
     header,entries=parse_playlist(original)
     entries=restore_previous(entries)
@@ -141,7 +141,7 @@ def reinforce(path, pool):
     for i,(meta,_) in enumerate(entries):
         key=canonical(visible(meta))
         if key and key not in first: first[key]=i
-    out=[]; promoted=0
+    out=[]; promoted=0; host_use=collections.Counter()
     for i,(meta,url) in enumerate(entries):
         key=canonical(visible(meta))
         if not key or key == "CCTV-5" or first.get(key) != i:
@@ -150,7 +150,12 @@ def reinforce(path, pool):
         coverage={s for item in items for s in item.sources}
         if len(coverage) < 2 or not items:
             out.append((meta,url)); continue
-        primary=items[0]
+        # Do not recreate the old correlated-failure problem on IPv6: prefer a
+        # strong candidate, but progressively penalize a literal host already
+        # carrying many other CCTV/satellite primaries. This naturally spreads
+        # channels across the independent 2409 operator pools when available.
+        primary=max(items,key=lambda item:(item.score-HOST_REUSE_PENALTY*host_use[item.host],-host_use[item.host],len(item.sources),item.score))
+        host_use[primary.host]+=1
         out.append((renamed(meta,f"{key} IPv6主线"),primary.url))
         if url != primary.url:
             out.append((renamed(meta,f"{key} {'IPv6' if ipv6(url) else 'IPv4'}备用"),url))
@@ -158,7 +163,7 @@ def reinforce(path, pool):
     header=count_header(header,len(out))
     rendered="\n".join(header+[part for entry in out for part in entry])+"\n"
     if rendered != original: path.write_text(rendered,encoding="utf-8",newline="\n")
-    return rendered != original,promoted
+    return rendered != original,promoted,dict(host_use)
 
 def core_playlist(source,target):
     if not source.exists(): return 0
@@ -168,18 +173,25 @@ def core_playlist(source,target):
     target.write_text("\n".join(header+[part for entry in core for part in entry])+"\n",encoding="utf-8",newline="\n")
     return len(core)
 
-def report(status,promoted,count):
+def report(status,promoted,count,host_use):
     path=Path("build-report.txt")
     if not path.exists(): return
     text=re.sub(r"^core_ipv6_.*\n?","",path.read_text(encoding="utf-8",errors="ignore"),flags=re.M)
-    lines=[f"core_ipv6_promoted={promoted}",f"core_ipv6_playlist_channels={count}","core_ipv6_feed_status="+json.dumps(status,ensure_ascii=False,sort_keys=True)]
+    lines=[
+        f"core_ipv6_promoted={promoted}",
+        f"core_ipv6_playlist_channels={count}",
+        "core_ipv6_primary_hosts="+json.dumps(host_use,ensure_ascii=False,sort_keys=True),
+        "core_ipv6_feed_status="+json.dumps(status,ensure_ascii=False,sort_keys=True),
+    ]
     path.write_text(text.rstrip()+"\n"+"\n".join(lines)+"\n",encoding="utf-8",newline="\n")
 
 def main():
-    pool,status=candidates(); total=0
+    pool,status=candidates(); total=0; stable_hosts={}
     for path in (Path("tv.m3u"),Path("tv-all.m3u")):
-        changed,n=reinforce(path,pool); total+=n; print(f"{path}: changed={changed} promoted={n}")
-    count=core_playlist(Path("tv.m3u"),Path("tv-core.m3u")); report(status,total,count)
+        changed,n,hosts=reinforce(path,pool); total+=n
+        if path.name == "tv.m3u": stable_hosts=hosts
+        print(f"{path}: changed={changed} promoted={n} hosts={json.dumps(hosts,ensure_ascii=False,sort_keys=True)}")
+    count=core_playlist(Path("tv.m3u"),Path("tv-core.m3u")); report(status,total,count,stable_hosts)
     print("feeds="+json.dumps(status,ensure_ascii=False,sort_keys=True)); print(f"core_playlist_channels={count}")
     return 0
 if __name__ == "__main__": raise SystemExit(main())
