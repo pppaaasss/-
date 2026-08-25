@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/hotfix_cctv5_pair.py'
       - 'scripts/repair_cctv5.py'
+      - 'tests/test_repair_cctv5_pair.py'
       - '.github/workflows/hotfix-cctv5.yml'
 
 permissions:
@@ -16,6 +17,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Run CCTV5 pair tests
+        run: python3 -m unittest discover -s tests -p 'test_repair_cctv5_pair.py' -v
       - name: Apply independent CCTV5 pair rescue
         run: python3 scripts/hotfix_cctv5_pair.py
       - name: Publish hotfix
