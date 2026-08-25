@@ -2048,6 +2048,41 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
     return selected[:target]
 
 
+def restore_existing_family_core(
+    selected: list[Channel], existing_easy: list[Channel], target: int = TARGET_EASY
+) -> list[Channel]:
+    """Carry forward a core tile when no new route has safe speed headroom.
+
+    A slow 9 Mbps stream must not be promoted as "fast", but a temporary lack
+    of a better public route also must not delete a family satellite station.
+    Newly verified choices always win; this only fills missing CCTV/satellite
+    keys from the already-published easy list.
+    """
+    output = list(selected)
+    selected_keys = {channel_key(channel) for channel in output}
+    for channel in existing_easy:
+        key = channel_key(channel)
+        if (
+            key in selected_keys
+            or not is_core_channel(channel)
+            or not is_viewer_wanted_channel(channel)
+        ):
+            continue
+        channel.probe["carried_family_fallback"] = True
+        output.append(channel)
+        selected_keys.add(key)
+
+    if len(output) <= target:
+        return output
+    core = [channel for channel in output if is_core_channel(channel)]
+    ordinary = sorted(
+        (channel for channel in output if not is_core_channel(channel)),
+        key=measured_score,
+        reverse=True,
+    )
+    return core + ordinary[: max(0, target - len(core))]
+
+
 def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int = 2) -> list[Channel]:
     """Publish two independently hosted 1080p CCTV-5 escape routes.
 
@@ -2294,6 +2329,15 @@ def main() -> int:
     candidates: list[Channel] = []
     previous_history = load_health_history()
     carried_forward_candidates = 0
+    existing_easy_channels: list[Channel] = []
+    existing_easy_playlist = Path("tv-easy.m3u")
+    if existing_easy_playlist.exists():
+        existing_easy_channels = parse_m3u(
+            existing_easy_playlist.read_text(encoding="utf-8", errors="ignore"),
+            "现有订阅",
+            False,
+            source="carried:tv-easy.m3u",
+        )
     existing_playlist = Path("tv.m3u")
     if existing_playlist.exists():
         existing_channels = parse_m3u(
@@ -2420,7 +2464,9 @@ def main() -> int:
     )
 
     stable_primary = select_stable(probe_pool)
-    easy = select_easy(probe_pool)
+    easy = restore_existing_family_core(
+        select_easy(probe_pool), existing_easy_channels
+    )
     easy_keys = {channel_key(channel) for channel in easy}
     easy_missing_cctv = [target for target in CCTV_AUDIT_IDS if target not in easy_keys]
     easy_satellite_names = sorted(
@@ -2525,6 +2571,9 @@ def main() -> int:
     stable_core = sum(is_core_channel(channel) for channel in stable)
     easy_core = sum(is_core_channel(channel) for channel in easy)
     easy_core_fallbacks = sum(bool(channel.probe.get("easy_core_fallback")) for channel in easy)
+    easy_carried_core_fallbacks = sum(
+        bool(channel.probe.get("carried_family_fallback")) for channel in easy
+    )
     stable_public_pay = sum(is_public_pay_channel(channel) for channel in stable)
     stable_chinese_oriented = sum(is_chinese_oriented(channel) for channel in stable)
     stable_extinfs = [cleaned_extinf(channel) for channel in stable]
@@ -2677,6 +2726,7 @@ def main() -> int:
         f"easy_dual_stack_dns={sum(bool(channel.probe.get('dual_stack_dns')) for channel in easy)}",
         f"easy_cctv_or_major_satellite={easy_core}",
         f"easy_core_relaxed_fallbacks={easy_core_fallbacks}",
+        f"easy_core_carried_fallbacks={easy_carried_core_fallbacks}",
         "easy_missing_cctv=" + json.dumps(easy_missing_cctv, ensure_ascii=False),
         "easy_missing_mainland_satellites=" + json.dumps(easy_missing_satellites, ensure_ascii=False),
         "easy_mainland_satellite_names=" + json.dumps(easy_satellite_names, ensure_ascii=False),
