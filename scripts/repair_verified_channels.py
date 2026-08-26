@@ -28,10 +28,11 @@ REPORT=Path('migu-catalog-report.txt')
 MIGU_GENERAL_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/migu.m3u'
 MIGU_CCTV_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u'
 MIGU_MERGED_FALLBACK='https://raw.githubusercontent.com/jia070310/lemonTV/main/iptv-fe.m3u'
-UA='Mozilla/5.0 (AppleTV; APTV Migu catalog merge/1.3)'
+UA='Mozilla/5.0 (AppleTV; APTV Migu catalog merge/1.4)'
 
 VERIFIED={
     'CCTV-5':'http://1.24.39.180:9003/hls/5/index.m3u8',
+    'CCTV-6':'http://1.24.39.180:9003/hls/6/index.m3u8',
     '湖南卫视':'http://192.151.150.154/live/hnwshd.m3u8',
     '黑龙江卫视':'http://107.150.60.122/live/hljwshd.m3u8',
     '海南卫视':'http://107.150.60.122/live/lywshd.m3u8',
@@ -39,10 +40,10 @@ VERIFIED={
     '云南卫视':'http://107.150.60.122/live/ynwshd.m3u8',
 }
 VERIFIED_KBPS={
-    'CCTV-5':6710,'湖南卫视':3200,'黑龙江卫视':3200,
+    'CCTV-5':6710,'CCTV-6':6710,'湖南卫视':3200,'黑龙江卫视':3200,
     '海南卫视':3200,'陕西卫视':3370,'云南卫视':3380,
 }
-MIGU_FORCE={'CCTV-5+','CCTV-6','CCTV-8'}
+MIGU_FORCE={'CCTV-5+','CCTV-8'}
 REGROUP={'央视文化精品':'中文付费','人间卫视':'台湾'}
 DROP_EXACT={
     'CCTV央视台球','星空卫视','北京衛視 (1080p) [Geo-blocked]','康巴卫视',
