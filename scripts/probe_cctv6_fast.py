@@ -7,6 +7,8 @@ from probe_cctv5_hd import probe
 
 REPORT=Path('cctv6-fast-probe-report.txt')
 CANDIDATES=[
+ ('fresh-153-ts','http://153.0.171.163:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0'),
+ ('fresh-192-public','http://192.151.150.154/live/cctv6hd.m3u8'),
  ('goodiptv-8m','https://live.goodiptv.club/api/bestv.php?id=cctv6hd8m/8000000'),
  ('henan-unicom','http://123.6.9.146/live/jz-cctv-6/live.m3u8'),
  ('gd-telecom-ts','http://183.63.15.42:9901/tsfile/live/0006_1.m3u8'),
