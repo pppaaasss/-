@@ -2,8 +2,10 @@
 """Final guard after the full Migu catalog merge.
 
 This intentionally runs LAST. It protects exact channel identity from fuzzy
-catalog matching and keeps non-satellite CCTV specialty services out of 卫视台.
-Migu playback itself is user-verified, so there is no speed gate here.
+catalog matching, keeps non-satellite specialty services out of 卫视台, removes
+semantic duplicates, and filters movie/documentary-style additions that do not
+belong in the user's curated domestic list. Migu playback itself is user-verified,
+so there is no speed gate here.
 """
 from __future__ import annotations
 
@@ -13,26 +15,31 @@ from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
 CCTV_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u'
-UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.0)'
+UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.1)'
 
-# Exact names in the dedicated Migu CCTV list -> exact names in our playlists.
 CCTV_EXACT={
     'CCTV5+':'CCTV-5+',
     'CCTV6':'CCTV-6',
     'CCTV8':'CCTV-8',
 }
 
-# These are CCTV/international/specialty services, not mainland satellite TV.
 GROUP_FIX={
     'CCTV4欧洲':'中文综合',
     'CCTV4美洲':'中文综合',
     '中学生':'中文付费',
-    '发现之旅':'中文付费',
-    '老故事':'中文付费',
 }
 
-# Same service under two labels. Preserve the user's long-standing display name.
+# Same service under two labels. Preserve the long-standing display name.
 DUPLICATE_ALIASES=(('农林卫视','中国农林卫视'),)
+
+# Do not let a full-catalog merge quietly reintroduce movie/documentary channels.
+DROP_UNWANTED={
+    '上视东方影视',
+    '南方影视',
+    '江苏影视频道',
+    '发现之旅',
+    '老故事',
+}
 
 
 def display(line:str)->str|None:
@@ -105,7 +112,7 @@ def patch(path:Path,exact:dict[str,str])->tuple[int,int,int]:
     lines=path.read_text(encoding='utf-8').splitlines(keepends=True)
     parts=chunks(lines)
     names={display(c[0]) for c in parts if c and c[0].startswith('#EXTINF:')}
-    drop:set[str]=set()
+    drop=set(DROP_UNWANTED)
     for keep,duplicate in DUPLICATE_ALIASES:
         if keep in names and duplicate in names:
             drop.add(duplicate)
@@ -118,7 +125,7 @@ def patch(path:Path,exact:dict[str,str])->tuple[int,int,int]:
         name=display(c[0]) or ''
         if name in drop:
             dropped+=1
-            print(f'{path}:{name}: drop duplicate alias')
+            print(f'{path}:{name}: drop curated-list exclusion/duplicate')
             continue
         if name in GROUP_FIX and f'group-title="{GROUP_FIX[name]}"' not in c[0]:
             c[0]=set_group(c[0],GROUP_FIX[name])
@@ -152,8 +159,8 @@ def main()->int:
     for p in PLAYLISTS:
         i,g,d=patch(p,exact)
         ti+=i; tg+=g; td+=d
-        print(f'{p}: identity={i} group={g} dropped_duplicates={d}')
-    print(f'total_identity={ti} total_group={tg} total_dropped_duplicates={td}')
+        print(f'{p}: identity={i} group={g} dropped={d}')
+    print(f'total_identity={ti} total_group={tg} total_dropped={td}')
     return 0
 
 if __name__=='__main__':
