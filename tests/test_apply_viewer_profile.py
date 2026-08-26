@@ -55,6 +55,26 @@ class ViewerProfileTests(unittest.TestCase):
             with self.subTest(group=group, name=name):
                 self.assertTrue(MODULE.keep_entry(extinf(group, name))[0])
 
+    def test_reassigns_catch_all_chinese_group_to_regions(self):
+        fixtures = (
+            ("浙江钱江都市", "浙江"),
+            ("苏州新闻综合", "江苏"),
+            ("TVBS欢乐台", "台湾"),
+            ("TVB翡翠台", "香港"),
+            ("TOKYO MX チャンネル", "日本"),
+            ("都市频道", "其他地方"),
+        )
+        for name, expected in fixtures:
+            with self.subTest(name=name):
+                entry = MODULE.Entry(
+                    extinf("中文综合", name),
+                    (extinf("中文综合", name), "https://example.com/live.m3u8"),
+                )
+                regionalized, old_group, new_group = MODULE.regionalize_entry(entry)
+                self.assertEqual(old_group, "中文综合")
+                self.assertEqual(new_group, expected)
+                self.assertIn(f'group-title="{expected}"', regionalized.extinf)
+
     def test_rewrites_count_and_is_idempotent(self):
         playlist = "\n".join(
             (

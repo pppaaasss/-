@@ -17,6 +17,8 @@ class BuildPlaylistTests(unittest.TestCase):
     def test_default_targets_match_local_first_profile(self):
         self.assertEqual(builder.TARGET_STABLE, 420)
         self.assertEqual(builder.MIN_STABLE, 280)
+        self.assertEqual(builder.TARGET_MAIN, 450)
+        self.assertEqual(builder.MIN_MAIN, 430)
         self.assertEqual(builder.TARGET_ALL, 560)
         self.assertEqual(builder.TARGET_EASY, 180)
         self.assertEqual(builder.MIN_EASY, 55)
@@ -188,6 +190,27 @@ https://example.com/notice.m3u8
         self.assertIn('tvg-name="CCTV5"', extinf)
         self.assertIn('/CCTV5.png"', extinf)
         self.assertTrue(extinf.endswith(",CCTV-5"))
+
+    def test_generic_chinese_channels_are_split_into_real_regions(self):
+        fixtures = (
+            ("浙江钱江都市", "中文综合", "浙江"),
+            ("苏州新闻综合", "中文综合", "江苏"),
+            ("邯郸公共频道", "大陆", "河北"),
+            ("TVBS欢乐台", "中文综合", "台湾"),
+            ("TVB翡翠台", "中文综合", "香港"),
+            ("TOKYO MX チャンネル", "中文综合", "日本"),
+            ("都市频道", "中文综合", "其他地方"),
+            ("北京卫视", "大陆", "卫视台"),
+        )
+        for name, group, expected in fixtures:
+            with self.subTest(name=name):
+                channel = builder.Channel(
+                    name,
+                    f'#EXTINF:-1 group-title="{group}",{name}',
+                    "https://example.com/live.m3u8",
+                    group,
+                )
+                self.assertEqual(builder.display_group(channel), expected)
 
     def test_playlist_header_advertises_epg(self):
         channel = builder.Channel(
@@ -382,6 +405,39 @@ segments/live-001.ts
                 "manifest_s": 1.0,
             }
         self.assertGreater(builder.measured_score(high), builder.measured_score(low))
+
+    def test_core_route_does_not_trade_picture_for_raw_download_speed(self):
+        speed_only = builder.Channel(
+            "CCTV-10 科教 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-10 科教 1080p',
+            "https://speed.example/cctv10.m3u8",
+            "大陆",
+        )
+        balanced = builder.Channel(
+            "CCTV-10 科教 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-10 科教 1080p',
+            "https://balanced.example/cctv10.m3u8",
+            "大陆",
+        )
+        for channel, download, stream in (
+            (speed_only, 40.0, 1.1),
+            (balanced, 11.0, 4.5),
+        ):
+            channel.static_score = builder.channel_static_score(channel)
+            channel.probe = {
+                "ok": True,
+                "checks_ok": 3,
+                "height": 1080,
+                "segment_mbps": download,
+                "stream_mbps": stream,
+                "manifest_s": 1.0,
+            }
+        self.assertGreater(
+            builder.core_route_score(balanced),
+            builder.core_route_score(speed_only),
+        )
+        selected = builder.select_stable([speed_only, balanced])
+        self.assertEqual(selected[0].url, balanced.url)
 
     def test_core_route_requires_download_headroom_for_high_bitrate(self):
         overloaded = builder.Channel(

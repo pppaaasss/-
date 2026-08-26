@@ -273,13 +273,45 @@ def has_playback_headroom(probe: Probe) -> bool:
     return probe.mbps >= max(5.0, probe.stream_mbps * 1.35)
 
 
+def balanced_probe_score(probe: Probe) -> float:
+    """Prefer a clear stream with headroom, not the largest speed-test burst."""
+    if not probe.ok:
+        return -1e9
+    if probe.height >= 1080:
+        value = 145.0
+    elif probe.height >= 720:
+        value = 80.0
+    elif probe.height >= 540:
+        value = 25.0
+    else:
+        value = 45.0 if probe.stream_mbps >= 2.5 else 0.0
+    value += min(probe.stream_mbps, 10.0) * 30.0
+    value += min(probe.mbps, 20.0) * 1.5
+    if probe.stream_mbps:
+        headroom = probe.mbps / probe.stream_mbps
+        if headroom >= 2.0:
+            value += 55.0
+        elif headroom >= 1.5:
+            value += 42.0
+        elif headroom >= 1.35:
+            value += 28.0
+        elif headroom >= 1.15:
+            value -= 65.0
+        else:
+            value -= 260.0
+        if probe.stream_mbps < 1.2:
+            value -= 130.0
+        elif probe.stream_mbps < 1.8:
+            value -= 75.0
+        elif probe.stream_mbps < 2.4:
+            value -= 25.0
+    return value
+
+
 def probe_rank(probe: Probe, order: dict[str, int]) -> tuple:
     return (
         has_playback_headroom(probe),
-        probe.mbps / probe.stream_mbps >= 1.05 if probe.stream_mbps else False,
-        probe.height >= 1080,
-        min(probe.stream_mbps, 12.0),
-        min(probe.mbps, 40.0),
+        balanced_probe_score(probe),
         -order[probe.url],
     )
 
@@ -318,9 +350,8 @@ def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, S
             key=lambda pair: (
                 has_playback_headroom(pair[0]) and has_playback_headroom(pair[1]),
                 int(has_playback_headroom(pair[0])) + int(has_playback_headroom(pair[1])),
-                int(pair[0].height >= 1080) + int(pair[1].height >= 1080),
-                min(pair[0].stream_mbps, 12.0) + min(pair[1].stream_mbps, 12.0),
-                min(pair[0].mbps, 40.0) + min(pair[1].mbps, 40.0),
+                min(balanced_probe_score(pair[0]), balanced_probe_score(pair[1])),
+                balanced_probe_score(pair[0]) + balanced_probe_score(pair[1]),
             ),
         )
         return {

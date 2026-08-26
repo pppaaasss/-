@@ -13,6 +13,11 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+try:
+    from channel_regions import group_sort_index, regionalized_group
+except ModuleNotFoundError:  # Imported by the repository's offline tests.
+    from scripts.channel_regions import group_sort_index, regionalized_group
+
 
 PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 BLOCKED_GROUPS = {"纪录片", "中文纪录", "电影", "中文电影", "新闻", "国际", "韩国"}
@@ -52,6 +57,24 @@ def attribute(extinf: str, name: str) -> str:
 
 def visible_name(extinf: str) -> str:
     return extinf.rsplit(",", 1)[-1].strip() if "," in extinf else extinf
+
+
+def regionalize_entry(entry: Entry) -> tuple[Entry, str, str]:
+    """Move a generic Chinese tile into its identifiable region."""
+    old_group = attribute(entry.extinf, "group-title")
+    identity_extinf = re.sub(r'group-title="[^"]*"', "", entry.extinf, flags=re.I)
+    new_group = regionalized_group(identity_extinf, old_group)
+    if not new_group or new_group == old_group:
+        return entry, old_group, old_group
+    if "group-title=" in entry.extinf:
+        extinf = re.sub(
+            r'group-title="[^"]*"', f'group-title="{new_group}"', entry.extinf, count=1, flags=re.I
+        )
+    else:
+        extinf = entry.extinf.replace(
+            "#EXTINF:-1", f'#EXTINF:-1 group-title="{new_group}"', 1
+        )
+    return Entry(extinf, (extinf, *entry.lines[1:])), old_group, new_group
 
 
 def keep_entry(extinf: str) -> tuple[bool, str]:
@@ -127,12 +150,19 @@ def apply_profile(path: Path) -> dict:
     header, entries = split_playlist(original)
     kept: list[Entry] = []
     removed = Counter()
+    regrouped = Counter()
     for entry in entries:
-        keep, reason = keep_entry(entry.extinf)
+        regionalized, old_group, new_group = regionalize_entry(entry)
+        keep, reason = keep_entry(regionalized.extinf)
         if keep:
-            kept.append(entry)
+            kept.append(regionalized)
+            if new_group != old_group:
+                regrouped[f"{old_group}->{new_group}"] += 1
         else:
             removed[reason] += 1
+    # Keep groups contiguous in APTV while preserving the builder's measured
+    # ranking and CCTV numeric order inside each group.
+    kept.sort(key=lambda entry: group_sort_index(attribute(entry.extinf, "group-title")))
     rendered = render(header, kept)
     path.write_text(rendered, encoding="utf-8", newline="\n")
 
@@ -146,6 +176,7 @@ def apply_profile(path: Path) -> dict:
         "before": len(entries),
         "after": len(kept),
         "removed": dict(sorted(removed.items())),
+        "regrouped": dict(sorted(regrouped.items())),
         "changed": rendered != original,
     }
 

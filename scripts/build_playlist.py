@@ -26,10 +26,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
 
+try:
+    from channel_regions import (
+        MAINLAND_REGION_GROUPS,
+        group_sort_index,
+        regionalized_group,
+    )
+except ModuleNotFoundError:  # Imported by the repository's offline tests.
+    from scripts.channel_regions import (
+        MAINLAND_REGION_GROUPS,
+        group_sort_index,
+        regionalized_group,
+    )
+
 
 # Keep tv.m3u as the permanent APTV subscription path; only its contents change.
 TARGET_STABLE = int(os.getenv("TARGET_STABLE", "420"))
 MIN_STABLE = int(os.getenv("MIN_STABLE", "280"))
+TARGET_MAIN = int(os.getenv("TARGET_MAIN", "450"))
+MIN_MAIN = int(os.getenv("MIN_MAIN", "430"))
 TARGET_ALL = int(os.getenv("TARGET_ALL", "560"))
 TARGET_EASY = int(os.getenv("TARGET_EASY", "180"))
 # The family list may shrink to the CCTV + satellite essentials when unrelated
@@ -54,15 +69,48 @@ LOGO_BASE_URL = "https://live.fanmingming.cn/tv"
 # documentary/movie/news catalogue. Missing groups are filled only by another
 # wanted language/region; foreign English overflow is never used as padding.
 GROUP_TARGETS = {
-    "大陆": 220,
-    "中文综合": 80,
-    "中文付费": 30,
-    "香港": 30,
+    # Reserve regional variety before mainland overflow.  The final display
+    # order remains CCTV/satellite -> mainland regions -> HK/TW/JP.
+    "卫视台": 72,
+    "台湾": 60,
+    "香港": 25,
+    "日本": 20,
     "澳门": 5,
-    "台湾": 80,
-    "新加坡": 4,
-    "马来西亚": 4,
-    "日本": 30,
+    "新加坡": 2,
+    "马来西亚": 3,
+    "北京": 10,
+    "上海": 16,
+    "天津": 8,
+    "重庆": 8,
+    "河北": 16,
+    "山西": 12,
+    "内蒙古": 8,
+    "辽宁": 10,
+    "吉林": 8,
+    "黑龙江": 8,
+    "江苏": 22,
+    "浙江": 22,
+    "安徽": 12,
+    "福建": 12,
+    "江西": 12,
+    "山东": 16,
+    "河南": 16,
+    "湖北": 16,
+    "湖南": 16,
+    "广东": 24,
+    "广西": 10,
+    "海南": 8,
+    "四川": 16,
+    "贵州": 10,
+    "云南": 10,
+    "西藏": 5,
+    "陕西": 10,
+    "甘肃": 8,
+    "青海": 5,
+    "宁夏": 5,
+    "新疆": 10,
+    "其他地方": 35,
+    "中文付费": 30,
     "娱乐": 10,
     "体育": 15,
     "少儿": 10,
@@ -71,9 +119,30 @@ GROUP_TARGETS = {
     "财经": 5,
 }
 
-GROUP_ORDER = {name: i for i, name in enumerate(GROUP_TARGETS)}
+# Source buckets are much broader than output regions.  Probe enough unique
+# mainland/language entries for a 450-channel publication instead of letting
+# the old 80-channel 中文综合 quota starve local stations before classification.
+PROBE_GROUP_TARGETS = {
+    "大陆": 300,
+    "中文综合": 160,
+    "中文付费": 50,
+    "香港": 35,
+    "澳门": 8,
+    "台湾": 90,
+    "新加坡": 6,
+    "马来西亚": 6,
+    "日本": 40,
+    "娱乐": 15,
+    "体育": 20,
+    "少儿": 15,
+    "音乐": 8,
+    "教育": 8,
+    "财经": 8,
+}
+
 CHINESE_GROUPS = {
-    "大陆", "中文综合", "中文付费", "香港", "澳门", "台湾", "新加坡", "马来西亚"
+    "大陆", "中文综合", "其他地方", "中文付费", "香港", "澳门",
+    "台湾", "新加坡", "马来西亚", *MAINLAND_REGION_GROUPS,
 }
 
 BLOCKED_OUTPUT_GROUPS = {"纪录片", "中文纪录", "电影", "中文电影", "新闻", "国际", "韩国"}
@@ -103,12 +172,43 @@ REGIONAL_BRAND_RE = re.compile(
 # Missing groups never get padded with marginal streams merely to hit 200.
 EASY_GROUP_TARGETS = {
     "卫视台": 72,
-    "中文综合": 60,
-    "香港": 10,
-    "澳门": 4,
     "台湾": 20,
-    "新加坡": 2,
+    "香港": 10,
     "日本": 8,
+    "澳门": 4,
+    "新加坡": 2,
+    "北京": 4,
+    "上海": 5,
+    "天津": 3,
+    "重庆": 3,
+    "河北": 5,
+    "山西": 4,
+    "内蒙古": 3,
+    "辽宁": 4,
+    "吉林": 3,
+    "黑龙江": 3,
+    "江苏": 6,
+    "浙江": 6,
+    "安徽": 4,
+    "福建": 4,
+    "江西": 4,
+    "山东": 5,
+    "河南": 5,
+    "湖北": 5,
+    "湖南": 5,
+    "广东": 6,
+    "广西": 4,
+    "海南": 3,
+    "四川": 5,
+    "贵州": 4,
+    "云南": 4,
+    "西藏": 2,
+    "陕西": 4,
+    "甘肃": 3,
+    "青海": 2,
+    "宁夏": 2,
+    "新疆": 4,
+    "其他地方": 12,
     "中文付费": 5,
     "体育": 5,
     "少儿": 4,
@@ -750,6 +850,8 @@ def parse_headers(extinf: str) -> dict[str, str]:
 
 def normalized_imported_group(value: str, fallback: str) -> str:
     low = re.sub(r"\s+", " ", value).strip().lower()
+    if value.strip() in {*MAINLAND_REGION_GROUPS, "其他地方"}:
+        return value.strip()
     for aliases, canonical in IMPORTED_GROUP_ALIASES:
         if any(alias in low for alias in aliases):
             return canonical
@@ -1574,6 +1676,75 @@ def is_family_core_usable(channel: Channel) -> bool:
     )
 
 
+def core_route_score(channel: Channel) -> float:
+    """Balance picture quality with enough delivery headroom for core TV.
+
+    Raw download throughput is capped and deliberately has the smallest
+    weight: once a stream has enough headroom, 50 Mbps does not make a
+    1 Mbps picture better than a 10 Mbps route carrying a 4.5 Mbps picture.
+    Conversely, a high programme bitrate is heavily penalized when its
+    measured download rate cannot sustain playback.
+    """
+    probe = channel.probe
+    if not probe.get("ok") or probe.get("duplicate_core_content"):
+        return -9999.0
+    speed = float(probe.get("segment_mbps") or 0)
+    latency = float(probe.get("manifest_s") or 10)
+    height = int(probe.get("height") or labelled_height(channel))
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    if not stream_mbps:
+        stream_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
+
+    if height >= 2160:
+        score = 190.0
+    elif height >= 1080:
+        score = 145.0
+    elif height >= 720:
+        score = 80.0
+    elif height >= 540:
+        score = 25.0
+    else:
+        score = 45.0 if stream_mbps >= 2.5 else 0.0
+
+    if stream_mbps:
+        score += min(stream_mbps, 10.0) * 30.0
+        if stream_mbps < 1.2:
+            score -= 130.0
+        elif stream_mbps < 1.8:
+            score -= 75.0
+        elif stream_mbps < 2.4:
+            score -= 25.0
+
+        headroom = speed / stream_mbps
+        if headroom >= 2.0:
+            score += 55.0
+        elif headroom >= 1.5:
+            score += 42.0
+        elif headroom >= 1.35:
+            score += 28.0
+        elif headroom >= 1.15:
+            score -= 65.0
+        else:
+            score -= 260.0
+    elif speed < 3.0:
+        score -= 45.0
+
+    # Speed still matters up to a comfortable ceiling, but cannot swamp the
+    # independently measured resolution and programme bitrate.
+    score += min(speed, 20.0) * 1.5
+    score -= latency * 8.0
+    score += min(int(probe.get("checks_ok") or 1), 3) * 18.0
+    score += max(-60.0, min(historical_score(channel), 90.0)) * 0.35
+    # Host/curation hints are only a tie-breaker for routes with similar real
+    # measurements; old hard-pinning bonuses no longer choose the picture.
+    score += max(-80.0, min(channel.static_score, 80.0)) * 0.12
+    return score
+
+
+def route_selection_score(channel: Channel) -> float:
+    return core_route_score(channel) if is_core_channel(channel) else measured_score(channel)
+
+
 def measured_score(channel: Channel) -> float:
     score = channel.static_score + historical_score(channel)
     probe = channel.probe
@@ -1585,7 +1756,7 @@ def measured_score(channel: Channel) -> float:
     latency = float(probe.get("manifest_s") or 10)
     height = int(probe.get("height") or labelled_height(channel))
     stream_mbps = float(probe.get("stream_mbps") or 0)
-    score += speed * 2.2 - latency * 7
+    score += speed * (0.8 if is_core_channel(channel) else 2.2) - latency * 7
     if int(probe.get("checks_ok") or 1) >= 2:
         score += 35
     elif probe.get("recheck_failed"):
@@ -1607,15 +1778,15 @@ def measured_score(channel: Channel) -> float:
         headroom = speed / stream_mbps
         if is_core_channel(channel):
             if stream_mbps < 1.2:
-                score -= 90
+                score -= 130
             elif headroom >= 1.50:
-                score += quality * 18 + min(headroom, 4.0) * 8
+                score += quality * 25 + min(headroom, 3.0) * 7
             elif headroom >= 1.25:
-                score += quality * 14
+                score += quality * 18
             elif headroom >= 1.05:
-                score += quality * 6 - 35
+                score += quality * 8 - 70
             else:
-                score -= 170
+                score -= 260
         else:
             score += quality * 5
             if headroom < 1.05:
@@ -1641,7 +1812,7 @@ def core_candidate_diagnostics(channels: Iterable[Channel], targets: Iterable[st
                 channel for channel in channels
                 if canonical_mainland_satellite_name(channel) == target
             ]
-        tested.sort(key=measured_score, reverse=True)
+        tested.sort(key=route_selection_score, reverse=True)
         output[target] = [
             {
                 "name": channel.name,
@@ -1701,7 +1872,7 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
         grouped[channel.group].append(channel)
     pool: list[Channel] = []
     for group, items in grouped.items():
-        quota = GROUP_TARGETS.get(group, 5)
+        quota = PROBE_GROUP_TARGETS.get(group, GROUP_TARGETS.get(group, 5))
         by_channel: dict[str, list[Channel]] = defaultdict(list)
         for item in items:
             by_channel[channel_key(item)].append(item)
@@ -1769,7 +1940,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             continue
         key = channel_key(channel)
         existing = best.get(key)
-        if existing is None or measured_score(channel) > measured_score(existing):
+        if existing is None or route_selection_score(channel) > route_selection_score(existing):
             best[key] = channel
 
     # CCTV-5 is refreshed automatically: a preferred overseas route may stay
@@ -1791,17 +1962,11 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
                 int(channel.probe.get("checks_ok") or 1) >= 2,
                 float(channel.probe.get("segment_mbps") or 0)
                 >= max(
-                    6.0,
+                    3.0,
                     float(channel.probe.get("stream_mbps") or 0) * 1.35,
                 ),
-                not any(
-                    token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-                    for token in CCTV5_OPERATOR_HINTS
-                ),
-                measured_score(channel),
-                min(float(channel.probe.get("segment_mbps") or 0), 30),
+                core_route_score(channel),
                 -float(channel.probe.get("manifest_s") or 99),
-                channel.url in CCTV5_PREFERRED_1080_URLS,
             ),
         )
 
@@ -1831,7 +1996,7 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
                 and channel.probe.get("ok")
                 and not channel.probe.get("header_required")
             ),
-            key=measured_score,
+            key=route_selection_score,
             default=None,
         )
         if fallback is not None:
@@ -1885,9 +2050,9 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
     eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
     for channel in eligible:
-        grouped[channel.group].append(channel)
+        grouped[display_group(channel)].append(channel)
     for items in grouped.values():
-        items.sort(key=measured_score, reverse=True)
+        items.sort(key=route_selection_score, reverse=True)
 
     selected: list[Channel] = []
     selected_urls: set[str] = set()
@@ -1895,7 +2060,11 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
 
     # Guarantee every playable CCTV/major provincial station before filling
     # entertainment categories. Failed and dead URLs are still excluded.
-    core = sorted((channel for channel in eligible if is_core_channel(channel)), key=measured_score, reverse=True)
+    core = sorted(
+        (channel for channel in eligible if is_core_channel(channel)),
+        key=core_route_score,
+        reverse=True,
+    )
     for channel in core:
         key = channel_key(channel)
         if key in selected_keys:
@@ -1905,9 +2074,9 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         selected_keys.add(key)
 
     for group, quota in GROUP_TARGETS.items():
-        already = sum(channel.group == group for channel in selected)
+        already = sum(display_group(channel) == group for channel in selected)
         for channel in grouped.get(group, []):
-            if already >= quota:
+            if already >= quota or len(selected) >= TARGET_STABLE:
                 break
             key = channel_key(channel)
             if key in selected_keys:
@@ -1916,6 +2085,8 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             selected_urls.add(channel.url)
             selected_keys.add(key)
             already += 1
+        if len(selected) >= TARGET_STABLE:
+            break
 
     if len(selected) < TARGET_STABLE:
         overflow = sorted(
@@ -1953,11 +2124,11 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             ):
                 continue
             existing = relaxed_best.get(key)
-            if existing is None or measured_score(channel) > measured_score(existing):
+            if existing is None or route_selection_score(channel) > route_selection_score(existing):
                 relaxed_best[key] = channel
         relaxed = sorted(
             relaxed_best.values(),
-            key=lambda channel: (is_chinese_oriented(channel), measured_score(channel)),
+            key=lambda channel: (is_chinese_oriented(channel), route_selection_score(channel)),
             reverse=True,
         )
         selected.extend(relaxed[: TARGET_STABLE - len(selected)])
@@ -1972,7 +2143,7 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
             continue
         key = channel_key(channel)
         existing = best.get(key)
-        if existing is None or measured_score(channel) > measured_score(existing):
+        if existing is None or route_selection_score(channel) > route_selection_score(existing):
             best[key] = channel
 
     # Family rule: every currently usable CCTV/provincial satellite channel
@@ -1988,12 +2159,12 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
         rank = (
             not bool(channel.probe.get("easy_check_failed")),
             int(channel.probe.get("checks_ok") or 0),
-            measured_score(channel),
+            core_route_score(channel),
         )
         if existing is None or rank > (
             not bool(existing.probe.get("easy_check_failed")),
             int(existing.probe.get("checks_ok") or 0),
-            measured_score(existing),
+            core_route_score(existing),
         ):
             family_fallbacks[key] = channel
     for key, channel in family_fallbacks.items():
@@ -2006,7 +2177,7 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
     for channel in eligible:
         grouped[display_group(channel)].append(channel)
     for items in grouped.values():
-        items.sort(key=measured_score, reverse=True)
+        items.sort(key=route_selection_score, reverse=True)
 
     selected: list[Channel] = []
     selected_keys: set[str] = set()
@@ -2014,7 +2185,7 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
     # CCTV and provincial satellite stations are the living-room essentials.
     for channel in sorted(
         (item for item in eligible if is_core_channel(item)),
-        key=measured_score,
+        key=core_route_score,
         reverse=True,
     ):
         key = channel_key(channel)
@@ -2040,7 +2211,7 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
             key=lambda channel: (
                 is_chinese_oriented(channel),
                 bool(channel.probe.get("ipv6_dns")),
-                measured_score(channel),
+                route_selection_score(channel),
             ),
             reverse=True,
         )
@@ -2109,9 +2280,8 @@ def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int
         key=lambda channel: (
             int(channel.probe.get("checks_ok") or 1) >= 2,
             not bool(channel.probe.get("recheck_failed")),
-            min(float(channel.probe.get("segment_mbps") or 0), 30),
+            core_route_score(channel),
             -float(channel.probe.get("manifest_s") or 99),
-            measured_score(channel),
         ),
         reverse=True,
     )
@@ -2162,48 +2332,115 @@ def add_cctv5_backups(stable: list[Channel], channels: list[Channel], count: int
     return output[:TARGET_STABLE]
 
 
+def publication_fallback_rank(channel: Channel) -> tuple:
+    """Rank broader-list fallbacks without pretending all were stable."""
+    probe = channel.probe
+    ok = bool(probe.get("ok")) and not bool(
+        probe.get("header_required") or probe.get("duplicate_core_content")
+    )
+    quality_score = (
+        route_selection_score(channel) if ok else channel.static_score
+    )
+    return (
+        ok and int(probe.get("checks_ok") or 0) >= 2,
+        ok,
+        str(channel.source).startswith("carried:"),
+        channel.curated,
+        int(probe.get("height") or labelled_height(channel)) >= 720,
+        quality_score,
+    )
+
+
 def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
     selected = list(stable)
-    urls = {channel.url for channel in selected}
     keys = {channel_key(channel) for channel in selected}
-    curated = [
-        channel for channel in channels
-        if channel.curated
-        and not is_placeholder_relay(channel)
-        and channel.url not in urls
-        and channel_key(channel) not in keys
-    ]
-    for channel in curated:
-        selected.append(channel)
-        urls.add(channel.url)
-        keys.add(channel_key(channel))
     best_remainder: dict[str, Channel] = {}
     for channel in channels:
         key = channel_key(channel)
-        if channel.url in urls or key in keys or is_placeholder_relay(channel):
+        if key in keys or is_placeholder_relay(channel):
             continue
         existing = best_remainder.get(key)
-        rank = (is_stable(channel), measured_score(channel), channel.static_score)
-        if existing is None or rank > (is_stable(existing), measured_score(existing), existing.static_score):
+        if existing is None or publication_fallback_rank(channel) > publication_fallback_rank(existing):
             best_remainder[key] = channel
-    remainder = sorted(best_remainder.values(), key=lambda channel: (is_stable(channel), measured_score(channel), channel.static_score), reverse=True)
+    remainder = sorted(
+        best_remainder.values(), key=publication_fallback_rank, reverse=True
+    )
     selected.extend(remainder[: max(0, TARGET_ALL - len(selected))])
     return selected[:TARGET_ALL]
 
 
+def select_main(stable: list[Channel], full: list[Channel], target: int = TARGET_MAIN) -> list[Channel]:
+    """Publish about 450 channels while keeping the verified core untouched.
+
+    The strict set is always first.  Remaining places are filled from the
+    broader fallback set by region quota and measured-route rank.  Technical
+    CCTV backup tiles are omitted because the final independent rescue pass
+    maintains one correct CCTV-5 and one CCTV-5+ tile.
+    """
+    selected: list[Channel] = []
+    selected_keys: set[str] = set()
+    for channel in stable:
+        key = channel_key(channel)
+        if channel.display_override or key in selected_keys:
+            continue
+        selected.append(channel)
+        selected_keys.add(key)
+        if len(selected) >= target:
+            return selected
+
+    grouped: dict[str, list[Channel]] = defaultdict(list)
+    for channel in full:
+        key = channel_key(channel)
+        if channel.display_override or key in selected_keys:
+            continue
+        grouped[display_group(channel)].append(channel)
+    for items in grouped.values():
+        items.sort(key=publication_fallback_rank, reverse=True)
+
+    for group, quota in GROUP_TARGETS.items():
+        already = sum(display_group(channel) == group for channel in selected)
+        for channel in grouped.get(group, []):
+            if already >= quota or len(selected) >= target:
+                break
+            key = channel_key(channel)
+            if key in selected_keys:
+                continue
+            selected.append(channel)
+            selected_keys.add(key)
+            already += 1
+        if len(selected) >= target:
+            return selected
+
+    overflow = sorted(
+        (
+            channel for channel in full
+            if not channel.display_override and channel_key(channel) not in selected_keys
+        ),
+        key=publication_fallback_rank,
+        reverse=True,
+    )
+    for channel in overflow:
+        key = channel_key(channel)
+        if key in selected_keys:
+            continue
+        selected.append(channel)
+        selected_keys.add(key)
+        if len(selected) >= target:
+            break
+    return selected
+
+
 def display_group(channel: Channel) -> str:
-    """Collapse the old Mainland bucket into the two APTV groups requested."""
+    """Return the final APTV group, splitting catch-all Chinese stations."""
     identity_extinf = re.sub(r'group-title="[^"]*"', "", channel.extinf, flags=re.I)
-    identity = f"{channel.name} {identity_extinf}".lower()
+    identity = f"{channel.name} {identity_extinf}"
     # CCTV can arrive through language/category feeds instead of the old
     # Mainland feed, so classify it independently of the imported group.
     if re.search(r"(?:cctv|cgtn|央视)", identity, re.I):
         return "卫视台"
     if channel.group in {"大陆", "中文综合"} and canonical_mainland_satellite_name(channel):
         return "卫视台"
-    if channel.group == "大陆":
-        return "中文综合"
-    return channel.group
+    return regionalized_group(identity, channel.group)
 
 
 def canonical_display_name(channel: Channel) -> str:
@@ -2292,11 +2529,10 @@ def satellite_sort_key(channel: Channel) -> tuple:
 
 
 def sort_channels(channels: list[Channel]) -> list[Channel]:
-    output_order = {"卫视台": 0, "中文综合": 1}
     return sorted(
         channels,
         key=lambda channel: (
-            output_order.get(display_group(channel), GROUP_ORDER.get(display_group(channel), 99) + 2),
+            group_sort_index(display_group(channel)),
             satellite_sort_key(channel),
             -measured_score(channel),
             canonical_display_name(channel).lower(),
@@ -2482,6 +2718,7 @@ def main() -> int:
     ]
     stable = add_cctv5_backups(stable_primary, probe_pool)
     full = select_all(candidates, stable)
+    main_playlist = select_main(stable, full)
     history_payload = update_health_history(probe_pool, previous_history)
     healthy = sum(
         1
@@ -2511,6 +2748,10 @@ def main() -> int:
     if len(stable) < MIN_STABLE:
         legacy_safety_reasons.append(
             f"only {len(stable)}/{MIN_STABLE} minimum stable channels (target {TARGET_STABLE})"
+        )
+    if len(main_playlist) < MIN_MAIN:
+        legacy_safety_reasons.append(
+            f"only {len(main_playlist)}/{MIN_MAIN} minimum main channels (target {TARGET_MAIN})"
         )
     if len(full) < TARGET_ALL:
         legacy_safety_reasons.append(
@@ -2559,7 +2800,11 @@ def main() -> int:
             + "; ".join(legacy_safety_reasons)
         )
     else:
-        write_playlist(Path("tv.m3u"), stable, "APTV 高清稳定版：实测 HLS 清单与视频分片；1080p/720p 优先")
+        write_playlist(
+            Path("tv.m3u"),
+            main_playlist,
+            "APTV 约450台：央视卫视实测画质/码率/速度平衡，区域频道实测优先",
+        )
         write_playlist(Path("tv-all.m3u"), full, "APTV 完整备用版：频道更多，未全部通过稳定性门槛")
     HISTORY_PATH.write_text(
         json.dumps(history_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
@@ -2567,6 +2812,7 @@ def main() -> int:
     )
 
     stable_groups = Counter(display_group(channel) for channel in stable)
+    main_groups = Counter(display_group(channel) for channel in main_playlist)
     easy_groups = Counter(display_group(channel) for channel in easy)
     stable_core = sum(is_core_channel(channel) for channel in stable)
     easy_core = sum(is_core_channel(channel) for channel in easy)
@@ -2739,6 +2985,9 @@ def main() -> int:
         f"stable_channels={len(stable)}",
         f"stable_target={TARGET_STABLE}",
         f"stable_minimum={MIN_STABLE}",
+        f"main_channels={len(main_playlist)}",
+        f"main_target={TARGET_MAIN}",
+        f"main_minimum={MIN_MAIN}",
         f"all_channels={len(full)}",
         f"stable_https={sum(channel.url.startswith('https://') for channel in stable)}",
         f"stable_placeholder_relays={sum(is_placeholder_relay(channel) for channel in stable)}",
@@ -2776,6 +3025,7 @@ def main() -> int:
         "cctv5_output_routes=" + json.dumps(cctv5_output_routes, ensure_ascii=False),
         "stable_resolution=" + json.dumps(dict(stable_heights), ensure_ascii=False, sort_keys=True),
         "stable_groups=" + json.dumps(dict(stable_groups), ensure_ascii=False, sort_keys=True),
+        "main_groups=" + json.dumps(dict(main_groups), ensure_ascii=False, sort_keys=True),
         "easy_groups=" + json.dumps(dict(easy_groups), ensure_ascii=False, sort_keys=True),
         "source_failures=" + json.dumps(source_failures, ensure_ascii=False),
         "top_probe_errors=" + json.dumps(errors.most_common(12), ensure_ascii=False),

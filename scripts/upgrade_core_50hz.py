@@ -191,8 +191,27 @@ def score(result: HzResult) -> float:
         value += 500
     elif result.height >= 720:
         value += 100
-    value += min(result.speed_mbps, 40) * 6
-    value += min(result.stream_mbps, 15) * 18
+    # Once playback headroom is safe, programme bitrate/picture quality must
+    # outweigh a short download burst. A 40 Mbps download carrying a 1 Mbps
+    # picture is not an upgrade over a stable 5 Mbps broadcast stream.
+    value += min(result.stream_mbps, 12) * 32
+    value += min(result.speed_mbps, 20) * 1.8
+    if result.stream_mbps:
+        headroom = result.speed_mbps / result.stream_mbps
+        if headroom >= 2.0:
+            value += 70
+        elif headroom >= 1.5:
+            value += 50
+        elif headroom >= 1.35:
+            value += 30
+        elif headroom >= 1.15:
+            value -= 90
+        else:
+            value -= 320
+        if result.stream_mbps < 1.2:
+            value -= 160
+        elif result.stream_mbps < 1.8:
+            value -= 80
     value -= result.startup_s * 28
     if result.candidate.hint50:
         value += 20

@@ -9,6 +9,7 @@ on:
       - 'scripts/upgrade_core_50hz.py'
       - 'scripts/clean_single_station.py'
       - 'scripts/apply_viewer_profile.py'
+      - 'scripts/channel_regions.py'
       - 'tests/test_build_playlist.py'
       - 'tests/test_repair_cctv5_pair.py'
       - 'tests/test_apply_viewer_profile.py'
@@ -46,6 +47,8 @@ jobs:
         env:
           TARGET_STABLE: '420'
           MIN_STABLE: '280'
+          TARGET_MAIN: '450'
+          MIN_MAIN: '430'
           TARGET_ALL: '560'
           TARGET_EASY: '180'
           MIN_EASY: '55'
