@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Surgical repair for viewer-verified TV identities.
+"""Surgical post-build repair for verified TV routes and satellite grouping.
 
-Only the URL following an exact EXTINF display name is replaced. No grouping,
-metadata, ordering, channel count, or unrelated station is changed.
+Exact-name rules only: pin measured routes, move known non-satellite services to
+their proper groups, and drop dead/misclassified tiles from the satellite group.
+Unrelated channels, ordering and metadata are left untouched.
 """
 from __future__ import annotations
+import re
 from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
@@ -21,40 +23,102 @@ VERIFIED={
     '陕西卫视':'http://107.150.60.122/live/snwshd.m3u8',
 }
 
-# Known identity traps. These remain documented even after a verified route is
-# pinned, so future maintenance does not accidentally re-introduce them.
+# Exact services confirmed by the frame audit to be mis-grouped rather than
+# mainland satellite TV stations.
+REGROUP={
+    '央视文化精品':'中文付费',
+    '人间卫视':'台湾',
+}
+
+# Dead duplicates, non-TV scenic webcams, or broken tiles that were incorrectly
+# published into 卫视台. They are removed until a real TV route is verified.
+DROP_EXACT={
+    'CCTV央视台球',
+    '星空卫视',
+    '北京衛視 (1080p) [Geo-blocked]',
+    '康巴卫视',
+    '央视网-云南保山瓦窑镇瓦窑码头',
+    '央视网-云南普洱澜沧县景迈山',
+    '央视网-云南西双版纳千年古寨曼丢',
+    '央视网-安徽黄山始信新道',
+    '央视网-江苏无锡鼋头渚',
+    '央视网-河北邯郸京娘湖',
+    '央视网-西藏日喀则珠穆朗玛峰',
+    '央视网-西藏林芝岷山错高民宿',
+    '央视网-西藏林芝鲁朗色季拉山',
+}
+
+# Known identity traps. Keep these documented so future candidate work does not
+# accidentally re-introduce them.
 FORBIDDEN_BY_NAME={
     'CCTV-8':('cctv8k',),
     '黑龙江卫视':('SXyuyao3',),
 }
 
 def display(line:str)->str|None:
+    line=line.rstrip('\r\n')
     if not line.startswith('#EXTINF:') or ',' not in line: return None
     return line.rsplit(',',1)[1].strip()
 
-def patch(path:Path)->int:
-    if not path.exists(): return 0
+def set_group(extinf:str, group:str)->str:
+    ending='\r\n' if extinf.endswith('\r\n') else '\n'
+    raw=extinf.rstrip('\r\n')
+    if re.search(r'group-title="[^"]*"',raw):
+        raw=re.sub(r'group-title="[^"]*"',f'group-title="{group}"',raw,count=1)
+    else:
+        comma=raw.rfind(',')
+        if comma>=0:
+            raw=raw[:comma]+f' group-title="{group}"'+raw[comma:]
+    return raw+ending
+
+def patch(path:Path)->tuple[int,int,int]:
+    if not path.exists(): return (0,0,0)
     lines=path.read_text(encoding='utf-8').splitlines(keepends=True)
-    changed=0
-    for i,line in enumerate(lines):
-        name=display(line.rstrip('\r\n'))
-        replacement=VERIFIED.get(name or '')
-        if not replacement: continue
-        j=i+1
-        while j<len(lines) and lines[j].lstrip().startswith('#'): j+=1
-        if j>=len(lines): continue
-        old=lines[j].rstrip('\r\n')
-        ending='\r\n' if lines[j].endswith('\r\n') else '\n'
-        if old!=replacement:
-            lines[j]=replacement+ending
-            changed+=1
-    if changed: path.write_text(''.join(lines),encoding='utf-8',newline='')
-    return changed
+    out=[]
+    i=0
+    pinned=regrouped=dropped=0
+    while i<len(lines):
+        if not lines[i].startswith('#EXTINF:'):
+            out.append(lines[i]); i+=1; continue
+
+        start=i
+        i+=1
+        while i<len(lines) and not lines[i].startswith('#EXTINF:'):
+            i+=1
+        chunk=lines[start:i]
+        name=display(chunk[0]) or ''
+
+        if name in DROP_EXACT:
+            dropped+=1
+            continue
+
+        group=REGROUP.get(name)
+        if group and f'group-title="{group}"' not in chunk[0]:
+            chunk[0]=set_group(chunk[0],group)
+            regrouped+=1
+
+        replacement=VERIFIED.get(name)
+        if replacement:
+            for j in range(1,len(chunk)):
+                if chunk[j].strip() and not chunk[j].lstrip().startswith('#'):
+                    old=chunk[j].rstrip('\r\n')
+                    if old!=replacement:
+                        ending='\r\n' if chunk[j].endswith('\r\n') else '\n'
+                        chunk[j]=replacement+ending
+                        pinned+=1
+                    break
+        out.extend(chunk)
+
+    if pinned or regrouped or dropped:
+        path.write_text(''.join(out),encoding='utf-8',newline='')
+    return pinned,regrouped,dropped
 
 def main()->int:
-    total=0
+    tp=tr=td=0
     for p in PLAYLISTS:
-        n=patch(p); total+=n; print(f'{p}: changed={n}')
-    print(f'total_changed={total}')
+        pinned,regrouped,dropped=patch(p)
+        tp+=pinned; tr+=regrouped; td+=dropped
+        print(f'{p}: pinned={pinned} regrouped={regrouped} dropped={dropped}')
+    print(f'total_pinned={tp} total_regrouped={tr} total_dropped={td}')
     return 0
 if __name__=='__main__': raise SystemExit(main())
