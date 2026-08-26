@@ -14,6 +14,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class BestFanHighBitrateTests(unittest.TestCase):
+    def test_prefers_viewer_selected_h264_cctv5_route(self):
+        source = "\n".join(
+            (
+                "#EXTM3U",
+                '#EXTINF:-1 tvg-name="CCTV5[1080][S]",CCTV-5',
+                "http://120.198.95.220:9901/tsfile/live/1019_1.m3u8?key=txiptv",
+                '#EXTINF:-1 tvg-name="CCTV5[1080][S]",CCTV-5',
+                "http://221.7.175.154:8445/tsfile/live/1018_1.m3u8?key=txiptv",
+                "",
+            )
+        )
+        routes = MODULE.preferred_routes(source)
+        self.assertEqual(
+            routes["cctv5"].url.split("?", 1)[0],
+            MODULE.CCTV5_TV_PREFERRED_BASE,
+        )
+
     def test_prefers_raw_1080_route_and_keeps_cctv5plus_separate(self):
         source = "\n".join(
             (

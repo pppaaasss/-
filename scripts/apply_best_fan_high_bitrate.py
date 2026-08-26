@@ -36,6 +36,9 @@ PLAYLISTS = (
 )
 DEFAULT_MIN_HEIGHT = 1080
 DEFAULT_UA = "Mozilla/5.0 (APTV best-fan high-bitrate override/1.0)"
+CCTV5_TV_PREFERRED_BASE = (
+    "http://221.7.175.154:8445/tsfile/live/1018_1.m3u8"
+)
 
 
 @dataclass(frozen=True)
@@ -92,7 +95,13 @@ def preferred_routes(text: str, min_height: int = DEFAULT_MIN_HEIGHT) -> dict[st
             continue
         # Resolution and raw delivery format are quality signals. Upstream
         # order is the last tie-breaker; no remote stream speed test is run.
-        rank = (height, transport_rank(channel.url), int(channel.url.startswith("https://")), -index)
+        delivery_rank = transport_rank(channel.url)
+        if key == "cctv5" and channel.url.split("?", 1)[0] == CCTV5_TV_PREFERRED_BASE:
+            # The uploaded list contains several 1080p CCTV-5 routes. Prefer
+            # this previously identified H.264 ~8.6 Mbps route over the
+            # phone-only 120.198 route, without running another speed test.
+            delivery_rank = 6
+        rank = (height, delivery_rank, int(channel.url.startswith("https://")), -index)
         route = PreferredRoute(key, channel.name, channel.url, height, rank)
         if key not in preferred or rank > preferred[key].rank:
             preferred[key] = route
