@@ -9,8 +9,10 @@ on:
       - 'scripts/upgrade_core_50hz.py'
       - 'scripts/clean_single_station.py'
       - 'scripts/apply_viewer_profile.py'
+      - 'scripts/apply_best_fan_high_bitrate.py'
       - 'scripts/channel_regions.py'
       - 'tests/test_build_playlist.py'
+      - 'tests/test_apply_best_fan_high_bitrate.py'
       - 'tests/test_repair_cctv5_pair.py'
       - 'tests/test_apply_viewer_profile.py'
       - 'tests/test_clean_single_station.py'
@@ -80,6 +82,9 @@ jobs:
       - name: Final independent CCTV-5 and CCTV-5+ rescue
         if: ${{ !cancelled() }}
         run: python3 scripts/repair_cctv5.py
+      - name: Apply user-verified best-fan high-bitrate routes
+        if: ${{ !cancelled() }}
+        run: python3 scripts/apply_best_fan_high_bitrate.py
       - name: Install frame-audit image dependency
         if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         run: |

@@ -4,7 +4,9 @@ on:
   push:
     paths:
       - 'scripts/hotfix_cctv5_pair.py'
+      - 'scripts/apply_best_fan_high_bitrate.py'
       - 'scripts/repair_cctv5.py'
+      - 'tests/test_apply_best_fan_high_bitrate.py'
       - 'tests/test_repair_cctv5_pair.py'
       - '.github/workflows/hotfix-cctv5.yml'
 
@@ -29,6 +31,8 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_repair_cctv5_pair.py' -v
       - name: Apply independent CCTV5 pair rescue
         run: python3 scripts/hotfix_cctv5_pair.py
+      - name: Extend the high-bitrate override to every eligible channel
+        run: python3 scripts/apply_best_fan_high_bitrate.py
       - name: Publish hotfix
         run: |
           git config user.name 'github-actions[bot]'
