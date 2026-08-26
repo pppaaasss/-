@@ -15,7 +15,7 @@ from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
 CCTV_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u'
-UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.6)'
+UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.7)'
 
 CCTV_EXACT={
     'CCTV5':'CCTV-5',
@@ -25,11 +25,10 @@ CCTV_EXACT={
     'CCTV9':'CCTV-9',
 }
 
-# Measured public routes that passed the real quality/speed gate. These are
-# intentionally pinned after the Migu merge so future scheduled repairs cannot
-# silently downgrade them.
+# Exact public routes whose channel identity is known. Do not pin a stream only
+# because its resolution/bitrate looks good; identity must be independently correct.
 PINNED_EXACT={
-    'CCTV-14':'https://event.pull.hebtv.com/jishi/cp2.m3u8',
+    'CCTV-14':'http://74.91.26.218:82/live/cctv14hd.m3u8',
 }
 
 GROUP_FIX={
