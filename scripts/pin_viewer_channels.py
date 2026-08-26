@@ -14,7 +14,7 @@ from pathlib import Path
 # CCTV-1 uses the 221.7 route from the uploaded cn_all list; viewer cache is now 30s.
 # CCTV-5 uses a previously verified 1080p rescue route; never downgrade it to 720p.
 # Hunan currently uses the other route from the uploaded cn_all list.
-# CCTV-6 uses the uploaded list's explicit /1080p/ route instead of the current 720p feed.
+# CCTV-6 uses another uploaded-list route after the explicit /1080p/ route played as 720p.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
@@ -26,7 +26,7 @@ TARGET_URLS = {
     "cctv1": "http://221.7.175.154:8445/tsfile/live/1000_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv5": "http://198.204.228.26/live/cctv5hd.m3u8",
-    "cctv6": "http://173.208.212.130:8181/1080p/cctv6.m3u8",
+    "cctv6": "http://222.169.85.8:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0",
     "hunan": "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0",
 }
 
