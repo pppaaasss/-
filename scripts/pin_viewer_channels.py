@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
+# Hunan currently uses the alternate route from the uploaded cn_all list.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
