@@ -1,0 +1,42 @@
+name: Probe satellite repair candidates
+
+on:
+  push:
+    paths:
+      - 'scripts/probe_satellite_repairs.py'
+      - '.github/workflows/probe-satellite-repairs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: satellite-repair-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ffprobe is available
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Probe repair candidates
+        run: python3 scripts/probe_satellite_repairs.py
+      - name: Publish probe report only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add satellite-repair-probe.txt
+          if git diff --cached --quiet; then
+            echo 'No probe report changes'
+          else
+            git commit -m 'Measure satellite repair candidates'
+            git pull --rebase -X theirs origin master
+            git push
+          fi
