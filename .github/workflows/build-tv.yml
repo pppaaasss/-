@@ -85,6 +85,9 @@ jobs:
       - name: Apply best-fan routes and TV-balanced CCTV profile
         if: ${{ !cancelled() }}
         run: python3 scripts/apply_best_fan_high_bitrate.py
+      - name: Pin viewer-confirmed CCTV-1 CCTV-4 and Hunan routes
+        if: ${{ !cancelled() }}
+        run: python3 scripts/pin_viewer_channels.py
       - name: Install frame-audit image dependency
         if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         run: |
