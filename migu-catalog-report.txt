@@ -1,10 +1,18 @@
-generated_utc=2026-08-26T04:12:16Z
-migu_catalog_entries=104
+generated_utc=2026-08-26T04:23:11Z
+migu_catalog_entries=106
 policy=compare overlaps; add missing Chinese linear TV only to tv.m3u/tv-all.m3u; Migu speed exempt
-summary_changed=4 summary_added=12 summary_migu_used=16 summary_regrouped=0 summary_dropped=0
+summary_changed=20 summary_added=14 summary_migu_used=34 summary_regrouped=0 summary_dropped=0
 
+UPGRADE	tv-easy.m3u	CCTV-5	cctv-special-forced (CCTV5)
 UPGRADE	tv-easy.m3u	CCTV-5+	cctv-special-forced (CCTV5)
+UPGRADE	tv-easy.m3u	CCTV-6	cctv-special-forced (CCTV6)
+UPGRADE	tv-easy.m3u	CCTV-8	cctv-special-forced (CCTV8)
+UPGRADE	tv-easy.m3u	CCTV-9	cctv-special-forced (CCTV9)
+UPGRADE	tv.m3u	CCTV-5	cctv-special-forced (CCTV5)
 UPGRADE	tv.m3u	CCTV-5+	cctv-special-forced (CCTV5)
+UPGRADE	tv.m3u	CCTV-6	cctv-special-forced (CCTV6)
+UPGRADE	tv.m3u	CCTV-8	cctv-special-forced (CCTV8)
+UPGRADE	tv.m3u	CCTV-9	cctv-special-forced (CCTV9)
 SKIP_NEW	tv.m3u	上海新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	24小时城市联赛轮播台	deny-word	其它
 SKIP_NEW	tv.m3u	CHC影迷电影	deny-word	其它
@@ -20,6 +28,7 @@ SKIP_NEW	tv.m3u	建党105周年巡礼	other-not-linear-looking	其它
 SKIP_NEW	tv.m3u	徐州新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	新动力量创一流	other-not-linear-looking	其它
 SKIP_NEW	tv.m3u	新片放映厅	other-not-linear-looking	其它
+ADD	tv.m3u	武术世界	group=中文综合	source=general	q=1300
 SKIP_NEW	tv.m3u	江阴新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	泰州新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	淮安新闻综合	deny-word	其它
@@ -34,12 +43,16 @@ SKIP_NEW	tv.m3u	CGTN外语纪录	deny-word	央视
 SKIP_NEW	tv.m3u	CGTN法语	deny-word	央视
 SKIP_NEW	tv.m3u	CGTN西班牙语	deny-word	央视
 SKIP_NEW	tv.m3u	CGTN阿拉伯语	deny-word	央视
-ADD	tv.m3u	中国农林卫视	group=卫视台	source=general	q=1300
+ADD	tv.m3u	中国农林卫视	group=卫视台	source=general	q=12000
 ADD	tv.m3u	发现之旅	group=卫视台	source=general	q=2000
 ADD	tv.m3u	老故事	group=卫视台	source=general	q=1300
 ADD	tv.m3u	江苏影视频道	group=江苏	source=general	q=600
 SKIP_NEW	tv.m3u	陕西新闻资讯频道	deny-word	其它
+UPGRADE	tv-all.m3u	CCTV-5	cctv-special-forced (CCTV5)
 UPGRADE	tv-all.m3u	CCTV-5+	cctv-special-forced (CCTV5)
+UPGRADE	tv-all.m3u	CCTV-6	cctv-special-forced (CCTV6)
+UPGRADE	tv-all.m3u	CCTV-8	cctv-special-forced (CCTV8)
+UPGRADE	tv-all.m3u	CCTV-9	cctv-special-forced (CCTV9)
 SKIP_NEW	tv-all.m3u	上海新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	24小时城市联赛轮播台	deny-word	其它
 ADD	tv-all.m3u	上视东方影视	group=中文综合	source=general	q=1200
@@ -54,6 +67,7 @@ SKIP_NEW	tv-all.m3u	建党105周年巡礼	other-not-linear-looking	其它
 SKIP_NEW	tv-all.m3u	徐州新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	新动力量创一流	other-not-linear-looking	其它
 SKIP_NEW	tv-all.m3u	新片放映厅	other-not-linear-looking	其它
+ADD	tv-all.m3u	武术世界	group=中文综合	source=general	q=1300
 SKIP_NEW	tv-all.m3u	江阴新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	泰州新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	淮安新闻综合	deny-word	其它
@@ -68,9 +82,13 @@ SKIP_NEW	tv-all.m3u	CGTN外语纪录	deny-word	央视
 SKIP_NEW	tv-all.m3u	CGTN法语	deny-word	央视
 SKIP_NEW	tv-all.m3u	CGTN西班牙语	deny-word	央视
 SKIP_NEW	tv-all.m3u	CGTN阿拉伯语	deny-word	央视
-ADD	tv-all.m3u	中国农林卫视	group=卫视台	source=general	q=1300
+ADD	tv-all.m3u	中国农林卫视	group=卫视台	source=general	q=12000
 ADD	tv-all.m3u	发现之旅	group=卫视台	source=general	q=2000
 ADD	tv-all.m3u	老故事	group=卫视台	source=general	q=1300
 ADD	tv-all.m3u	江苏影视频道	group=江苏	source=general	q=600
 SKIP_NEW	tv-all.m3u	陕西新闻资讯频道	deny-word	其它
+UPGRADE	tv-core.m3u	CCTV-5	cctv-special-forced (CCTV5)
 UPGRADE	tv-core.m3u	CCTV-5+	cctv-special-forced (CCTV5)
+UPGRADE	tv-core.m3u	CCTV-6	cctv-special-forced (CCTV6)
+UPGRADE	tv-core.m3u	CCTV-8	cctv-special-forced (CCTV8)
+UPGRADE	tv-core.m3u	CCTV-9	cctv-special-forced (CCTV9)
