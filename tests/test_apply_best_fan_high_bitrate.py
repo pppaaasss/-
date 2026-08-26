@@ -31,7 +31,7 @@ class BestFanHighBitrateTests(unittest.TestCase):
             MODULE.CCTV5_TV_PREFERRED_BASE,
         )
 
-    def test_prefers_raw_1080_route_and_keeps_cctv5plus_separate(self):
+    def test_prefers_raw_1080_route_and_keeps_cctv5plus_identity_separate(self):
         source = "\n".join(
             (
                 "#EXTM3U",
@@ -46,7 +46,9 @@ class BestFanHighBitrateTests(unittest.TestCase):
         )
         routes = MODULE.preferred_routes(source)
         self.assertEqual(routes["cctv5"].url, "http://1.2.3.4:9901/tsfile/live/0005_1.m3u8")
-        self.assertEqual(routes["cctv5plus"].url, "http://1.2.3.4:9901/tsfile/live/0116_1.m3u8")
+        self.assertEqual(routes["cctv5plus"].url, MODULE.CCTV5PLUS_IDENTITY_URL)
+        self.assertIn("cctv5p", routes["cctv5plus"].url)
+        self.assertNotEqual(routes["cctv5"].url, routes["cctv5plus"].url)
 
     def test_replaces_only_url_and_does_not_use_720p_candidate(self):
         source = "\n".join(

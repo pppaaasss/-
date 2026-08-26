@@ -39,6 +39,7 @@ DEFAULT_UA = "Mozilla/5.0 (APTV best-fan high-bitrate override/1.0)"
 CCTV5_TV_PREFERRED_BASE = (
     "http://221.7.175.154:8445/tsfile/live/1018_1.m3u8"
 )
+CCTV5PLUS_IDENTITY_URL = "http://107.150.60.122/live/cctv5p.m3u8"
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,16 @@ def preferred_routes(text: str, min_height: int = DEFAULT_MIN_HEIGHT) -> dict[st
         route = PreferredRoute(key, channel.name, channel.url, height, rank)
         if key not in preferred or rank > preferred[key].rank:
             preferred[key] = route
+    # best-fan currently labels the 0116 raw route as CCTV-5+, but the viewer
+    # confirmed that it actually plays CCTV-5. Keep the two station identities
+    # independent and publish the explicit cctv5p H.264 route for CCTV-5+.
+    preferred["cctv5plus"] = PreferredRoute(
+        key="cctv5plus",
+        name="CCTV-5+",
+        url=CCTV5PLUS_IDENTITY_URL,
+        height=720,
+        rank=(720, 6, 0, 0),
+    )
     return preferred
 
 
