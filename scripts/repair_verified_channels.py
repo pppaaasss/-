@@ -43,7 +43,7 @@ VERIFIED_KBPS={
     'CCTV-5':6710,'CCTV-6':6710,'湖南卫视':3200,'黑龙江卫视':3200,
     '海南卫视':3200,'陕西卫视':3370,'云南卫视':3380,
 }
-MIGU_FORCE={'CCTV-5+','CCTV-8'}
+MIGU_FORCE={'CCTV-5','CCTV-5+','CCTV-6','CCTV-8','CCTV-9'}
 REGROUP={'央视文化精品':'中文付费','人间卫视':'台湾'}
 DROP_EXACT={
     'CCTV央视台球','星空卫视','北京衛視 (1080p) [Geo-blocked]','康巴卫视',
@@ -262,6 +262,11 @@ def choose_route(name:str,current:str,migu:dict[str,Entry])->tuple[str,str]:
         return base,'verified/current'
     if name in MIGU_FORCE:
         return row.url,f'{row.source}-forced ({row.name})'
+    # CCTV must never be replaced from URL-name/profile heuristics alone.
+    # Keep the current route unless it is explicitly forced above; measured
+    # bitrate/resolution audits decide future CCTV upgrades.
+    if canonical_cctv(name):
+        return base,'keep-existing-cctv-unless-explicitly-forced'
     cq=url_quality_kbps(base,name)
     mq=url_quality_kbps(row.url,row.name)
     if mq>=cq+400:
