@@ -11,13 +11,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: weak-cctv-probe
+  group: weak-cctv-probe-fast
   cancel-in-progress: true
 
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Ensure ffprobe is available
