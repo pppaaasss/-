@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Probe only CCTV-5, CCTV-5+ and 湖南卫视 before any playlist change.
+"""Probe the user's priority TV channels before any playlist change.
 
-This script never edits published playlists.  It reuses the repository's real
+This script never edits published playlists. It reuses the repository's real
 ffprobe + HLS segment measurements and writes priority-probe-report.txt.
 Candidates known to be China Mobile PLTV/GMCC routes are intentionally omitted.
 """
@@ -17,7 +17,7 @@ from pathlib import Path
 from probe_cctv5_hd import probe
 
 REPORT = Path("priority-probe-report.txt")
-WORKERS = 12
+WORKERS = 16
 
 CANDIDATES = {
     "CCTV-5": [
@@ -45,17 +45,32 @@ CANDIDATES = {
         ("public-192", "http://192.151.150.154/live/hnwshd.m3u8"),
         ("cbn-4m", "http://113.207.84.196/session/d8b2230e-9333-11ee-a43e-525400dfb345$h1.0$live.cbncdn.cn/pj9p9p/__cl/cg:live/__c/hunanHD/__op/default/__f/5/v4M/index.m3u8"),
     ],
+    "CCTV-6": [
+        ("public-119-8m", "http://119.39.128.18:88/hls/6/index.m3u8"),
+        ("bestv-proxy-8m", "http://moss.hk3.345888.xyz.cdn.cloudflare.net/moss/bestv.php?id=cctv6hd8m/8000000"),
+        ("public-198", "http://198.204.228.26/live/cctv6hd.m3u8"),
+        ("public-107", "http://107.150.60.122/live/cctv6hd.m3u8"),
+        ("public-74", "http://74.91.26.218:82/live/cctv6hd.m3u8"),
+        ("public-207", "http://207.56.13.146:81/cdnlive/cctv6.m3u8"),
+        ("current-69", "http://69.30.245.50/live/cctv6.m3u8"),
+    ],
+    "CCTV-8": [
+        ("public-119-8m", "http://119.39.128.18:88/hls/8/index.m3u8"),
+        ("bestv-proxy-8m", "http://moss.hk3.345888.xyz.cdn.cloudflare.net/moss/bestv.php?id=cctv8hd8m/8000000"),
+        ("public-198", "http://198.204.228.26/live/cctv8hd.m3u8"),
+        ("public-107", "http://107.150.60.122/live/cctv8hd.m3u8"),
+        ("public-74", "http://74.91.26.218:82/live/cctv8hd.m3u8"),
+        ("public-207", "http://207.56.13.146:81/cdnlive/cctv8.m3u8"),
+    ],
 }
 
 
 def metrics(result):
     min_dl = min(result.download_mbps, result.second_download_mbps or result.download_mbps)
     headroom = min_dl / result.stream_mbps if result.stream_mbps else 0.0
-    # User wants both image quality and speed.  Do not publish a nominally high
-    # bitrate stream if the measured path cannot download faster than playback.
     passed = bool(
         result.ok
-        and result.height >= 1080
+        and 1080 <= result.height < 2160
         and result.stream_mbps >= 5.0
         and min_dl >= max(7.0, result.stream_mbps * 1.20)
         and result.startup_s <= 2.0
@@ -97,6 +112,7 @@ def main() -> int:
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "policy": {
             "min_height": 1080,
+            "reject_2160_plus_for_normal_channels": True,
             "min_stream_mbps": 5.0,
             "min_download_mbps": 7.0,
             "min_headroom": 1.20,
