@@ -27,17 +27,17 @@ jobs:
         run: |
           git fetch origin master
           git checkout -B master origin/master
-      - name: Repair only verified identities
+      - name: Repair verified identities and merge Migu catalog
         run: python3 scripts/repair_verified_channels.py
-      - name: Publish surgical repair
+      - name: Publish domestic repair and Migu catalog diff
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u migu-catalog-report.txt
           if git diff --cached --quiet; then
-            echo 'No verified identity changes'
+            echo 'No domestic/Migu catalog changes'
           else
-            git commit -m 'Repair verified TV identities only'
+            git commit -m 'Merge better and missing Migu TV channels'
             git pull --rebase -X theirs origin master
             git push
           fi
