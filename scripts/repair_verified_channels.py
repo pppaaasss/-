@@ -18,6 +18,7 @@ VERIFIED={
     '湖南卫视':'http://192.151.150.154/live/hnwshd.m3u8',
     '黑龙江卫视':'http://107.150.60.122/live/hljwshd.m3u8',
     '海南卫视':'http://107.150.60.122/live/lywshd.m3u8',
+    '陕西卫视':'http://107.150.60.122/live/snwshd.m3u8',
 }
 
 # Known identity traps. These remain documented even after a verified route is
