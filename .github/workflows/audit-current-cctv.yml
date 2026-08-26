@@ -1,0 +1,42 @@
+name: Audit current CCTV quality
+
+on:
+  push:
+    paths:
+      - 'scripts/audit_current_cctv.py'
+      - '.github/workflows/audit-current-cctv.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: current-cctv-quality-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ffprobe is available
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Audit current CCTV lineup
+        run: python3 scripts/audit_current_cctv.py
+      - name: Publish report
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cctv-current-quality-report.txt
+          if git diff --cached --quiet; then
+            echo 'No report changes'
+          else
+            git commit -m 'Audit current CCTV bitrate and resolution'
+            git pull --rebase -X theirs origin master
+            git push
+          fi
