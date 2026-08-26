@@ -1,15 +1,17 @@
-generated_utc=2026-08-26T02:55:13Z
+generated_utc=2026-08-26T03:11:10Z
 migu_catalog_entries=103
 policy=compare overlaps; add missing Chinese linear TV only to tv.m3u/tv-all.m3u; Migu speed exempt
-summary_changed=4 summary_added=2 summary_migu_used=6 summary_regrouped=0 summary_dropped=0
+summary_changed=4 summary_added=12 summary_migu_used=16 summary_regrouped=0 summary_dropped=0
 
 UPGRADE	tv-easy.m3u	CCTV-5+	cctv-special-forced (CCTV5)
 UPGRADE	tv.m3u	CCTV-5+	cctv-special-forced (CCTV5)
 SKIP_NEW	tv.m3u	上海新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	24小时城市联赛轮播台	deny-word	其它
 SKIP_NEW	tv.m3u	CHC影迷电影	deny-word	其它
+ADD	tv.m3u	上视东方影视	group=中文综合	source=general	q=1200
 SKIP_NEW	tv.m3u	公共新闻频道	deny-word	其它
 SKIP_NEW	tv.m3u	南京新闻综合频道	deny-word	其它
+ADD	tv.m3u	南方影视	group=中文综合	source=general	q=1000
 SKIP_NEW	tv.m3u	南通新闻综合	deny-word	其它
 SKIP_NEW	tv.m3u	和美乡途轮播台	deny-word	其它
 SKIP_NEW	tv.m3u	宜兴新闻综合	deny-word	其它
@@ -33,12 +35,17 @@ SKIP_NEW	tv.m3u	CGTN法语	deny-word	央视
 SKIP_NEW	tv.m3u	CGTN西班牙语	deny-word	央视
 SKIP_NEW	tv.m3u	CGTN阿拉伯语	deny-word	央视
 ADD	tv.m3u	中国农林卫视	group=卫视台	source=general	q=1300
+ADD	tv.m3u	发现之旅	group=卫视台	source=general	q=2000
+ADD	tv.m3u	老故事	group=卫视台	source=general	q=1300
+ADD	tv.m3u	江苏影视频道	group=江苏	source=general	q=600
 SKIP_NEW	tv.m3u	陕西新闻资讯频道	deny-word	其它
 UPGRADE	tv-all.m3u	CCTV-5+	cctv-special-forced (CCTV5)
 SKIP_NEW	tv-all.m3u	上海新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	24小时城市联赛轮播台	deny-word	其它
+ADD	tv-all.m3u	上视东方影视	group=中文综合	source=general	q=1200
 SKIP_NEW	tv-all.m3u	公共新闻频道	deny-word	其它
 SKIP_NEW	tv-all.m3u	南京新闻综合频道	deny-word	其它
+ADD	tv-all.m3u	南方影视	group=中文综合	source=general	q=1000
 SKIP_NEW	tv-all.m3u	南通新闻综合	deny-word	其它
 SKIP_NEW	tv-all.m3u	和美乡途轮播台	deny-word	其它
 SKIP_NEW	tv-all.m3u	宜兴新闻综合	deny-word	其它
@@ -62,5 +69,8 @@ SKIP_NEW	tv-all.m3u	CGTN法语	deny-word	央视
 SKIP_NEW	tv-all.m3u	CGTN西班牙语	deny-word	央视
 SKIP_NEW	tv-all.m3u	CGTN阿拉伯语	deny-word	央视
 ADD	tv-all.m3u	中国农林卫视	group=卫视台	source=general	q=1300
+ADD	tv-all.m3u	发现之旅	group=卫视台	source=general	q=2000
+ADD	tv-all.m3u	老故事	group=卫视台	source=general	q=1300
+ADD	tv-all.m3u	江苏影视频道	group=江苏	source=general	q=600
 SKIP_NEW	tv-all.m3u	陕西新闻资讯频道	deny-word	其它
 UPGRADE	tv-core.m3u	CCTV-5+	cctv-special-forced (CCTV5)
