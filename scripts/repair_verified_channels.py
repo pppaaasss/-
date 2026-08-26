@@ -9,15 +9,19 @@ from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
 
-# All entries here must have passed ffprobe + two HLS segment downloads on
-# GitHub Actions. China Mobile PLTV/GMCC routes are intentionally excluded.
+# All entries here passed ffprobe + two real HLS segment downloads on GitHub
+# Actions. China Mobile PLTV/GMCC/Migu routes are intentionally excluded.
 VERIFIED={
+    # 1920x1080, ~6.71 Mbps stream, ~9.30 Mbps minimum measured download.
+    'CCTV-5':'http://1.24.39.180:9003/hls/5/index.m3u8',
+    # True 1080 satellite routes with large measured download headroom.
     '湖南卫视':'http://192.151.150.154/live/hnwshd.m3u8',
     '黑龙江卫视':'http://107.150.60.122/live/hljwshd.m3u8',
     '海南卫视':'http://107.150.60.122/live/lywshd.m3u8',
 }
 
-# Known identity traps are documented here so future changes do not re-add them.
+# Known identity traps. These remain documented even after a verified route is
+# pinned, so future maintenance does not accidentally re-introduce them.
 FORBIDDEN_BY_NAME={
     'CCTV-8':('cctv8k',),
     '黑龙江卫视':('SXyuyao3',),
