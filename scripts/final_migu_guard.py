@@ -15,7 +15,7 @@ from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
 CCTV_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u'
-UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.5)'
+UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.6)'
 
 CCTV_EXACT={
     'CCTV5':'CCTV-5',
@@ -23,6 +23,13 @@ CCTV_EXACT={
     'CCTV6':'CCTV-6',
     'CCTV8':'CCTV-8',
     'CCTV9':'CCTV-9',
+}
+
+# Measured public routes that passed the real quality/speed gate. These are
+# intentionally pinned after the Migu merge so future scheduled repairs cannot
+# silently downgrade them.
+PINNED_EXACT={
+    'CCTV-14':'https://event.pull.hebtv.com/jishi/cp2.m3u8',
 }
 
 GROUP_FIX={
@@ -82,6 +89,7 @@ def fetch_cctv_exact()->dict[str,str]:
     missing=set(CCTV_EXACT.values())-set(found)
     if missing:
         raise RuntimeError('missing dedicated CCTV entries: '+','.join(sorted(missing)))
+    found.update(PINNED_EXACT)
     return found
 
 
@@ -142,7 +150,7 @@ def patch(path:Path,exact:dict[str,str])->tuple[int,int,int]:
                         ending='\r\n' if c[j].endswith('\r\n') else '\n'
                         c[j]=wanted+ending
                         identities+=1
-                        print(f'{path}:{name}: dedicated CCTV identity corrected')
+                        print(f'{path}:{name}: exact route corrected')
                     break
         out.extend(c)
 
@@ -156,7 +164,7 @@ def patch(path:Path,exact:dict[str,str])->tuple[int,int,int]:
 
 def main()->int:
     exact=fetch_cctv_exact()
-    print('dedicated_cctv_resolved='+','.join(sorted(exact)))
+    print('exact_routes_resolved='+','.join(sorted(exact)))
     ti=tg=td=0
     for p in PLAYLISTS:
         i,g,d=patch(p,exact)
