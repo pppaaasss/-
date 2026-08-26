@@ -1,0 +1,43 @@
+name: Repair verified TV identities
+
+on:
+  push:
+    paths:
+      - 'scripts/repair_verified_channels.py'
+      - '.github/workflows/repair-verified-channels.yml'
+  schedule:
+    - cron: '27 */4 * * *'
+    - cron: '57 10-15 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aptv-playlist-writes
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sync latest playlists
+        run: |
+          git fetch origin master
+          git checkout -B master origin/master
+      - name: Repair only verified identities
+        run: python3 scripts/repair_verified_channels.py
+      - name: Publish surgical repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          if git diff --cached --quiet; then
+            echo 'No verified identity changes'
+          else
+            git commit -m 'Repair verified TV identities only'
+            git pull --rebase -X theirs origin master
+            git push
+          fi
