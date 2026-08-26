@@ -15,10 +15,11 @@ from pathlib import Path
 
 PLAYLISTS=(Path('tv-easy.m3u'),Path('tv.m3u'),Path('tv-all.m3u'),Path('tv-core.m3u'))
 CCTV_SOURCE='https://raw.githubusercontent.com/ioptu/migu_video/main/cctv.migu.m3u'
-UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.2)'
+UA='Mozilla/5.0 (AppleTV; APTV final Migu identity guard/1.3)'
 
 CCTV_EXACT={
     'CCTV5+':'CCTV-5+',
+    'CCTV6':'CCTV-6',
     'CCTV8':'CCTV-8',
 }
 
