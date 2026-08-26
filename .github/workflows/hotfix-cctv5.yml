@@ -31,7 +31,7 @@ jobs:
         run: python3 -m unittest discover -s tests -p 'test_repair_cctv5_pair.py' -v
       - name: Apply independent CCTV5 pair rescue
         run: python3 scripts/hotfix_cctv5_pair.py
-      - name: Extend the high-bitrate override to every eligible channel
+      - name: Apply best-fan routes and TV-balanced CCTV profile
         run: python3 scripts/apply_best_fan_high_bitrate.py
       - name: Publish hotfix
         run: |

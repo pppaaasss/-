@@ -14,6 +14,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class BestFanHighBitrateTests(unittest.TestCase):
+    def test_locks_every_main_cctv_to_the_tv_balanced_profile(self):
+        routes = MODULE.preferred_routes("#EXTM3U\n")
+        expected = {
+            *(f"cctv{number}" for number in range(1, 18)),
+            "cctv5plus",
+            "cctv4k",
+        }
+        self.assertEqual(set(MODULE.CCTV_TV_BALANCED_ROUTES), expected)
+        self.assertTrue(expected.issubset(routes))
+        for key in expected:
+            name, url, height = MODULE.CCTV_TV_BALANCED_ROUTES[key]
+            self.assertEqual(routes[key].name, name)
+            self.assertEqual(routes[key].url, url)
+            self.assertEqual(routes[key].height, height)
+            self.assertNotIn("/tsfile/live/", url)
+            self.assertNotIn("miguvideo.com", url)
+
     def test_uses_explicit_cctv5_identity_instead_of_swapped_numeric_route(self):
         source = "\n".join(
             (
@@ -49,7 +66,7 @@ class BestFanHighBitrateTests(unittest.TestCase):
         self.assertIn("cctv5p", routes["cctv5plus"].url)
         self.assertNotEqual(routes["cctv5"].url, routes["cctv5plus"].url)
 
-    def test_replaces_only_url_and_does_not_use_720p_candidate(self):
+    def test_replaces_only_url_and_uses_tv_profile_for_main_cctv(self):
         source = "\n".join(
             (
                 "#EXTM3U",
@@ -80,10 +97,11 @@ class BestFanHighBitrateTests(unittest.TestCase):
             result = MODULE.apply_overrides(path, routes)
             rendered = path.read_text(encoding="utf-8")
             second = MODULE.apply_overrides(path, routes)
-        self.assertEqual(result["matched"], 1)
-        self.assertEqual(result["changed"], 1)
+        self.assertEqual(result["matched"], 2)
+        self.assertEqual(result["changed"], 2)
         self.assertIn("http://1.2.3.4:9901/tsfile/live/0128_1.m3u8", rendered)
-        self.assertIn("http://old.example/cctv16.m3u8", rendered)
+        self.assertIn(MODULE.CCTV_TV_BALANCED_ROUTES["cctv16"][1], rendered)
+        self.assertNotIn("http://old.example/cctv16.m3u8", rendered)
         self.assertIn("http://old.example/jotx.m3u8", rendered)
         self.assertIn('group-title="卫视台",湖南卫视', rendered)
         self.assertEqual(second["changed"], 0)
@@ -119,7 +137,7 @@ class BestFanHighBitrateTests(unittest.TestCase):
             result = MODULE.apply_overrides(path, routes)
             rendered = path.read_text(encoding="utf-8")
         self.assertEqual(result["matched"], 1)
-        self.assertIn("http://1.2.3.4:9901/tsfile/live/1003_1.m3u8", rendered)
+        self.assertIn(MODULE.CCTV_TV_BALANCED_ROUTES["cctv4"][1], rendered)
         self.assertIn("http://old.example/cctv4-europe.m3u8", rendered)
 
 

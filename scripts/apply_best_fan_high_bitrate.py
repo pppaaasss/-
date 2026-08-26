@@ -6,7 +6,9 @@ can prefer a small overseas transcode over a high-bitrate domestic IPTV route
 that is fast on the viewer's actual connection.  This final pass trusts the
 metadata-rich best-fan status list for same-name 1080p/2160p channels and only
 replaces their URL.  Channel count, names, groups, logos and ordering stay
-unchanged.
+unchanged.  Main CCTV services are the exception: they use a measured H.264
+living-room profile with enough download headroom instead of the raw 8-11 Mbps
+``tsfile`` routes that buffered or failed on the viewer's television.
 """
 
 from __future__ import annotations
@@ -36,8 +38,58 @@ PLAYLISTS = (
 )
 DEFAULT_MIN_HEIGHT = 1080
 DEFAULT_UA = "Mozilla/5.0 (APTV best-fan high-bitrate override/1.0)"
-CCTV5_IDENTITY_URL = "http://107.150.60.122/live/cctv5hd.m3u8"
-CCTV5PLUS_IDENTITY_URL = "http://107.150.60.122/live/cctv5p.m3u8"
+# Static, television-friendly H.264 routes selected from the uploaded best-fan
+# list plus this repository's repeated segment probes.  These routes favour a
+# useful 720p/1080p picture with playback headroom over nominal raw bitrate.
+# CCTV-5 and CCTV-5+ use explicit named paths because two numeric upstream
+# routes were viewer-confirmed to carry the opposite station.
+CCTV_TV_BALANCED_ROUTES: dict[str, tuple[str, str, int]] = {
+    "cctv1": ("CCTV-1", "http://bztv.tvbus.cc:8081/cdnlive/cctv1.m3u8", 720),
+    "cctv2": ("CCTV-2", "http://107.150.60.122/live/cctv2hd.m3u8", 720),
+    "cctv3": ("CCTV-3", "http://bztv.tvbus.cc:8081/cdnlive/cctv3.m3u8", 720),
+    "cctv4": (
+        "CCTV-4",
+        "https://dash2.antik.sk/live/test_cctv_tizen/playlist.m3u8",
+        720,
+    ),
+    "cctv5": ("CCTV-5", "http://107.150.60.122/live/cctv5hd.m3u8", 720),
+    "cctv5plus": ("CCTV-5+", "http://107.150.60.122/live/cctv5p.m3u8", 720),
+    "cctv6": ("CCTV-6", "http://69.30.245.50/live/cctv6.m3u8", 720),
+    "cctv7": ("CCTV-7", "http://198.204.228.26/live/cctv7hd.m3u8", 1080),
+    "cctv8": ("CCTV-8", "http://107.150.60.122/live/cctv8hd.m3u8", 720),
+    "cctv9": (
+        "CCTV-9",
+        "http://204.12.221.218:8181/3m1080p/cctv9.m3u8",
+        1080,
+    ),
+    "cctv10": (
+        "CCTV-10",
+        "http://207.56.13.146:81/cdnlive/cctv10.m3u8",
+        1080,
+    ),
+    "cctv11": (
+        "CCTV-11",
+        "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd",
+        720,
+    ),
+    "cctv12": (
+        "CCTV-12",
+        "http://207.56.13.146:81/cdnlive/cctv12.m3u8",
+        1080,
+    ),
+    "cctv13": ("CCTV-13", "http://74.91.26.218:82/live/cctv13hd.m3u8", 1080),
+    "cctv14": ("CCTV-14", "http://74.91.26.218:82/live/cctv14hd.m3u8", 720),
+    "cctv15": ("CCTV-15", "http://107.150.60.122/live/cctv15hd.m3u8", 1080),
+    "cctv16": ("CCTV-16", "http://107.150.60.122/live/cctv16hd.m3u8", 1080),
+    "cctv17": ("CCTV-17", "http://74.91.26.218:82/live/cctv17hd.m3u8", 1080),
+    "cctv4k": (
+        "CCTV-4K",
+        "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv4k",
+        2160,
+    ),
+}
+CCTV5_IDENTITY_URL = CCTV_TV_BALANCED_ROUTES["cctv5"][1]
+CCTV5PLUS_IDENTITY_URL = CCTV_TV_BALANCED_ROUTES["cctv5plus"][1]
 
 
 @dataclass(frozen=True)
@@ -98,23 +150,17 @@ def preferred_routes(text: str, min_height: int = DEFAULT_MIN_HEIGHT) -> dict[st
         route = PreferredRoute(key, channel.name, channel.url, height, rank)
         if key not in preferred or rank > preferred[key].rank:
             preferred[key] = route
-    # Numeric raw routes in the upstream list have now been viewer-confirmed
-    # with swapped CCTV-5/CCTV-5+ identities. Do not infer these two stations
-    # from numeric paths: keep the explicit H.264 ``cctv5hd``/``cctv5p`` pair.
-    preferred["cctv5"] = PreferredRoute(
-        key="cctv5",
-        name="CCTV-5",
-        url=CCTV5_IDENTITY_URL,
-        height=720,
-        rank=(720, 6, 0, 0),
-    )
-    preferred["cctv5plus"] = PreferredRoute(
-        key="cctv5plus",
-        name="CCTV-5+",
-        url=CCTV5PLUS_IDENTITY_URL,
-        height=720,
-        rank=(720, 6, 0, 0),
-    )
+    # Apply the living-room profile after the broad high-bitrate selection so
+    # future scheduled builds cannot put raw, under-headroom routes back on the
+    # main CCTV tiles.  The explicit map also prevents CCTV-5/5+ identity swaps.
+    for key, (name, url, height) in CCTV_TV_BALANCED_ROUTES.items():
+        preferred[key] = PreferredRoute(
+            key=key,
+            name=name,
+            url=url,
+            height=height,
+            rank=(height, 6, int(url.startswith("https://")), 0),
+        )
     return preferred
 
 

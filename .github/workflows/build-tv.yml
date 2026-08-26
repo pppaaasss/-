@@ -82,7 +82,7 @@ jobs:
       - name: Final independent CCTV-5 and CCTV-5+ rescue
         if: ${{ !cancelled() }}
         run: python3 scripts/repair_cctv5.py
-      - name: Apply user-verified best-fan high-bitrate routes
+      - name: Apply best-fan routes and TV-balanced CCTV profile
         if: ${{ !cancelled() }}
         run: python3 scripts/apply_best_fan_high_bitrate.py
       - name: Install frame-audit image dependency
