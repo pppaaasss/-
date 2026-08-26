@@ -27,6 +27,8 @@ class BuildPlaylistTests(unittest.TestCase):
         fixtures = (
             ("BBC Earth", "纪录片", False),
             ("VOA美国之音", "中文综合", False),
+            ("Red Bull TV", "中文综合", False),
+            ("Alfa TV", "中文综合", False),
             ("CNA亚洲新闻台", "新加坡", False),
             ("Channel 8", "新加坡", True),
             ("JOTX-DTV", "日本", True),

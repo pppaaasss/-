@@ -27,8 +27,10 @@ permissions:
   contents: write
 
 concurrency:
-  group: rebuild-aptv-playlists
-  cancel-in-progress: true
+  # The short CCTV pair workflow writes the same playlist files. Serialize
+  # both workflows so one cannot advance master during the other's publish.
+  group: aptv-playlist-writes
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -107,7 +109,10 @@ jobs:
             # Independent probe/report workflows may advance master while this
             # long build is running. Rebase the generated playlist commit so a
             # harmless concurrent report push cannot make publication fail.
-            git pull --rebase --autostash origin master
+            # Generated files are authoritative for this completed probe. In
+            # the unlikely event another report commit advanced master, keep
+            # this run's freshly measured versions while replaying the commit.
+            git pull --rebase -X theirs --autostash origin master
             git push
           fi
       - name: Propagate broad playlist build failure after rescue publish

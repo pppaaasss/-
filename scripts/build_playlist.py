@@ -1135,7 +1135,12 @@ def is_viewer_wanted_channel(channel: Channel) -> bool:
     """Enforce the requested Chinese/Taiwan/Japan, no-English profile."""
     if channel.group in BLOCKED_OUTPUT_GROUPS:
         return False
-    identity = f"{channel.name} {channel.extinf}"
+    # A catch-all group label such as group-title="中文综合" is not language
+    # evidence for the station itself.  Excluding it here keeps English-named
+    # overflow from occupying main-list slots only to be removed by the final
+    # publication guard.
+    identity_extinf = re.sub(r'group-title="[^"]*"', "", channel.extinf, flags=re.I)
+    identity = f"{channel.name} {identity_extinf}"
     if re.search(r"(?<![a-z])cgtn(?![a-z])", identity, re.I):
         return False
     if ENGLISH_SERVICE_RE.search(identity):
@@ -1203,7 +1208,8 @@ def is_public_pay_channel(channel: Channel) -> bool:
 
 
 def is_chinese_oriented(channel: Channel) -> bool:
-    identity = f"{channel.name} {channel.extinf}".lower()
+    identity_extinf = re.sub(r'group-title="[^"]*"', "", channel.extinf, flags=re.I)
+    identity = f"{channel.name} {identity_extinf}".lower()
     return (
         channel.group in CHINESE_GROUPS
         or bool(re.search(r"[\u4e00-\u9fff]", channel.name))
