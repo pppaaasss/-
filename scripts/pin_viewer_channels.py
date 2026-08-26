@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+# Touch this file to run the targeted pin workflow without rebuilding the catalogue.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
