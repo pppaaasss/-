@@ -14,7 +14,7 @@ SPEC.loader.exec_module(MODULE)
 
 
 class BestFanHighBitrateTests(unittest.TestCase):
-    def test_prefers_viewer_selected_h264_cctv5_route(self):
+    def test_uses_explicit_cctv5_identity_instead_of_swapped_numeric_route(self):
         source = "\n".join(
             (
                 "#EXTM3U",
@@ -26,10 +26,9 @@ class BestFanHighBitrateTests(unittest.TestCase):
             )
         )
         routes = MODULE.preferred_routes(source)
-        self.assertEqual(
-            routes["cctv5"].url.split("?", 1)[0],
-            MODULE.CCTV5_TV_PREFERRED_BASE,
-        )
+        self.assertEqual(routes["cctv5"].url, MODULE.CCTV5_IDENTITY_URL)
+        self.assertIn("cctv5hd", routes["cctv5"].url)
+        self.assertNotIn("cctv5p.", routes["cctv5"].url)
 
     def test_prefers_raw_1080_route_and_keeps_cctv5plus_identity_separate(self):
         source = "\n".join(
@@ -45,7 +44,7 @@ class BestFanHighBitrateTests(unittest.TestCase):
             )
         )
         routes = MODULE.preferred_routes(source)
-        self.assertEqual(routes["cctv5"].url, "http://1.2.3.4:9901/tsfile/live/0005_1.m3u8")
+        self.assertEqual(routes["cctv5"].url, MODULE.CCTV5_IDENTITY_URL)
         self.assertEqual(routes["cctv5plus"].url, MODULE.CCTV5PLUS_IDENTITY_URL)
         self.assertIn("cctv5p", routes["cctv5plus"].url)
         self.assertNotEqual(routes["cctv5"].url, routes["cctv5plus"].url)

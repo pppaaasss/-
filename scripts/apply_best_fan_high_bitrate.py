@@ -36,9 +36,7 @@ PLAYLISTS = (
 )
 DEFAULT_MIN_HEIGHT = 1080
 DEFAULT_UA = "Mozilla/5.0 (APTV best-fan high-bitrate override/1.0)"
-CCTV5_TV_PREFERRED_BASE = (
-    "http://221.7.175.154:8445/tsfile/live/1018_1.m3u8"
-)
+CCTV5_IDENTITY_URL = "http://107.150.60.122/live/cctv5hd.m3u8"
 CCTV5PLUS_IDENTITY_URL = "http://107.150.60.122/live/cctv5p.m3u8"
 
 
@@ -96,19 +94,20 @@ def preferred_routes(text: str, min_height: int = DEFAULT_MIN_HEIGHT) -> dict[st
             continue
         # Resolution and raw delivery format are quality signals. Upstream
         # order is the last tie-breaker; no remote stream speed test is run.
-        delivery_rank = transport_rank(channel.url)
-        if key == "cctv5" and channel.url.split("?", 1)[0] == CCTV5_TV_PREFERRED_BASE:
-            # The uploaded list contains several 1080p CCTV-5 routes. Prefer
-            # this previously identified H.264 ~8.6 Mbps route over the
-            # phone-only 120.198 route, without running another speed test.
-            delivery_rank = 6
-        rank = (height, delivery_rank, int(channel.url.startswith("https://")), -index)
+        rank = (height, transport_rank(channel.url), int(channel.url.startswith("https://")), -index)
         route = PreferredRoute(key, channel.name, channel.url, height, rank)
         if key not in preferred or rank > preferred[key].rank:
             preferred[key] = route
-    # best-fan currently labels the 0116 raw route as CCTV-5+, but the viewer
-    # confirmed that it actually plays CCTV-5. Keep the two station identities
-    # independent and publish the explicit cctv5p H.264 route for CCTV-5+.
+    # Numeric raw routes in the upstream list have now been viewer-confirmed
+    # with swapped CCTV-5/CCTV-5+ identities. Do not infer these two stations
+    # from numeric paths: keep the explicit H.264 ``cctv5hd``/``cctv5p`` pair.
+    preferred["cctv5"] = PreferredRoute(
+        key="cctv5",
+        name="CCTV-5",
+        url=CCTV5_IDENTITY_URL,
+        height=720,
+        rank=(720, 6, 0, 0),
+    )
     preferred["cctv5plus"] = PreferredRoute(
         key="cctv5plus",
         name="CCTV-5+",
