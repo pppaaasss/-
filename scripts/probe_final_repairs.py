@@ -7,38 +7,38 @@ from probe_cctv5_hd import probe
 
 CANDIDATES={
   'CCTV-5+':[
-    ('jilin-unicom','http://222.169.85.8:9901/tsfile/live/0116_1.m3u8'),
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.130:8004'),
+    ('jia-gd-telecom-a','http://119.134.202.156:8889/rtp/239.77.0.87:5146'),
+    ('jia-gd-telecom-b','http://119.134.202.156:8889/rtp/239.77.1.31:5146'),
     ('proxy','http://go.bkpcp.top/mg/cctv5p'),
   ],
   'CCTV-6':[
-    ('unicom-153','http://153.0.171.163:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0'),
-    ('public-204','http://204.12.221.218:8181/3m1080p/cctv6.m3u8'),
-    ('public-182','http://182.140.125.47:808/hls/6/index.m3u8'),
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.174:8001'),
+    ('jia-gd-telecom-a','http://119.134.202.156:8889/rtp/239.77.0.35:5146'),
+    ('jia-gd-telecom-b','http://119.134.202.156:8889/rtp/239.77.0.171:5146'),
+    ('jia-gd-telecom-c','http://119.134.202.156:8889/rtp/239.77.1.9:5146'),
     ('public-hls-1.24','http://1.24.39.180:9003/hls/6/index.m3u8'),
-    ('public-hls-113','http://113.57.140.161:10081/newlive/live/hls/6/live.m3u8'),
-    ('unicom-113','http://113.90.154.189:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0'),
   ],
   'CCTV-8':[
-    ('unicom-153','http://153.0.171.163:9901/tsfile/live/1007_1.m3u8?key=txiptv&playlive=1&authid=0'),
-    ('unicom-221','http://221.7.175.154:8445/tsfile/live/1006_1.m3u8?key=txiptv&playlive=1&authid=0'),
-    ('public-69','http://69.30.245.50/live/cctv8.m3u8'),
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.175:8001'),
+    ('jia-gd-telecom-a','http://119.134.202.156:8889/rtp/239.77.0.37:5146'),
+    ('jia-gd-telecom-b','http://119.134.202.156:8889/rtp/239.77.0.172:5146'),
+    ('jia-gd-telecom-c','http://119.134.202.156:8889/rtp/239.77.1.10:5146'),
     ('public-hls-1.24','http://1.24.39.180:9003/hls/8/index.m3u8'),
-    ('public-hls-113','http://113.57.140.161:10081/newlive/live/hls/8/live.m3u8'),
-    ('unicom-113','http://113.90.154.189:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0'),
   ],
   '吉林卫视':[
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.240:8172'),
     ('current-unicom','http://221.7.175.154:8445/tsfile/live/1014_1.m3u8?key=txiptv&playlive=1&authid=0'),
   ],
   '陕西卫视':[
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.41:8140'),
     ('public-107-sn','http://107.150.60.122/live/snwshd.m3u8'),
     ('public-63-sn','http://63.141.230.178:82/gslb/zbdq5.m3u8?id=snwshd'),
-    ('unicom-gateway','http://113.25.252.226:9901/tsfile/live/1040_1.m3u8?key=txiptv&playlive=1&authid=0'),
   ],
   '云南卫视':[
+    ('jia-bj-unicom','http://114.243.99.254:8888/rtp/239.3.1.26:8108'),
     ('public-107','http://107.150.60.122/live/ynwshd.m3u8'),
     ('public-63','http://63.141.230.178:82/gslb/zbdq5.m3u8?id=ynwshd'),
-    ('jilin-unicom','http://222.169.85.8:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=1&authid=0'),
-    ('dynamic-gateway','http://genglei.8866.org:9901/tsfile/live/1028_1.m3u8?key=txiptv&playlive=1&authid=0'),
   ],
 }
 
@@ -53,7 +53,7 @@ def run(item):
 
 def main():
   flat=[(ch,l,u) for ch,rows in CANDIDATES.items() for l,u in rows]
-  with concurrent.futures.ThreadPoolExecutor(max_workers=20) as ex: raw=list(ex.map(run,flat))
+  with concurrent.futures.ThreadPoolExecutor(max_workers=22) as ex: raw=list(ex.map(run,flat))
   grouped={k:[] for k in CANDIDATES}
   for ch,d in raw: grouped[ch].append(d)
   Path('final-repair-probe.txt').write_text(json.dumps({'generated_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'results':grouped},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
