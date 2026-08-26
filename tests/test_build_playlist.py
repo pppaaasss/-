@@ -441,6 +441,36 @@ segments/live-001.ts
         selected = builder.select_stable([speed_only, balanced])
         self.assertEqual(selected[0].url, balanced.url)
 
+    def test_core_route_prefers_bitrate_after_safe_headroom(self):
+        fast_soft = builder.Channel(
+            "CCTV-5 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-5 1080p',
+            "https://fast.example/cctv5.m3u8",
+            "大陆",
+        )
+        balanced = builder.Channel(
+            "CCTV-5 1080p",
+            '#EXTINF:-1 group-title="大陆",CCTV-5 1080p',
+            "https://balanced.example/cctv5.m3u8",
+            "大陆",
+        )
+        for channel, download, stream in (
+            (fast_soft, 16.13, 1.29),
+            (balanced, 3.51, 1.68),
+        ):
+            channel.probe = {
+                "ok": True,
+                "checks_ok": 3,
+                "height": 1080,
+                "segment_mbps": download,
+                "stream_mbps": stream,
+                "manifest_s": 1.0,
+            }
+        self.assertGreater(
+            builder.core_route_score(balanced),
+            builder.core_route_score(fast_soft),
+        )
+
     def test_core_route_requires_download_headroom_for_high_bitrate(self):
         overloaded = builder.Channel(
             "北京卫视 1080p",

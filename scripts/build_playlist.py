@@ -1736,8 +1736,9 @@ def core_route_score(channel: Channel) -> float:
         score -= 45.0
 
     # Speed still matters up to a comfortable ceiling, but cannot swamp the
-    # independently measured resolution and programme bitrate.
-    score += min(speed, 20.0) * 1.5
+    # independently measured resolution and programme bitrate.  Above 8 Mbps
+    # the headroom bands already capture playback safety.
+    score += min(speed, 8.0) * 0.6
     score -= latency * 8.0
     score += min(int(probe.get("checks_ok") or 1), 3) * 18.0
     score += max(-60.0, min(historical_score(channel), 90.0)) * 0.35

@@ -59,6 +59,32 @@ class RepairCctv5PairTests(unittest.TestCase):
             selected["cctv5plus"].probe.host,
         )
 
+    def test_moderate_speed_with_headroom_beats_fast_soft_picture(self):
+        fast_soft = repair.CANDIDATES["cctv5"][1]
+        balanced = repair.CANDIDATES["cctv5"][4]
+        plus = repair.CANDIDATES["cctv5plus"][2]
+        results = []
+        for url in repair.CANDIDATES["cctv5"]:
+            if url == fast_soft:
+                results.append(repair.Probe("cctv5", url, True, 16.13, 1.29))
+            elif url == balanced:
+                results.append(repair.Probe("cctv5", url, True, 3.51, 1.68))
+            else:
+                results.append(repair.Probe("cctv5", url, False))
+        results.extend(
+            repair.Probe(
+                "cctv5plus",
+                url,
+                url == plus,
+                16.38 if url == plus else 0.0,
+                1.07 if url == plus else 0.0,
+            )
+            for url in repair.CANDIDATES["cctv5plus"]
+        )
+        selected = repair.choose_routes(results, {})
+        self.assertTrue(repair.has_playback_headroom(selected["cctv5"].probe))
+        self.assertEqual(selected["cctv5"].url, balanced)
+
     def test_new_builder_route_competes_with_fixed_rescue_pool(self):
         dynamic = "https://dynamic.example/cctv5-high.m3u8"
         results = [

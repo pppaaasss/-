@@ -270,7 +270,12 @@ def existing_routes(path: Path) -> dict[str, str]:
 
 
 def has_playback_headroom(probe: Probe) -> bool:
-    return probe.mbps >= max(5.0, probe.stream_mbps * 1.35)
+    # Judge delivery against the programme's real bitrate.  A fixed 5 Mbps
+    # floor wrongly rejects a sustainable 1.7 Mbps stream downloading at
+    # 3.5 Mbps, then favors a softer 1.3 Mbps picture only because its CDN can
+    # burst at 15+ Mbps.  Two Mbps is merely a small absolute safety floor;
+    # the 35% ratio is the actual anti-buffering requirement.
+    return probe.mbps >= max(2.0, probe.stream_mbps * 1.35)
 
 
 def balanced_probe_score(probe: Probe) -> float:
@@ -286,7 +291,10 @@ def balanced_probe_score(probe: Probe) -> float:
     else:
         value = 45.0 if probe.stream_mbps >= 2.5 else 0.0
     value += min(probe.stream_mbps, 10.0) * 30.0
-    value += min(probe.mbps, 20.0) * 1.5
+    # Once comfortable playback headroom is reached, additional burst speed
+    # has little viewing value.  Cap and lightly weight it so programme
+    # bitrate/resolution decide between two sustainable routes.
+    value += min(probe.mbps, 8.0) * 0.6
     if probe.stream_mbps:
         headroom = probe.mbps / probe.stream_mbps
         if headroom >= 2.0:
