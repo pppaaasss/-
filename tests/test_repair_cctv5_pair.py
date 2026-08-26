@@ -59,6 +59,34 @@ class RepairCctv5PairTests(unittest.TestCase):
             selected["cctv5plus"].probe.host,
         )
 
+    def test_new_builder_route_competes_with_fixed_rescue_pool(self):
+        dynamic = "https://dynamic.example/cctv5-high.m3u8"
+        results = [
+            repair.Probe(
+                "cctv5",
+                url,
+                url == repair.CANDIDATES["cctv5"][0],
+                35.0,
+                1.0,
+                1080,
+            )
+            for url in repair.CANDIDATES["cctv5"]
+        ]
+        results.append(repair.Probe("cctv5", dynamic, True, 12.0, 5.0, 1080))
+        results.extend(
+            repair.Probe(
+                "cctv5plus",
+                url,
+                url == repair.CANDIDATES["cctv5plus"][0],
+                14.0,
+                3.0,
+                1080,
+            )
+            for url in repair.CANDIDATES["cctv5plus"]
+        )
+        selected = repair.choose_routes(results, {"cctv5": dynamic})
+        self.assertEqual(selected["cctv5"].url, dynamic)
+
     def test_pair_optimizer_does_not_waste_best_plus_route(self):
         five_fast_host = repair.CANDIDATES["cctv5"][1]
         five_alternate = repair.CANDIDATES["cctv5"][2]

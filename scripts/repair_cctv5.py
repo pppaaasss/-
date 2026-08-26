@@ -312,7 +312,7 @@ def probe_rank(probe: Probe, order: dict[str, int]) -> tuple:
     return (
         has_playback_headroom(probe),
         balanced_probe_score(probe),
-        -order[probe.url],
+        -order.get(probe.url, len(order)),
     )
 
 
@@ -322,9 +322,8 @@ def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, S
     for station in ("cctv5", "cctv5plus"):
         order = {url: index for index, url in enumerate(CANDIDATES[station])}
         healthy = [
-            by_pair[(station, url)]
-            for url in CANDIDATES[station]
-            if by_pair[(station, url)].ok
+            probe for (probe_station, _), probe in by_pair.items()
+            if probe_station == station and probe.ok
         ]
         healthy.sort(key=lambda probe: probe_rank(probe, order), reverse=True)
         healthy_by_station[station] = healthy
@@ -455,11 +454,26 @@ def update_report(selections: dict[str, Selection]) -> None:
 
 
 def main() -> int:
-    jobs = [
-        (station, url)
-        for station, urls in CANDIDATES.items()
-        for url in urls
-    ]
+    # Re-probe the routes just selected by the broad builder as well as the
+    # curated rescue pool. Otherwise this final pass could overwrite a newly
+    # discovered 4-6 Mbps picture with a faster but visibly softer 1 Mbps
+    # fixed-pool route.
+    previous: dict[str, str] = {}
+    current_urls: dict[str, list[str]] = {"cctv5": [], "cctv5plus": []}
+    for filename in PLAYLISTS:
+        for station, url in existing_routes(Path(filename)).items():
+            previous.setdefault(station, url)
+            if url not in current_urls[station]:
+                current_urls[station].append(url)
+
+    jobs: list[tuple[str, str]] = []
+    seen_jobs: set[tuple[str, str]] = set()
+    for station, urls in CANDIDATES.items():
+        for url in (*current_urls[station], *urls):
+            marker = (station, url)
+            if marker not in seen_jobs:
+                jobs.append(marker)
+                seen_jobs.add(marker)
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(jobs)) as executor:
         futures = [executor.submit(probe_candidate, station, url) for station, url in jobs]
         results = [future.result() for future in futures]
@@ -472,7 +486,6 @@ def main() -> int:
             f"height={result.height}"
         )
 
-    previous = existing_routes(Path("tv-easy.m3u"))
     selections = choose_routes(results, previous)
     for station, selected in selections.items():
         print(f"selected {station}={selected.url} reason={selected.reason}")
