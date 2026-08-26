@@ -1,0 +1,46 @@
+name: Fix CCTV auto selection
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-cctv-autoselect.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Disable heuristic CCTV replacements
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/repair_verified_channels.py')
+          s=p.read_text(encoding='utf-8')
+          old="MIGU_FORCE={'CCTV-5+','CCTV-8'}"
+          new="MIGU_FORCE={'CCTV-5','CCTV-5+','CCTV-6','CCTV-8','CCTV-9'}"
+          if old not in s and new not in s:
+              raise SystemExit('MIGU_FORCE marker not found')
+          s=s.replace(old,new)
+          old2="""    if name in MIGU_FORCE:\n        return row.url,f'{row.source}-forced ({row.name})'\n    cq=url_quality_kbps(base,name)\n"""
+          new2="""    if name in MIGU_FORCE:\n        return row.url,f'{row.source}-forced ({row.name})'\n    # CCTV must never be replaced from URL-name/profile heuristics alone.\n    # Keep the current route unless it is explicitly forced above; measured\n    # bitrate/resolution audits decide future CCTV upgrades.\n    if canonical_cctv(name):\n        return base,'keep-existing-cctv-unless-explicitly-forced'\n    cq=url_quality_kbps(base,name)\n"""
+          if old2 not in s and 'keep-existing-cctv-unless-explicitly-forced' not in s:
+              raise SystemExit('choose_route marker not found')
+          s=s.replace(old2,new2)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Publish fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add scripts/repair_verified_channels.py
+          if git diff --cached --quiet; then
+            echo 'Already fixed'
+          else
+            git commit -m 'Stop heuristic CCTV bitrate downgrades'
+            git pull --rebase -X theirs origin master
+            git push
+          fi
