@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
+# CCTV-1 uses the uploaded list's explicit 3 Mbps 1080p route.
 # Hunan currently uses the other route from the uploaded cn_all list.
 # CCTV-6 uses the uploaded list's explicit /1080p/ route instead of the current 720p feed.
 PLAYLISTS = (
@@ -21,7 +22,7 @@ PLAYLISTS = (
 )
 
 TARGET_URLS = {
-    "cctv1": "http://222.169.85.8:9901/tsfile/live/0001_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "cctv1": "http://204.12.221.218:8181/3m1080p/cctv1.m3u8",
     "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv6": "http://173.208.212.130:8181/1080p/cctv6.m3u8",
     "hunan": "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0",
