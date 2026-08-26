@@ -1,0 +1,35 @@
+name: Pin viewer-confirmed channels
+
+on:
+  push:
+    paths:
+      - 'scripts/pin_viewer_channels.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aptv-playlist-writes
+  cancel-in-progress: false
+
+jobs:
+  pin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pin CCTV-1 CCTV-4 and Hunan only
+        run: python3 scripts/pin_viewer_channels.py
+      - name: Publish pinned playlists
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          if git diff --cached --quiet; then
+            echo 'No channel pin changes'
+          else
+            git commit -m 'Pin viewer-confirmed CCTV1 CCTV4 Hunan routes'
+            git pull --rebase --autostash origin master
+            git push
+          fi
