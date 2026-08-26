@@ -2,8 +2,8 @@
 """Fast, surgical hotfix for the three user-priority high-bitrate channels.
 
 Only the stream URL immediately following the exact EXTINF entries for
-CCTV-5, CCTV-5+ and 湖南卫视 is replaced.  Every other byte-level playlist
-entry is left untouched by this script.
+CCTV-5, CCTV-5+ and 湖南卫视 is replaced. Every other playlist entry is left
+untouched by this script.
 """
 
 from __future__ import annotations
@@ -17,13 +17,13 @@ PLAYLISTS = (
     Path("tv-core.m3u"),
 )
 
-# High-bitrate 1080 sources. CCTV-5 uses the repository's measured 1080p50
-# ~10 Mbps route; CCTV-5+ and Hunan use advertised 8 Mbps 1080 China Mobile
-# CDN routes instead of the current low-bitrate fallbacks.
+# No China Mobile IPTV routes here. CCTV-5 keeps the repository-measured
+# 1080p50 ~10 Mbps public route. CCTV-5+ uses an explicit BestTV 8 Mbps route,
+# and Hunan uses the direct MGTV high-quality feed rather than a mobile PLTV URL.
 TARGETS = {
     "CCTV-5": "http://120.76.248.139/live/bfgd/4200000064.m3u8",
-    "CCTV-5+": "http://otttv.bj.chinamobile.com/TVOD/88888888/224/3221226458/1.m3u8",
-    "湖南卫视": "http://ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226307/index.m3u8",
+    "CCTV-5+": "http://180.97.247.27:8088/liveplay-kk.rtxapp.com/live/program/live/cctv5phd8m/8000000/mnf.m3u8",
+    "湖南卫视": "http://hlsal-ldvt.qing.mgtv.com/nn_live/nn_x64/aWQ9SE5XU1pHU1Qmcz0yNDAwJmQ9OTkmaHNpemU9MzIwMDAwMDAw/n_index.m3u8",
 }
 
 
