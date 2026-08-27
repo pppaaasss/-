@@ -2792,7 +2792,7 @@ def main() -> int:
         easy,
         "APTV 无脑稳定版：三轮实测、历史稳定度与 IPv6/IPv4 双栈优选",
     )
-    if legacy_safety_reasons:
+    if legacy_safety_reasons and not os.getenv("CANDIDATE_ALLOW_INCOMPLETE_CORE"):
         print(
             "legacy playlists preserved while family list can update: "
             + "; ".join(legacy_safety_reasons)
