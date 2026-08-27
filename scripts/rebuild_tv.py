@@ -36,12 +36,39 @@ EXTRA_UPSTREAMS = [
     ("大陆", "https://raw.githubusercontent.com/kaige-cai/live/main/live.m3u", False),
 ]
 
+# Viewer feedback beats upstream labels.  This URL is advertised as CCTV-13
+# 1080p by an upstream index but the living-room player actually receives 720p.
+USER_REJECTED_ROUTES = {
+    ("cctv13", "http://74.91.26.218:82/live/cctv13hd.m3u8"),
+}
+
+_ORIGINAL_STATIC_SCORE = build_playlist.channel_static_score
 _ORIGINAL_CORE_ROUTE_SCORE = build_playlist.core_route_score
 _ORIGINAL_MEASURED_SCORE = build_playlist.measured_score
 
 
+def user_rejected(channel: build_playlist.Channel) -> bool:
+    return (build_playlist.channel_key(channel), channel.url) in USER_REJECTED_ROUTES
+
+
+def viewer_static_score(channel: build_playlist.Channel) -> float:
+    """Keep malformed upstream URLs from crashing the whole scheduled rebuild."""
+    if user_rejected(channel):
+        return -1_000_000.0
+    try:
+        return _ORIGINAL_STATIC_SCORE(channel)
+    except (ValueError, UnicodeError):
+        # Some community lists occasionally contain impossible ports or other
+        # malformed URL components. Treat them as unusable candidates instead
+        # of letting one bad line stop all channel refreshes.
+        return -1_000_000.0
+
+
 def viewer_quality_bonus(channel: build_playlist.Channel) -> float:
     """Make real picture quality dominate ranking after a route passes probes."""
+    if user_rejected(channel):
+        return -1_000_000.0
+
     probe = channel.probe
     if not probe.get("ok") or probe.get("duplicate_core_content"):
         return 0.0
@@ -73,10 +100,14 @@ def viewer_quality_bonus(channel: build_playlist.Channel) -> float:
 
 
 def viewer_core_route_score(channel: build_playlist.Channel) -> float:
+    if user_rejected(channel):
+        return -1_000_000.0
     return _ORIGINAL_CORE_ROUTE_SCORE(channel) + viewer_quality_bonus(channel)
 
 
 def viewer_measured_score(channel: build_playlist.Channel) -> float:
+    if user_rejected(channel):
+        return -1_000_000.0
     return _ORIGINAL_MEASURED_SCORE(channel) + viewer_quality_bonus(channel)
 
 
@@ -87,8 +118,10 @@ def configure_builder() -> None:
             build_playlist.SOURCES.append(spec)
             existing_urls.add(spec[1])
 
-    # Patch ranking only.  All existing live-manifest/media-segment health gates
-    # remain authoritative, so dead streams cannot win just by claiming 1080p.
+    # Patch ranking only. All existing live-manifest/media-segment health gates
+    # remain authoritative. The static wrapper also quarantines malformed URLs
+    # so one broken community-list entry cannot abort the entire four-hour run.
+    build_playlist.channel_static_score = viewer_static_score
     build_playlist.core_route_score = viewer_core_route_score
     build_playlist.measured_score = viewer_measured_score
 
