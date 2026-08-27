@@ -18,6 +18,7 @@ class ReleaseSafetyTests(unittest.TestCase):
             "missing_core": [],
             "changed_core": ["cctv8"],
             "core_streaks": {"cctv8": 2},
+            "candidate_run_id": "12345",
             "production_sha256_before": hashes,
         }
 
@@ -40,6 +41,10 @@ class ReleaseSafetyTests(unittest.TestCase):
             self.validate_manifest(data, False, "12345")
         with self.assertRaises(SystemExit):
             self.validate_manifest(data, True, "")
+
+    def test_visual_review_must_match_candidate_run(self) -> None:
+        with self.assertRaises(SystemExit):
+            self.validate_manifest(self.manifest(), True, "99999")
 
     def test_reviewed_two_round_candidate_can_pass_gate(self) -> None:
         self.validate_manifest(self.manifest(), True, "12345")
