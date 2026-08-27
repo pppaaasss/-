@@ -347,7 +347,8 @@ EXTRAS = [
     # CCTV-5 must remain 1080p. These are video-CDN paths (not the AAC-only
     # /audio/ feed that previously produced a black screen in APTV).
     ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub"),
-    ("CCTV-5 体育 1080p 海外镜像", "大陆", "http://207.56.13.146:81/cdnlive/cctv5.m3u8"),
+    ("CCTV-5 体育 1080p 实测", "大陆", "http://198.204.228.26/live/cctv5hd.m3u8"),
+    ("CCTV-5 体育 720p 备用", "大陆", "http://207.56.13.146:81/cdnlive/cctv5.m3u8"),
     ("CCTV-5 体育 1080p 高码", "大陆", "http://117.161.12.124/live/program/live/cctv5hd8m/8000000/mnf.m3u8"),
     ("CCTV-5 体育 1080p 百视通", "大陆", "http://120.76.248.139/live/bfgd/4200000064.m3u8"),
     ("CCTV-5 体育 1080p 教育网镜像", "大陆", "http://video.qd.sdu.edu.cn/liverespath/3f76badfb3a23d95f26ff573a93902bbdb8b8e98/index.m3u8"),
@@ -648,7 +649,7 @@ PREFERRED_HOSTS = [
 CCTV5_EDGE_HOSTS = ("myalicdn.com", "wscdns.com")
 CCTV5_PREFERRED_1080_URLS = (
     "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub",
-    "http://207.56.13.146:81/cdnlive/cctv5.m3u8",
+    "http://198.204.228.26/live/cctv5hd.m3u8",
 )
 CCTV5_OPERATOR_HINTS = ("chinamobile.com", "gmcc.net", "cmvideo.cn", "gitv.tv")
 UNSTABLE_HOST_HINTS = [

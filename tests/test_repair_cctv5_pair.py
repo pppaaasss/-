@@ -85,6 +85,33 @@ class RepairCctv5PairTests(unittest.TestCase):
         self.assertTrue(repair.has_playback_headroom(selected["cctv5"].probe))
         self.assertEqual(selected["cctv5"].url, balanced)
 
+    def test_viewer_confirmed_1080_beats_fast_720_route(self):
+        confirmed = repair.VIEWER_CCTV5_1080_URL
+        fast_720 = repair.CANDIDATES["cctv5"][0]
+        plus = repair.CANDIDATES["cctv5plus"][0]
+        results = []
+        for url in repair.CANDIDATES["cctv5"]:
+            if url == confirmed:
+                results.append(repair.Probe("cctv5", url, True, 5.04, 3.73, 1080))
+            elif url == fast_720:
+                results.append(repair.Probe("cctv5", url, True, 21.72, 1.47, 720))
+            else:
+                results.append(repair.Probe("cctv5", url, False))
+        results.extend(
+            repair.Probe(
+                "cctv5plus",
+                url,
+                url == plus,
+                26.62 if url == plus else 0.0,
+                3.43 if url == plus else 0.0,
+                1080 if url == plus else 0,
+            )
+            for url in repair.CANDIDATES["cctv5plus"]
+        )
+        selected = repair.choose_routes(results, {})
+        self.assertEqual(selected["cctv5"].url, confirmed)
+        self.assertEqual(selected["cctv5"].reason, "viewer_confirmed_1080")
+
     def test_new_builder_route_competes_with_fixed_rescue_pool(self):
         dynamic = "https://dynamic.example/cctv5-high.m3u8"
         results = [

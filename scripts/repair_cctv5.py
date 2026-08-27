@@ -23,6 +23,7 @@ DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV CCTV5 pair rescue/2.0)"
 TIMEOUT = 7.0
 READ_LIMIT = 512 * 1024
 SEGMENT_SAMPLE_LIMIT = 1024 * 1024
+VIEWER_CCTV5_1080_URL = "http://198.204.228.26/live/cctv5hd.m3u8"
 
 # This single host was hard-pinned for both stations and the viewer confirmed
 # that both routes stopped playing on 2026-08-25.  Never preserve it as a
@@ -37,7 +38,7 @@ CANDIDATES = {
         "http://207.56.13.146:81/cdnlive/cctv5.m3u8",
         "http://107.150.60.122/live/cctv5hd.m3u8",
         "http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub",
-        "http://198.204.228.26/live/cctv5hd.m3u8",
+        VIEWER_CCTV5_1080_URL,
         "http://1.24.39.180:9003/hls/5/index.m3u8",
         "http://120.76.248.139/live/bfgd/4200000064.m3u8",
         "http://58.56.162.102:4466/newlive/live/hls/5/live.m3u8",
@@ -52,9 +53,20 @@ CANDIDATES = {
 }
 
 FALLBACKS = {
-    "cctv5": CANDIDATES["cctv5"][0],
+    "cctv5": VIEWER_CCTV5_1080_URL,
     "cctv5plus": CANDIDATES["cctv5plus"][0],
 }
+
+# The living-room player is the final resolution authority.  This route was
+# confirmed there as 1080p, while the much faster 207.56 route displayed as
+# 720p.  Prefer the confirmed route whenever it is still live and has at least
+# modest playback headroom; only then fall back to the generic pair optimizer.
+VIEWER_CONFIRMED_1080_ROUTES = {
+    "cctv5": frozenset({VIEWER_CCTV5_1080_URL}),
+    "cctv5plus": frozenset(),
+}
+VIEWER_CONFIRMED_MIN_HEADROOM = 1.15
+VIEWER_CONFIRMED_MIN_STREAM_MBPS = 2.4
 
 CANONICAL_NAMES = {"cctv5": "CCTV-5", "cctv5plus": "CCTV-5+"}
 
@@ -316,8 +328,22 @@ def balanced_probe_score(probe: Probe) -> float:
     return value
 
 
+def is_viewer_confirmed_1080(probe: Probe) -> bool:
+    if (
+        not probe.ok
+        or probe.url not in VIEWER_CONFIRMED_1080_ROUTES.get(probe.station, ())
+        or probe.stream_mbps < VIEWER_CONFIRMED_MIN_STREAM_MBPS
+    ):
+        return False
+    return probe.mbps >= max(
+        2.0,
+        probe.stream_mbps * VIEWER_CONFIRMED_MIN_HEADROOM,
+    )
+
+
 def probe_rank(probe: Probe, order: dict[str, int]) -> tuple:
     return (
+        is_viewer_confirmed_1080(probe),
         has_playback_headroom(probe),
         balanced_probe_score(probe),
         -order.get(probe.url, len(order)),
@@ -355,14 +381,21 @@ def choose_routes(results: list[Probe], previous: dict[str, str]) -> dict[str, S
         cctv5, cctv5plus = max(
             pairs,
             key=lambda pair: (
+                is_viewer_confirmed_1080(pair[0]),
+                is_viewer_confirmed_1080(pair[1]),
                 has_playback_headroom(pair[0]) and has_playback_headroom(pair[1]),
                 int(has_playback_headroom(pair[0])) + int(has_playback_headroom(pair[1])),
                 min(balanced_probe_score(pair[0]), balanced_probe_score(pair[1])),
                 balanced_probe_score(pair[0]) + balanced_probe_score(pair[1]),
             ),
         )
+        cctv5_reason = (
+            "viewer_confirmed_1080"
+            if is_viewer_confirmed_1080(cctv5)
+            else "fresh_pair_probe"
+        )
         return {
-            "cctv5": Selection(cctv5.url, "fresh_pair_probe", cctv5),
+            "cctv5": Selection(cctv5.url, cctv5_reason, cctv5),
             "cctv5plus": Selection(cctv5plus.url, "fresh_pair_probe", cctv5plus),
         }
 
