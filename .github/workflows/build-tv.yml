@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run offline tests
         run: python3 -m unittest discover -s tests -v
-      - name: Probe and build playlists
+      - name: Probe all upstreams and build quality-first playlists
         id: playlist_build
         # A broad rebuild can fail its family-channel safety gate while the
         # currently published playlists are still usable. Keep going so the
@@ -84,9 +84,9 @@ jobs:
       - name: Final independent CCTV-5 and CCTV-5+ rescue
         if: ${{ !cancelled() }}
         run: python3 scripts/repair_cctv5.py
-      - name: Apply best-fan routes and TV-balanced CCTV profile
-        if: ${{ !cancelled() }}
-        run: python3 scripts/apply_best_fan_high_bitrate.py
+      # best-fan is already part of the measured candidate pool. Do not run the
+      # old static best-fan override here because it could replace a healthy
+      # 1080p winner with one of the old hard-coded 720p CCTV routes.
       - name: Pin viewer-confirmed CCTV-1 CCTV-4 and Hunan routes
         if: ${{ !cancelled() }}
         run: python3 scripts/pin_viewer_channels.py
