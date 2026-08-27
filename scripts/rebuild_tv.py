@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 """Single production entry point for the APTV playlist rebuild.
 
-The big builder owns source discovery, probing, health history and publication
-selection. This module adds the viewer's source/quality policy, then runs the
-small final passes in one fixed order.
-
 Production priorities:
 1. keep the scheduled backend alive even when one upstream contains junk,
 2. keep a usable previous publication if a rebuild becomes obviously broken,
-3. healthy 2160p/1080p high-bitrate routes,
-4. healthy ordinary 1080p routes,
-5. 720p only as an availability fallback when HD candidates are unusable.
+3. keep published local/regional tiles alive and remove confirmed dead clutter,
+4. healthy 2160p/1080p high-bitrate routes,
+5. healthy ordinary 1080p routes,
+6. 720p only as an availability fallback when HD candidates are unusable,
+7. mirror pay channels independently without stream probing.
 
 Viewer-confirmed pins are intentionally NOT reapplied by this scheduled entry
 point. They remain a manual hotfix tool. Scheduled rebuilds must be allowed to
@@ -19,7 +17,6 @@ fail over when a pinned source later dies.
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 import traceback
@@ -50,8 +47,7 @@ EXTRA_UPSTREAMS = [
     ("大陆", "https://raw.githubusercontent.com/kaige-cai/live/main/live.m3u", False),
 ]
 
-# Viewer feedback beats upstream labels. This URL is advertised as CCTV-13
-# 1080p by an upstream index but the living-room player actually receives 720p.
+# Viewer feedback beats upstream labels.
 USER_REJECTED_ROUTES = {
     ("cctv13", "http://74.91.26.218:82/live/cctv13hd.m3u8"),
 }
@@ -163,8 +159,10 @@ def publication_is_sane(previous: dict[Path, str]) -> tuple[bool, str]:
         old = previous.get(path)
         if old:
             old_count = playlist_count(old)
-            # A sudden >35% catalogue collapse is much more likely to be a
-            # broken upstream/probe run than a legitimate overnight change.
+            # A sudden >35% catalogue collapse is more likely to be a broken
+            # probe/upstream run than legitimate cleanup.  Confirmed dead-local
+            # pruning is allowed as long as the publication stays above this
+            # guardrail.
             if old_count >= floor and count < int(old_count * 0.65):
                 return False, f"{path.name} collapsed from {old_count} to {count} channels"
     return True, "ok"
@@ -212,14 +210,15 @@ def main() -> int:
     if base_rc:
         failures.append(f"base builder ({base_rc})")
 
+    # These passes operate on the measured publication.  Local maintenance is
+    # deliberately non-fatal: if its own network view is bad, leave the builder
+    # result alone rather than taking the backend down.
     steps = [
         ("Promote verified 1080p50/1080i50 routes", "upgrade_core_50hz.py", False),
         ("Keep one visible tile per station", "clean_single_station.py", True),
         ("Apply viewer region/profile policy", "apply_viewer_profile.py", True),
         ("Repair CCTV-5 / CCTV-5+ independently", "repair_cctv5.py", True),
-        # Do not reapply manual living-room pins here: an automatic rebuild must
-        # be free to fail over if yesterday's viewer-confirmed source is dead.
-        ("Mirror best-fan pay channels without stream tests", "import_best_fan_pay_unchecked.py", True),
+        ("Repair/remove confirmed dead local stations", "maintain_published_channels.py", False),
     ]
     for label, script, required in steps:
         if not run_python(label, script, required=required):
@@ -230,6 +229,16 @@ def main() -> int:
         print(f"ERROR: publication guard rejected rebuild: {reason}", flush=True)
         restore_playlists(previous)
         failures.append("publication guard")
+
+    # Pay channels are an independent unchecked mirror.  Run this AFTER the
+    # rollback guard so a broad rebuild failure cannot erase the pay import.
+    # The importer has its own index-level sanity check and never opens streams.
+    if not run_python(
+        "Mirror best-fan pay channels without stream tests",
+        "import_best_fan_pay_unchecked.py",
+        required=False,
+    ):
+        failures.append("import_best_fan_pay_unchecked.py")
 
     if failures:
         print("\nPipeline kept a usable publication but reported failures: " + ", ".join(failures), flush=True)
