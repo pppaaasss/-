@@ -1,0 +1,97 @@
+name: Finalize TV lineup once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/finalize-tv-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: contains(github.event.head_commit.message, '[finalize-tv-once]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Remove four unwanted satellite channels only
+        run: |
+          python3 - <<'PY'
+          import re
+          import subprocess
+          from pathlib import Path
+
+          targets = {'甘肃卫视', '延边卫视', '农林卫视', '三沙卫视'}
+          files = ['tv-easy.m3u', 'tv.m3u', 'tv-all.m3u', 'tv-core.m3u']
+
+          def parse_entries(text):
+              lines = text.splitlines()
+              entries = {}
+              i = 0
+              while i < len(lines):
+                  line = lines[i]
+                  if line.startswith('#EXTINF:'):
+                      name = line.rsplit(',', 1)[-1].strip()
+                      url = lines[i + 1].strip() if i + 1 < len(lines) else ''
+                      entries[name] = (line, url)
+                      i += 2
+                  else:
+                      i += 1
+              return entries
+
+          for filename in files:
+              path = Path(filename)
+              before = path.read_text(encoding='utf-8')
+              parent = subprocess.check_output(['git', 'show', f'HEAD^:{filename}'], text=True)
+              parent_cctv = {k: v for k, v in parse_entries(parent).items() if k.upper().startswith('CCTV')}
+
+              lines = before.splitlines()
+              out = []
+              i = 0
+              removed = []
+              while i < len(lines):
+                  line = lines[i]
+                  if line.startswith('#EXTINF:'):
+                      name = line.rsplit(',', 1)[-1].strip()
+                      if name in targets:
+                          removed.append(name)
+                          i += 1
+                          if i < len(lines):
+                              i += 1
+                          continue
+                  out.append(line)
+                  i += 1
+
+              text = '\n'.join(out) + '\n'
+              count = sum(1 for line in out if line.startswith('#EXTINF:'))
+              text = re.sub(r'(?m)^# channels=\d+$', f'# channels={count}', text)
+              path.write_text(text, encoding='utf-8')
+
+              now_entries = parse_entries(text)
+              now_cctv = {k: v for k, v in now_entries.items() if k.upper().startswith('CCTV')}
+              if parent_cctv != now_cctv:
+                  raise SystemExit(f'{filename}: CCTV entries changed unexpectedly')
+              still = sorted(targets & set(now_entries))
+              if still:
+                  raise SystemExit(f'{filename}: targets still present: {still}')
+              print(filename, 'removed=', sorted(set(removed)), 'channels=', count)
+          PY
+
+      - name: Verify only four production playlists changed
+        run: |
+          git diff --check
+          changed="$(git diff --name-only)"
+          bad="$(printf '%s\n' "$changed" | grep -v -E '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u)$' || true)"
+          test -z "$bad" || { echo "Unexpected changed files:"; echo "$bad"; exit 1; }
+
+      - name: Commit final production lineup
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git commit -m 'Finalize TV lineup and remove four satellite channels'
+          git push origin HEAD:master

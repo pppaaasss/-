@@ -1,21 +1,7 @@
 name: Build isolated TV candidates
 
 on:
-  schedule:
-    - cron: '17 */4 * * *'
   workflow_dispatch:
-  push:
-    branches: [master]
-    paths:
-      - 'scripts/build_playlist.py'
-      - 'scripts/build_candidate.py'
-      - 'scripts/candidate_policy.py'
-      - 'scripts/run_candidate.py'
-      - 'scripts/candidate_release.py'
-      - 'tests/test_quality_hardening.py'
-      - 'tests/test_candidate_policy.py'
-      - 'tests/test_release_safety.py'
-      - '.github/workflows/build-candidate.yml'
 
 permissions:
   contents: write
