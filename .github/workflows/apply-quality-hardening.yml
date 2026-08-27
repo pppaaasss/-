@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - 'scripts/apply_quality_hardening.py'
+      - 'scripts/apply_candidate_mode.py'
       - 'tests/test_quality_hardening.py'
       - '.github/workflows/apply-quality-hardening.yml'
 
@@ -28,13 +29,16 @@ jobs:
         run: |
           sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/prod-before.sha256
 
-      - name: Apply decoded-quality patch
+      - name: Apply decoded-quality and candidate-mode patches
         run: |
           python3 scripts/apply_quality_hardening.py
+          python3 scripts/apply_candidate_mode.py
           python3 -m py_compile scripts/build_playlist.py
 
       - name: Run quality hardening tests
-        run: python3 -m unittest tests.test_quality_hardening -v
+        run: |
+          python3 -m unittest tests.test_quality_hardening -v
+          python3 -m unittest tests.test_release_safety -v
 
       - name: Prove production playlists unchanged
         run: |
@@ -60,5 +64,5 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Harden decoded quality selection'
+          git commit -m 'Enable incomplete isolated candidate scans'
           git push origin HEAD:master
