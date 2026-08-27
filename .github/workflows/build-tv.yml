@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'scripts/build_playlist.py'
+      - 'scripts/build_playlist_with_upstreams.py'
       - 'scripts/repair_cctv5.py'
       - 'scripts/upgrade_core_50fps.py'
       - 'scripts/upgrade_core_50hz.py'
@@ -62,7 +63,7 @@ jobs:
           PROBE_TIMEOUT: '8'
           CORE_VARIANTS_PER_CHANNEL: '24'
           HISTORY_WINDOW: '24'
-        run: python3 scripts/build_playlist.py
+        run: python3 scripts/build_playlist_with_upstreams.py
       - name: Ensure ffprobe is available for 1080p50/1080i50 verification
         if: ${{ !cancelled() }}
         run: |
