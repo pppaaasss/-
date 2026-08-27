@@ -1,0 +1,132 @@
+name: Audit HK MO TW and pay once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/audit-regional-pay-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: contains(github.event.head_commit.message, '[audit-regional-pay-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ffprobe
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Probe only Hong Kong Macau Taiwan and Chinese pay TV
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures
+          import json
+          import subprocess
+          from collections import defaultdict
+          from pathlib import Path
+
+          TARGET_GROUPS = {'香港', '澳门', '台湾', '中文付费'}
+          FILES = [
+              ('prod-easy', 'tv-easy.m3u'),
+              ('prod-main', 'tv.m3u'),
+              ('candidate-easy', 'candidate/tv-easy.m3u'),
+              ('candidate-main', 'candidate/tv.m3u'),
+          ]
+          EXTRA_PAY = [
+              ('中文付费', 'CCTV央视台球-备选', 'http://38.75.136.137:98/gslb/dsdqpub/ystq.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV第一剧场-备选', 'http://38.75.136.137:98/gslb/dsdqpub/dyjc.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV怀旧剧场-备选A', 'http://38.75.136.137:98/gslb/dsdqpub/hjjc.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV怀旧剧场-备选B', 'http://120.76.248.139/live/bfgd/4200000224.m3u8'),
+              ('中文付费', 'CCTV文化精品-备选', 'http://38.75.136.137:98/gslb/dsdqpub/ysjp.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV世界地理-备选', 'http://38.75.136.137:98/gslb/dsdqpub/sjdl.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV风云剧场-备选', 'http://38.75.136.137:98/gslb/dsdqpub/fyjc.m3u8?auth=testpub'),
+              ('中文付费', 'CCTV风云音乐-备选', 'http://38.75.136.137:98/gslb/dsdqpub/fyyy.m3u8?auth=testpub'),
+          ]
+
+          def parse_m3u(path):
+              p = Path(path)
+              if not p.exists():
+                  return []
+              lines = p.read_text(encoding='utf-8', errors='replace').splitlines()
+              out = []
+              i = 0
+              while i < len(lines):
+                  line = lines[i].strip()
+                  if line.startswith('#EXTINF:'):
+                      group = ''
+                      marker = 'group-title="'
+                      if marker in line:
+                          group = line.split(marker, 1)[1].split('"', 1)[0]
+                      name = line.rsplit(',', 1)[-1].strip()
+                      url = lines[i + 1].strip() if i + 1 < len(lines) else ''
+                      if group in TARGET_GROUPS and url.startswith(('http://', 'https://')):
+                          out.append((group, name, url))
+                      i += 2
+                  else:
+                      i += 1
+              return out
+
+          merged = {}
+          for origin, path in FILES:
+              for group, name, url in parse_m3u(path):
+                  key = (group, name, url)
+                  merged.setdefault(key, set()).add(origin)
+          for group, name, url in EXTRA_PAY:
+              merged.setdefault((group, name, url), set()).add('extra-replacement')
+
+          items = [(g, n, u, ','.join(sorted(origins))) for (g, n, u), origins in merged.items()]
+
+          def probe(item):
+              group, name, url, origins = item
+              cmd = [
+                  'ffprobe', '-v', 'error', '-rw_timeout', '8000000',
+                  '-select_streams', 'v:0',
+                  '-show_entries', 'stream=width,height,codec_name,r_frame_rate',
+                  '-of', 'json', url,
+              ]
+              try:
+                  cp = subprocess.run(cmd, capture_output=True, text=True, timeout=11)
+                  if cp.returncode != 0:
+                      err = (cp.stderr or f'ffprobe_rc_{cp.returncode}').strip().replace('\n', ' ')[:180]
+                      return (group, name, url, origins, False, 0, 0, '', '', err)
+                  data = json.loads(cp.stdout or '{}')
+                  stream = (data.get('streams') or [{}])[0]
+                  w = int(stream.get('width') or 0)
+                  h = int(stream.get('height') or 0)
+                  codec = str(stream.get('codec_name') or '')
+                  fps = str(stream.get('r_frame_rate') or '')
+                  return (group, name, url, origins, h > 0, w, h, codec, fps, '')
+              except subprocess.TimeoutExpired:
+                  return (group, name, url, origins, False, 0, 0, '', '', 'timeout')
+              except Exception as exc:
+                  return (group, name, url, origins, False, 0, 0, '', '', f'{type(exc).__name__}:{exc}'[:180])
+
+          results = []
+          with concurrent.futures.ThreadPoolExecutor(max_workers=16) as ex:
+              for result in ex.map(probe, items):
+                  results.append(result)
+
+          summary = defaultdict(lambda: [0, 0])
+          lines = []
+          for group, name, url, origins, ok, w, h, codec, fps, err in sorted(results, key=lambda r: (r[0], not r[4], r[1], r[2])):
+              summary[group][0] += 1
+              summary[group][1] += int(ok)
+              lines.append(f'RESULT|{group}|{name}|ok={int(ok)}|size={w}x{h}|codec={codec}|fps={fps}|origin={origins}|url={url}|error={err}')
+
+          header = [f'SUMMARY|{group}|tested={vals[0]}|ok={vals[1]}|failed={vals[0]-vals[1]}' for group, vals in sorted(summary.items())]
+          text = '\n'.join(header + lines) + '\n'
+          Path('regional-pay-audit.txt').write_text(text, encoding='utf-8')
+          print(text)
+          PY
+      - name: Upload audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: regional-pay-audit-${{ github.run_id }}
+          path: regional-pay-audit.txt
+          retention-days: 3
