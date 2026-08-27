@@ -16,6 +16,7 @@ def apply(bp: ModuleType) -> None:
     original_measured_score = bp.measured_score
     original_fallback_rank = bp.publication_fallback_rank
     original_add_cctv5_backups = bp.add_cctv5_backups
+    original_merge_probe_results = bp.merge_probe_results
 
     def mainland_quality_score(channel) -> float:
         probe = channel.probe
@@ -121,6 +122,34 @@ def apply(bp: ModuleType) -> None:
         filtered = [channel for channel in channels if valid_cctv5_backup(channel)]
         return original_add_cctv5_backups(stable, filtered, count=count)
 
+    def merge_probe_results(first: dict, later: dict, checks_ok: int) -> dict:
+        """Carry the worst decoded size across rechecks, not just legacy height."""
+        combined = original_merge_probe_results(first, later, checks_ok)
+        heights = [
+            int(value)
+            for value in (
+                first.get("decoded_height") or first.get("height"),
+                later.get("decoded_height") or later.get("height"),
+            )
+            if value and int(value) > 0
+        ]
+        widths = [
+            int(value)
+            for value in (
+                first.get("decoded_width") or first.get("width"),
+                later.get("decoded_width") or later.get("width"),
+            )
+            if value and int(value) > 0
+        ]
+        if heights:
+            worst_height = min(heights)
+            combined["decoded_height"] = worst_height
+            combined["height"] = worst_height
+        if widths:
+            combined["decoded_width"] = min(widths)
+        return combined
+
     bp.measured_score = measured_score
     bp.publication_fallback_rank = publication_fallback_rank
     bp.add_cctv5_backups = add_cctv5_backups
+    bp.merge_probe_results = merge_probe_results

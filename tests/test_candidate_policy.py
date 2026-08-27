@@ -11,12 +11,14 @@ class CandidatePolicyTests(unittest.TestCase):
         self.original_measured_score = bp.measured_score
         self.original_fallback_rank = bp.publication_fallback_rank
         self.original_add_cctv5_backups = bp.add_cctv5_backups
+        self.original_merge_probe_results = bp.merge_probe_results
         candidate_policy.apply(bp)
 
     def tearDown(self) -> None:
         bp.measured_score = self.original_measured_score
         bp.publication_fallback_rank = self.original_fallback_rank
         bp.add_cctv5_backups = self.original_add_cctv5_backups
+        bp.merge_probe_results = self.original_merge_probe_results
 
     def channel(self, name: str, *, group: str = "广东", url: str = "http://example.test/live.m3u8") -> bp.Channel:
         return bp.Channel(
@@ -71,6 +73,32 @@ class CandidatePolicyTests(unittest.TestCase):
         fake.probe["height"] = 1080
         output = bp.add_cctv5_backups([primary], [fake], count=1)
         self.assertFalse(any(str(channel.display_override or "").startswith("CCTV-5 备用") for channel in output))
+
+    def test_recheck_downgrade_updates_decoded_height(self) -> None:
+        first = {
+            "ok": True,
+            "decoded_width": 1920,
+            "decoded_height": 1080,
+            "width": 1920,
+            "height": 1080,
+            "segment_mbps": 10.0,
+            "manifest_s": 0.5,
+            "stream_mbps": 4.0,
+        }
+        later = {
+            "ok": True,
+            "decoded_width": 1280,
+            "decoded_height": 720,
+            "width": 1280,
+            "height": 720,
+            "segment_mbps": 9.0,
+            "manifest_s": 0.7,
+            "stream_mbps": 3.0,
+        }
+        merged = bp.merge_probe_results(first, later, 2)
+        self.assertEqual(merged["decoded_height"], 720)
+        self.assertEqual(merged["height"], 720)
+        self.assertEqual(merged["decoded_width"], 1280)
 
     def test_overseas_keeps_original_network_policy(self) -> None:
         channel = self.channel("香港测试", group="香港")
