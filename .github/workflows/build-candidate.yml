@@ -91,6 +91,50 @@ jobs:
             --workers 8 \
             --timeout 30
 
+      - name: Record frame-audit readiness in candidate manifest
+        if: ${{ !cancelled() && hashFiles('candidate/manifest.json') != '' }}
+        run: |
+          python3 - <<'PY'
+          import csv, json, re
+          from pathlib import Path
+
+          manifest_path = Path('candidate/manifest.json')
+          data = json.loads(manifest_path.read_text(encoding='utf-8'))
+          changed = [str(value) for value in (data.get('changed_core') or [])]
+
+          def display_name(key: str) -> str:
+              low = key.lower()
+              if low == 'cctv5plus':
+                  return 'CCTV-5+'
+              if low == 'cctv4k':
+                  return 'CCTV-4K'
+              match = re.fullmatch(r'cctv(\d{1,2})', low)
+              if match:
+                  return f'CCTV-{int(match.group(1))}'
+              return key
+
+          results_path = Path('candidate-frame-audit/results.csv')
+          frame_ok_names = set()
+          if results_path.exists():
+              with results_path.open('r', encoding='utf-8-sig', newline='') as handle:
+                  for row in csv.DictReader(handle):
+                      if str(row.get('status') or '').strip() == 'frame_ok':
+                          frame_ok_names.add(str(row.get('name') or '').strip())
+
+          missing = [key for key in changed if display_name(key) not in frame_ok_names]
+          sheets = sorted(path.name for path in Path('candidate-frame-audit').glob('contact-sheet*.jpg'))
+          ready = (not changed) or (not missing and bool(sheets))
+          data['frame_audit_ready'] = ready
+          data['frame_audit_missing_changed_core'] = missing
+          data['frame_contact_sheets'] = sheets
+          manifest_path.write_text(
+              json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          if changed and not ready:
+              print('Changed core routes are NOT visually reviewable yet:', ','.join(missing) or 'contact sheet missing')
+          PY
+
       - name: Prove production SHA256 did not change
         if: always()
         run: |

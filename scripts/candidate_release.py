@@ -52,6 +52,10 @@ def validate(manifest: dict, *, visual_confirmed: bool, audit_run_id: str) -> No
         raise SystemExit("core changes lack two consecutive scans: " + ", ".join(short))
     expected_run_id = str(manifest.get("candidate_run_id") or "").strip()
     if changed:
+        if not manifest.get("frame_audit_ready"):
+            absent = list(manifest.get("frame_audit_missing_changed_core") or [])
+            detail = ": " + ", ".join(map(str, absent)) if absent else ""
+            raise SystemExit("changed core routes lack a reviewable frame-audit artifact" + detail)
         if not visual_confirmed or not audit_run_id.strip():
             raise SystemExit("changed core routes require explicit visual artifact confirmation")
         if not expected_run_id or audit_run_id.strip() != expected_run_id:

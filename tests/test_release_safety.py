@@ -19,6 +19,8 @@ class ReleaseSafetyTests(unittest.TestCase):
             "changed_core": ["cctv8"],
             "core_streaks": {"cctv8": 2},
             "candidate_run_id": "12345",
+            "frame_audit_ready": True,
+            "frame_audit_missing_changed_core": [],
             "production_sha256_before": hashes,
         }
 
@@ -32,6 +34,13 @@ class ReleaseSafetyTests(unittest.TestCase):
     def test_changed_core_needs_two_consecutive_scans(self) -> None:
         data = self.manifest()
         data["core_streaks"]["cctv8"] = 1
+        with self.assertRaises(SystemExit):
+            self.validate_manifest(data, True, "12345")
+
+    def test_changed_core_needs_reviewable_frame_audit(self) -> None:
+        data = self.manifest()
+        data["frame_audit_ready"] = False
+        data["frame_audit_missing_changed_core"] = ["cctv8"]
         with self.assertRaises(SystemExit):
             self.validate_manifest(data, True, "12345")
 
@@ -62,6 +71,7 @@ class ReleaseSafetyTests(unittest.TestCase):
         self.assertNotIn("git pull --rebase", text)
         self.assertIn("production-before.sha256", text)
         self.assertIn("production-after.sha256", text)
+        self.assertIn("frame_audit_ready", text)
 
     def test_promotion_and_rollback_share_production_lock(self) -> None:
         for name in ("promote-candidate.yml", "rollback-production.yml", "pin-viewer-channels.yml"):
