@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Hong Kong probe for the frozen production core playlist.
+"""Hong Kong probe for formal IPTV playlists.
 
 This agent is intentionally read-only with respect to production playlists.
-It probes tv-core.m3u from a Hong Kong host and writes local reports only.
+It can probe the full formal tv.m3u while applying stricter quality floors to
+core CCTV/satellite channels.
 
 Policy:
-- decoded resolution below the formal floor is hard evidence (DEGRADED)
+- core decoded resolution below 1080 is DEGRADED; CCTV-4K floor is 2160
+- non-core formal channels may use a lower configured floor (normally 720)
 - network timeout/unreachable from Hong Kong is UNKNOWN, never "dead"
 - HLS segment failure with otherwise valid decode is UNKNOWN
 - production playlists are never modified by this program
@@ -16,7 +18,6 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import json
-import os
 import re
 import subprocess
 import time
@@ -25,7 +26,7 @@ import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-USER_AGENT = "Mozilla/5.0 (HK-IPTV-Probe/1.0)"
+USER_AGENT = "Mozilla/5.0 (HK-IPTV-Probe/1.1)"
 HTTP_TIMEOUT = 8.0
 FFPROBE_TIMEOUT = 16
 WORKERS = 8
@@ -179,10 +180,13 @@ def hls_segment_probe(url: str) -> tuple[bool, float, float, str]:
         return False, 0.0, 0.0, f"{type(exc).__name__}:{str(exc)[:180]}"
 
 
-def probe_one(item: tuple[str, str]) -> ProbeResult:
-    name, url = item
-    floor = 2160 if name == "CCTV-4K" else 1080
-    r = ProbeResult(name=name, url=url, min_height=floor)
+def probe_one(item) -> ProbeResult:
+    if len(item) == 3:
+        name, url, floor = item
+    else:
+        name, url = item
+        floor = 2160 if name == "CCTV-4K" else 1080
+    r = ProbeResult(name=name, url=url, min_height=int(floor))
     try:
         meta = ffprobe_meta(url)
         r.width = meta["width"]
@@ -196,9 +200,9 @@ def probe_one(item: tuple[str, str]) -> ProbeResult:
         r.error = f"ffprobe:{type(exc).__name__}:{str(exc)[:180]}"
         return r
 
-    if r.height < floor:
+    if r.height < r.min_height:
         r.status = "DEGRADED"
-        r.error = f"decoded_height_{r.height}_below_{floor}"
+        r.error = f"decoded_height_{r.height}_below_{r.min_height}"
         return r
 
     ok, speed, startup, err = hls_segment_probe(url)
@@ -235,12 +239,13 @@ def update_state(results: list[ProbeResult], state_path: Path) -> dict:
             "consecutive_degraded": consecutive,
             "last_url": r.url,
             "last_height": r.height,
+            "min_height": r.min_height,
             "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }
         if consecutive >= 2:
             alerts.append({"name": r.name, "reason": r.error, "url": r.url, "consecutive": consecutive})
 
-    state = {"version": 1, "channels": channels, "alerts": alerts}
+    state = {"version": 2, "channels": channels, "alerts": alerts}
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return state
@@ -249,6 +254,8 @@ def update_state(results: list[ProbeResult], state_path: Path) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--playlist", default="tv-core.m3u")
+    ap.add_argument("--core-playlist", default="")
+    ap.add_argument("--default-min-height", type=int, default=1080)
     ap.add_argument("--output-dir", default="/var/lib/iptv-hk-probe")
     ap.add_argument("--workers", type=int, default=WORKERS)
     args = ap.parse_args()
@@ -256,7 +263,20 @@ def main() -> int:
     playlist = Path(args.playlist)
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    items = load_playlist(playlist)
+    rows = load_playlist(playlist)
+    core_names = set()
+    if args.core_playlist:
+        core_names = {name for name, _ in load_playlist(Path(args.core_playlist))}
+    items = []
+    for name, url in rows:
+        if name == "CCTV-4K":
+            floor = 2160
+        elif name in core_names:
+            floor = 1080
+        else:
+            floor = args.default_min_height
+        items.append((name, url, floor))
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as ex:
         results = list(ex.map(probe_one, items))
 
@@ -266,9 +286,12 @@ def main() -> int:
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "probe_region": "Hong Kong",
         "playlist": str(playlist),
+        "core_playlist": args.core_playlist,
         "production_modified": False,
         "policy": {
-            "low_decoded_resolution_is_hard_evidence": True,
+            "core_height_floor_1080": True,
+            "cctv4k_height_floor_2160": True,
+            "noncore_default_height_floor": args.default_min_height,
             "hk_network_failure_is_unknown_not_dead": True,
             "auto_replace_formal_routes": False,
         },
@@ -286,11 +309,11 @@ def main() -> int:
 
     text = [
         f"generated_utc={payload['generated_utc']}",
-        f"GOOD={payload['summary']['good']} DEGRADED={payload['summary']['degraded']} UNKNOWN={payload['summary']['unknown']}",
+        f"CHANNELS={payload['summary']['channels']} GOOD={payload['summary']['good']} DEGRADED={payload['summary']['degraded']} UNKNOWN={payload['summary']['unknown']}",
     ]
     for r in results:
         dims = f"{r.width}x{r.height}" if r.width and r.height else "-"
-        text.append(f"{r.status:8} {r.name:14} {dims:10} {r.codec:6} seg={r.segment_mbps:.2f}Mbps {r.error}")
+        text.append(f"{r.status:8} {r.name:18} {dims:10} {r.codec:6} floor={r.min_height} seg={r.segment_mbps:.2f}Mbps {r.error}")
     if payload["alerts"]:
         text.append("ALERTS:")
         for a in payload["alerts"]:
