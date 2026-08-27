@@ -1,10 +1,8 @@
 name: Build isolated TV candidates
 
 on:
+  # Manual fallback only. Scheduled stream filtering moved to the Hong Kong host.
   workflow_dispatch:
-  schedule:
-    # 03:17 Asia/Singapore. Scheduled runs refresh candidate/ only.
-    - cron: '17 19 * * *'
 
 permissions:
   contents: write
