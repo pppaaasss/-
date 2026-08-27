@@ -44,6 +44,7 @@ jobs:
 
       - name: Commit only the hardened builder
         run: |
+          rm -rf scripts/__pycache__ tests/__pycache__
           git fetch origin master
           test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
             echo 'master moved while hardening; refusing to overwrite newer work'
