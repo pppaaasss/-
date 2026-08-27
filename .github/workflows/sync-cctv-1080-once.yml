@@ -1,0 +1,115 @@
+name: Sync verified CCTV 1080 once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/sync-cctv-1080-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    if: contains(github.event.head_commit.message, '[sync-cctv-1080-once]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Sync CCTV 1080 routes across all production playlists
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          routes = {
+              'CCTV-1':  'http://221.7.175.154:8445/tsfile/live/1000_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-2':  'http://221.7.175.154:8445/tsfile/live/1001_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-3':  'http://112.123.243.37:50085/tsfile/live/0003_1.m3u8?key=txiptv&playlive=0&authid=0',
+              'CCTV-5':  'http://38.75.136.137:98/gslb/dsdqpub/cctv5hd.m3u8?auth=testpub',
+              'CCTV-5+': 'http://223.78.65.165:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-6':  'http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0',
+              'CCTV-7':  'http://219.147.245.238:25480/newlive/live/hls/8/live.m3u8',
+              'CCTV-8':  'http://112.30.73.119:229/tsfile/live/0008_2.m3u8?key=txiptv&playlive=0&authid=0',
+              'CCTV-9':  'http://221.7.175.154:8445/tsfile/live/1007_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-10': 'http://207.56.13.146:81/cdnlive/cctv10.m3u8',
+              'CCTV-11': 'http://120.76.248.139/live/bfgd/4200000130.m3u8',
+              'CCTV-12': 'http://221.7.175.154:8445/tsfile/live/1010_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-13': 'http://221.7.175.154:8445/tsfile/live/1011_1.m3u8?key=txiptv&playlive=1&authid=0',
+              'CCTV-14': 'http://112.123.243.37:50085/tsfile/live/0015_1.m3u8?key=txiptv&playlive=0&authid=0',
+              'CCTV-15': 'http://58.56.162.102:4466/newlive/live/hls/16/live.m3u8',
+              'CCTV-16': 'http://198.204.228.26/live/cctv16hd.m3u8',
+              'CCTV-17': 'http://221.7.175.154:8445/tsfile/live/1009_1.m3u8?key=txiptv&playlive=1&authid=0',
+          }
+          untouched = {'CCTV-4', 'CCTV-4K'}
+          files = ['tv-easy.m3u', 'tv.m3u', 'tv-all.m3u', 'tv-core.m3u']
+
+          def parse(text):
+              lines = text.splitlines()
+              out = {}
+              i = 0
+              while i < len(lines):
+                  line = lines[i]
+                  if line.startswith('#EXTINF:'):
+                      name = line.rsplit(',', 1)[-1].strip()
+                      url = lines[i+1].strip() if i+1 < len(lines) else ''
+                      out[name] = (line, url)
+                      i += 2
+                  else:
+                      i += 1
+              return out
+
+          for fn in files:
+              p = Path(fn)
+              before = p.read_text(encoding='utf-8')
+              before_map = parse(before)
+              missing = sorted(set(routes) - set(before_map))
+              if missing:
+                  raise SystemExit(f'{fn}: missing CCTV entries {missing}')
+              untouched_before = {k: before_map.get(k) for k in untouched}
+
+              lines = before.splitlines()
+              i = 0
+              changed = []
+              while i < len(lines):
+                  if lines[i].startswith('#EXTINF:'):
+                      name = lines[i].rsplit(',', 1)[-1].strip()
+                      if name in routes:
+                          if i + 1 >= len(lines):
+                              raise SystemExit(f'{fn}: missing URL after {name}')
+                          if lines[i+1].strip() != routes[name]:
+                              lines[i+1] = routes[name]
+                              changed.append(name)
+                          i += 2
+                          continue
+                  i += 1
+
+              after = '\n'.join(lines) + '\n'
+              p.write_text(after, encoding='utf-8')
+              after_map = parse(after)
+              for name, url in routes.items():
+                  if after_map.get(name, ('',''))[1] != url:
+                      raise SystemExit(f'{fn}: {name} route mismatch after sync')
+              untouched_after = {k: after_map.get(k) for k in untouched}
+              if untouched_before != untouched_after:
+                  raise SystemExit(f'{fn}: CCTV-4/CCTV-4K changed unexpectedly')
+              if 'cctv8k' in after_map['CCTV-8'][1].lower():
+                  raise SystemExit(f'{fn}: CCTV-8 points to CCTV8K')
+              print(fn, 'changed=', ','.join(changed) or 'none')
+          PY
+
+      - name: Verify only production playlists changed
+        run: |
+          git diff --check
+          changed="$(git diff --name-only)"
+          bad="$(printf '%s\n' "$changed" | grep -v -E '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u)$' || true)"
+          test -z "$bad" || { echo "Unexpected changed files:"; echo "$bad"; exit 1; }
+
+      - name: Commit synced CCTV routes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git commit -m 'Sync tested 1080 CCTV routes across production playlists'
+          git push origin HEAD:master
