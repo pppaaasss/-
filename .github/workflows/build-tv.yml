@@ -10,6 +10,7 @@ on:
       - 'scripts/clean_single_station.py'
       - 'scripts/apply_viewer_profile.py'
       - 'scripts/apply_best_fan_high_bitrate.py'
+      - 'scripts/import_best_fan_pay_unchecked.py'
       - 'scripts/channel_regions.py'
       - 'tests/test_build_playlist.py'
       - 'tests/test_apply_best_fan_high_bitrate.py'
@@ -88,6 +89,9 @@ jobs:
       - name: Pin viewer-confirmed CCTV-1 CCTV-4 and Hunan routes
         if: ${{ !cancelled() }}
         run: python3 scripts/pin_viewer_channels.py
+      - name: Mirror best-fan pay channels without stream testing
+        if: ${{ !cancelled() }}
+        run: python3 scripts/import_best_fan_pay_unchecked.py
       - name: Install frame-audit image dependency
         if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
         run: |
