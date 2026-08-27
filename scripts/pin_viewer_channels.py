@@ -2,7 +2,7 @@
 """Pin only the viewer-confirmed living-room routes.
 
 This is intentionally surgical: it only replaces the URL for CCTV-1, CCTV-4,
-CCTV-5, CCTV-6 and 湖南卫视. Channel metadata, ordering and every other station stay untouched.
+CCTV-5 and CCTV-6. Channel metadata, ordering and every other station stay untouched.
 """
 
 from __future__ import annotations
@@ -13,8 +13,6 @@ from pathlib import Path
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
 # CCTV-1 uses the 221.7 route from the uploaded cn_all list; viewer cache is now 30s.
 # CCTV-5 uses a previously verified 1080p rescue route; never downgrade it to 720p.
-# Hunan is reverted to the previous working 112.123 route after the operator 4K
-# candidates failed in the viewer's real APTV test.
 # CCTV-6 moves off the viewer-confirmed black-screen 222.169 route to the current
 # first 1080-labelled best-fan candidate; actual APTV playback remains final authority.
 PLAYLISTS = (
@@ -29,7 +27,6 @@ TARGET_URLS = {
     "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv5": "http://198.204.228.26/live/cctv5hd.m3u8",
     "cctv6": "http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0",
-    "hunan": "http://112.123.243.37:50085/tsfile/live/1002_1.m3u8?key=txiptv&playlive=0&authid=0",
 }
 
 
@@ -46,8 +43,6 @@ def target_key(extinf: str) -> str | None:
         return "cctv5"
     if compact == "cctv6":
         return "cctv6"
-    if name.strip() == "湖南卫视":
-        return "hunan"
     return None
 
 

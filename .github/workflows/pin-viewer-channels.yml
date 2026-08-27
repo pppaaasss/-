@@ -13,7 +13,7 @@ permissions:
 
 # Fast viewer fixes must not sit behind an 85-minute catalogue rebuild. The
 # authoritative final presentation pass is also part of the full rebuild, so a
-# later scheduled publication will preserve the same Hunan/grouping policy.
+# later scheduled publication will preserve the same grouping policy.
 concurrency:
   group: aptv-fast-viewer-fixes
   cancel-in-progress: true
@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Pin viewer-confirmed CCTV-1/4/5/6 and Hunan routes
+      - name: Pin viewer-confirmed CCTV-1/4/5/6 routes
         run: python3 scripts/pin_viewer_channels.py
       - name: Collapse province groups and place Hunan after CCTV
         run: python3 scripts/organize_apptv_groups.py

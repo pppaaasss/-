@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Normalize final APTV presentation and keep the viewer-approved Hunan route.
+"""Normalize final APTV presentation.
 
 User-facing policy:
 - keep CCTV/satellites together in ``卫视台``;
 - place 湖南卫视 immediately after the last CCTV tile;
-- force 湖南卫视 to the viewer-approved working route;
+- preserve the healthy 湖南卫视 route selected by the builder;
 - collapse every mainland province/city bucket into one ``地方台`` group;
 - leave pay/HK/TW/JP and other specialty groups alone.
 
@@ -25,11 +25,6 @@ PLAYLISTS = (
     Path("tv.m3u"),
     Path("tv-all.m3u"),
     Path("tv-core.m3u"),
-)
-
-HUNAN_STABLE_URL = (
-    "http://112.123.243.37:50085/tsfile/live/1002_1.m3u8"
-    "?key=txiptv&playlive=0&authid=0"
 )
 
 MAINLAND_REGION_GROUPS = {
@@ -107,8 +102,7 @@ def normalize_blocks(blocks: list[Block]) -> list[Block]:
     for block in blocks:
         group = group_name(block.extinf)
         extinf = set_group(block.extinf, "地方台") if group in MAINLAND_REGION_GROUPS else block.extinf
-        url = HUNAN_STABLE_URL if is_hunan_satellite(Block(extinf, block.url)) else block.url
-        normalized.append(Block(extinf, url))
+        normalized.append(Block(extinf, block.url))
 
     # Stable move only: keep every other station in its current relative order.
     hunan = [block for block in normalized if is_hunan_satellite(block)]

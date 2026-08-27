@@ -27,6 +27,15 @@ class OrganizeGroupsTests(unittest.TestCase):
         self.assertEqual(groups["广东珠江"], "地方台")
         self.assertEqual(groups["湖南卫视"], "卫视台")
         self.assertEqual(groups["凤凰中文"], "中文付费")
+        urls = {module.visible_name(block.extinf): block.url for block in result}
+        self.assertEqual(urls["湖南卫视"], "http://a/hn.m3u8")
+
+    def test_hunan_alias_url_is_preserved(self):
+        original_url = "https://example.test/live/hunan.m3u8?token=fresh"
+        result = module.normalize_blocks([
+            module.Block('#EXTINF:-1 group-title="卫视台",湖南衛視', original_url),
+        ])
+        self.assertEqual(result[0].url, original_url)
 
 
 if __name__ == "__main__":
