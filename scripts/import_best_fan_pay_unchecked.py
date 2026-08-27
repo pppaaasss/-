@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Mirror best-fan pay channels into APTV without opening stream URLs.
 
-The upstream project already refreshes and orders its pay lists.  This script
+The upstream project already refreshes and orders its pay lists. This script
 only downloads the M3U indexes, keeps the first route for each visible channel
-name, forces them into 中文付费, and publishes them.  It intentionally does NOT
+name, forces them into 中文付费, and publishes them. It intentionally does NOT
 probe, time, ffprobe, or fetch any media stream.
 
-Both cn_pay.m3u8 and cn_pay_status.m3u8 are accepted as index sources.  If one
+Both cn_pay.m3u8 and cn_pay_status.m3u8 are accepted as index sources. If one
 index is temporarily unavailable the other can still refresh the mirror; if
 both fail, the existing published pay entries are preserved.
+
+A tiny manual correction table is allowed for viewer-confirmed wrong-channel
+mappings. These corrections are still not stream-tested here; they simply beat
+known-bad labels from the broad catalogue.
 """
 
 from __future__ import annotations
@@ -22,12 +26,25 @@ UPSTREAMS = (
     "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay_status.m3u8",
 )
 PLAYLISTS = (Path("tv-easy.m3u"), Path("tv.m3u"), Path("tv-all.m3u"))
-DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV unchecked pay mirror/2.0)"
+DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV unchecked pay mirror/2.1)"
 MARKER = "# best-fan pay mirror (unchecked; no stream probing)"
 OLD_MARKERS = {
     "# best-fan cn_pay.m3u8 unchecked mirror (no stream probing)",
     MARKER,
 }
+
+# Viewer reported the previous "CCTV央视台球" URL was the wrong programme.
+# Keep this specialty/pay tile out of the broad CCTV/satellite bucket and use a
+# route that is explicitly published as 央视台球 by current IPTV indexes.
+MANUAL_PAY_OVERRIDES = (
+    (
+        "CCTV央视台球",
+        '#EXTINF:-1 tvg-id="央视台球" tvg-name="央视台球" '
+        'tvg-logo="https://live.fanmingming.cn/tv/%E5%A4%AE%E8%A7%86%E5%8F%B0%E7%90%83.png" '
+        'group-title="中文付费",CCTV央视台球',
+        "http://38.75.136.137:98/gslb/dsdqpub/ystq.m3u8?auth=testpub",
+    ),
+)
 
 
 def visible_name(extinf: str) -> str:
@@ -69,6 +86,16 @@ def parse_index(text: str) -> list[tuple[str, str, str]]:
     return entries
 
 
+def apply_manual_overrides(entries: list[tuple[str, str, str]]) -> list[tuple[str, str, str]]:
+    overrides = {
+        name_key(name): (name_key(name), force_pay_group(extinf), url)
+        for name, extinf, url in MANUAL_PAY_OVERRIDES
+    }
+    output = [entry for entry in entries if entry[0] not in overrides]
+    output.extend(overrides.values())
+    return output
+
+
 def fetch_upstream() -> list[tuple[str, str, str]]:
     merged: list[tuple[str, str, str]] = []
     seen: set[str] = set()
@@ -100,7 +127,7 @@ def fetch_upstream() -> list[tuple[str, str, str]]:
     if len(merged) < 5:
         detail = "; ".join(failures) if failures else "no usable entries"
         raise RuntimeError(f"all pay indexes unusable: {detail}")
-    return merged
+    return apply_manual_overrides(merged)
 
 
 def parse_blocks(text: str) -> tuple[list[str], list[tuple[str, str, str]]]:
@@ -128,7 +155,7 @@ def patch_playlist(path: Path, upstream: list[tuple[str, str, str]]) -> int:
     prefix, blocks = parse_blocks(original)
     managed = {key for key, _, _ in upstream}
 
-    # Matching visible names are owned by the pay mirror.  Remove any stale
+    # Matching visible names are owned by the pay mirror. Remove any stale
     # copy from another group, then append exactly one current upstream route.
     kept = [(key, extinf, url) for key, extinf, url in blocks if key not in managed]
 
