@@ -50,6 +50,23 @@ class CandidatePolicyTests(unittest.TestCase):
         candidate_policy.apply(bp)
         self.assertEqual(bp.SOURCES.count(candidate_policy.HOTEL_SOURCE), before)
 
+    def test_tianjin_primary_routes_are_candidate_only_and_idempotent(self) -> None:
+        primary_cctv1 = (
+            "CCTV-1",
+            "大陆",
+            "http://111.32.21.78/PLTV/88888888/224/3221226366/1.m3u8",
+        )
+        low_cctv1 = (
+            "CCTV-1",
+            "大陆",
+            "http://111.32.21.78/PLTV/88888888/224/3221226550/1.m3u8",
+        )
+        self.assertIn(primary_cctv1, bp.EXTRAS)
+        self.assertNotIn(low_cctv1, bp.EXTRAS)
+        before = bp.EXTRAS.count(primary_cctv1)
+        candidate_policy.apply(bp)
+        self.assertEqual(bp.EXTRAS.count(primary_cctv1), before)
+
     def test_mainland_quality_beats_github_speed(self) -> None:
         clear = self.channel("广东测试A", url="http://example.test/a.m3u8")
         fast_low = self.channel("广东测试B", url="http://example.test/b.m3u8")
@@ -75,7 +92,6 @@ class CandidatePolicyTests(unittest.TestCase):
         fake = self.channel("CCTV-5", group="大陆", url="http://backup.test/cctv5.m3u8")
         self.probe(primary, height=1080, stream=3.5, speed=0.05)
         self.probe(fake, height=720, stream=3.5, speed=80.0)
-        # Simulate a stale manifest/name claiming 1080 while ffprobe decoded 720.
         fake.probe["height"] = 1080
         output = bp.add_cctv5_backups([primary], [fake], count=1)
         self.assertFalse(any(str(channel.display_override or "").startswith("CCTV-5 备用") for channel in output))

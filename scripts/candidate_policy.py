@@ -16,11 +16,77 @@ HOTEL_SOURCE = (
     False,
 )
 
+# Manually retained operator routes from the user's previously supplied Tianjin
+# playlist. Only the primary CCTV/satellite block is included; the explicitly
+# labelled low-bitrate block is intentionally excluded. These are candidates,
+# never trusted metadata: ffprobe still decides decoded size/codec/bitrate.
+TIANJIN_OPERATOR_EXTRAS = (
+    ("CCTV-1", "http://111.32.21.78/PLTV/88888888/224/3221226366/1.m3u8"),
+    ("CCTV-2", "http://111.32.21.78/PLTV/88888888/224/3221226385/1.m3u8"),
+    ("CCTV-3", "http://111.32.21.78/PLTV/88888888/224/3221226518/1.m3u8"),
+    ("CCTV-4", "http://111.32.21.78/PLTV/88888888/224/3221226388/1.m3u8"),
+    ("CCTV-5", "http://111.32.21.78/PLTV/88888888/224/3221226537/1.m3u8"),
+    ("CCTV-5+", "http://111.32.21.78/PLTV/88888888/224/3221226399/1.m3u8"),
+    ("CCTV-6", "http://111.32.21.78/PLTV/88888888/224/3221226540/1.m3u8"),
+    ("CCTV-7", "http://111.32.21.78/PLTV/88888888/224/3221226391/1.m3u8"),
+    ("CCTV-8", "http://111.32.21.78/PLTV/88888888/224/3221226543/1.m3u8"),
+    ("CCTV-9", "http://111.32.21.78/PLTV/88888888/224/3221226404/1.m3u8"),
+    ("CCTV-10", "http://111.32.21.78/PLTV/88888888/224/3221226387/1.m3u8"),
+    ("CCTV-11", "http://111.32.21.78/PLTV/88888888/224/3221226390/1.m3u8"),
+    ("CCTV-12", "http://111.32.21.78/PLTV/88888888/224/3221226395/1.m3u8"),
+    ("CCTV-13", "http://111.32.21.78/PLTV/88888888/224/3221226367/1.m3u8"),
+    ("CCTV-14", "http://111.32.21.78/PLTV/88888888/224/3221226398/1.m3u8"),
+    ("CCTV-15", "http://111.32.21.78/PLTV/88888888/224/3221226401/1.m3u8"),
+    ("CCTV-16", "http://111.32.21.78/PLTV/88888888/224/3221226393/1.m3u8"),
+    ("CCTV-17", "http://111.32.21.78/PLTV/88888888/224/3221226396/1.m3u8"),
+    ("北京卫视", "http://111.32.21.78/PLTV/88888888/224/3221226403/1.m3u8"),
+    ("东方卫视", "http://111.32.21.78/PLTV/88888888/224/3221226372/1.m3u8"),
+    ("重庆卫视", "http://111.32.21.78/PLTV/88888888/224/3221226369/1.m3u8"),
+    ("河北卫视", "http://111.32.21.78/PLTV/88888888/224/3221226430/1.m3u8"),
+    ("山西卫视", "http://111.32.21.78/PLTV/88888888/224/3221226465/1.m3u8"),
+    ("内蒙古卫视", "http://111.32.21.78/PLTV/88888888/224/3221226458/1.m3u8"),
+    ("辽宁卫视", "http://111.32.21.78/PLTV/88888888/224/3221226450/1.m3u8"),
+    ("吉林卫视", "http://111.32.21.78/PLTV/88888888/224/3221226429/1.m3u8"),
+    ("黑龙江卫视", "http://111.32.21.78/PLTV/88888888/224/3221226423/1.m3u8"),
+    ("江苏卫视", "http://111.32.21.78/PLTV/88888888/224/3221226442/1.m3u8"),
+    ("浙江卫视", "http://111.32.21.78/PLTV/88888888/224/3221226377/1.m3u8"),
+    ("安徽卫视", "http://111.32.21.78/PLTV/88888888/224/3221226400/1.m3u8"),
+    ("东南卫视", "http://111.32.21.78/PLTV/88888888/224/3221226415/1.m3u8"),
+    ("江西卫视", "http://111.32.21.78/PLTV/88888888/224/3221226437/1.m3u8"),
+    ("山东卫视", "http://111.32.21.78/PLTV/88888888/224/3221226374/1.m3u8"),
+    ("河南卫视", "http://111.32.21.78/PLTV/88888888/224/3221226434/1.m3u8"),
+    ("湖北卫视", "http://111.32.21.78/PLTV/88888888/224/3221226426/1.m3u8"),
+    ("湖南卫视", "http://111.32.21.78/PLTV/88888888/224/3221226439/1.m3u8"),
+    ("广东卫视", "http://111.32.21.78/PLTV/88888888/224/3221226421/1.m3u8"),
+    ("广西卫视", "http://111.32.21.78/PLTV/88888888/224/3221226424/1.m3u8"),
+    ("海南卫视", "http://111.32.21.78/PLTV/88888888/224/3221226428/1.m3u8"),
+    ("四川卫视", "http://111.32.21.78/PLTV/88888888/224/3221226467/1.m3u8"),
+    ("贵州卫视", "http://111.32.21.78/PLTV/88888888/224/3221226427/1.m3u8"),
+    ("云南卫视", "http://111.32.21.78/PLTV/88888888/224/3221226478/1.m3u8"),
+    ("西藏卫视", "http://111.32.21.78/PLTV/88888888/224/3221226460/1.m3u8"),
+    ("陕西卫视", "http://111.32.21.78/PLTV/88888888/224/3221226468/1.m3u8"),
+    ("甘肃卫视", "http://111.32.21.78/PLTV/88888888/224/3221226417/1.m3u8"),
+    ("青海卫视", "http://111.32.21.78/PLTV/88888888/224/3221226456/1.m3u8"),
+    ("宁夏卫视", "http://111.32.21.78/PLTV/88888888/224/3221226453/1.m3u8"),
+    ("新疆卫视", "http://111.32.21.78/PLTV/88888888/224/3221226463/1.m3u8"),
+    ("深圳卫视", "http://111.32.21.78/PLTV/88888888/224/3221226464/1.m3u8"),
+    ("厦门卫视", "http://111.32.21.78/PLTV/88888888/224/3221226457/1.m3u8"),
+    ("兵团卫视", "http://111.32.21.78/PLTV/88888888/224/3221226406/1.m3u8"),
+    ("延边卫视", "http://111.32.21.78/PLTV/88888888/224/3221226472/1.m3u8"),
+    ("大湾区卫视", "http://111.32.21.78/PLTV/88888888/224/3221226425/1.m3u8"),
+    ("安多卫视", "http://111.32.21.78/PLTV/88888888/224/3221226410/1.m3u8"),
+    ("农林卫视", "http://111.32.21.78/PLTV/88888888/224/3221226486/1.m3u8"),
+)
+
 
 def apply(bp: ModuleType) -> None:
     """Patch candidate ranking without changing overseas network policy."""
     if HOTEL_SOURCE not in bp.SOURCES:
         bp.SOURCES.append(HOTEL_SOURCE)
+    for name, url in TIANJIN_OPERATOR_EXTRAS:
+        extra = (name, "大陆", url)
+        if extra not in bp.EXTRAS:
+            bp.EXTRAS.append(extra)
 
     original_measured_score = bp.measured_score
     original_fallback_rank = bp.publication_fallback_rank
@@ -44,8 +110,6 @@ def apply(bp: ModuleType) -> None:
         codec = str(probe.get("codec") or "").lower()
         checks = int(probe.get("checks_ok") or 0)
 
-        # Keep static/history influence deliberately small. They may help break
-        # ties but cannot beat decoded picture quality.
         score = max(-80.0, min(float(channel.static_score or 0.0), 80.0)) * 0.10
         score += max(-60.0, min(float(bp.historical_score(channel)), 90.0)) * 0.08
 
@@ -60,8 +124,6 @@ def apply(bp: ModuleType) -> None:
         else:
             score -= 220.0
 
-        # Intrinsic bitrate is a picture-quality signal. Do not use runner
-        # download speed/headroom here.
         if stream_mbps:
             score += min(stream_mbps, 12.0) * 16.0
             if height >= 1080 and codec in {"h264", "avc", "avc1"} and stream_mbps < 2.0:
@@ -125,9 +187,6 @@ def apply(bp: ModuleType) -> None:
         return True
 
     def add_cctv5_backups(stable, channels, count: int = 2):
-        # The legacy helper looked at probe.height/labels. Feed it only routes
-        # that have passed decoded-quality checks so fake 1080 backups cannot
-        # displace ordinary channels in the candidate list.
         filtered = [channel for channel in channels if valid_cctv5_backup(channel)]
         return original_add_cctv5_backups(stable, filtered, count=count)
 
