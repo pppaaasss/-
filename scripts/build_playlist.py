@@ -17,6 +17,7 @@ import json
 import os
 import re
 import socket
+import subprocess
 import time
 import urllib.error
 import urllib.parse
@@ -1243,6 +1244,135 @@ def labelled_height(channel: Channel) -> int:
     return 0
 
 
+
+# DECODED_QUALITY_POLICY_V4
+# GitHub-hosted runners are outside mainland China. For mainland routes,
+# throughput/startup values are diagnostics only. Picture identity and quality
+# still have to be proven from the actual media stream.
+MAINLAND_ROUTE_GROUPS = {"大陆", "中文付费", "其他地方", *MAINLAND_REGION_GROUPS}
+TOKEN_EXPIRY_RE = re.compile(r"(?:^|[?&])(?:exp|expires|expire|expiry)=([0-9]{9,13})(?:&|$)", re.I)
+
+
+def is_mainland_route(channel: Channel) -> bool:
+    return is_core_channel(channel) or channel.group in MAINLAND_ROUTE_GROUPS
+
+
+def required_actual_height(channel: Channel) -> int:
+    if channel_key(channel) == "cctv4k":
+        return 2160
+    if is_core_channel(channel):
+        return 1080
+    return 720
+
+
+def actual_height(channel: Channel) -> int:
+    return int(channel.probe.get("decoded_height") or channel.probe.get("height") or 0)
+
+
+def parse_rate(value: str | None) -> float:
+    if not value:
+        return 0.0
+    try:
+        if "/" in value:
+            left, right = value.split("/", 1)
+            return float(left) / float(right) if float(right) else 0.0
+        return float(value)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return 0.0
+
+
+def ffprobe_video(url: str, headers: dict[str, str]) -> dict:
+    command = [
+        "ffprobe", "-v", "error",
+        "-rw_timeout", str(int(PROBE_TIMEOUT * 1_000_000)),
+        "-user_agent", headers.get("User-Agent", DEFAULT_UA),
+        "-analyzeduration", "7000000", "-probesize", "7000000",
+    ]
+    extra_headers = [
+        f"{key}: {value}"
+        for key, value in headers.items()
+        if key.lower() != "user-agent"
+    ]
+    if extra_headers:
+        command.extend(["-headers", "\r\n".join(extra_headers) + "\r\n"])
+    command.extend([
+        "-select_streams", "v:0",
+        "-show_entries",
+        "stream=codec_name,width,height,avg_frame_rate,r_frame_rate,field_order,bit_rate:format=bit_rate",
+        "-of", "json", url,
+    ])
+    completed = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        timeout=PROBE_TIMEOUT + 5,
+        check=False,
+    )
+    if completed.returncode:
+        raise ValueError("ffprobe:" + (completed.stderr or "failed").strip()[-160:])
+    payload = json.loads(completed.stdout or "{}")
+    streams = payload.get("streams") or []
+    if not streams:
+        raise ValueError("ffprobe_no_video")
+    stream = streams[0]
+    fmt = payload.get("format") or {}
+    field_order = str(stream.get("field_order") or "unknown").lower()
+    scan = (
+        "interlaced" if field_order in {"tt", "bb", "tb", "bt"}
+        else "progressive" if field_order == "progressive"
+        else "unknown"
+    )
+    bit_rate = int(stream.get("bit_rate") or fmt.get("bit_rate") or 0)
+    return {
+        "width": int(stream.get("width") or 0),
+        "height": int(stream.get("height") or 0),
+        "codec": str(stream.get("codec_name") or "unknown").lower(),
+        "fps": round(parse_rate(stream.get("avg_frame_rate")) or parse_rate(stream.get("r_frame_rate")), 3),
+        "field_order": field_order,
+        "scan": scan,
+        "stream_mbps": round(bit_rate / 1_000_000, 3) if bit_rate else 0.0,
+    }
+
+
+def has_short_token(url: str) -> bool:
+    match = TOKEN_EXPIRY_RE.search(url)
+    if not match:
+        return False
+    raw = int(match.group(1))
+    expiry = raw // 1000 if raw > 10_000_000_000 else raw
+    return expiry - int(time.time()) < 24 * 3600
+
+
+def publication_url(channel: Channel) -> str:
+    return str(channel.probe.get("publish_url") or channel.url)
+
+
+def clone_with_resolution_label(channel: Channel) -> Channel:
+    height = actual_height(channel)
+    suffix = f"[{height}p]" if height else "[未知分辨率]"
+    name = canonical_display_name(channel)
+    if suffix in name:
+        return channel
+    display = f"{name} {suffix}"
+    extinf = channel.extinf
+    if "," in extinf:
+        extinf = extinf.rsplit(",", 1)[0] + "," + display
+    return Channel(
+        name=display,
+        extinf=extinf,
+        url=channel.url,
+        group=channel.group,
+        allow_geo=channel.allow_geo,
+        curated=channel.curated,
+        headers=dict(channel.headers),
+        static_score=channel.static_score,
+        probe=dict(channel.probe),
+        display_override=display,
+        source=channel.source,
+        history=dict(channel.history),
+    )
+
+
 def channel_static_score(channel: Channel) -> float:
     low = f"{channel.name} {channel.extinf}".lower()
     parsed = urllib.parse.urlsplit(channel.url)
@@ -1324,18 +1454,18 @@ def variant_rows(text: str, base_url: str) -> list[tuple[int, int, int, str]]:
     return rows
 
 
+
 def choose_variant(rows: list[tuple[int, int, int, str]]) -> tuple[int, int, int, str] | None:
+    """Return only a probe-order hint; manifest labels are never quality proof."""
     if not rows:
         return None
-    # Lock the health test to the best <=1080p representation.  APTV still gets
-    # the original master URL and can adapt down if the user's route fluctuates.
     normal = [row for row in rows if 720 <= row[1] <= 1080 and (not row[2] or row[2] <= 14_000_000)]
     if normal:
         return max(normal, key=lambda row: (row[1], row[0], row[2]))
-    under = [row for row in rows if row[1] and row[1] <= 1080]
-    if under:
-        return max(under, key=lambda row: (row[1], row[0], row[2]))
-    return min(rows, key=lambda row: (row[1] or 99999, row[2] or 999999999))
+    with_size = [row for row in rows if row[1] > 0]
+    if with_size:
+        return max(with_size, key=lambda row: (row[1], row[0], row[2]))
+    return rows[0]
 
 
 def first_media_segment(text: str, base_url: str) -> tuple[str | None, float]:
@@ -1415,33 +1545,119 @@ def url_ip_families(url: str) -> tuple[bool, bool]:
     return host_ip_families(host) if host else (False, False)
 
 
+
 def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
     headers = channel.headers if use_declared_headers else {}
     manifest_bytes, manifest_seconds, final_url = timed_read(channel.url, headers, 512 * 1024, PROBE_TIMEOUT)
     text = manifest_bytes.decode("utf-8", "ignore")
+
+    # Direct transport streams and redirects without an HLS manifest are valid
+    # inputs. Their dimensions come only from ffprobe on the actual video.
     if "#EXTM3U" not in text:
-        raise ValueError("not_hls")
+        decoded = ffprobe_video(final_url, headers)
+        payload, elapsed, direct_final, resource_size = timed_read_with_size(
+            final_url, headers, MAX_PROBE_BYTES, PROBE_TIMEOUT
+        )
+        if len(payload) < 16 * 1024:
+            raise ValueError("short_direct_stream")
+        speed_mbps = len(payload) * 8 / elapsed / 1_000_000
+        return {
+            "ok": True,
+            "manifest_s": round(manifest_seconds, 3),
+            "segment_mbps": round(speed_mbps, 2),
+            "segment_bytes": len(payload),
+            "segment_sha256": hashlib.sha256(payload).hexdigest(),
+            "stream_mbps": decoded["stream_mbps"],
+            "width": decoded["width"],
+            "height": decoded["height"],
+            "decoded_width": decoded["width"],
+            "decoded_height": decoded["height"],
+            "codec": decoded["codec"],
+            "fps": decoded["fps"],
+            "scan": decoded["scan"],
+            "field_order": decoded["field_order"],
+            "bandwidth": 0,
+            "declared_width": 0,
+            "declared_height": 0,
+            "is_master_playlist": False,
+            "tested_variant_url": direct_final,
+            "publish_url": channel.url,
+            "variant_actual_heights": [decoded["height"]] if decoded["height"] else [],
+            "has_low_variant": 0 < decoded["height"] < 1080,
+            "short_lived_token": has_short_token(channel.url) or has_short_token(direct_final),
+            "header_required": use_declared_headers,
+            "ipv4_dns": url_ip_families(final_url)[0],
+            "ipv6_dns": url_ip_families(final_url)[1],
+            "dual_stack_dns": all(url_ip_families(final_url)),
+        }
 
     rows = variant_rows(text, final_url)
-    selected_variant = choose_variant(rows)
-    width = height = bandwidth = 0
-    media_url = final_url
-    media_text = text
-    media_seconds = manifest_seconds
-    if selected_variant:
-        width, height, bandwidth, media_url = selected_variant
-        media_bytes, media_seconds, media_url = timed_read(media_url, headers, 512 * 1024, PROBE_TIMEOUT)
-        media_text = media_bytes.decode("utf-8", "ignore")
-        if "#EXTM3U" not in media_text:
-            raise ValueError("bad_variant")
-
-    upper_media = media_text.upper()
-    if "#EXT-X-ENDLIST" in upper_media or re.search(
-        r"#EXT-X-PLAYLIST-TYPE\s*:\s*VOD", upper_media
-    ):
+    upper = text.upper()
+    if not rows and ("#EXT-X-ENDLIST" in upper or re.search(r"#EXT-X-PLAYLIST-TYPE\s*:\s*VOD", upper)):
         raise ValueError("vod_playlist")
 
-    segment_url, segment_duration = first_media_segment(media_text, media_url)
+    variants: list[dict] = []
+    if rows:
+        hint = choose_variant(rows)
+        ordered = ([hint] if hint else []) + [row for row in rows if row != hint]
+        for declared_width, declared_height, bandwidth, variant_url in ordered:
+            try:
+                media_bytes, media_seconds, media_final = timed_read(
+                    variant_url, headers, 512 * 1024, PROBE_TIMEOUT
+                )
+                media_text = media_bytes.decode("utf-8", "ignore")
+                if "#EXTM3U" not in media_text:
+                    continue
+                decoded = ffprobe_video(variant_url, headers)
+                variants.append({
+                    "declared_width": declared_width,
+                    "declared_height": declared_height,
+                    "bandwidth": bandwidth,
+                    "variant_url": variant_url,
+                    "media_final": media_final,
+                    "media_text": media_text,
+                    "media_seconds": media_seconds,
+                    "decoded": decoded,
+                })
+            except Exception:
+                continue
+        if not variants:
+            raise ValueError("master_no_decodable_variant")
+    else:
+        decoded = ffprobe_video(final_url, headers)
+        variants.append({
+            "declared_width": 0,
+            "declared_height": 0,
+            "bandwidth": 0,
+            "variant_url": channel.url,
+            "media_final": final_url,
+            "media_text": text,
+            "media_seconds": 0.0,
+            "decoded": decoded,
+        })
+
+    required = required_actual_height(channel)
+    if is_core_channel(channel):
+        # For normal CCTV/satellites prefer the closest representation at or
+        # above 1080 rather than accidentally selecting a huge adaptive tier.
+        def rank(item: dict) -> tuple:
+            height = int(item["decoded"]["height"] or 0)
+            if channel_key(channel) == "cctv4k":
+                return (height >= 2160, height, item["decoded"]["stream_mbps"])
+            return (height >= required, -abs(height - required) if height >= required else height, item["decoded"]["stream_mbps"])
+    else:
+        def rank(item: dict) -> tuple:
+            height = int(item["decoded"]["height"] or 0)
+            return (height >= 720, min(height, 1080), item["decoded"]["stream_mbps"])
+
+    selected = max(variants, key=rank)
+    decoded = selected["decoded"]
+    media_text = selected["media_text"]
+    if "#EXT-X-ENDLIST" in media_text.upper() or re.search(
+        r"#EXT-X-PLAYLIST-TYPE\s*:\s*VOD", media_text.upper()
+    ):
+        raise ValueError("vod_playlist")
+    segment_url, segment_duration = first_media_segment(media_text, selected["media_final"])
     if not segment_url:
         raise ValueError("no_live_segment")
     segment, segment_seconds, _, segment_resource_bytes = timed_read_with_size(
@@ -1450,23 +1666,44 @@ def probe_once(channel: Channel, use_declared_headers: bool) -> dict:
     if len(segment) < 16 * 1024:
         raise ValueError("short_segment")
     speed_mbps = len(segment) * 8 / segment_seconds / 1_000_000
-    stream_mbps = (
+    estimated_stream_mbps = (
         segment_resource_bytes * 8 / segment_duration / 1_000_000
-        if segment_resource_bytes and segment_duration > 0
-        else 0.0
+        if segment_resource_bytes and segment_duration > 0 else 0.0
     )
+    stream_mbps = decoded["stream_mbps"] or estimated_stream_mbps
+    publish_url = selected["variant_url"] if rows else channel.url
+    if channel_key(channel) == "cctv8" and re.search(
+        r"(?:cctv[-_]?8k|cctv8k|/8k(?:[/?.]|$))", urllib.parse.unquote(publish_url).lower()
+    ):
+        raise ValueError("cctv8_identity_conflict")
+
     manifest_ipv4, manifest_ipv6 = url_ip_families(final_url)
     segment_ipv4, segment_ipv6 = url_ip_families(segment_url)
+    actual_heights = sorted({int(item["decoded"]["height"] or 0) for item in variants if int(item["decoded"]["height"] or 0) > 0})
     return {
         "ok": True,
-        "manifest_s": round(manifest_seconds + (media_seconds if selected_variant else 0), 3),
+        "manifest_s": round(manifest_seconds + float(selected["media_seconds"] or 0), 3),
         "segment_mbps": round(speed_mbps, 2),
         "segment_bytes": len(segment),
         "segment_sha256": hashlib.sha256(segment).hexdigest(),
-        "stream_mbps": round(stream_mbps, 2),
-        "width": width,
-        "height": height,
-        "bandwidth": bandwidth,
+        "stream_mbps": round(float(stream_mbps or 0), 3),
+        "width": decoded["width"],
+        "height": decoded["height"],
+        "decoded_width": decoded["width"],
+        "decoded_height": decoded["height"],
+        "codec": decoded["codec"],
+        "fps": decoded["fps"],
+        "scan": decoded["scan"],
+        "field_order": decoded["field_order"],
+        "bandwidth": int(selected["bandwidth"] or 0),
+        "declared_width": int(selected["declared_width"] or 0),
+        "declared_height": int(selected["declared_height"] or 0),
+        "is_master_playlist": bool(rows),
+        "tested_variant_url": selected["variant_url"],
+        "publish_url": publish_url,
+        "variant_actual_heights": actual_heights,
+        "has_low_variant": any(0 < height < 1080 for height in actual_heights),
+        "short_lived_token": has_short_token(publish_url) or has_short_token(selected["media_final"]),
         "header_required": use_declared_headers,
         "ipv4_dns": manifest_ipv4 or segment_ipv4,
         "ipv6_dns": manifest_ipv6 or segment_ipv6,
@@ -1574,191 +1811,122 @@ def mark_duplicate_core_content(
     return sorted(collisions, key=lambda item: (-item["distinct_keys"], item["fingerprint"]))
 
 
+
 def is_stable(channel: Channel) -> bool:
     if is_placeholder_relay(channel):
         return False
     probe = channel.probe
-    if probe.get("geo_restricted"):
-        # Official regional CDN streams can be valid behind the user's HK/JP/SG
-        # exit even when GitHub's US runner receives a geo error.
-        return channel.allow_geo and channel.static_score >= 55 and labelled_height(channel) >= 720
     if (
         not probe.get("ok")
         or probe.get("header_required")
         or probe.get("duplicate_core_content")
+        or probe.get("short_lived_token")
     ):
         return False
-    height = probe.get("height") or labelled_height(channel)
+    height = actual_height(channel)
+    if not height or height < required_actual_height(channel):
+        return False
+    if probe.get("is_master_playlist") and publication_url(channel) == channel.url:
+        return False
+    stream_mbps = float(probe.get("stream_mbps") or 0)
+    if is_core_channel(channel) and str(probe.get("codec") or "").lower() in {"h264", "avc", "avc1"} and stream_mbps and stream_mbps < 2.0:
+        return False
+    if is_mainland_route(channel):
+        return True
     speed = float(probe.get("segment_mbps") or 0)
     latency = float(probe.get("manifest_s") or 99)
     bandwidth_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
     required_speed = max(2.2, bandwidth_mbps * 1.25)
-    stream_mbps = float(probe.get("stream_mbps") or 0)
     if stream_mbps:
-        required_speed = max(
-            required_speed,
-            stream_mbps * (1.35 if is_core_channel(channel) else 1.20),
-        )
-    if height and height < 720:
-        return False
-    if latency > 5.0 or speed < required_speed:
-        return False
-    parsed = urllib.parse.urlsplit(channel.url)
-    raw_ip = bool(re.fullmatch(r"\d+\.\d+\.\d+\.\d+", parsed.hostname or ""))
-    if channel.url.startswith("http://") and (raw_ip or parsed.port not in (None, 80)):
-        return speed >= 5.0 and latency <= 3.5
-    return True
+        required_speed = max(required_speed, stream_mbps * (1.35 if is_core_channel(channel) else 1.20))
+    return latency <= 5.0 and speed >= required_speed
+
 
 
 def is_core_acceptable(channel: Channel) -> bool:
-    """Slightly relaxed floor for must-have CCTV and provincial channels."""
+    """Core promotion gate: decoded 1080 minimum, 2160 for CCTV-4K."""
     if not is_core_channel(channel) or is_placeholder_relay(channel):
         return False
     probe = channel.probe
-    if probe.get("geo_restricted"):
-        return False
     if (
         not probe.get("ok")
         or probe.get("header_required")
         or probe.get("duplicate_core_content")
+        or probe.get("short_lived_token")
     ):
         return False
-    height = int(probe.get("height") or labelled_height(channel))
-    speed = float(probe.get("segment_mbps") or 0)
-    latency = float(probe.get("manifest_s") or 99)
+    height = actual_height(channel)
+    if not height or height < required_actual_height(channel):
+        return False
+    if probe.get("is_master_playlist") and publication_url(channel) == channel.url:
+        return False
     stream_mbps = float(probe.get("stream_mbps") or 0)
-    required_speed = max(1.2, stream_mbps * 1.15 if stream_mbps else 0)
-    # CCTV-5+ currently has public 576i fallbacks; accept those only for the
-    # core guarantee, while ordinary channels still require the HD threshold.
-    return (not height or height >= 540) and speed >= required_speed and latency <= 8.0
+    codec = str(probe.get("codec") or "").lower()
+    if codec in {"h264", "avc", "avc1"} and stream_mbps and stream_mbps < 2.0:
+        return False
+    return True
+
 
 
 def is_easy_ready(channel: Channel) -> bool:
-    """Strict living-room gate: three fresh checks plus ample speed headroom."""
+    """Family list requires three fresh checks and decoded picture quality."""
     probe = channel.probe
     if (
         not is_stable(channel)
         or int(probe.get("checks_ok") or 0) < 3
         or probe.get("recheck_failed")
         or probe.get("easy_check_failed")
-        or probe.get("header_required")
         or probe.get("geo_restricted")
-        or probe.get("unverified_china_side_fallback")
-        or probe.get("unverified_edge_fallback")
-        or probe.get("duplicate_core_content")
     ):
         return False
-    height = int(probe.get("height") or labelled_height(channel))
-    speed = float(probe.get("segment_mbps") or 0)
-    latency = float(probe.get("manifest_s") or 99)
-    bandwidth_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
-    required_speed = max(2.5, bandwidth_mbps * 1.5)
-    stream_mbps = float(probe.get("stream_mbps") or 0)
-    if stream_mbps:
-        required_speed = max(required_speed, stream_mbps * 1.5)
-    if height >= 2160:
-        required_speed = max(required_speed, 10.0)
-    elif height >= 1080:
-        required_speed = max(required_speed, 3.0)
-    if latency > 4.0 or speed < required_speed:
-        return False
+    if is_mainland_route(channel):
+        return True
     recent = [1 if value else 0 for value in channel.history.get("recent", [])][-HISTORY_WINDOW:]
-    if len(recent) >= 4 and sum(recent) / len(recent) < 0.75:
-        return False
-    return True
+    return not (len(recent) >= 4 and sum(recent) / len(recent) < 0.75)
+
 
 
 def is_family_core_usable(channel: Channel) -> bool:
-    """Availability floor for elderly-family CCTV and satellite essentials."""
-    if not is_core_channel(channel) or is_placeholder_relay(channel):
+    """Two-check core fallback, but never a 720/unknown core primary."""
+    if not is_core_acceptable(channel):
         return False
     probe = channel.probe
-    if (
-        not probe.get("ok")
-        or int(probe.get("checks_ok") or 0) < 2
-        or probe.get("recheck_failed")
-        or probe.get("header_required")
-        or probe.get("geo_restricted")
-        or probe.get("duplicate_core_content")
-    ):
-        return False
-    # Core channels may use a lower-bitrate domestic route when no strict
-    # three-check route exists. Two successful fresh segment reads are still
-    # mandatory; a completely dead route never receives a family exemption.
-    lower_floor_urls = VISUALLY_CONFIRMED_CORE_URLS | DOMESTIC_FRAME_AUDIT_CORE_URLS
-    minimum_speed = 0.35 if channel.url in lower_floor_urls else 0.6
-    stream_mbps = float(probe.get("stream_mbps") or 0)
-    if stream_mbps:
-        minimum_speed = max(minimum_speed, stream_mbps * 1.05)
     return (
-        float(probe.get("segment_mbps") or 0) >= minimum_speed
-        and float(probe.get("manifest_s") or 99) <= 10.0
+        int(probe.get("checks_ok") or 0) >= 2
+        and not probe.get("recheck_failed")
+        and not probe.get("geo_restricted")
     )
 
 
+
 def core_route_score(channel: Channel) -> float:
-    """Balance picture quality with enough delivery headroom for core TV.
-
-    Raw download throughput is capped and deliberately has the smallest
-    weight: once a stream has enough headroom, 50 Mbps does not make a
-    1 Mbps picture better than a 10 Mbps route carrying a 4.5 Mbps picture.
-    Conversely, a high programme bitrate is heavily penalized when its
-    measured download rate cannot sustain playback.
-    """
+    """Rank core routes by decoded picture/bitrate; mainland speed is advisory."""
     probe = channel.probe
-    if not probe.get("ok") or probe.get("duplicate_core_content"):
+    if not is_core_acceptable(channel):
         return -9999.0
-    speed = float(probe.get("segment_mbps") or 0)
-    latency = float(probe.get("manifest_s") or 10)
-    height = int(probe.get("height") or labelled_height(channel))
+    height = actual_height(channel)
     stream_mbps = float(probe.get("stream_mbps") or 0)
-    if not stream_mbps:
-        stream_mbps = float(probe.get("bandwidth") or 0) / 1_000_000
-
     if height >= 2160:
-        score = 190.0
+        score = 220.0
     elif height >= 1080:
-        score = 145.0
-    elif height >= 720:
-        score = 80.0
-    elif height >= 540:
-        score = 25.0
+        score = 160.0
     else:
-        score = 45.0 if stream_mbps >= 2.5 else 0.0
-
+        return -9999.0
     if stream_mbps:
-        score += min(stream_mbps, 10.0) * 30.0
-        if stream_mbps < 1.2:
-            score -= 130.0
-        elif stream_mbps < 1.8:
-            score -= 75.0
-        elif stream_mbps < 2.4:
-            score -= 25.0
-
-        headroom = speed / stream_mbps
-        if headroom >= 2.0:
-            score += 55.0
-        elif headroom >= 1.5:
-            score += 42.0
-        elif headroom >= 1.35:
-            score += 28.0
-        elif headroom >= 1.15:
-            score -= 65.0
-        else:
-            score -= 260.0
-    elif speed < 3.0:
-        score -= 45.0
-
-    # Speed still matters up to a comfortable ceiling, but cannot swamp the
-    # independently measured resolution and programme bitrate.  Above 8 Mbps
-    # the headroom bands already capture playback safety.
-    score += min(speed, 8.0) * 0.6
-    score -= latency * 8.0
-    score += min(int(probe.get("checks_ok") or 1), 3) * 18.0
-    score += max(-60.0, min(historical_score(channel), 90.0)) * 0.35
-    # Host/curation hints are only a tie-breaker for routes with similar real
-    # measurements; old hard-pinning bonuses no longer choose the picture.
-    score += max(-80.0, min(channel.static_score, 80.0)) * 0.12
+        score += min(stream_mbps, 12.0) * 32.0
+    score += min(int(probe.get("checks_ok") or 1), 3) * 20.0
+    score += max(-60.0, min(historical_score(channel), 90.0)) * (0.08 if is_mainland_route(channel) else 0.30)
+    score += max(-80.0, min(channel.static_score, 80.0)) * 0.10
+    if not is_mainland_route(channel):
+        speed = float(probe.get("segment_mbps") or 0)
+        latency = float(probe.get("manifest_s") or 10)
+        if stream_mbps:
+            headroom = speed / stream_mbps if stream_mbps else 0
+            if headroom >= 1.5:
+                score += 35
+            elif headroom < 1.35:
+                score -= 160
+        score -= latency * 6.0
     return score
 
 
@@ -1952,121 +2120,17 @@ def select_probe_pool(channels: list[Channel]) -> list[Channel]:
     return pool
 
 
+
 def select_stable(channels: list[Channel]) -> list[Channel]:
-    # Keep the fastest measured URL for each actual channel.  URL alternatives
-    # are useful during probing but must not become duplicate APTV tiles.
+    """Select only decoded-quality routes; never pad core with 720/unknown."""
     best: dict[str, Channel] = {}
     for channel in channels:
-        if not (is_stable(channel) or is_core_acceptable(channel)):
+        if not (is_core_acceptable(channel) if is_core_channel(channel) else is_stable(channel)):
             continue
         key = channel_key(channel)
         existing = best.get(key)
         if existing is None or route_selection_score(channel) > route_selection_score(existing):
             best[key] = channel
-
-    # CCTV-5 is refreshed automatically: a preferred overseas route may stay
-    # primary only while its manifest and video segment pass this run. If it
-    # expires, the best double-checked 1080p candidate takes over immediately.
-    cctv5_verified = [
-        channel for channel in channels
-        if channel_key(channel) == "cctv5"
-        and channel.probe.get("ok")
-        and not channel.probe.get("header_required")
-        and int(channel.probe.get("height") or labelled_height(channel)) >= 1080
-        and "/audio/" not in urllib.parse.urlsplit(channel.url).path.lower()
-        and not is_placeholder_relay(channel)
-    ]
-    if cctv5_verified:
-        best["cctv5"] = max(
-            cctv5_verified,
-            key=lambda channel: (
-                int(channel.probe.get("checks_ok") or 1) >= 2,
-                float(channel.probe.get("segment_mbps") or 0)
-                >= max(
-                    3.0,
-                    float(channel.probe.get("stream_mbps") or 0) * 1.35,
-                ),
-                core_route_score(channel),
-                -float(channel.probe.get("manifest_s") or 99),
-            ),
-        )
-
-    # Keep the fastest truly playable route for every requested CCTV station
-    # and mainland satellite channel even if it narrowly misses the general
-    # speed floor. Ordinary channels remain subject to the strict threshold.
-    fallback_keys = set(REQUIRED_CORE_IDS)
-    fallback_keys.update(
-        channel_key(channel)
-        for channel in channels
-        if channel.group == "大陆" and is_core_channel(channel)
-    )
-    # Publicly shared linear pay channels get the same real-segment fallback:
-    # they may miss the general speed floor, but dead/VOD/header-only routes do
-    # not pass because probe.ok is mandatory below.
-    fallback_keys.update(
-        channel_key(channel) for channel in channels if is_public_pay_channel(channel)
-    )
-    for key in fallback_keys:
-        if key in best:
-            continue
-        fallback = max(
-            (
-                channel for channel in channels
-                if channel_key(channel) == key
-                and not is_placeholder_relay(channel)
-                and channel.probe.get("ok")
-                and not channel.probe.get("header_required")
-            ),
-            key=route_selection_score,
-            default=None,
-        )
-        if fallback is not None:
-            best[key] = fallback
-
-    # The overseas runner cannot consistently reach several domestic CDN/IPTV
-    # routes. Keep one current curated China-side route for these priority
-    # stations only when no segment-verified route exists in this build.
-    for key in CHINA_SIDE_FALLBACK_IDS:
-        if key in best:
-            continue
-        # For CCTV-5, only a labelled 1080p overseas mirror/public edge CDN is
-        # acceptable as an unverified primary. Operator and 720p stay behind.
-        if key == "cctv5":
-            edge_fallback = max(
-                (
-                    channel for channel in channels
-                    if channel_key(channel) == key
-                    and channel.curated
-                    and (
-                        channel.url in CCTV5_PREFERRED_1080_URLS
-                        or any(
-                            token in (urllib.parse.urlsplit(channel.url).hostname or "").lower()
-                            for token in CCTV5_EDGE_HOSTS
-                        )
-                    )
-                    and labelled_height(channel) >= 1080
-                    and not is_placeholder_relay(channel)
-                ),
-                key=channel_static_score,
-                default=None,
-            )
-            if edge_fallback is not None:
-                edge_fallback.probe["unverified_edge_fallback"] = True
-                best[key] = edge_fallback
-                continue
-        fallback = max(
-            (
-                channel for channel in channels
-                if channel_key(channel) == key
-                and channel.curated
-                and not is_placeholder_relay(channel)
-            ),
-            key=channel_static_score,
-            default=None,
-        )
-        if fallback is not None:
-            fallback.probe["unverified_china_side_fallback"] = True
-            best[key] = fallback
 
     eligible = list(best.values())
     grouped: dict[str, list[Channel]] = defaultdict(list)
@@ -2076,23 +2140,12 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
         items.sort(key=route_selection_score, reverse=True)
 
     selected: list[Channel] = []
-    selected_urls: set[str] = set()
     selected_keys: set[str] = set()
-
-    # Guarantee every playable CCTV/major provincial station before filling
-    # entertainment categories. Failed and dead URLs are still excluded.
-    core = sorted(
-        (channel for channel in eligible if is_core_channel(channel)),
-        key=core_route_score,
-        reverse=True,
-    )
-    for channel in core:
+    for channel in sorted((item for item in eligible if is_core_channel(item)), key=core_route_score, reverse=True):
         key = channel_key(channel)
-        if key in selected_keys:
-            continue
-        selected.append(channel)
-        selected_urls.add(channel.url)
-        selected_keys.add(key)
+        if key not in selected_keys:
+            selected.append(channel)
+            selected_keys.add(key)
 
     for group, quota in GROUP_TARGETS.items():
         already = sum(display_group(channel) == group for channel in selected)
@@ -2103,94 +2156,34 @@ def select_stable(channels: list[Channel]) -> list[Channel]:
             if key in selected_keys:
                 continue
             selected.append(channel)
-            selected_urls.add(channel.url)
             selected_keys.add(key)
             already += 1
-        if len(selected) >= TARGET_STABLE:
-            break
 
     if len(selected) < TARGET_STABLE:
         overflow = sorted(
-            (channel for channel in eligible if channel.url not in selected_urls and channel_key(channel) not in selected_keys),
-            key=measured_score,
+            (channel for channel in eligible if channel_key(channel) not in selected_keys),
+            key=route_selection_score,
             reverse=True,
         )
-        for channel in overflow[: TARGET_STABLE - len(selected)]:
-            selected.append(channel)
-            selected_urls.add(channel.url)
-            selected_keys.add(channel_key(channel))
-
-    # If the strict HD/speed floor finishes just below the requested count,
-    # admit only successfully probed live stations through a conservative
-    # secondary floor. VOD playlists were already rejected during probing.
-    if len(selected) < TARGET_STABLE:
-        relaxed_best: dict[str, Channel] = {}
-        for channel in channels:
-            key = channel_key(channel)
-            probe = channel.probe
-            height = int(probe.get("height") or labelled_height(channel))
-            chinese = is_chinese_oriented(channel)
-            min_speed = 0.8 if chinese else 1.5
-            max_latency = 10.0 if chinese else 6.0
-            if (
-                key in selected_keys
-                or channel.url in selected_urls
-                or is_placeholder_relay(channel)
-                or not probe.get("ok")
-                or probe.get("geo_restricted")
-                or probe.get("header_required")
-                or (height and height < 720)
-                or float(probe.get("segment_mbps") or 0) < min_speed
-                or float(probe.get("manifest_s") or 99) > max_latency
-            ):
-                continue
-            existing = relaxed_best.get(key)
-            if existing is None or route_selection_score(channel) > route_selection_score(existing):
-                relaxed_best[key] = channel
-        relaxed = sorted(
-            relaxed_best.values(),
-            key=lambda channel: (is_chinese_oriented(channel), route_selection_score(channel)),
-            reverse=True,
-        )
-        selected.extend(relaxed[: TARGET_STABLE - len(selected)])
+        selected.extend(overflow[: TARGET_STABLE - len(selected)])
     return selected[:TARGET_STABLE]
 
 
+
 def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Channel]:
-    """Build the one-click list without padding it with marginal routes."""
+    """Family list: actual >=720, core actual >=1080, no quantity padding."""
     best: dict[str, Channel] = {}
     for channel in channels:
-        if not is_easy_ready(channel) or channel.display_override:
+        if channel.display_override:
+            continue
+        ready = is_easy_ready(channel)
+        if not ready and is_core_channel(channel):
+            ready = is_family_core_usable(channel)
+        if not ready:
             continue
         key = channel_key(channel)
         existing = best.get(key)
         if existing is None or route_selection_score(channel) > route_selection_score(existing):
-            best[key] = channel
-
-    # Family rule: every currently usable CCTV/provincial satellite channel
-    # outranks music and regional overflow. Prefer the strict route,
-    # but never omit an essential merely because its best domestic source is
-    # slower than the general living-room headroom threshold.
-    family_fallbacks: dict[str, Channel] = {}
-    for channel in channels:
-        if not is_family_core_usable(channel) or channel.display_override:
-            continue
-        key = channel_key(channel)
-        existing = family_fallbacks.get(key)
-        rank = (
-            not bool(channel.probe.get("easy_check_failed")),
-            int(channel.probe.get("checks_ok") or 0),
-            core_route_score(channel),
-        )
-        if existing is None or rank > (
-            not bool(existing.probe.get("easy_check_failed")),
-            int(existing.probe.get("checks_ok") or 0),
-            core_route_score(existing),
-        ):
-            family_fallbacks[key] = channel
-    for key, channel in family_fallbacks.items():
-        if key not in best:
-            channel.probe["easy_core_fallback"] = True
             best[key] = channel
 
     eligible = list(best.values())
@@ -2202,18 +2195,11 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
 
     selected: list[Channel] = []
     selected_keys: set[str] = set()
-
-    # CCTV and provincial satellite stations are the living-room essentials.
-    for channel in sorted(
-        (item for item in eligible if is_core_channel(item)),
-        key=core_route_score,
-        reverse=True,
-    ):
+    for channel in sorted((item for item in eligible if is_core_channel(item)), key=core_route_score, reverse=True):
         key = channel_key(channel)
         if key not in selected_keys:
             selected.append(channel)
             selected_keys.add(key)
-
     for group, quota in EASY_GROUP_TARGETS.items():
         already = sum(display_group(channel) == group for channel in selected)
         for channel in grouped.get(group, []):
@@ -2225,53 +2211,39 @@ def select_easy(channels: list[Channel], target: int = TARGET_EASY) -> list[Chan
             selected.append(channel)
             selected_keys.add(key)
             already += 1
-
     if len(selected) < target:
         overflow = sorted(
             (channel for channel in eligible if channel_key(channel) not in selected_keys),
-            key=lambda channel: (
-                is_chinese_oriented(channel),
-                bool(channel.probe.get("ipv6_dns")),
-                route_selection_score(channel),
-            ),
+            key=route_selection_score,
             reverse=True,
         )
         selected.extend(overflow[: target - len(selected)])
     return selected[:target]
 
 
+
 def restore_existing_family_core(
     selected: list[Channel], existing_easy: list[Channel], target: int = TARGET_EASY
 ) -> list[Channel]:
-    """Carry forward a core tile when no new route has safe speed headroom.
-
-    A slow 9 Mbps stream must not be promoted as "fast", but a temporary lack
-    of a better public route also must not delete a family satellite station.
-    Newly verified choices always win; this only fills missing CCTV/satellite
-    keys from the already-published easy list.
-    """
+    """Never carry an old core blindly; only explicit visual-confirmed URLs."""
     output = list(selected)
     selected_keys = {channel_key(channel) for channel in output}
     for channel in existing_easy:
         key = channel_key(channel)
-        if (
-            key in selected_keys
-            or not is_core_channel(channel)
-            or not is_viewer_wanted_channel(channel)
-        ):
+        if key in selected_keys or not is_core_channel(channel):
             continue
+        if channel.url not in VISUALLY_CONFIRMED_CORE_URLS:
+            continue
+        if labelled_height(channel) < 1080 and channel_key(channel) != "cctv4k":
+            continue
+        channel.probe["manual_1080_confirmed"] = True
         channel.probe["carried_family_fallback"] = True
         output.append(channel)
         selected_keys.add(key)
-
     if len(output) <= target:
         return output
     core = [channel for channel in output if is_core_channel(channel)]
-    ordinary = sorted(
-        (channel for channel in output if not is_core_channel(channel)),
-        key=measured_score,
-        reverse=True,
-    )
+    ordinary = sorted((channel for channel in output if not is_core_channel(channel)), key=measured_score, reverse=True)
     return core + ordinary[: max(0, target - len(core))]
 
 
@@ -2372,7 +2344,9 @@ def publication_fallback_rank(channel: Channel) -> tuple:
     )
 
 
+
 def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
+    """Broader fallback may keep low/unknown routes, always visibly labelled."""
     selected = list(stable)
     keys = {channel_key(channel) for channel in selected}
     best_remainder: dict[str, Channel] = {}
@@ -2383,21 +2357,18 @@ def select_all(channels: list[Channel], stable: list[Channel]) -> list[Channel]:
         existing = best_remainder.get(key)
         if existing is None or publication_fallback_rank(channel) > publication_fallback_rank(existing):
             best_remainder[key] = channel
-    remainder = sorted(
-        best_remainder.values(), key=publication_fallback_rank, reverse=True
-    )
-    selected.extend(remainder[: max(0, TARGET_ALL - len(selected))])
+    remainder = sorted(best_remainder.values(), key=publication_fallback_rank, reverse=True)
+    for channel in remainder[: max(0, TARGET_ALL - len(selected))]:
+        if actual_height(channel) and actual_height(channel) >= 720:
+            selected.append(channel)
+        else:
+            selected.append(clone_with_resolution_label(channel))
     return selected[:TARGET_ALL]
 
 
-def select_main(stable: list[Channel], full: list[Channel], target: int = TARGET_MAIN) -> list[Channel]:
-    """Publish about 450 channels while keeping the verified core untouched.
 
-    The strict set is always first.  Remaining places are filled from the
-    broader fallback set by region quota and measured-route rank.  Technical
-    CCTV backup tiles are omitted because the final independent rescue pass
-    maintains one correct CCTV-5 and one CCTV-5+ tile.
-    """
+def select_main(stable: list[Channel], full: list[Channel], target: int = TARGET_MAIN) -> list[Channel]:
+    """Main list may broaden ordinary stations but never downgrade a core tile."""
     selected: list[Channel] = []
     selected_keys: set[str] = set()
     for channel in stable:
@@ -2408,16 +2379,16 @@ def select_main(stable: list[Channel], full: list[Channel], target: int = TARGET
         selected_keys.add(key)
         if len(selected) >= target:
             return selected
-
     grouped: dict[str, list[Channel]] = defaultdict(list)
     for channel in full:
         key = channel_key(channel)
         if channel.display_override or key in selected_keys:
             continue
+        if is_core_channel(channel) and not is_core_acceptable(channel):
+            continue
         grouped[display_group(channel)].append(channel)
     for items in grouped.values():
         items.sort(key=publication_fallback_rank, reverse=True)
-
     for group, quota in GROUP_TARGETS.items():
         already = sum(display_group(channel) == group for channel in selected)
         for channel in grouped.get(group, []):
@@ -2431,11 +2402,12 @@ def select_main(stable: list[Channel], full: list[Channel], target: int = TARGET
             already += 1
         if len(selected) >= target:
             return selected
-
     overflow = sorted(
         (
             channel for channel in full
-            if not channel.display_override and channel_key(channel) not in selected_keys
+            if not channel.display_override
+            and channel_key(channel) not in selected_keys
+            and (not is_core_channel(channel) or is_core_acceptable(channel))
         ),
         key=publication_fallback_rank,
         reverse=True,
@@ -2565,6 +2537,7 @@ def sort_channels(channels: list[Channel]) -> list[Channel]:
     )
 
 
+
 def write_playlist(path: Path, channels: list[Channel], description: str) -> None:
     lines = [
         f'#EXTM3U x-tvg-url="{EPG_URL}"',
@@ -2573,7 +2546,7 @@ def write_playlist(path: Path, channels: list[Channel], description: str) -> Non
         f"# channels={len(channels)}",
     ]
     for channel in sort_channels(channels):
-        lines.extend((cleaned_extinf(channel), channel.url))
+        lines.extend((cleaned_extinf(channel), publication_url(channel)))
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
