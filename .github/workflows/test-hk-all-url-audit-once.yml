@@ -1,0 +1,66 @@
+name: Validate resumable Hong Kong all-URL audit once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/test-hk-all-url-audit-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: contains(github.event.head_commit.message, '[test-hk-all-url]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax checks
+        run: |
+          python3 -m py_compile scripts/hk_audit_all_urls.py scripts/hk_probe.py
+          bash -n scripts/hk_audit_all_urls.sh
+      - name: Offline audit behavior
+        run: |
+          python3 - <<'PY'
+          import json, sys, tempfile
+          from pathlib import Path
+          sys.path.insert(0,'scripts')
+          import hk_audit_all_urls as a
+
+          with tempfile.TemporaryDirectory() as td:
+              td=Path(td)
+              h=td/'harvest.jsonl'
+              rows=[
+                  {'name':'A','group':'大陆','source':'s1','url':'http://x/a.m3u8'},
+                  {'name':'A alias','group':'大陆','source':'s2','url':'http://x/a.m3u8'},
+                  {'name':'B','group':'香港','source':'s3','url':'http://x/b.m3u8'},
+              ]
+              h.write_text('\n'.join(json.dumps(x,ensure_ascii=False) for x in rows)+'\n',encoding='utf-8')
+              order,meta=a.load_harvest(h)
+              assert order == ['http://x/a.m3u8','http://x/b.m3u8']
+              assert meta['http://x/a.m3u8']['names'] == ['A','A alias']
+
+              old_meta=a.hk_probe.ffprobe_meta
+              old_hls=a.hk_probe.hls_segment_probe
+              try:
+                  a.hk_probe.ffprobe_meta=lambda u: {'width':1920,'height':1080,'codec':'h264','field_order':'progressive','fps':25.0,'bitrate_mbps':3.5}
+                  a.hk_probe.hls_segment_probe=lambda u: (True,8.0,0.4,'')
+                  r=a.probe_one('http://x/a.m3u8',meta['http://x/a.m3u8'])
+                  assert r['status']=='GOOD', r
+
+                  a.hk_probe.ffprobe_meta=lambda u: {'width':640,'height':360,'codec':'h264','field_order':'progressive','fps':25.0,'bitrate_mbps':1.2}
+                  r=a.probe_one('http://x/b.m3u8',meta['http://x/b.m3u8'])
+                  assert r['status']=='DEGRADED', r
+              finally:
+                  a.hk_probe.ffprobe_meta=old_meta
+                  a.hk_probe.hls_segment_probe=old_hls
+
+              out=td/'out'; out.mkdir()
+              done={r['url']:r}
+              a.atomic_summary(out,2,done,'2026-01-01T00:00:00Z')
+              s=json.loads((out/'summary.json').read_text())
+              assert s['completed']==1 and s['remaining']==1
+              print('HK_ALL_URL_AUDIT_OFFLINE_VALID')
+          PY
+      - name: Prove production untouched
+        run: git diff --exit-code -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
