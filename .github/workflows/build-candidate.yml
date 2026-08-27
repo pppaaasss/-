@@ -2,6 +2,9 @@ name: Build isolated TV candidates
 
 on:
   workflow_dispatch:
+  schedule:
+    # 03:17 Asia/Singapore. Scheduled runs refresh candidate/ only.
+    - cron: '17 19 * * *'
 
 permissions:
   contents: write
@@ -50,6 +53,7 @@ jobs:
           python3 -m unittest tests.test_quality_hardening -v
           python3 -m unittest tests.test_candidate_policy -v
           python3 -m unittest tests.test_release_safety -v
+          python3 -m unittest tests.test_home_route_policy -v
 
       - name: Build only inside isolated candidate workspace
         id: build
@@ -123,6 +127,21 @@ jobs:
           )
           if changed and not ready:
               print('Changed core routes are NOT visually reviewable yet:', ','.join(missing) or 'contact sheet missing')
+          PY
+
+      - name: Record home-feedback veto in candidate manifest
+        if: ${{ !cancelled() && hashFiles('candidate/manifest.json') != '' }}
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from scripts.home_route_policy import rejected_urls
+
+          path = Path('candidate/manifest.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['home_feedback_rejected_url_count'] = len(rejected_urls())
+          data['home_playback_is_authoritative'] = True
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           PY
 
       - name: Prove production SHA256 did not change
