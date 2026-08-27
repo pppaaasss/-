@@ -9,8 +9,11 @@ on:
     paths:
       - 'scripts/build_playlist.py'
       - 'scripts/build_candidate.py'
+      - 'scripts/candidate_policy.py'
+      - 'scripts/run_candidate.py'
       - 'scripts/candidate_release.py'
       - 'tests/test_quality_hardening.py'
+      - 'tests/test_candidate_policy.py'
       - 'tests/test_release_safety.py'
       - '.github/workflows/build-candidate.yml'
 
@@ -59,12 +62,13 @@ jobs:
       - name: Run offline hard-gate tests
         run: |
           python3 -m unittest tests.test_quality_hardening -v
+          python3 -m unittest tests.test_candidate_policy -v
           python3 -m unittest tests.test_release_safety -v
 
       - name: Build only inside isolated candidate workspace
         id: build
         continue-on-error: true
-        run: python3 scripts/build_candidate.py
+        run: python3 scripts/run_candidate.py
 
       - name: Bind candidate manifest to this exact Actions run
         if: ${{ !cancelled() && hashFiles('candidate/manifest.json') != '' }}
