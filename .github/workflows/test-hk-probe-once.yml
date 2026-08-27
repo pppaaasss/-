@@ -1,0 +1,36 @@
+name: Validate Hong Kong probe agent once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/test-hk-probe-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: contains(github.event.head_commit.message, '[test-hk-probe]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Python and installer syntax
+        run: |
+          python3 -m py_compile scripts/hk_probe.py
+          bash -n scripts/install_hk_probe.sh
+      - name: Validate production playlist parsing only
+        run: |
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          spec=importlib.util.spec_from_file_location('hk_probe','scripts/hk_probe.py')
+          m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
+          rows=m.load_playlist(Path('tv-core.m3u'))
+          assert len(rows) >= 20, len(rows)
+          names={n for n,_ in rows}
+          assert 'CCTV-2' in names and 'CCTV-11' in names and 'CCTV-4K' in names
+          print('parsed',len(rows),'core channels; production untouched')
+          PY
+      - name: Prove production playlists untouched
+        run: git diff --exit-code -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
