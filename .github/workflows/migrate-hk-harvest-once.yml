@@ -1,0 +1,80 @@
+name: Validate harvest to Hong Kong filter migration once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/migrate-hk-harvest-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: contains(github.event.head_commit.message, '[migrate-hk-harvest]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Record production hashes
+        run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
+
+      - name: Disable scheduled GitHub candidate probing
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.github/workflows/build-candidate.yml')
+          text=p.read_text(encoding='utf-8')
+          old="""on:\n  workflow_dispatch:\n  schedule:\n    # 03:17 Asia/Singapore. Scheduled runs refresh candidate/ only.\n    - cron: '17 19 * * *'\n"""
+          new="""on:\n  # Manual fallback only. Scheduled stream filtering moved to the Hong Kong host.\n  workflow_dispatch:\n"""
+          if old not in text:
+              raise SystemExit('expected old candidate schedule block not found')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          PY
+
+      - name: Validate script syntax
+        run: |
+          python3 -m py_compile scripts/harvest_sources.py scripts/hk_probe.py scripts/hk_filter_harvest.py
+          bash -n scripts/install_hk_probe.sh
+
+      - name: Exercise source-only harvest
+        run: |
+          rm -rf /tmp/hk-harvest-test
+          python3 scripts/harvest_sources.py --output-dir /tmp/hk-harvest-test --workers 8
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('/tmp/hk-harvest-test/manifest.json').read_text(encoding='utf-8'))
+          assert m['stream_probe_performed'] is False
+          assert m['candidate_entries'] >= 100
+          assert m['unique_urls'] >= 100
+          print('HARVEST_VALID',m['candidate_entries'],m['unique_urls'],m['sources_failed'])
+          PY
+
+      - name: Exercise Hong Kong candidate matching without stream probes
+        run: |
+          python3 scripts/hk_filter_harvest.py \
+            --harvest /tmp/hk-harvest-test/candidates.jsonl \
+            --playlist tv-core.m3u \
+            --feedback config/home-route-feedback.json \
+            --output-dir /tmp/hk-filter-test \
+            --max-per-channel 14 \
+            --list-only
+
+      - name: Prove production playlists untouched
+        run: |
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-after.sha256
+          diff -u /tmp/production-before.sha256 /tmp/production-after.sha256
+          test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
+
+      - name: Commit scheduling migration only
+        run: |
+          git add .github/workflows/build-candidate.yml
+          test "$(git diff --cached --name-only)" = '.github/workflows/build-candidate.yml'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git commit -m 'Move scheduled stream filtering from GitHub to Hong Kong host'
+          git push origin HEAD:master
