@@ -63,6 +63,19 @@ jobs:
         continue-on-error: true
         run: python3 scripts/build_candidate.py
 
+      - name: Bind candidate manifest to this exact Actions run
+        if: ${{ !cancelled() && hashFiles('candidate/manifest.json') != '' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('candidate/manifest.json')
+          data = json.loads(path.read_text(encoding='utf-8'))
+          data['candidate_run_id'] = os.environ['GITHUB_RUN_ID']
+          data['candidate_run_url'] = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}"
+          path.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+
       - name: Capture candidate core frames for human review
         if: ${{ !cancelled() && hashFiles('candidate/tv-easy.m3u') != '' }}
         continue-on-error: true
