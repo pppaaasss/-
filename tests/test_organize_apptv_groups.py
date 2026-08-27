@@ -1,15 +1,11 @@
-import importlib.util
 import pathlib
+import sys
 import unittest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location(
-    "organize_apptv_groups", ROOT / "scripts" / "organize_apptv_groups.py"
-)
-module = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
-SPEC.loader.exec_module(module)
+sys.path.insert(0, str(ROOT / "scripts"))
+import organize_apptv_groups as module
 
 
 class OrganizeGroupsTests(unittest.TestCase):
