@@ -8,7 +8,8 @@ Production priorities:
 4. healthy 2160p/1080p high-bitrate routes,
 5. healthy ordinary 1080p routes,
 6. 720p only as an availability fallback when HD candidates are unusable,
-7. mirror pay channels independently without stream probing.
+7. mirror pay channels independently without stream probing,
+8. normalize the final APTV presentation into compact user-facing groups.
 
 Viewer-confirmed pins are intentionally NOT reapplied by this scheduled entry
 point. They remain a manual hotfix tool. Scheduled rebuilds must be allowed to
@@ -160,7 +161,7 @@ def publication_is_sane(previous: dict[Path, str]) -> tuple[bool, str]:
         if old:
             old_count = playlist_count(old)
             # A sudden >35% catalogue collapse is more likely to be a broken
-            # probe/upstream run than legitimate cleanup.  Confirmed dead-local
+            # probe/upstream run than legitimate cleanup. Confirmed dead-local
             # pruning is allowed as long as the publication stays above this
             # guardrail.
             if old_count >= floor and count < int(old_count * 0.65):
@@ -210,7 +211,7 @@ def main() -> int:
     if base_rc:
         failures.append(f"base builder ({base_rc})")
 
-    # These passes operate on the measured publication.  Local maintenance is
+    # These passes operate on the measured publication. Local maintenance is
     # deliberately non-fatal: if its own network view is bad, leave the builder
     # result alone rather than taking the backend down.
     steps = [
@@ -230,7 +231,7 @@ def main() -> int:
         restore_playlists(previous)
         failures.append("publication guard")
 
-    # Pay channels are an independent unchecked mirror.  Run this AFTER the
+    # Pay channels are an independent unchecked mirror. Run this AFTER the
     # rollback guard so a broad rebuild failure cannot erase the pay import.
     # The importer has its own index-level sanity check and never opens streams.
     if not run_python(
@@ -239,6 +240,15 @@ def main() -> int:
         required=False,
     ):
         failures.append("import_best_fan_pay_unchecked.py")
+
+    # Presentation-only final pass: province/city buckets become one 地方台
+    # category and 湖南卫视 is kept immediately after the CCTV block.
+    if not run_python(
+        "Normalize APTV groups and Hunan position",
+        "organize_apptv_groups.py",
+        required=False,
+    ):
+        failures.append("organize_apptv_groups.py")
 
     if failures:
         print("\nPipeline kept a usable publication but reported failures: " + ", ".join(failures), flush=True)
