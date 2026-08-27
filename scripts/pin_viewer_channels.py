@@ -13,7 +13,7 @@ from pathlib import Path
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
 # CCTV-1 uses the 221.7 route from the uploaded cn_all list; viewer cache is now 30s.
 # CCTV-5 uses a previously verified 1080p rescue route; never downgrade it to 720p.
-# Hunan currently uses the other route from the uploaded cn_all list.
+# Hunan uses the alternate 112.123 route from the uploaded cn_all list.
 # CCTV-6 uses another uploaded-list route after the explicit /1080p/ route played as 720p.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
@@ -27,7 +27,7 @@ TARGET_URLS = {
     "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv5": "http://198.204.228.26/live/cctv5hd.m3u8",
     "cctv6": "http://222.169.85.8:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0",
-    "hunan": "http://221.7.175.154:8445/tsfile/live/0128_1.m3u8?key=txiptv&playlive=1&authid=0",
+    "hunan": "http://112.123.243.37:50085/tsfile/live/1002_1.m3u8?key=txiptv&playlive=0&authid=0",
 }
 
 
