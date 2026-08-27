@@ -1,0 +1,47 @@
+name: Seed raw IPTV source harvest once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/harvest-sources-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  seed:
+    if: contains(github.event.head_commit.message, '[harvest-once]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Record production hashes
+        run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/before.sha256
+      - name: Harvest source text only
+        run: python3 scripts/harvest_sources.py --output-dir harvest --workers 12
+      - name: Verify harvest and production isolation
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path('harvest/manifest.json').read_text(encoding='utf-8'))
+          assert m['stream_probe_performed'] is False
+          assert m['candidate_entries'] >= 100
+          assert m['unique_urls'] >= 100
+          print('HARVEST_SEED',m['candidate_entries'],m['unique_urls'],m['sources_failed'])
+          PY
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/after.sha256
+          diff -u /tmp/before.sha256 /tmp/after.sha256
+      - name: Commit harvest only
+        run: |
+          rm -rf scripts/__pycache__
+          git add harvest/
+          bad="$(git diff --cached --name-only | grep -v '^harvest/' || true)"
+          test -z "$bad"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git commit -m 'Seed raw IPTV source harvest'
+          git push origin HEAD:master
