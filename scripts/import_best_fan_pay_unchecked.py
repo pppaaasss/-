@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Mirror best-fan's pay-channel list into the APTV playlists without probing.
+"""Mirror best-fan pay channels into APTV without opening stream URLs.
 
-The upstream project already refreshes and orders cn_pay.m3u8.  This script only
-fetches that playlist, keeps the first route for each visible channel name, and
-publishes those entries as 中文付费.  It intentionally does *not* open, time,
-ffprobe, or otherwise test any stream URL.
+The upstream project already refreshes and orders its pay lists.  This script
+only downloads the M3U indexes, keeps the first route for each visible channel
+name, forces them into 中文付费, and publishes them.  It intentionally does NOT
+probe, time, ffprobe, or fetch any media stream.
+
+Both cn_pay.m3u8 and cn_pay_status.m3u8 are accepted as index sources.  If one
+index is temporarily unavailable the other can still refresh the mirror; if
+both fail, the existing published pay entries are preserved.
 """
 
 from __future__ import annotations
@@ -13,10 +17,17 @@ import re
 import urllib.request
 from pathlib import Path
 
-UPSTREAM = "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay.m3u8"
+UPSTREAMS = (
+    "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay.m3u8",
+    "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_pay_status.m3u8",
+)
 PLAYLISTS = (Path("tv-easy.m3u"), Path("tv.m3u"), Path("tv-all.m3u"))
-DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV unchecked pay mirror/1.0)"
-MARKER = "# best-fan cn_pay.m3u8 unchecked mirror (no stream probing)"
+DEFAULT_UA = "Mozilla/5.0 (AppleTV; APTV unchecked pay mirror/2.0)"
+MARKER = "# best-fan pay mirror (unchecked; no stream probing)"
+OLD_MARKERS = {
+    "# best-fan cn_pay.m3u8 unchecked mirror (no stream probing)",
+    MARKER,
+}
 
 
 def visible_name(extinf: str) -> str:
@@ -39,16 +50,8 @@ def force_pay_group(extinf: str) -> str:
     return extinf
 
 
-def fetch_upstream() -> list[tuple[str, str, str]]:
-    req = urllib.request.Request(
-        UPSTREAM,
-        headers={"User-Agent": DEFAULT_UA, "Accept": "application/vnd.apple.mpegurl,*/*"},
-    )
-    with urllib.request.urlopen(req, timeout=25) as response:
-        text = response.read(1_000_000).decode("utf-8", "ignore")
-
+def parse_index(text: str) -> list[tuple[str, str, str]]:
     entries: list[tuple[str, str, str]] = []
-    seen: set[str] = set()
     extinf: str | None = None
     for raw in text.splitlines():
         line = raw.strip()
@@ -58,18 +61,46 @@ def fetch_upstream() -> list[tuple[str, str, str]]:
         if extinf and line.startswith(("http://", "https://")):
             name = visible_name(extinf)
             key = name_key(name)
-            if key and key not in seen:
-                seen.add(key)
+            if key:
                 entries.append((key, force_pay_group(extinf), line))
             extinf = None
         elif line and not line.startswith("#"):
             extinf = None
-
-    # Structural sanity only.  This is not a stream-health test; on a broken or
-    # truncated upstream fetch, preserve the currently published pay channels.
-    if len(entries) < 5:
-        raise RuntimeError(f"upstream pay list looked incomplete: {len(entries)} unique channels")
     return entries
+
+
+def fetch_upstream() -> list[tuple[str, str, str]]:
+    merged: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+    failures: list[str] = []
+
+    for upstream in UPSTREAMS:
+        try:
+            request = urllib.request.Request(
+                upstream,
+                headers={
+                    "User-Agent": DEFAULT_UA,
+                    "Accept": "application/vnd.apple.mpegurl,*/*",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=25) as response:
+                text = response.read(1_500_000).decode("utf-8", "ignore")
+            parsed = parse_index(text)
+            if len(parsed) < 5:
+                raise RuntimeError(f"index looked incomplete: {len(parsed)} entries")
+            for key, extinf, url in parsed:
+                if key in seen:
+                    continue
+                seen.add(key)
+                merged.append((key, extinf, url))
+            print(f"pay index loaded: {upstream} entries={len(parsed)} unique_total={len(merged)}")
+        except Exception as exc:
+            failures.append(f"{upstream}: {type(exc).__name__}: {str(exc)[:100]}")
+
+    if len(merged) < 5:
+        detail = "; ".join(failures) if failures else "no usable entries"
+        raise RuntimeError(f"all pay indexes unusable: {detail}")
+    return merged
 
 
 def parse_blocks(text: str) -> tuple[list[str], list[tuple[str, str, str]]]:
@@ -84,9 +115,7 @@ def parse_blocks(text: str) -> tuple[list[str], list[tuple[str, str, str]]]:
             blocks.append((name_key(name), line, lines[i + 1].strip()))
             i += 2
             continue
-        # Preserve playlist header/comments, but drop an old mirror marker so
-        # every run writes exactly one current marker.
-        if line.strip() != MARKER:
+        if line.strip() not in OLD_MARKERS:
             prefix.append(line)
         i += 1
     return prefix, blocks
@@ -99,12 +128,11 @@ def patch_playlist(path: Path, upstream: list[tuple[str, str, str]]) -> int:
     prefix, blocks = parse_blocks(original)
     managed = {key for key, _, _ in upstream}
 
-    # The upstream pay set is authoritative for matching visible names.  Remove
-    # older copies from any group first, then append one current upstream route.
+    # Matching visible names are owned by the pay mirror.  Remove any stale
+    # copy from another group, then append exactly one current upstream route.
     kept = [(key, extinf, url) for key, extinf, url in blocks if key not in managed]
 
     output: list[str] = []
-    # Keep #EXTM3U and generated comments at the top.
     output.extend(prefix)
     if output and output[-1] != "":
         output.append("")
@@ -123,8 +151,8 @@ def patch_playlist(path: Path, upstream: list[tuple[str, str, str]]) -> int:
 def main() -> int:
     try:
         upstream = fetch_upstream()
-    except Exception as exc:  # Preserve existing playlists if the index itself is unavailable.
-        print(f"best-fan unchecked pay import skipped: {exc}")
+    except Exception as exc:
+        print(f"best-fan unchecked pay import skipped; existing pay entries preserved: {exc}")
         return 0
 
     for path in PLAYLISTS:
