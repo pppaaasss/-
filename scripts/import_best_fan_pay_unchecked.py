@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mirror best-fan pay channels into APTV without opening stream URLs.
+"""Mirror pay channels into APTV without opening stream URLs.
 
 The upstream project already refreshes and orders its pay lists. This script
 only downloads the M3U indexes, keeps the first route for each visible channel
@@ -7,12 +7,9 @@ name, forces them into 中文付费, and publishes them. It intentionally does N
 probe, time, ffprobe, or fetch any media stream.
 
 Both cn_pay.m3u8 and cn_pay_status.m3u8 are accepted as index sources. If one
-index is temporarily unavailable the other can still refresh the mirror; if
-both fail, the existing published pay entries are preserved.
-
-A tiny manual correction table is allowed for viewer-confirmed wrong-channel
-mappings. These corrections are still not stream-tested here; they simply beat
-known-bad labels from the broad catalogue.
+index is temporarily unavailable the other can still refresh the mirror. A
+small manual correction table is applied last for viewer-confirmed wrong-channel
+mappings; those corrections remain effective even if both pay indexes fail.
 """
 
 from __future__ import annotations
@@ -35,7 +32,7 @@ OLD_MARKERS = {
 
 # Viewer reported the previous "CCTV央视台球" URL was the wrong programme.
 # Keep this specialty/pay tile out of the broad CCTV/satellite bucket and use a
-# route that is explicitly published as 央视台球 by current IPTV indexes.
+# route explicitly published as 央视台球 by current IPTV indexes.
 MANUAL_PAY_OVERRIDES = (
     (
         "CCTV央视台球",
@@ -125,8 +122,12 @@ def fetch_upstream() -> list[tuple[str, str, str]]:
             failures.append(f"{upstream}: {type(exc).__name__}: {str(exc)[:100]}")
 
     if len(merged) < 5:
+        # Preserve all existing unmatched pay entries, but still let known
+        # viewer corrections replace a bad tile. patch_playlist only manages
+        # keys returned here, so this fallback cannot wipe the pay catalogue.
         detail = "; ".join(failures) if failures else "no usable entries"
-        raise RuntimeError(f"all pay indexes unusable: {detail}")
+        print(f"pay indexes unavailable; applying manual corrections only: {detail}")
+        return apply_manual_overrides([])
     return apply_manual_overrides(merged)
 
 
@@ -176,15 +177,10 @@ def patch_playlist(path: Path, upstream: list[tuple[str, str, str]]) -> int:
 
 
 def main() -> int:
-    try:
-        upstream = fetch_upstream()
-    except Exception as exc:
-        print(f"best-fan unchecked pay import skipped; existing pay entries preserved: {exc}")
-        return 0
-
+    upstream = fetch_upstream()
     for path in PLAYLISTS:
         count = patch_playlist(path, upstream)
-        print(f"{path}: mirrored {count} unchecked best-fan pay channels")
+        print(f"{path}: mirrored/overrode {count} unchecked pay channels")
     return 0
 
 
