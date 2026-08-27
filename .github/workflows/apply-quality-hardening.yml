@@ -1,0 +1,63 @@
+name: Apply decoded quality hardening
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'scripts/apply_quality_hardening.py'
+      - 'tests/test_quality_hardening.py'
+      - '.github/workflows/apply-quality-hardening.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: code-quality-hardening
+  cancel-in-progress: false
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Record production playlist hashes
+        run: |
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/prod-before.sha256
+
+      - name: Apply decoded-quality patch
+        run: |
+          python3 scripts/apply_quality_hardening.py
+          python3 -m py_compile scripts/build_playlist.py
+
+      - name: Run quality hardening tests
+        run: python3 -m unittest tests.test_quality_hardening -v
+
+      - name: Prove production playlists unchanged
+        run: |
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/prod-after.sha256
+          diff -u /tmp/prod-before.sha256 /tmp/prod-after.sha256
+          test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
+
+      - name: Commit only the hardened builder
+        run: |
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
+            echo 'master moved while hardening; refusing to overwrite newer work'
+            exit 1
+          }
+          changed="$(git status --porcelain)"
+          echo "$changed"
+          test -z "$(git status --porcelain | grep -v '^ M scripts/build_playlist.py$')"
+          git add scripts/build_playlist.py
+          if git diff --cached --quiet; then
+            echo 'Builder already hardened'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Harden decoded quality selection'
+          git push origin HEAD:master
