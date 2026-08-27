@@ -1,23 +1,15 @@
 {
-  "version": 1,
+  "version": 2,
   "enabled": true,
-  "required_candidate_good_runs": 1,
-  "required_formal_degraded_runs": 1,
-  "required_formal_hard_dead_runs": 1,
-  "max_updates_per_run": 9999,
-  "protected_channels": [],
+  "replace_formal_statuses": [
+    "DEGRADED",
+    "UNKNOWN"
+  ],
   "minimum_height_default": 1080,
   "minimum_height_overrides": {
     "CCTV-4K": 2160
   },
   "minimum_h264_bitrate_mbps": 2.0,
   "allow_unknown_h264_bitrate": true,
-  "reject_token_urls": true,
-  "hard_dead_error_patterns": [
-    "404",
-    "410",
-    "not found",
-    "no_video_stream",
-    "invalid data found"
-  ]
+  "reject_token_urls": true
 }
