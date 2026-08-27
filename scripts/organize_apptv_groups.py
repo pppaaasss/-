@@ -7,7 +7,7 @@ User-facing policy:
 - collapse every mainland province/city bucket into one ``地方台`` group;
 - leave pay/HK/TW/JP and other specialty groups alone.
 
-This is intentionally a final presentation pass.  The main builder may keep
+This is intentionally a final presentation pass. The main builder may keep
 province-level groups internally for candidate quotas and dead-source repair;
 APTV only needs one compact local-TV category.
 """
@@ -23,6 +23,7 @@ PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
     Path("tv-all.m3u"),
+    Path("tv-core.m3u"),
 )
 
 MAINLAND_REGION_GROUPS = {
@@ -76,12 +77,7 @@ def is_hunan_satellite(block: Block) -> bool:
 
 
 def parse_playlist(text: str) -> tuple[list[str], list[Block]]:
-    """Return non-channel lines and channel blocks in original order.
-
-    Comments/markers are kept at the top.  The generated playlists use only
-    top-level comments, so this keeps the final M3U deterministic and avoids
-    comments getting stranded between moved channel blocks.
-    """
+    """Return non-channel lines and channel blocks in original order."""
     misc: list[str] = []
     blocks: list[Block] = []
     lines = text.splitlines()
