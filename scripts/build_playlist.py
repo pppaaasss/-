@@ -2760,7 +2760,7 @@ def main() -> int:
             f"safety stop: only {len(easy)}/{MIN_EASY} triple-checked easy channels "
             f"(target {TARGET_EASY}); existing playlists were not replaced"
         )
-    if easy_missing_cctv:
+    if easy_missing_cctv and not os.getenv("CANDIDATE_ALLOW_INCOMPLETE_CORE"):
         print(
             "missing_core_diagnostics="
             + json.dumps(
@@ -2773,7 +2773,7 @@ def main() -> int:
             + ",".join(easy_missing_cctv)
             + "; existing playlists were not replaced"
         )
-    if easy_missing_satellites:
+    if easy_missing_satellites and not os.getenv("CANDIDATE_ALLOW_INCOMPLETE_CORE"):
         print(
             "missing_core_diagnostics="
             + json.dumps(
