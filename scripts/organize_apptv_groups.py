@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Normalize the final APTV presentation groups without changing stream URLs.
+"""Normalize final APTV presentation and keep the viewer-approved Hunan route.
 
 User-facing policy:
 - keep CCTV/satellites together in ``卫视台``;
 - place 湖南卫视 immediately after the last CCTV tile;
+- force 湖南卫视 to the viewer-approved working route;
 - collapse every mainland province/city bucket into one ``地方台`` group;
 - leave pay/HK/TW/JP and other specialty groups alone.
 
-This is intentionally a final presentation pass. The main builder may keep
-province-level groups internally for candidate quotas and dead-source repair;
-APTV only needs one compact local-TV category.
+This is intentionally the final publication pass. The builder may keep
+province-level groups internally for quotas and dead-source repair; the files
+APTV reads must always expose the compact grouping requested by the viewer.
 """
 
 from __future__ import annotations
@@ -24,6 +25,11 @@ PLAYLISTS = (
     Path("tv.m3u"),
     Path("tv-all.m3u"),
     Path("tv-core.m3u"),
+)
+
+HUNAN_STABLE_URL = (
+    "http://112.123.243.37:50085/tsfile/live/1002_1.m3u8"
+    "?key=txiptv&playlive=0&authid=0"
 )
 
 MAINLAND_REGION_GROUPS = {
@@ -77,7 +83,6 @@ def is_hunan_satellite(block: Block) -> bool:
 
 
 def parse_playlist(text: str) -> tuple[list[str], list[Block]]:
-    """Return non-channel lines and channel blocks in original order."""
     misc: list[str] = []
     blocks: list[Block] = []
     lines = text.splitlines()
@@ -102,7 +107,8 @@ def normalize_blocks(blocks: list[Block]) -> list[Block]:
     for block in blocks:
         group = group_name(block.extinf)
         extinf = set_group(block.extinf, "地方台") if group in MAINLAND_REGION_GROUPS else block.extinf
-        normalized.append(Block(extinf, block.url))
+        url = HUNAN_STABLE_URL if is_hunan_satellite(Block(extinf, block.url)) else block.url
+        normalized.append(Block(extinf, url))
 
     # Stable move only: keep every other station in its current relative order.
     hunan = [block for block in normalized if is_hunan_satellite(block)]
