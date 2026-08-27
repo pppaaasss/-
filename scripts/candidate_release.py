@@ -50,8 +50,12 @@ def validate(manifest: dict, *, visual_confirmed: bool, audit_run_id: str) -> No
     short = [key for key in changed if int(streaks.get(key, 0)) < 2]
     if short:
         raise SystemExit("core changes lack two consecutive scans: " + ", ".join(short))
-    if changed and (not visual_confirmed or not audit_run_id.strip()):
-        raise SystemExit("changed core routes require explicit visual artifact confirmation")
+    expected_run_id = str(manifest.get("candidate_run_id") or "").strip()
+    if changed:
+        if not visual_confirmed or not audit_run_id.strip():
+            raise SystemExit("changed core routes require explicit visual artifact confirmation")
+        if not expected_run_id or audit_run_id.strip() != expected_run_id:
+            raise SystemExit("visual review run ID must match this candidate scan")
     expected = manifest.get("production_sha256_before") or {}
     actual = current_hashes()
     if expected != actual:
