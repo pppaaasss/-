@@ -969,9 +969,15 @@ def is_cctv4k_label(channel: Channel) -> bool:
     return bool(re.search(r"cctv[\s_-]*4[\s_-]*k", label, re.I))
 
 
+def is_cctv8k_label(channel: Channel) -> bool:
+    """Keep the CCTV-8K ultra-HD service separate from CCTV-8 Drama."""
+    label = normalized_name(channel.name)
+    return bool(re.search(r"cctv[\s_-]*8[\s_-]*k", label, re.I))
+
+
 def numbered_cctv_id(channel: Channel) -> str | None:
-    """Return CCTV-1..17 from the visible label, excluding CCTV-4K."""
-    if is_cctv4k_label(channel):
+    """Return CCTV-1..17, excluding distinct CCTV-4K/CCTV-8K services."""
+    if is_cctv4k_label(channel) or is_cctv8k_label(channel):
         return None
     match = re.search(r"cctv[\s_-]*0?(\d{1,2})(?!\d)", normalized_name(channel.name), re.I)
     if match and 1 <= int(match.group(1)) <= 17:
@@ -986,6 +992,11 @@ def cctv_url_conflicts_with_label(channel: Channel) -> bool:
         return False
     url_low = urllib.parse.unquote(channel.url).lower()
     if "cgtn-america.m3u8" in url_low:
+        return True
+    if expected == "cctv8" and re.search(
+        r"(?:[?&]id=cctv8k\b|channel_cctv8k|/cctv8k(?:[/?.]|$))",
+        url_low,
+    ):
         return True
     url_numbers = {
         f"cctv{int(number)}"
@@ -1002,6 +1013,8 @@ def channel_key(channel: Channel) -> str:
     # spelling variants such as CCTV4K / CCTV-4K HD are one channel.
     if is_cctv4k_label(channel):
         return "cctv4k"
+    if is_cctv8k_label(channel):
+        return "cctv8k"
     satellite_name = canonical_mainland_satellite_name(channel)
     if satellite_name:
         return satellite_name
@@ -2457,6 +2470,8 @@ def canonical_display_name(channel: Channel) -> str:
     key = channel_key(channel)
     if key == "cctv4k":
         return "CCTV-4K"
+    if key == "cctv8k":
+        return "CCTV-8K"
     if key == "cctv5plus":
         return "CCTV-5+"
     numbered = re.fullmatch(r"cctv(\d{1,2})", key)
@@ -2473,6 +2488,8 @@ def fanmingming_logo_name(channel: Channel) -> str | None:
     key = channel_key(channel)
     if key == "cctv4k":
         return "CCTV4K"
+    if key == "cctv8k":
+        return "CCTV8K"
     if key == "cctv5plus":
         return "CCTV5+"
     numbered = re.fullmatch(r"cctv(\d{1,2})", key)

@@ -104,6 +104,31 @@ https://example.com/notice.m3u8
         self.assertFalse(builder.is_station_like(wrong_number))
         self.assertTrue(builder.is_station_like(correct))
 
+    def test_cctv8k_never_replaces_cctv8_drama(self):
+        ultra = builder.Channel(
+            "CCTV8K",
+            '#EXTINF:-1 group-title="大陆",CCTV8K',
+            "https://example.com/live/cctv8k.m3u8",
+            "大陆",
+        )
+        wrong_for_drama = builder.Channel(
+            "CCTV-8 电视剧",
+            '#EXTINF:-1 group-title="大陆",CCTV-8 电视剧',
+            "https://example.com/live/cctv8k.m3u8",
+            "大陆",
+        )
+        correct_drama = builder.Channel(
+            "CCTV-8 电视剧",
+            '#EXTINF:-1 group-title="大陆",CCTV-8 电视剧',
+            "https://example.com/live/cctv8hd.m3u8",
+            "大陆",
+        )
+        self.assertIsNone(builder.numbered_cctv_id(ultra))
+        self.assertEqual(builder.channel_key(ultra), "cctv8k")
+        self.assertEqual(builder.canonical_display_name(ultra), "CCTV-8K")
+        self.assertFalse(builder.is_station_like(wrong_for_drama))
+        self.assertTrue(builder.is_station_like(correct_drama))
+
     def test_user_rejected_4k_and_music_routes_are_rejected(self):
         cctv4k = builder.Channel(
             "CCTV-4K",

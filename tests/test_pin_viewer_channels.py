@@ -16,6 +16,8 @@ class PinViewerChannelsTests(unittest.TestCase):
             "#EXTM3U",
             '#EXTINF:-1 group-title="卫视台",湖南卫视',
             hunan_url,
+            '#EXTINF:-1 group-title="卫视台",CCTV-8',
+            "https://example.test/live/cctv8k.m3u8",
             '#EXTINF:-1 group-title="卫视台",CCTV-1',
             "https://example.test/live/cctv1.m3u8",
             "",
@@ -26,8 +28,9 @@ class PinViewerChannelsTests(unittest.TestCase):
             changed = module.patch_playlist(path)
             rendered = path.read_text(encoding="utf-8")
 
-        self.assertEqual(changed, ["cctv1"])
+        self.assertEqual(changed, ["cctv8", "cctv1"])
         self.assertIn(hunan_url, rendered)
+        self.assertIn(module.TARGET_URLS["cctv8"], rendered)
         self.assertIn(module.TARGET_URLS["cctv1"], rendered)
 
 

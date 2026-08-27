@@ -24,7 +24,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Pin viewer-confirmed CCTV-1/4/5/6 routes
+      - name: Pin viewer-confirmed CCTV-1/4/5/6/8 routes
         run: python3 scripts/pin_viewer_channels.py
       - name: Collapse province groups and place Hunan after CCTV
         run: python3 scripts/organize_apptv_groups.py

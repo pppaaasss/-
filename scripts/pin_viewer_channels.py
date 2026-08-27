@@ -2,7 +2,7 @@
 """Pin only the viewer-confirmed living-room routes.
 
 This is intentionally surgical: it only replaces the URL for CCTV-1, CCTV-4,
-CCTV-5 and CCTV-6. Channel metadata, ordering and every other station stay untouched.
+CCTV-5, CCTV-6 and CCTV-8. Channel metadata, ordering and every other station stay untouched.
 """
 
 from __future__ import annotations
@@ -15,6 +15,7 @@ from pathlib import Path
 # CCTV-5 uses a previously verified 1080p rescue route; never downgrade it to 720p.
 # CCTV-6 moves off the viewer-confirmed black-screen 222.169 route to the current
 # first 1080-labelled best-fan candidate; actual APTV playback remains final authority.
+# CCTV-8 must stay on the Drama HD feed, never the separate CCTV-8K service.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
@@ -27,6 +28,7 @@ TARGET_URLS = {
     "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
     "cctv5": "http://198.204.228.26/live/cctv5hd.m3u8",
     "cctv6": "http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0",
+    "cctv8": "http://107.150.60.122/live/cctv8hd.m3u8",
 }
 
 
@@ -43,6 +45,8 @@ def target_key(extinf: str) -> str | None:
         return "cctv5"
     if compact == "cctv6":
         return "cctv6"
+    if compact == "cctv8":
+        return "cctv8"
     return None
 
 
