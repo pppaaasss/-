@@ -1,95 +1,20 @@
-name: Rebuild APTV playlists
+name: Production playlists frozen
 
-# Stable mode: production playlists rebuild only after an explicit manual run.
+# Safety interlock installed before the real quality audit. Candidate generation
+# is enabled only after the read-only audit is reviewed. This workflow cannot
+# write or publish the four production playlists.
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: aptv-playlist-writes
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  build:
+  frozen:
     runs-on: ubuntu-latest
-    timeout-minutes: 85
+    timeout-minutes: 2
     steps:
       - uses: actions/checkout@v4
-
-      - name: Run offline tests
-        run: python3 -m unittest discover -s tests -v
-
-      - name: Ensure ffprobe is available
-        run: |
-          if ! command -v ffprobe >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq ffmpeg
-          fi
-
-      - name: Run consolidated TV rebuild pipeline
-        id: rebuild
-        continue-on-error: true
-        env:
-          TARGET_STABLE: '420'
-          MIN_STABLE: '280'
-          TARGET_MAIN: '450'
-          MIN_MAIN: '430'
-          TARGET_ALL: '560'
-          TARGET_EASY: '180'
-          MIN_EASY: '55'
-          SOURCE_WORKERS: '12'
-          PROBE_WORKERS: '56'
-          PROBE_TIMEOUT: '8'
-          CORE_VARIANTS_PER_CHANNEL: '24'
-          HISTORY_WINDOW: '24'
-        run: python3 scripts/rebuild_tv.py
-
-      # Belt-and-suspenders path: even if the consolidated wrapper itself has a
-      # future Python/import failure, the unchecked pay mirror still refreshes
-      # against the last usable playlists. It never opens stream URLs.
-      - name: Refresh unchecked pay mirror independently
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: python3 scripts/import_best_fan_pay_unchecked.py
-
-      # The independent pay fallback above can append entries after the main
-      # wrapper has normalized presentation. Re-run the cheap presentation pass
-      # so every published file still has the requested compact grouping.
-      - name: Normalize final APTV presentation independently
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: python3 scripts/organize_apptv_groups.py
-
-      - name: Capture CCTV and satellite frames for identity review
-        if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
-        run: |
-          python3 -m pip install --quiet pillow
-          python3 scripts/audit_tv_frames.py --playlist tv-easy.m3u --output frame-audit --workers 8 --timeout 30 || true
-
-      - name: Upload family-channel frame audit
-        if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: family-channel-frame-audit
-          path: frame-audit/
-          retention-days: 3
-
-      - name: Publish refreshed playlists
-        if: ${{ !cancelled() }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u health-history.json build-report.txt fps-report.txt
-          if git diff --cached --quiet; then
-            echo 'No playlist changes'
-          else
-            git commit -m 'Refresh measured APTV playlists'
-            git pull --rebase -X theirs --autostash origin master
-            git push
-          fi
-
-      - name: Propagate rebuild failure after publication
-        if: ${{ !cancelled() && steps.rebuild.outcome == 'failure' }}
-        run: exit 1
+      - run: |
+          echo 'Production rebuild is frozen. Use the read-only quality audit first.'
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
