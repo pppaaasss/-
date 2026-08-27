@@ -7,7 +7,10 @@ on:
   push:
     branches: [master]
     paths:
+      - 'scripts/build_playlist.py'
       - 'scripts/build_candidate.py'
+      - 'scripts/candidate_release.py'
+      - 'tests/test_quality_hardening.py'
       - 'tests/test_release_safety.py'
       - '.github/workflows/build-candidate.yml'
 
