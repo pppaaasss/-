@@ -10,11 +10,13 @@ class CandidatePolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.original_measured_score = bp.measured_score
         self.original_fallback_rank = bp.publication_fallback_rank
+        self.original_add_cctv5_backups = bp.add_cctv5_backups
         candidate_policy.apply(bp)
 
     def tearDown(self) -> None:
         bp.measured_score = self.original_measured_score
         bp.publication_fallback_rank = self.original_fallback_rank
+        bp.add_cctv5_backups = self.original_add_cctv5_backups
 
     def channel(self, name: str, *, group: str = "广东", url: str = "http://example.test/live.m3u8") -> bp.Channel:
         return bp.Channel(
@@ -36,6 +38,8 @@ class CandidatePolicyTests(unittest.TestCase):
             "segment_mbps": speed,
             "manifest_s": 0.2 if speed > 10 else 25.0,
             "checks_ok": checks,
+            "is_master_playlist": False,
+            "publish_url": channel.url,
         }
 
     def test_mainland_quality_beats_github_speed(self) -> None:
@@ -57,6 +61,16 @@ class CandidatePolicyTests(unittest.TestCase):
         self.probe(fake, height=540, stream=3.0, speed=80.0)
         rank = bp.publication_fallback_rank(fake)
         self.assertFalse(rank[4])
+
+    def test_cctv5_backup_rejects_fake_decoded_720(self) -> None:
+        primary = self.channel("CCTV-5", group="大陆", url="http://primary.test/cctv5.m3u8")
+        fake = self.channel("CCTV-5", group="大陆", url="http://backup.test/cctv5.m3u8")
+        self.probe(primary, height=1080, stream=3.5, speed=0.05)
+        self.probe(fake, height=720, stream=3.5, speed=80.0)
+        # Simulate a stale manifest/name claiming 1080 while ffprobe decoded 720.
+        fake.probe["height"] = 1080
+        output = bp.add_cctv5_backups([primary], [fake], count=1)
+        self.assertFalse(any(str(channel.display_override or "").startswith("CCTV-5 备用") for channel in output))
 
     def test_overseas_keeps_original_network_policy(self) -> None:
         channel = self.channel("香港测试", group="香港")

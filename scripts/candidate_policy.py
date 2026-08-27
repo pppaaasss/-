@@ -15,6 +15,7 @@ def apply(bp: ModuleType) -> None:
     """Patch candidate ranking without changing overseas network policy."""
     original_measured_score = bp.measured_score
     original_fallback_rank = bp.publication_fallback_rank
+    original_add_cctv5_backups = bp.add_cctv5_backups
 
     def mainland_quality_score(channel) -> float:
         probe = channel.probe
@@ -91,5 +92,35 @@ def apply(bp: ModuleType) -> None:
             mainland_quality_score(channel) if ok else float(channel.static_score or 0.0),
         )
 
+    def valid_cctv5_backup(channel) -> bool:
+        if bp.channel_key(channel) != "cctv5":
+            return True
+        probe = channel.probe
+        if (
+            not probe.get("ok")
+            or probe.get("header_required")
+            or probe.get("duplicate_core_content")
+            or probe.get("short_lived_token")
+            or bp.cctv_url_conflicts_with_label(channel)
+        ):
+            return False
+        if int(bp.actual_height(channel) or 0) < 1080:
+            return False
+        if probe.get("is_master_playlist") and bp.publication_url(channel) == channel.url:
+            return False
+        stream_mbps = float(probe.get("stream_mbps") or 0.0)
+        codec = str(probe.get("codec") or "").lower()
+        if codec in {"h264", "avc", "avc1"} and stream_mbps and stream_mbps < 2.0:
+            return False
+        return True
+
+    def add_cctv5_backups(stable, channels, count: int = 2):
+        # The legacy helper looked at probe.height/labels. Feed it only routes
+        # that have passed decoded-quality checks so fake 1080 backups cannot
+        # displace ordinary channels in the candidate list.
+        filtered = [channel for channel in channels if valid_cctv5_backup(channel)]
+        return original_add_cctv5_backups(stable, filtered, count=count)
+
     bp.measured_score = measured_score
     bp.publication_fallback_rank = publication_fallback_rank
+    bp.add_cctv5_backups = add_cctv5_backups
