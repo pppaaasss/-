@@ -11,9 +11,12 @@ on:
 permissions:
   contents: write
 
+# Fast viewer fixes must not sit behind an 85-minute catalogue rebuild. The
+# authoritative final presentation pass is also part of the full rebuild, so a
+# later scheduled publication will preserve the same Hunan/grouping policy.
 concurrency:
-  group: aptv-playlist-writes
-  cancel-in-progress: false
+  group: aptv-fast-viewer-fixes
+  cancel-in-progress: true
 
 jobs:
   pin:
