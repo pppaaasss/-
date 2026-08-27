@@ -24,7 +24,7 @@ python3 scripts/hk_filter_harvest.py \
   --playlist tv-core.m3u \
   --feedback config/home-route-feedback.json \
   --output-dir "$DATA_DIR/candidates" \
-  --workers "${IPTV_HK_WORKERS:-12}" \
+  --workers "${IPTV_HK_WORKERS:-4}" \
   --max-per-channel "${IPTV_HK_MAX_PER_CHANNEL:-14}"
 
 python3 scripts/hk_auto_update.py \
