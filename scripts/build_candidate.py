@@ -38,7 +38,6 @@ def production_hashes() -> dict[str, str]:
 
 
 def normalize_route(url: str) -> str:
-    """Normalize rotating auth material while preserving channel identity params."""
     parsed = urllib.parse.urlsplit(url.strip())
     query = []
     for key, value in urllib.parse.parse_qsl(parsed.query, keep_blank_values=True):
@@ -139,11 +138,12 @@ def run_builder(work: Path) -> tuple[int, str, set[str]]:
     import build_playlist as bp  # noqa: PLC0415
 
     mainland_satellites = set(bp.MAINLAND_SATELLITE_NAMES)
-    # Candidate scans are allowed to be incomplete. Missing 1080 core routes are
-    # reported; they must never trigger a 720/unknown fallback publication.
+    # Do not alter CCTV/satellite identity tables: they are what makes the
+    # decoded 1080/2160 core gates apply. Candidate mode only allows the build
+    # to finish with missing core entries so the report can say what is absent.
     bp.MIN_EASY = 0
-    bp.CCTV_AUDIT_IDS = ()
-    bp.MAINLAND_SATELLITE_NAMES = ()
+    previous_mode = os.environ.get("CANDIDATE_ALLOW_INCOMPLETE_CORE")
+    os.environ["CANDIDATE_ALLOW_INCOMPLETE_CORE"] = "1"
 
     original = Path.cwd()
     try:
@@ -156,6 +156,10 @@ def run_builder(work: Path) -> tuple[int, str, set[str]]:
         return rc, report, mainland_satellites
     finally:
         os.chdir(original)
+        if previous_mode is None:
+            os.environ.pop("CANDIDATE_ALLOW_INCOMPLETE_CORE", None)
+        else:
+            os.environ["CANDIDATE_ALLOW_INCOMPLETE_CORE"] = previous_mode
 
 
 def main() -> int:
@@ -170,8 +174,6 @@ def main() -> int:
         if CACHE_HISTORY.exists():
             shutil.copy2(CACHE_HISTORY, work / "health-history.json")
         elif (ROOT / "health-history.json").exists():
-            # Read-only bootstrap only. The newly generated history is written
-            # back to Actions cache, never staged into Git by the candidate job.
             shutil.copy2(ROOT / "health-history.json", work / "health-history.json")
 
         rc, report, mainland_satellites = run_builder(work)
@@ -187,7 +189,6 @@ def main() -> int:
                 shutil.copy2(work / name, CANDIDATE / name)
             write_core_playlist(CANDIDATE / "tv-easy.m3u", CANDIDATE / "tv-core.m3u", mainland_satellites)
         else:
-            # Never leave a stale candidate playlist paired with a fresh failed manifest.
             for name in PRODUCTION_FILES:
                 (CANDIDATE / name).unlink(missing_ok=True)
 
