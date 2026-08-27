@@ -10,9 +10,18 @@ from __future__ import annotations
 
 from types import ModuleType
 
+HOTEL_SOURCE = (
+    "大陆",
+    "https://raw.githubusercontent.com/cymz6/AutoIPTV-Hotel/main/lives.m3u",
+    False,
+)
+
 
 def apply(bp: ModuleType) -> None:
     """Patch candidate ranking without changing overseas network policy."""
+    if HOTEL_SOURCE not in bp.SOURCES:
+        bp.SOURCES.append(HOTEL_SOURCE)
+
     original_measured_score = bp.measured_score
     original_fallback_rank = bp.publication_fallback_rank
     original_add_cctv5_backups = bp.add_cctv5_backups

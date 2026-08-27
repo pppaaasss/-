@@ -44,6 +44,12 @@ class CandidatePolicyTests(unittest.TestCase):
             "publish_url": channel.url,
         }
 
+    def test_candidate_source_pool_includes_autoiptv_hotel_once(self) -> None:
+        self.assertIn(candidate_policy.HOTEL_SOURCE, bp.SOURCES)
+        before = bp.SOURCES.count(candidate_policy.HOTEL_SOURCE)
+        candidate_policy.apply(bp)
+        self.assertEqual(bp.SOURCES.count(candidate_policy.HOTEL_SOURCE), before)
+
     def test_mainland_quality_beats_github_speed(self) -> None:
         clear = self.channel("广东测试A", url="http://example.test/a.m3u8")
         fast_low = self.channel("广东测试B", url="http://example.test/b.m3u8")
