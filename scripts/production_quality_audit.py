@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Read-only ffprobe audit for the published APTV playlists.
+"""Read-only ffprobe audit for published APTV playlists.
 
 The auditor never rewrites a playlist. Resolution/codec/frame-rate/interlace are
 obtained from ffprobe decoding the selected video input. HLS RESOLUTION labels
 are used only to enumerate variants, never as proof of picture quality.
+
+Network policy: GitHub-hosted runners are outside mainland China. For mainland
+CCTV, satellite and regional channels, runner download speed/headroom is
+recorded for diagnostics only and is never a promotion rejection gate. A
+mainland stream that the GitHub runner cannot reach is reported as region-
+unverified rather than dead. Picture/identity/bitrate gates remain enforced.
 """
 from __future__ import annotations
 
@@ -20,10 +26,16 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-UA = "Mozilla/5.0 (AppleTV; APTV production quality audit/3.0)"
+UA = "Mozilla/5.0 (AppleTV; APTV production quality audit/3.1)"
 CCTV_RE = re.compile(r"^CCTV-(?:[1-9]|1[0-7])$")
 SHORT_TOKEN_RE = re.compile(r"(?:^|[?&])(exp|expires|expire|expiry)=([0-9]{9,13})(?:&|$)", re.I)
 PRODUCTION_FILES = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
+MAINLAND_GROUPS = {
+    "大陆", "卫视台", "北京", "上海", "天津", "重庆", "河北", "山西", "内蒙古",
+    "辽宁", "吉林", "黑龙江", "江苏", "浙江", "安徽", "福建", "江西", "山东",
+    "河南", "湖北", "湖南", "广东", "广西", "海南", "四川", "贵州", "云南",
+    "西藏", "陕西", "甘肃", "青海", "宁夏", "新疆", "其他地方",
+}
 
 
 @dataclass(frozen=True)
@@ -59,6 +71,13 @@ def is_core(name: str, group: str) -> bool:
     if group == "卫视台" and name.endswith("卫视") and name not in {"凤凰卫视", "澳亚卫视"}:
         return True
     return False
+
+
+def is_mainland(name: str, group: str) -> bool:
+    """Return whether GitHub runner network speed is non-representative."""
+    if CCTV_RE.fullmatch(name) or name in {"CCTV-5+", "CCTV-4K"}:
+        return True
+    return group in MAINLAND_GROUPS
 
 
 def request_bytes(url: str, *, timeout: float, limit: int = 1_500_000) -> tuple[bytes, str, float, float]:
@@ -234,16 +253,48 @@ def resolution_bucket(height: int) -> str:
     return "unknown"
 
 
+def apply_quality_policy(row: dict[str, Any], entry: Entry) -> None:
+    """Apply picture gates; GitHub network speed is advisory for mainland."""
+    row["is_mainland"] = is_mainland(entry.name, entry.group)
+    row["network_scope"] = "github_speed_advisory" if row["is_mainland"] else "github_speed_enforced"
+    required = 2160 if entry.name == "CCTV-4K" else 1080 if row["is_core"] else 720
+    headroom_floor = 1.5 if row["is_core"] else 1.35
+
+    if row["is_mainland"] and row["headroom"] and row["headroom"] < headroom_floor:
+        row["speed_advisory"] = (
+            f"github_runner_headroom={row['headroom']:.3f}<{headroom_floor:.2f}; "
+            "not a rejection gate for mainland-direct playback"
+        )
+
+    if row["height"] < required:
+        row["quality_gate"] = f"fail_height<{required}"
+    elif row["is_core"] and row["codec"].lower() in {"h264", "avc", "avc1"} and row["stream_mbps"] and row["stream_mbps"] < 2.0:
+        row["quality_gate"] = "fail_fake_1080_bitrate"
+    elif row["short_lived_token"]:
+        row["quality_gate"] = "fail_short_token"
+    elif row["is_master_playlist"] and row["has_480_540_576_720_variant"]:
+        row["quality_gate"] = "fail_unlocked_adaptive_master"
+    elif row["status"] == "suspected_identity":
+        row["quality_gate"] = "fail_suspected_identity"
+    elif (not row["is_mainland"]) and row["headroom"] and row["headroom"] < headroom_floor:
+        row["quality_gate"] = "fail_headroom"
+    else:
+        row["quality_gate"] = "pass"
+
+
 def audit_entry(entry: Entry, timeout: float, samples: int) -> dict[str, Any]:
+    mainland = is_mainland(entry.name, entry.group)
     row: dict[str, Any] = {
         "index": entry.index, "name": entry.name, "group": entry.group, "url": entry.url,
-        "final_url": "", "is_core": is_core(entry.name, entry.group), "is_master_playlist": False,
-        "tested_variant_url": "", "variant_actual_heights": [], "has_480_540_576_720_variant": False,
-        "width": 0, "height": 0, "codec": "unknown", "fps": 0.0, "scan": "unknown",
-        "field_order": "unknown", "stream_mbps": 0.0, "download_mbps_samples": [],
-        "worst_download_mbps": 0.0, "startup_seconds_samples": [], "worst_startup_seconds": 0.0,
-        "headroom": 0.0, "short_lived_token": False, "token_remaining_seconds": None,
-        "status": "unknown", "quality_gate": "unknown", "final_version_accepted": False, "error": "",
+        "final_url": "", "is_core": is_core(entry.name, entry.group), "is_mainland": mainland,
+        "network_scope": "github_speed_advisory" if mainland else "github_speed_enforced",
+        "is_master_playlist": False, "tested_variant_url": "", "variant_actual_heights": [],
+        "has_480_540_576_720_variant": False, "width": 0, "height": 0, "codec": "unknown",
+        "fps": 0.0, "scan": "unknown", "field_order": "unknown", "stream_mbps": 0.0,
+        "download_mbps_samples": [], "worst_download_mbps": 0.0, "startup_seconds_samples": [],
+        "worst_startup_seconds": 0.0, "headroom": 0.0, "speed_advisory": "",
+        "short_lived_token": False, "token_remaining_seconds": None, "status": "unknown",
+        "quality_gate": "unknown", "final_version_accepted": False, "error": "",
     }
     try:
         manifest, final_url, _, _ = request_bytes(entry.url, timeout=timeout)
@@ -255,13 +306,15 @@ def audit_entry(entry: Entry, timeout: float, samples: int) -> dict[str, Any]:
         if variants:
             for variant_url in variants:
                 try:
-                    actual = ffprobe(variant_url, timeout)
-                    actual_variants.append((variant_url, actual))
+                    actual_variants.append((variant_url, ffprobe(variant_url, timeout)))
                 except Exception:
                     continue
             if not actual_variants:
                 raise RuntimeError("master playlist has no decodable variants")
-            actual_variants.sort(key=lambda item: (item[1]["height"], item[1]["stream_mbps"], item[1]["width"]), reverse=True)
+            actual_variants.sort(
+                key=lambda item: (item[1]["height"], item[1]["stream_mbps"], item[1]["width"]),
+                reverse=True,
+            )
             tested_url, actual = actual_variants[0]
             row["tested_variant_url"] = tested_url
             heights = sorted({int(info["height"]) for _, info in actual_variants if int(info["height"]) > 0})
@@ -271,6 +324,7 @@ def audit_entry(entry: Entry, timeout: float, samples: int) -> dict[str, Any]:
             tested_url = final_url or entry.url
             row["tested_variant_url"] = tested_url
             actual = ffprobe(tested_url, timeout)
+
         for key in ("width", "height", "codec", "fps", "scan", "field_order", "stream_mbps"):
             row[key] = actual[key]
         estimated, speeds, starts, _ = estimate_bitrate_and_speed(tested_url, timeout, samples)
@@ -285,67 +339,121 @@ def audit_entry(entry: Entry, timeout: float, samples: int) -> dict[str, Any]:
         short, remaining = token_expiry(tested_url)
         row["short_lived_token"] = short
         row["token_remaining_seconds"] = remaining
-        suspected_identity = entry.name == "CCTV-8" and bool(re.search(r"cctv[-_]?8k|cctv8k|8k", (entry.url + " " + tested_url).lower()))
+
+        suspected_identity = entry.name == "CCTV-8" and bool(
+            re.search(r"cctv[-_]?8k|cctv8k|8k", (entry.url + " " + tested_url).lower())
+        )
         if suspected_identity:
             row["status"] = "suspected_identity"
         elif row["height"] <= 0:
             row["status"] = "unknown"
         else:
             row["status"] = "success"
-        required = 2160 if entry.name == "CCTV-4K" else 1080 if row["is_core"] else 720
-        if row["height"] < required:
-            row["quality_gate"] = f"fail_height<{required}"
-        elif row["is_core"] and row["codec"].lower() in {"h264", "avc", "avc1"} and row["stream_mbps"] and row["stream_mbps"] < 2.0:
-            row["quality_gate"] = "fail_fake_1080_bitrate"
-        elif row["headroom"] and row["headroom"] < (1.5 if row["is_core"] else 1.35):
-            row["quality_gate"] = "fail_headroom"
-        elif row["short_lived_token"]:
-            row["quality_gate"] = "fail_short_token"
-        elif row["is_master_playlist"] and row["has_480_540_576_720_variant"]:
-            row["quality_gate"] = "fail_unlocked_adaptive_master"
-        elif row["status"] == "suspected_identity":
-            row["quality_gate"] = "fail_suspected_identity"
-        else:
-            row["quality_gate"] = "pass"
+        apply_quality_policy(row, entry)
     except subprocess.TimeoutExpired:
-        row["status"] = "failed"; row["quality_gate"] = "fail_unreachable"; row["error"] = f"ffprobe timeout after {timeout}s"
+        row["error"] = f"ffprobe timeout after {timeout}s"
+        if mainland:
+            row["status"] = "github_unreachable"
+            row["quality_gate"] = "unknown_github_region"
+            row["speed_advisory"] = "GitHub runner reachability is not authoritative for mainland-direct playback"
+        else:
+            row["status"] = "failed"
+            row["quality_gate"] = "fail_unreachable"
     except Exception as exc:
-        row["status"] = "failed"; row["quality_gate"] = "fail_unreachable"; row["error"] = f"{type(exc).__name__}: {str(exc)[:500]}"
+        row["error"] = f"{type(exc).__name__}: {str(exc)[:500]}"
+        if mainland:
+            row["status"] = "github_unreachable"
+            row["quality_gate"] = "unknown_github_region"
+            row["speed_advisory"] = "GitHub runner reachability is not authoritative for mainland-direct playback"
+        else:
+            row["status"] = "failed"
+            row["quality_gate"] = "fail_unreachable"
     return row
 
 
 def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    counts = {"2160_plus": 0, "1080": 0, "720": 0, "below_720": 0, "unknown": 0, "unreachable": 0}
+    counts = {
+        "2160_plus": 0, "1080": 0, "720": 0, "below_720": 0, "unknown": 0,
+        "unreachable": 0, "github_region_unknown": 0,
+    }
     for row in rows:
-        if row["status"] == "failed": counts["unreachable"] += 1
-        else: counts[resolution_bucket(int(row.get("height") or 0))] += 1
-    core_bad = [row["name"] for row in rows if row["is_core"] and row["quality_gate"] != "pass"]
-    low = [row["name"] for row in rows if 0 < int(row["height"] or 0) < (2160 if row["name"] == "CCTV-4K" else 1080 if row["is_core"] else 720)]
+        if row["status"] == "failed":
+            counts["unreachable"] += 1
+        elif row["status"] == "github_unreachable":
+            counts["github_region_unknown"] += 1
+        else:
+            counts[resolution_bucket(int(row.get("height") or 0))] += 1
+
+    core_bad = [
+        row["name"] for row in rows
+        if row["is_core"] and str(row["quality_gate"]).startswith("fail_")
+    ]
+    core_unverified = [
+        row["name"] for row in rows
+        if row["is_core"] and row["quality_gate"] in {"unknown", "unknown_github_region"}
+    ]
+    low = [
+        row["name"] for row in rows
+        if 0 < int(row["height"] or 0) < (2160 if row["name"] == "CCTV-4K" else 1080 if row["is_core"] else 720)
+    ]
     unknown = [row["name"] for row in rows if row["status"] == "unknown"]
+    github_unknown = [row["name"] for row in rows if row["status"] == "github_unreachable"]
     dead = [row["name"] for row in rows if row["status"] == "failed"]
     suspected = [row["name"] for row in rows if row["status"] == "suspected_identity"]
-    return {"channels": len(rows), "counts": counts, "core_not_acceptable": core_bad, "low_resolution": low,
-            "unknown": unknown, "unreachable": dead, "suspected_identity": suspected,
-            "final_version_accepted_count": 0, "promotion_ready": not core_bad and not suspected}
+    speed_advisory = [row["name"] for row in rows if row.get("speed_advisory")]
+    return {
+        "channels": len(rows), "counts": counts, "core_not_acceptable": core_bad,
+        "core_unverified": core_unverified, "low_resolution": low, "unknown": unknown,
+        "github_region_unknown": github_unknown, "unreachable": dead,
+        "suspected_identity": suspected, "mainland_speed_advisory": speed_advisory,
+        "final_version_accepted_count": 0,
+        "promotion_ready": not core_bad and not core_unverified and not suspected,
+    }
 
 
 def write_outputs(out_dir: Path, rows: list[dict[str, Any]], playlist: Path) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     summary = summarize(rows)
-    payload = {"generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "playlist": str(playlist),
-               "resolution_source": "ffprobe decoded video stream; HLS RESOLUTION labels are not accepted as proof",
-               "summary": summary, "results": rows}
-    (out_dir / "quality-report.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    fields = ["index", "name", "group", "url", "final_url", "is_core", "width", "height", "codec", "fps", "scan",
-              "stream_mbps", "download_mbps_samples", "worst_download_mbps", "startup_seconds_samples", "worst_startup_seconds",
-              "headroom", "is_master_playlist", "tested_variant_url", "variant_actual_heights", "has_480_540_576_720_variant",
-              "short_lived_token", "status", "quality_gate", "final_version_accepted", "error"]
+    payload = {
+        "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "playlist": str(playlist),
+        "resolution_source": "ffprobe decoded video stream; HLS RESOLUTION labels are not accepted as proof",
+        "network_policy": (
+            "GitHub runner download speed/headroom and reachability are advisory for mainland-direct channels; "
+            "picture/identity/bitrate gates remain enforced"
+        ),
+        "summary": summary,
+        "results": rows,
+    }
+    (out_dir / "quality-report.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    fields = [
+        "index", "name", "group", "url", "final_url", "is_core", "is_mainland", "network_scope",
+        "width", "height", "codec", "fps", "scan", "stream_mbps", "download_mbps_samples",
+        "worst_download_mbps", "startup_seconds_samples", "worst_startup_seconds", "headroom",
+        "speed_advisory", "is_master_playlist", "tested_variant_url", "variant_actual_heights",
+        "has_480_540_576_720_variant", "short_lived_token", "status", "quality_gate",
+        "final_version_accepted", "error",
+    ]
     with (out_dir / "quality-report.csv").open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore"); writer.writeheader(); writer.writerows(rows)
-    lines = [f"playlist={playlist}", f"channels={summary['channels']}", *(f"{k}={v}" for k, v in summary["counts"].items()),
-             "final_version_accepted_count=0", "core_not_acceptable=" + ", ".join(summary["core_not_acceptable"]),
-             "low_resolution=" + ", ".join(summary["low_resolution"]), "unknown=" + ", ".join(summary["unknown"]),
-             "unreachable=" + ", ".join(summary["unreachable"]), "suspected_identity=" + ", ".join(summary["suspected_identity"])]
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(rows)
+    lines = [
+        f"playlist={playlist}", f"channels={summary['channels']}",
+        *(f"{k}={v}" for k, v in summary["counts"].items()),
+        "network_policy=mainland GitHub speed/reachability advisory only",
+        "final_version_accepted_count=0",
+        "core_not_acceptable=" + ", ".join(summary["core_not_acceptable"]),
+        "core_unverified=" + ", ".join(summary["core_unverified"]),
+        "low_resolution=" + ", ".join(summary["low_resolution"]),
+        "unknown=" + ", ".join(summary["unknown"]),
+        "github_region_unknown=" + ", ".join(summary["github_region_unknown"]),
+        "unreachable=" + ", ".join(summary["unreachable"]),
+        "suspected_identity=" + ", ".join(summary["suspected_identity"]),
+        "mainland_speed_advisory=" + ", ".join(summary["mainland_speed_advisory"]),
+    ]
     (out_dir / "summary.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return summary
 
@@ -361,10 +469,18 @@ def main() -> int:
     entries = parse_playlist(args.playlist)
     rows: list[dict[str, Any]] = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
-        futures = {pool.submit(audit_entry, entry, args.timeout, max(2, args.speed_samples)): entry for entry in entries}
+        futures = {
+            pool.submit(audit_entry, entry, args.timeout, max(2, args.speed_samples)): entry
+            for entry in entries
+        }
         for future in concurrent.futures.as_completed(futures):
-            row = future.result(); rows.append(row)
-            print(f"{row['index']:03d} {row['name']} {row['status']} {row['width']}x{row['height']} {row['codec']} gate={row['quality_gate']}", flush=True)
+            row = future.result()
+            rows.append(row)
+            print(
+                f"{row['index']:03d} {row['name']} {row['status']} "
+                f"{row['width']}x{row['height']} {row['codec']} gate={row['quality_gate']}",
+                flush=True,
+            )
     rows.sort(key=lambda row: int(row["index"]))
     summary = write_outputs(args.out_dir, rows, args.playlist)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
