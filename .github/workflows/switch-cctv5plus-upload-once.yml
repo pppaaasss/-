@@ -1,0 +1,68 @@
+name: Switch CCTV5+ to uploaded source once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/switch-cctv5plus-upload-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  switch:
+    if: contains(github.event.head_commit.message, '[switch-cctv5plus-upload]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Replace CCTV-5+ only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files=['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']
+          target='http://222.169.85.8:9901/tsfile/live/0116_1.m3u8'
+          for fn in files:
+              p=Path(fn); before=p.read_text(encoding='utf-8'); lines=before.splitlines(); hits=0
+              for i,line in enumerate(lines[:-1]):
+                  if line.startswith('#EXTINF:') and line.rsplit(',',1)[-1].strip()=='CCTV-5+':
+                      if not lines[i+1].startswith(('http://','https://')):
+                          raise SystemExit(f'{fn}: CCTV-5+ missing URL')
+                      lines[i+1]=target; hits+=1
+              if hits!=1:
+                  raise SystemExit(f'{fn}: expected exactly one CCTV-5+, got {hits}')
+              p.write_text('\n'.join(lines)+('\n' if before.endswith('\n') else ''),encoding='utf-8')
+          PY
+      - name: Verify only CCTV-5+ URL changed
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          files=['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']
+          expected='http://222.169.85.8:9901/tsfile/live/0116_1.m3u8'
+          for fn in files:
+              cur=Path(fn).read_text(encoding='utf-8').splitlines()
+              prev=subprocess.check_output(['git','show',f'HEAD^:{fn}'],text=True).splitlines()
+              def mask(lines):
+                  x=list(lines); c=0
+                  for i,l in enumerate(x[:-1]):
+                      if l.startswith('#EXTINF:') and l.rsplit(',',1)[-1].strip()=='CCTV-5+':
+                          x[i+1]='__CCTV5PLUS__'; c+=1
+                  return x,c
+              cm,cc=mask(cur); pm,pc=mask(prev)
+              if cc!=1 or pc!=1 or cm!=pm:
+                  raise SystemExit(f'{fn}: unexpected non-CCTV5+ change')
+              idx=next(i for i,l in enumerate(cur[:-1]) if l.startswith('#EXTINF:') and l.rsplit(',',1)[-1].strip()=='CCTV-5+')
+              if cur[idx+1]!=expected:
+                  raise SystemExit(f'{fn}: wrong route')
+          print('verified: only CCTV-5+ changed in all four playlists')
+          PY
+      - name: Commit playlists
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git diff --cached --quiet && exit 0
+          git commit -m 'Switch CCTV-5+ to uploaded alternate route'
+          git push origin HEAD:master
