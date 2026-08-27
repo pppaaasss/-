@@ -12,6 +12,7 @@ on:
       - 'scripts/repair_cctv5.py'
       - 'scripts/maintain_published_channels.py'
       - 'scripts/import_best_fan_pay_unchecked.py'
+      - 'scripts/organize_apptv_groups.py'
       - 'tests/test_*.py'
       - '.github/workflows/build-tv.yml'
   schedule:
@@ -70,6 +71,14 @@ jobs:
         if: ${{ !cancelled() }}
         continue-on-error: true
         run: python3 scripts/import_best_fan_pay_unchecked.py
+
+      # The independent pay fallback above can append entries after the main
+      # wrapper has normalized presentation. Re-run the cheap presentation pass
+      # so every published file still has the requested compact grouping.
+      - name: Normalize final APTV presentation independently
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: python3 scripts/organize_apptv_groups.py
 
       - name: Capture CCTV and satellite frames for identity review
         if: ${{ !cancelled() && github.event_name == 'push' && contains(github.event.head_commit.message, '[frame-audit]') }}
