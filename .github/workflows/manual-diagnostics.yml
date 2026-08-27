@@ -1,0 +1,63 @@
+name: Manual IPTV diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Diagnostic to run
+        required: true
+        type: choice
+        options:
+          - bfgd
+          - cctv5
+          - cctv6
+          - final-repairs
+          - priority
+          - public-alt
+          - satellites
+          - weak-cctv
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure ffprobe is available
+        run: |
+          if ! command -v ffprobe >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg
+          fi
+      - name: Run selected diagnostic
+        shell: bash
+        run: |
+          case "${{ inputs.target }}" in
+            bfgd)          python3 scripts/probe_bfgd_repairs.py ;;
+            cctv5)         python3 scripts/probe_cctv5_hd.py ;;
+            cctv6)         python3 scripts/probe_cctv6_fast.py ;;
+            final-repairs) python3 scripts/probe_final_repairs.py ;;
+            priority)      python3 scripts/probe_priority_channels.py ;;
+            public-alt)    python3 scripts/probe_public_alt_repairs.py ;;
+            satellites)    python3 scripts/probe_satellite_repairs.py ;;
+            weak-cctv)     python3 scripts/probe_weak_cctv.py ;;
+            *) echo "Unknown target" >&2; exit 2 ;;
+          esac
+      - name: Upload diagnostic reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: iptv-diagnostic-${{ inputs.target }}
+          path: |
+            bfgd-repair-probe.txt
+            cctv5-probe-report.txt
+            cctv6-fast-probe-report.txt
+            final-repair-probe.txt
+            priority-probe-report.txt
+            public-alt-repair-probe.txt
+            satellite-repair-probe.txt
+            cctv-weak-upgrade-report.json
+          if-no-files-found: ignore
+          retention-days: 3

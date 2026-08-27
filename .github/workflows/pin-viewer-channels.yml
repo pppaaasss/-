@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'scripts/pin_viewer_channels.py'
+      - '.github/workflows/pin-viewer-channels.yml'
   workflow_dispatch:
 
 permissions:
@@ -19,7 +20,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Pin CCTV-1 CCTV-4 and Hunan only
+      - name: Pin viewer-confirmed CCTV-1/4/5/6 and Hunan routes
         run: python3 scripts/pin_viewer_channels.py
       - name: Publish pinned playlists
         run: |
@@ -29,7 +30,7 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No channel pin changes'
           else
-            git commit -m 'Pin viewer-confirmed CCTV1 CCTV4 Hunan routes'
+            git commit -m 'Pin viewer-confirmed living-room routes'
             git pull --rebase --autostash origin master
             git push
           fi
