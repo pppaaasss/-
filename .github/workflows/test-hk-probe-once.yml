@@ -22,11 +22,11 @@ jobs:
       - name: Validate production playlist parsing only
         run: |
           python3 - <<'PY'
-          import importlib.util
+          import sys
           from pathlib import Path
-          spec=importlib.util.spec_from_file_location('hk_probe','scripts/hk_probe.py')
-          m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-          rows=m.load_playlist(Path('tv-core.m3u'))
+          sys.path.insert(0,'scripts')
+          import hk_probe
+          rows=hk_probe.load_playlist(Path('tv-core.m3u'))
           assert len(rows) >= 20, len(rows)
           names={n for n,_ in rows}
           assert 'CCTV-2' in names and 'CCTV-11' in names and 'CCTV-4K' in names
