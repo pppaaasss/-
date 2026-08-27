@@ -1,4 +1,4 @@
-name: Probe CCTV11 alternate routes once
+name: Probe CCTV2 and CCTV11 alternate routes once
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   probe:
-    if: contains(github.event.head_commit.message, '[probe-cctv11]')
+    if: contains(github.event.head_commit.message, '[probe-cctv2-cctv11]')
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -22,17 +22,19 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -y -qq ffmpeg
           fi
-      - name: Probe CCTV-11 candidates twice in parallel
+      - name: Probe CCTV-2 and CCTV-11 candidates twice in parallel
         run: |
           python3 - <<'PY'
           import concurrent.futures, json, subprocess, time
           candidates = [
-            ('operator-61', 'http://61.136.172.236:9901/tsfile/live/0011_1.m3u8'),
-            ('kankan', 'https://play.kankanlive.com/live/1698423476198918.m3u8'),
-            ('hls-183', 'http://183.11.239.36:808/hls/29/index.m3u8'),
-            ('operator-153', 'http://153.0.171.163:9901/tsfile/live/1010_1.m3u8?key=txiptv&playlive=1&authid=0'),
-            ('cmcc-ipv6', 'http://[2409:8087:8:21::18]:6610/otttv.bj.chinamobile.com/PLTV/88888888/224/3221226334/1.m3u8?'),
-            ('overseas-74', 'http://74.91.26.218:82/live/cctv11hd.m3u8'),
+            ('cctv2','204-3m1080','http://204.12.221.218:8181/3m1080p/cctv2.m3u8'),
+            ('cctv2','198-hd','http://198.204.228.26/live/cctv2hd.m3u8'),
+            ('cctv2','222-operator','http://222.169.85.8:9901/tsfile/live/0002_1.m3u8'),
+            ('cctv2','58-operator','http://58.57.40.22:9901/tsfile/live/1001_1.m3u8'),
+            ('cctv11','63-zbdq','http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv11hd'),
+            ('cctv11','38-dsdq','http://38.75.136.137:98/gslb/dsdqbv/cctv11hd.m3u8?auth=test20251009'),
+            ('cctv11','219-newlive','http://219.147.245.238:25480/newlive/live/hls/12/live.m3u8'),
+            ('cctv11','113-hls','http://113.9.214.47:9003/hls/11/index.m3u8'),
           ]
           def once(url):
               cmd=['ffprobe','-v','error','-rw_timeout','9000000','-select_streams','v:0','-show_entries','stream=width,height,codec_name','-of','json',url]
@@ -46,15 +48,17 @@ jobs:
               except Exception as e:
                   return {'ok':False,'error':f'{type(e).__name__}:{e}'}
           def check(item):
-              name,url=item
+              channel,name,url=item
               a=once(url); time.sleep(.5); b=once(url)
-              row={'name':name,'url':url,'first':a,'second':b}
+              row={'channel':channel,'name':name,'url':url,'first':a,'second':b}
               row['verified_1080']=bool(a.get('ok') and b.get('ok') and min(a.get('height',0),b.get('height',0))>=1080)
               return row
           with concurrent.futures.ThreadPoolExecutor(max_workers=len(candidates)) as ex:
               results=list(ex.map(check,candidates))
-          for row in results: print('CCTV11_PROBE',json.dumps(row,ensure_ascii=False))
-          print('CCTV11_WINNERS',json.dumps([r for r in results if r['verified_1080']],ensure_ascii=False))
+          for row in results: print('CCTV_PROBE',json.dumps(row,ensure_ascii=False))
+          for channel in ('cctv2','cctv11'):
+              winners=[r for r in results if r['channel']==channel and r['verified_1080']]
+              print('CCTV_WINNERS',channel,json.dumps(winners,ensure_ascii=False))
           PY
       - name: Prove production playlists untouched
         run: git diff --exit-code -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
