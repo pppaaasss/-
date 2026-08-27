@@ -1,42 +1,50 @@
 name: Pin viewer-confirmed channels
 
 on:
-  push:
-    paths:
-      - 'scripts/pin_viewer_channels.py'
-      - 'scripts/organize_apptv_groups.py'
-      - '.github/workflows/pin-viewer-channels.yml'
   workflow_dispatch:
+    inputs:
+      confirm_production_change:
+        description: 'Type YES after visually confirming the target channel'
+        required: true
+        default: 'NO'
 
 permissions:
   contents: write
 
-# Fast viewer fixes must not sit behind an 85-minute catalogue rebuild. The
-# authoritative final presentation pass is also part of the full rebuild, so a
-# later scheduled publication will preserve the same grouping policy.
 concurrency:
-  group: aptv-fast-viewer-fixes
-  cancel-in-progress: true
+  group: production-publish-lock
+  cancel-in-progress: false
 
 jobs:
   pin:
+    if: ${{ inputs.confirm_production_change == 'YES' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Pin viewer-confirmed CCTV-1/4/5/6/8 routes
+        with:
+          fetch-depth: 2
+      - name: Record previous production commit and hashes
+        run: |
+          git rev-parse HEAD | tee /tmp/production-before-commit.txt
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
+      - name: Pin viewer-confirmed channels
         run: python3 scripts/pin_viewer_channels.py
-      - name: Collapse province groups and place Hunan after CCTV
+      - name: Normalize final presentation
         run: python3 scripts/organize_apptv_groups.py
-      - name: Publish pinned and regrouped playlists
+      - name: Publish only explicit manual fix
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
+            echo 'master moved; refusing to overwrite newer work'
+            exit 1
+          }
           git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
           if git diff --cached --quiet; then
             echo 'No playlist changes'
-          else
-            git commit -m 'Pin routes and normalize APTV groups'
-            git pull --rebase --autostash origin master
-            git push
+            exit 0
           fi
+          git commit -m 'Manual viewer-confirmed production fix'
+          git push origin HEAD:master
