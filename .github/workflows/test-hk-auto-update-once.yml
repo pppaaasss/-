@@ -1,0 +1,60 @@
+name: Validate unrestricted Hong Kong auto-update once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/test-hk-auto-update-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: contains(github.event.head_commit.message, '[test-hk-auto]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax checks
+        run: |
+          python3 -m py_compile scripts/hk_auto_update.py scripts/hk_probe.py scripts/hk_filter_harvest.py
+          bash -n scripts/hk_cycle.sh scripts/install_hk_probe.sh
+      - name: Simulate two simultaneous bad channels
+        run: |
+          rm -rf /tmp/hk-auto-test
+          mkdir -p /tmp/hk-auto-test/repo
+          cp tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u /tmp/hk-auto-test/repo/
+          cat > /tmp/hk-auto-test/formal.json <<'JSON'
+          {"results":[
+            {"name":"CCTV-1","url":"keep","status":"GOOD","height":1080},
+            {"name":"CCTV-2","url":"old2","status":"DEGRADED","height":720,"error":"decoded_height_720_below_1080"},
+            {"name":"CCTV-11","url":"old11","status":"UNKNOWN","height":0,"error":"ffprobe timeout"}
+          ]}
+          JSON
+          cat > /tmp/hk-auto-test/candidates.json <<'JSON'
+          {"winners":{
+            "CCTV-2":{"url":"http://127.0.0.2/cctv2.m3u8","token_hint":false,"probe":{"status":"GOOD","height":1080,"codec":"h264","bitrate_mbps":3.2,"segment_ok":true}},
+            "CCTV-11":{"url":"http://127.0.0.11/cctv11.m3u8","token_hint":false,"probe":{"status":"GOOD","height":1080,"codec":"h264","bitrate_mbps":3.1,"segment_ok":true}}
+          }}
+          JSON
+          python3 scripts/hk_auto_update.py \
+            --formal-report /tmp/hk-auto-test/formal.json \
+            --candidate-report /tmp/hk-auto-test/candidates.json \
+            --config config/hk-auto-update.json \
+            --repo-root /tmp/hk-auto-test/repo \
+            --summary /tmp/hk-auto-test/summary.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          s=json.loads(Path('/tmp/hk-auto-test/summary.json').read_text())
+          assert s['artificial_update_limit'] is False
+          assert s['protected_channels'] == []
+          assert {x['channel'] for x in s['selected_updates']} == {'CCTV-2','CCTV-11'}
+          for fn in ['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']:
+              t=Path('/tmp/hk-auto-test/repo',fn).read_text()
+              assert 'http://127.0.0.2/cctv2.m3u8' in t, fn
+              assert 'http://127.0.0.11/cctv11.m3u8' in t, fn
+          print('UNRESTRICTED_AUTO_UPDATE_VALID')
+          PY
+      - name: Prove real production playlists untouched
+        run: git diff --exit-code -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
