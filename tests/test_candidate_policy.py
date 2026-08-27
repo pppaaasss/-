@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import time
 import unittest
 
 from scripts import build_playlist as bp
 from scripts import candidate_policy
+from scripts import gap_candidate_patch
 
 
 class CandidatePolicyTests(unittest.TestCase):
@@ -12,13 +14,16 @@ class CandidatePolicyTests(unittest.TestCase):
         self.original_fallback_rank = bp.publication_fallback_rank
         self.original_add_cctv5_backups = bp.add_cctv5_backups
         self.original_merge_probe_results = bp.merge_probe_results
+        self.original_has_short_token = bp.has_short_token
         candidate_policy.apply(bp)
+        gap_candidate_patch.apply(bp)
 
     def tearDown(self) -> None:
         bp.measured_score = self.original_measured_score
         bp.publication_fallback_rank = self.original_fallback_rank
         bp.add_cctv5_backups = self.original_add_cctv5_backups
         bp.merge_probe_results = self.original_merge_probe_results
+        bp.has_short_token = self.original_has_short_token
 
     def channel(self, name: str, *, group: str = "广东", url: str = "http://example.test/live.m3u8") -> bp.Channel:
         return bp.Channel(
@@ -66,6 +71,33 @@ class CandidatePolicyTests(unittest.TestCase):
         before = bp.EXTRAS.count(primary_cctv1)
         candidate_policy.apply(bp)
         self.assertEqual(bp.EXTRAS.count(primary_cctv1), before)
+
+    def test_targeted_gap_routes_are_candidate_only_and_idempotent(self) -> None:
+        cctv4k = (
+            "CCTV-4K",
+            "大陆",
+            "http://222.85.69.6/PLTV/88888888/224/3221227244/index.m3u8",
+        )
+        sansha = (
+            "三沙卫视",
+            "大陆",
+            "http://www.hiiptv.cn:6060/000000001000/4600001000000000117/1.m3u8?Contentid=4600001000000000117&stbId=005103FF00010060000100E400F75DA4",
+        )
+        self.assertIn(cctv4k, bp.EXTRAS)
+        self.assertIn(sansha, bp.EXTRAS)
+        before = bp.EXTRAS.count(cctv4k)
+        gap_candidate_patch.apply(bp)
+        self.assertEqual(bp.EXTRAS.count(cctv4k), before)
+
+    def test_auth_key_epoch_expiring_within_day_is_rejected(self) -> None:
+        expiry = int(time.time()) + 3600
+        url = f"https://example.test/live.m3u8?auth_key={expiry}-1-deadbeef"
+        self.assertTrue(bp.has_short_token(url))
+
+    def test_far_future_or_opaque_auth_key_is_not_false_positive(self) -> None:
+        expiry = int(time.time()) + 3 * 24 * 3600
+        self.assertFalse(bp.has_short_token(f"https://example.test/live.m3u8?auth_key={expiry}-1-deadbeef"))
+        self.assertFalse(bp.has_short_token("https://example.test/live.m3u8?auth_key=opaque-token"))
 
     def test_mainland_quality_beats_github_speed(self) -> None:
         clear = self.channel("广东测试A", url="http://example.test/a.m3u8")
