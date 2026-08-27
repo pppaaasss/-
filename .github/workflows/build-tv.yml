@@ -1,25 +1,7 @@
 name: Rebuild APTV playlists
 
+# Stable mode: production playlists rebuild only after an explicit manual run.
 on:
-  push:
-    paths:
-      - 'scripts/rebuild_tv.py'
-      - 'scripts/build_playlist.py'
-      - 'scripts/channel_regions.py'
-      - 'scripts/upgrade_core_50hz.py'
-      - 'scripts/clean_single_station.py'
-      - 'scripts/apply_viewer_profile.py'
-      - 'scripts/repair_cctv5.py'
-      - 'scripts/maintain_published_channels.py'
-      - 'scripts/import_best_fan_pay_unchecked.py'
-      - 'scripts/organize_apptv_groups.py'
-      - 'tests/test_*.py'
-      - '.github/workflows/build-tv.yml'
-  schedule:
-    # Baseline refresh every four hours.
-    - cron: '17 */4 * * *'
-    # China/Singapore evening peak (18:00-23:00 UTC+8): refresh hourly.
-    - cron: '47 10-15 * * *'
   workflow_dispatch:
 
 permissions:
