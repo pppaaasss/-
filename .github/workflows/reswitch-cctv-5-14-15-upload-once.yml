@@ -1,0 +1,80 @@
+name: Reswitch CCTV 5 14 15 from uploaded file once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/reswitch-cctv-5-14-15-upload-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  switch:
+    if: contains(github.event.head_commit.message, '[reswitch-cctv-5-14-15-upload]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Replace CCTV 5 14 15 only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files=['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']
+          targets={
+            'CCTV-5':'http://113.90.154.189:9901/tsfile/live/0018_1.m3u8?key=txiptv&playlive=1&authid=0',
+            'CCTV-14':'https://event.pull.hebtv.com/jishi/cp2.m3u8',
+            'CCTV-15':'http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009',
+          }
+          for fn in files:
+              p=Path(fn); before=p.read_text(encoding='utf-8'); lines=before.splitlines(); counts={k:0 for k in targets}
+              for i,line in enumerate(lines[:-1]):
+                  if not line.startswith('#EXTINF:'): continue
+                  name=line.rsplit(',',1)[-1].strip()
+                  if name in targets:
+                      if not lines[i+1].startswith(('http://','https://')):
+                          raise SystemExit(f'{fn}: {name} missing URL')
+                      lines[i+1]=targets[name]; counts[name]+=1
+              if counts != {k:1 for k in targets}:
+                  raise SystemExit(f'{fn}: bad counts {counts}')
+              p.write_text('\n'.join(lines)+('\n' if before.endswith('\n') else ''),encoding='utf-8')
+          PY
+      - name: Verify only CCTV 5 14 15 URLs changed
+        run: |
+          python3 - <<'PY'
+          import subprocess
+          from pathlib import Path
+          files=['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']
+          targets={
+            'CCTV-5':'http://113.90.154.189:9901/tsfile/live/0018_1.m3u8?key=txiptv&playlive=1&authid=0',
+            'CCTV-14':'https://event.pull.hebtv.com/jishi/cp2.m3u8',
+            'CCTV-15':'http://38.75.136.137:98/gslb/dsdqbv/cctv15hd.m3u8?auth=test20251009',
+          }
+          def mask(lines):
+              x=list(lines); counts={k:0 for k in targets}
+              for i,l in enumerate(x[:-1]):
+                  if not l.startswith('#EXTINF:'): continue
+                  name=l.rsplit(',',1)[-1].strip()
+                  if name in targets:
+                      x[i+1]=f'__{name}_URL__'; counts[name]+=1
+              return x,counts
+          for fn in files:
+              cur=Path(fn).read_text(encoding='utf-8').splitlines()
+              prev=subprocess.check_output(['git','show',f'HEAD^:{fn}'],text=True).splitlines()
+              cm,cc=mask(cur); pm,pc=mask(prev)
+              if cc != {k:1 for k in targets} or pc != {k:1 for k in targets} or cm!=pm:
+                  raise SystemExit(f'{fn}: unexpected non-target change')
+              for name,url in targets.items():
+                  idx=next(i for i,l in enumerate(cur[:-1]) if l.startswith('#EXTINF:') and l.rsplit(',',1)[-1].strip()==name)
+                  if cur[idx+1]!=url: raise SystemExit(f'{fn}: {name} wrong URL')
+          print('verified: only CCTV-5, CCTV-14, CCTV-15 changed in all four playlists')
+          PY
+      - name: Commit playlists
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git diff --cached --quiet && exit 0
+          git commit -m 'Reswitch CCTV-5 CCTV-14 CCTV-15 to uploaded file routes'
+          git push origin HEAD:master
