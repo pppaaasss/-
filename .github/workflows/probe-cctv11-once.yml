@@ -1,0 +1,57 @@
+name: Probe CCTV11 alternate routes once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/probe-cctv11-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    if: contains(github.event.head_commit.message, '[probe-cctv11]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe CCTV-11 candidates twice
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, time
+          candidates = [
+            ('operator-61', 'http://61.136.172.236:9901/tsfile/live/0011_1.m3u8'),
+            ('kankan', 'https://play.kankanlive.com/live/1698423476198918.m3u8'),
+            ('hls-183', 'http://183.11.239.36:808/hls/29/index.m3u8'),
+            ('operator-153', 'http://153.0.171.163:9901/tsfile/live/1010_1.m3u8?key=txiptv&playlive=1&authid=0'),
+            ('cmcc-ipv6', 'http://[2409:8087:8:21::18]:6610/otttv.bj.chinamobile.com/PLTV/88888888/224/3221226334/1.m3u8?'),
+            ('overseas-74', 'http://74.91.26.218:82/live/cctv11hd.m3u8'),
+          ]
+          def probe(url):
+              cmd = ['ffprobe','-v','error','-rw_timeout','12000000','-select_streams','v:0','-show_entries','stream=width,height,codec_name','-of','json',url]
+              try:
+                  p = subprocess.run(cmd, capture_output=True, text=True, timeout=18)
+                  if p.returncode != 0:
+                      return {'ok':False,'error':(p.stderr or '').strip()[-240:]}
+                  data = json.loads(p.stdout or '{}')
+                  streams = data.get('streams') or []
+                  if not streams:
+                      return {'ok':False,'error':'no_video_stream'}
+                  s = streams[0]
+                  return {'ok':True,'width':int(s.get('width') or 0),'height':int(s.get('height') or 0),'codec':s.get('codec_name') or ''}
+              except Exception as e:
+                  return {'ok':False,'error':f'{type(e).__name__}:{e}'}
+          results=[]
+          for name,url in candidates:
+              first=probe(url); time.sleep(1); second=probe(url)
+              row={'name':name,'url':url,'first':first,'second':second}
+              row['verified_1080']=bool(first.get('ok') and second.get('ok') and min(first.get('height',0),second.get('height',0))>=1080)
+              results.append(row)
+              print('CCTV11_PROBE', json.dumps(row, ensure_ascii=False))
+          winners=[r for r in results if r['verified_1080']]
+          print('CCTV11_WINNERS', json.dumps(winners, ensure_ascii=False))
+          PY
+      - name: Prove production playlists untouched
+        run: git diff --exit-code -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
