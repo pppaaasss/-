@@ -1,0 +1,23 @@
+name: Audit curated lineup once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/audit-curated-lineup-once.yml']
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Audit 500-channel curated lineup
+        run: python3 scripts/audit_curated_lineup.py
+      - name: Commit audit reports
+        run: |
+          git config user.name curated-audit
+          git config user.email curated-audit@users.noreply.github.com
+          git add audit/curated-lineup-audit-2026-08-28.json audit/curated-lineup-audit-2026-08-28.txt
+          git diff --cached --check
+          git commit -m 'Audit Hong Kong curated 500-channel lineup'
+          git push origin HEAD:master
