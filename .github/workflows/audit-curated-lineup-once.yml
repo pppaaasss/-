@@ -1,4 +1,4 @@
-name: Audit final strict lineup once
+name: Audit final station-only lineup once
 on:
   push:
     branches: [master]
@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
-      - name: Audit final 400-channel lineup
+      - name: Audit final station-only 400-channel lineup
         run: python3 scripts/audit_curated_lineup.py
       - name: Commit final audit reports
         run: |
@@ -19,5 +19,5 @@ jobs:
           git config user.email curated-audit@users.noreply.github.com
           git add audit/curated-lineup-audit-2026-08-28.json audit/curated-lineup-audit-2026-08-28.txt
           git diff --cached --check
-          git commit -m 'Audit final strict Hong Kong curated lineup'
+          git commit -m 'Audit final station-only Hong Kong lineup'
           git push origin HEAD:master
