@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Finalize the Hong Kong audit into a clean pool and curated production lineup.
+"""Finalize the Hong Kong audit into a clean pool and station-only lineup.
 
 After the full audit completes:
 - harvest/candidates.jsonl contains only Hong Kong verified GOOD URLs, enriched
   with the objective quality evidence measured during the full audit
 - non-GOOD URLs survive only as SHA256 tombstones so they cannot re-enter
-- a Chinese-first 400-600 channel lineup is built from verified GOOD routes
-- sports (including useful English sports) and BBC services are allowed
-- generic English FAST/local/shopping channels are not used as padding
+- the production main lineup is rebuilt to 400 channels, Chinese-first and
+  station-only: obvious VOD/loops/scenic/event-series content is rejected
+- HD is preferred; verified 720p is used only when needed to reach 400
+- sports are allowed with a soft cap, and one BBC-class service may be kept
+- generic English channels are rejected unless they are sports/BBC
 - tv-core.m3u and tv-easy.m3u are left untouched
-- tv.m3u and tv-all.m3u are updated only if the curated result is in range
+- tv.m3u and tv-all.m3u are updated together
 
 If a GitHub write token is configured on the HK host, the result is pushed.
 Otherwise a local commit + snapshot is kept for later publication.
@@ -112,8 +114,8 @@ def main() -> int:
     rejected_urls = set(by_url) - good_urls
 
     # Preserve every original label/provenance attached to each verified GOOD URL,
-    # and embed the measured quality.  Future core selection can rank *after*
-    # every harvested URL has been measured instead of blindly truncating first.
+    # and embed measured quality. Future selection therefore happens after every
+    # harvested URL has been measured, never before.
     active: list[dict] = []
     for source_row in original:
         url = str(source_row.get("url") or "").strip()
@@ -158,10 +160,14 @@ def main() -> int:
             "rejected_repo_storage_is_hash_only": True,
             "future_harvest_rejects_known_tombstones": True,
             "selection_happens_after_full_hk_measurement": True,
+            "curated_lineup_station_like_only": True,
             "curated_lineup_chinese_first": True,
+            "curated_lineup_hd_first": True,
+            "curated_lineup_target_channels": 400,
             "curated_lineup_sports_allowed": True,
             "curated_lineup_bbc_allowed": True,
-            "generic_english_fast_not_padding": True,
+            "generic_english_only_sports_or_bbc": True,
+            "obvious_vod_loop_scenic_event_series_rejected": True,
         },
     }
     manifest_path = repo / "harvest/verified-manifest.json"
@@ -169,55 +175,48 @@ def main() -> int:
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
-    # Build the actual 400-600 channel main lineup from the audit's GOOD set.
-    # The builder preserves tv-core entries and only rewrites tv.m3u/tv-all.m3u.
-    builder = repo / "scripts/hk_build_curated_lineup.py"
-    good_path = audit / "good.jsonl"
-    if not good_path.exists():
-        raise SystemExit("GOOD export missing after completed audit")
+    # Rebuild the production main list only after the GOOD-only pool above exists.
+    # This builder preserves tv-core exactly and rewrites tv.m3u/tv-all.m3u together.
+    builder = repo / "scripts/hk_rebuild_curated_station_only.py"
+    if not builder.exists():
+        raise SystemExit(f"station-only curated builder missing: {builder}")
     proc = subprocess.run(
-        [
-            "python3", str(builder),
-            "--good", str(good_path),
-            "--core", str(repo / "tv-core.m3u"),
-            "--existing-main", str(repo / "tv.m3u"),
-            "--output-main", str(repo / "tv.m3u"),
-            "--output-all", str(repo / "tv-all.m3u"),
-            "--manifest", str(repo / "harvest/curated-manifest.json"),
-            "--target", "500",
-            "--min-count", "400",
-            "--max-count", "600",
-        ],
+        ["python3", str(builder)],
+        cwd=str(repo),
         text=True,
         capture_output=True,
     )
     if proc.stdout:
         print(proc.stdout.strip())
-    if proc.returncode not in {0, 4}:
-        raise SystemExit(f"curated builder failed rc={proc.returncode}: {(proc.stderr or '')[-400:]}")
-    curated_published = proc.returncode == 0
+    if proc.returncode != 0:
+        raise SystemExit(f"station-only curated builder failed rc={proc.returncode}: {(proc.stderr or '')[-500:]}")
+    curated_published = True
 
-    curated_manifest = {}
+    curated_manifest: dict = {}
     cp = repo / "harvest/curated-manifest.json"
     if cp.exists():
         try:
             curated_manifest = json.loads(cp.read_text(encoding="utf-8"))
         except Exception:
             curated_manifest = {}
+    result_channels = int(curated_manifest.get("channels") or curated_manifest.get("result_channels") or 0)
     payload["curated"] = {
         "published": curated_published,
-        "result_channels": int(curated_manifest.get("result_channels") or 0),
-        "sports_channels": int((curated_manifest.get("group_counts") or {}).get("体育") or 0),
-        "bbc_channels": int((curated_manifest.get("group_counts") or {}).get("国际精选") or 0),
+        "stage": str(curated_manifest.get("stage") or ""),
+        "result_channels": result_channels,
+        "core_preserved": int(curated_manifest.get("core_preserved") or 0),
+        "sports_channels": int(curated_manifest.get("sports_channels") or 0),
+        "bbc_channels": int(curated_manifest.get("bbc_channels") or 0),
+        "noncore_720_count": int(curated_manifest.get("noncore_720_count") or 0),
     }
-    payload["production_modified"] = bool(curated_published)
+    payload["production_modified"] = True
     manifest_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
     print(
         f"HK_POOL_FINALIZED audited={total} good_urls={len(good_urls)} rejected={len(rejected_urls)} "
-        f"active_entries={len(active)} curated={payload['curated']['result_channels']}"
+        f"active_entries={len(active)} curated={result_channels}"
     )
 
     snapshot = Path("/var/lib/iptv-hk-probe/verified-pool-snapshot")
@@ -241,9 +240,9 @@ def main() -> int:
         "harvest/rejected-url-sha256.txt",
         "harvest/verified-manifest.json",
         "harvest/curated-manifest.json",
+        "tv.m3u",
+        "tv-all.m3u",
     ]
-    if curated_published:
-        add_paths += ["tv.m3u", "tv-all.m3u"]
     git(repo, "add", *add_paths)
     staged = git(repo, "diff", "--cached", "--quiet", check=False)
     if staged.returncode == 0:
@@ -252,7 +251,7 @@ def main() -> int:
 
     git(repo, "config", "user.name", "hk-iptv-probe")
     git(repo, "config", "user.email", "hk-iptv-probe@users.noreply.github.com")
-    git(repo, "commit", "-m", "Publish Hong Kong verified Chinese-first IPTV pool")
+    git(repo, "commit", "-m", "Publish Hong Kong verified station-only IPTV pool")
 
     token_file = Path("/etc/iptv-hk-probe.github-token")
     askpass = Path("/usr/local/libexec/iptv-hk-git-askpass")
@@ -263,7 +262,7 @@ def main() -> int:
         pushed = git(repo, "push", "origin", "HEAD:master", check=False, env=env)
         if pushed.returncode == 0:
             (snapshot / "NEEDS_PUBLISH").unlink(missing_ok=True)
-            print("HK_POOL_FINALIZED pushed verified pool + curated lineup")
+            print("HK_POOL_FINALIZED pushed verified pool + station-only lineup")
             return 0
         print(f"HK_POOL_FINALIZED push failed: {(pushed.stderr or '')[-300:]}")
 
