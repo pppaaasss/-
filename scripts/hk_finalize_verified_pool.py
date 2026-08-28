@@ -2,7 +2,8 @@
 """Finalize the Hong Kong audit into a clean pool and curated production lineup.
 
 After the full audit completes:
-- harvest/candidates.jsonl contains only Hong Kong verified GOOD URLs
+- harvest/candidates.jsonl contains only Hong Kong verified GOOD URLs, enriched
+  with the objective quality evidence measured during the full audit
 - non-GOOD URLs survive only as SHA256 tombstones so they cannot re-enter
 - a Chinese-first 400-600 channel lineup is built from verified GOOD routes
 - sports (including useful English sports) and BBC services are allowed
@@ -53,6 +54,22 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     )
 
 
+def quality_evidence(result: dict) -> dict:
+    return {
+        "checked_utc": str(result.get("checked_utc") or ""),
+        "width": int(result.get("width") or 0),
+        "height": int(result.get("height") or 0),
+        "codec": str(result.get("codec") or ""),
+        "field_order": str(result.get("field_order") or ""),
+        "fps": float(result.get("fps") or 0),
+        "bitrate_mbps": float(result.get("bitrate_mbps") or 0),
+        "segment_ok": bool(result.get("segment_ok")),
+        "segment_mbps": float(result.get("segment_mbps") or 0),
+        "startup_s": float(result.get("startup_s") or 0),
+        "transport": str(result.get("transport") or ""),
+    }
+
+
 def git(repo: Path, *args: str, check: bool = True, env: dict | None = None) -> subprocess.CompletedProcess:
     return subprocess.run(
         ["git", "-C", str(repo), *args],
@@ -94,9 +111,24 @@ def main() -> int:
     good_urls = {u for u, r in by_url.items() if str(r.get("status")) == "GOOD"}
     rejected_urls = set(by_url) - good_urls
 
-    # Preserve every original label/provenance attached to each verified GOOD URL.
-    active = [r for r in original if str(r.get("url") or "").strip() in good_urls]
-    active.sort(key=lambda r: (str(r.get("group") or ""), str(r.get("name") or "").casefold(), str(r.get("url") or "")))
+    # Preserve every original label/provenance attached to each verified GOOD URL,
+    # and embed the measured quality.  Future core selection can rank *after*
+    # every harvested URL has been measured instead of blindly truncating first.
+    active: list[dict] = []
+    for source_row in original:
+        url = str(source_row.get("url") or "").strip()
+        if url not in good_urls:
+            continue
+        row = dict(source_row)
+        row["hk_verified"] = quality_evidence(by_url[url])
+        active.append(row)
+    active.sort(
+        key=lambda r: (
+            str(r.get("group") or ""),
+            str(r.get("name") or "").casefold(),
+            str(r.get("url") or ""),
+        )
+    )
 
     tombstones = sorted(url_hash(u) for u in rejected_urls)
     (repo / "harvest/rejected-url-sha256.txt").write_text(
@@ -118,12 +150,14 @@ def main() -> int:
         "rejected_unique_urls": len(rejected_urls),
         "active_channel_url_entries": len(active),
         "pending_entries": len(pending),
+        "quality_evidence_embedded": True,
         "policy": {
             "active_pool_contains_good_only": True,
             "degraded_removed_from_active_pool": True,
             "unknown_removed_from_active_pool": True,
             "rejected_repo_storage_is_hash_only": True,
             "future_harvest_rejects_known_tombstones": True,
+            "selection_happens_after_full_hk_measurement": True,
             "curated_lineup_chinese_first": True,
             "curated_lineup_sports_allowed": True,
             "curated_lineup_bbc_allowed": True,
@@ -186,7 +220,6 @@ def main() -> int:
         f"active_entries={len(active)} curated={payload['curated']['result_channels']}"
     )
 
-    # Save a durable snapshot on the HK host regardless of GitHub credentials.
     snapshot = Path("/var/lib/iptv-hk-probe/verified-pool-snapshot")
     snapshot.mkdir(parents=True, exist_ok=True)
     for rel in (
@@ -202,7 +235,6 @@ def main() -> int:
         if src.exists():
             shutil.copy2(src, snapshot / src.name)
 
-    # Commit the verified pool and, when valid, the curated main/all lineups.
     add_paths = [
         "harvest/candidates.jsonl",
         "harvest/pending.jsonl",
