@@ -9,6 +9,13 @@ PLAYLISTS=(tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)
 cd "$REPO_DIR"
 mkdir -p "$DATA_DIR/formal" "$DATA_DIR/candidates"
 
+# If the completed full-audit pool exists only as a local HK snapshot because
+# GitHub write credentials are not configured yet, do not reset it away.
+if [[ -e "$DATA_DIR/verified-pool-snapshot/NEEDS_PUBLISH" ]]; then
+  echo "$LOG_PREFIX verified pool is waiting for GitHub publication; skip periodic cycle"
+  exit 0
+fi
+
 # Never start from stale local production edits.
 git fetch --quiet origin master
 git reset --hard origin/master >/dev/null
@@ -19,13 +26,17 @@ python3 scripts/hk_probe.py \
   --playlist tv-core.m3u \
   --output-dir "$DATA_DIR/formal"
 
-python3 scripts/hk_filter_harvest.py \
-  --harvest harvest/candidates.jsonl \
+# Core spare selection now happens AFTER the full Hong Kong audit.  The active
+# pool contains only GOOD URLs with embedded hk_verified resolution/bitrate/
+# segment evidence.  We rank every matched verified route first, then perform a
+# fresh probe only on a few diverse top choices.  No raw 14-route truncation.
+python3 scripts/hk_select_verified_core.py \
+  --pool harvest/candidates.jsonl \
   --playlist tv-core.m3u \
   --feedback config/home-route-feedback.json \
   --output-dir "$DATA_DIR/candidates" \
-  --workers "${IPTV_HK_WORKERS:-4}" \
-  --max-per-channel "${IPTV_HK_MAX_PER_CHANNEL:-14}"
+  --workers "${IPTV_HK_WORKERS:-2}" \
+  --fresh-per-channel "${IPTV_HK_FRESH_PER_CHANNEL:-4}"
 
 python3 scripts/hk_auto_update.py \
   --formal-report "$DATA_DIR/formal/latest.json" \
