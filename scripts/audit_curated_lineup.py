@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 from channel_regions import regionalized_group
@@ -18,6 +18,7 @@ JUNK_RE = re.compile(r'(?:adult|xxx|porn|情色|成人|购物|購物|shopping|te
 ENGLISH_RE = re.compile(r'^[\x00-\x7f]+$')
 SPORT_RE = re.compile(r'(?:体育|體育|足球|篮球|籃球|网球|網球|golf|tennis|sport|espn|bein|nba|nfl|mlb|nhl|ufc|racing|football|soccer|f1)', re.I)
 BBC_RE = re.compile(r'(?<![a-z])bbc(?:\s|[-_]|$)', re.I)
+CCTV_RE = re.compile(r'^CCTV(?:-|\s*)?(?:[1-9]|1[0-7]|4K|5\+)$', re.I)
 
 
 def blocks(path: Path):
@@ -94,15 +95,18 @@ def main():
             br=float(ev.get('bitrate_mbps') or 0)
             seg=bool(ev.get('segment_ok'))
             codec=str(ev.get('codec') or '').casefold()
+            transport=str(ev.get('transport') or '')
+            usable_transport = seg or transport == 'ffprobe_verified_non_hls'
             if h >= 2160: quality['2160+'] += 1
             elif h >= 1080: quality['1080'] += 1
             elif h >= 720: quality['720'] += 1
             elif h > 0: quality['below720'] += 1
             else: quality['unknown_height'] += 1
-            if h < 720 or not seg:
-                low_quality.append({'name':name,'group':group,'height':h,'codec':codec,'bitrate_mbps':br,'segment_ok':seg,'url':url})
+            if h < 720 or not usable_transport:
+                low_quality.append({'name':name,'group':group,'height':h,'codec':codec,'bitrate_mbps':br,'segment_ok':seg,'transport':transport,'url':url})
         if JUNK_RE.search(name): junk.append(name)
-        if ENGLISH_RE.fullmatch(name) and not SPORT_RE.search(name) and not BBC_RE.search(name):
+        english_allowed = group == '体育' or BBC_RE.search(name) or CCTV_RE.search(name)
+        if ENGLISH_RE.fullmatch(name) and not english_allowed:
             suspicious_english.append(name)
         if group == '其他地方':
             other_names.append(name)
@@ -148,7 +152,7 @@ def main():
     lines.append('\n== EVIDENCE MISSING ==')
     lines.extend(evidence_missing[:100] or ['NONE'])
     lines.append('\n== LOW QUALITY ==')
-    lines.extend([f"{r['name']} | {r['height']}p {r['codec']} {r['bitrate_mbps']:.3f}M segment={r['segment_ok']} | {r['url']}" for r in low_quality[:100]] or ['NONE'])
+    lines.extend([f"{r['name']} | {r['height']}p {r['codec']} {r['bitrate_mbps']:.3f}M transport={r['transport']} | {r['url']}" for r in low_quality[:100]] or ['NONE'])
     lines.append('\n== DUPLICATE NAMES ==')
     lines.extend(sorted(set(duplicate_names))[:100] or ['NONE'])
     lines.append('\n== GENERIC ENGLISH ==')
