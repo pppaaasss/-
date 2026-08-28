@@ -28,3 +28,10 @@ fi
 
 echo "$LOG_PREFIX monitoring complete; locked production playlists unchanged"
 echo "$LOG_PREFIX formal report: $DATA_DIR/formal/latest.json"
+
+python3 scripts/publish_hk_health.py \
+  --report "$DATA_DIR/formal/latest.json" \
+  --repository "${IPTV_GITHUB_REPOSITORY:-pppaaasss/-}" \
+  --branch "${IPTV_HEALTH_BRANCH:-health-monitor}" \
+  --destination "health/latest.json" \
+  --token-file "${IPTV_GITHUB_TOKEN_FILE:-/etc/iptv-hk-probe.github-token}"

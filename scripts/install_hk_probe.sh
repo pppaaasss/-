@@ -39,6 +39,7 @@ chmod +x \
   "$INSTALL_DIR/scripts/hk_probe.py" \
   "$INSTALL_DIR/scripts/hk_filter_harvest.py" \
   "$INSTALL_DIR/scripts/hk_auto_update.py" \
+  "$INSTALL_DIR/scripts/publish_hk_health.py" \
   "$INSTALL_DIR/scripts/hk_cycle.sh"
 
 # Optional write credential. Pass GITHUB_TOKEN only on the server when running
@@ -100,6 +101,7 @@ echo
 echo "Installed."
 echo "Formal report:     $DATA_DIR/formal/latest.txt"
 echo "Formal JSON:       $DATA_DIR/formal/latest.json"
+echo "GitHub health:     health-monitor:health/latest.json"
 echo "Log:               $LOG_FILE"
 echo "Cron:              every 4 hours at minute 17"
 echo "Production update: disabled (read-only monitoring)"

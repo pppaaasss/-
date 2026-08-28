@@ -11,6 +11,8 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         cycle = (ROOT / "scripts/hk_cycle.sh").read_text(encoding="utf-8")
         self.assertIn("--playlist tv.m3u", cycle)
         self.assertIn("locked production playlists unchanged", cycle)
+        self.assertIn("publish_hk_health.py", cycle)
+        self.assertIn("health-monitor", cycle)
         self.assertNotIn("hk_auto_update.py", cycle)
         self.assertNotIn("git push", cycle)
         self.assertNotIn("git commit", cycle)
