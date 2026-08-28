@@ -1,0 +1,23 @@
+name: Preview curated v3 once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/preview-curated-v3-once.yml']
+permissions:
+  contents: write
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Preview HD-only lineup
+        run: python3 scripts/preview_curated_v3.py
+      - name: Commit preview report
+        run: |
+          git config user.name curated-preview
+          git config user.email curated-preview@users.noreply.github.com
+          git add audit/curated-v3-preview.json
+          git diff --cached --check
+          git commit -m 'Preview HD-only curated IPTV lineup'
+          git push origin HEAD:master
