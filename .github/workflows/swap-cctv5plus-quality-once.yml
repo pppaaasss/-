@@ -1,0 +1,43 @@
+name: Swap CCTV5plus quality once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/swap-cctv5plus-quality-once.yml']
+permissions:
+  contents: write
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Swap only CCTV5plus
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          old='http://222.169.85.8:9901/tsfile/live/0116_1.m3u8'
+          new='http://223.78.65.165:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0'
+          for fn in ['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']:
+              p=Path(fn)
+              lines=p.read_text(encoding='utf-8').splitlines()
+              found=False
+              for i,line in enumerate(lines[:-1]):
+                  if line.startswith('#EXTINF:') and line.rsplit(',',1)[-1].strip()=='CCTV-5+':
+                      if lines[i+1].strip()!=old:
+                          raise SystemExit(f'{fn}: unexpected current CCTV5+ {lines[i+1].strip()}')
+                      lines[i+1]=new
+                      found=True
+                      break
+              if not found:
+                  raise SystemExit(f'{fn}: CCTV-5+ not found')
+              p.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          PY
+      - name: Verify and commit
+        run: |
+          grep -q '223.78.65.165:9901/tsfile/live/0006_1.m3u8' tv-core.m3u
+          git config user.name home-feedback-publisher
+          git config user.email home-feedback-publisher@users.noreply.github.com
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u
+          git diff --cached --check
+          git commit -m 'Switch CCTV5+ to verified alternate route'
+          git push origin HEAD:master
