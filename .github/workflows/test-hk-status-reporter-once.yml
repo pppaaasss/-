@@ -1,0 +1,35 @@
+name: Validate HK status reporter once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/test-hk-status-reporter-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: contains(github.event.head_commit.message, '[test-hk-status]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax
+        run: |
+          python3 -m py_compile scripts/hk_report_status.py
+          bash -n scripts/install_hk_status_reporter.sh
+      - name: Offline progress parser
+        run: |
+          python3 - <<'PY'
+          import sys,tempfile
+          from pathlib import Path
+          sys.path.insert(0,'scripts')
+          import hk_report_status as s
+          with tempfile.TemporaryDirectory() as td:
+              p=Path(td)/'progress.txt'
+              p.write_text('TOTAL=17170 DONE=2672 REMAINING=14498 GOOD=819 DEGRADED=413 UNKNOWN=1440 PROGRESS=15.56%\n')
+              d=s.read_progress(p)
+              assert d['DONE']=='2672' and d['GOOD']=='819' and d['PROGRESS']=='15.56%'
+          print('HK_STATUS_REPORTER_VALID')
+          PY
