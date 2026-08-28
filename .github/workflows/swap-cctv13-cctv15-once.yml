@@ -1,0 +1,50 @@
+name: Swap CCTV13 CCTV15 once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/swap-cctv13-cctv15-once.yml']
+permissions:
+  contents: write
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Swap only CCTV13 and CCTV15
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          from datetime import datetime, timezone
+          repl={
+            'CCTV-13':'http://198.204.228.26/live/cctv13hd.m3u8',
+            'CCTV-15':'http://107.150.60.122/live/cctv15hd.m3u8',
+          }
+          old13='http://221.7.175.154:8445/tsfile/live/1011_1.m3u8?key=txiptv&playlive=1&authid=0'
+          for fn in ['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']:
+            p=Path(fn); lines=p.read_text(encoding='utf-8').splitlines(); found=set()
+            for i,line in enumerate(lines[:-1]):
+              if line.startswith('#EXTINF:'):
+                name=line.rsplit(',',1)[-1].strip()
+                if name in repl:
+                  lines[i+1]=repl[name]; found.add(name)
+            if found!=set(repl): raise SystemExit(f'{fn}: missing {set(repl)-found}')
+            p.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          fp=Path('config/home-route-feedback.json'); d=json.loads(fp.read_text(encoding='utf-8'))
+          arr=d.setdefault('bad',{}).setdefault('cctv13',[])
+          if not any(isinstance(x,dict) and x.get('url')==old13 for x in arr):
+            arr.append({'url':old13,'reason':'home_quality_rejected_suspected_fake_1080p','observed_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')})
+          d['updated_utc']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          fp.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Verify and commit
+        run: |
+          grep -q '198.204.228.26/live/cctv13hd.m3u8' tv-core.m3u
+          grep -q '107.150.60.122/live/cctv15hd.m3u8' tv-core.m3u
+          git config user.name home-feedback-publisher
+          git config user.email home-feedback-publisher@users.noreply.github.com
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u config/home-route-feedback.json
+          git diff --cached --check
+          git commit -m 'Switch CCTV13 and CCTV15 emergency routes'
+          git push origin HEAD:master
