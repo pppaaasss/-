@@ -1,0 +1,38 @@
+name: Validate station-only finalizer once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/test-station-finalizer-once.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile finalizer and builders
+        run: python3 -m py_compile scripts/hk_finalize_verified_pool.py scripts/hk_rebuild_curated_from_verified_pool.py scripts/hk_rebuild_curated_station_only.py scripts/audit_curated_lineup.py
+      - name: Rebuild current verified pool in workspace
+        run: python3 scripts/hk_rebuild_curated_station_only.py
+      - name: Validate regenerated production shape
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,re
+          def rows(path):
+              lines=Path(path).read_text(encoding='utf-8').splitlines(); out=[]
+              for i,l in enumerate(lines[:-1]):
+                  if l.startswith('#EXTINF:') and ',' in l:
+                      u=lines[i+1].strip()
+                      if u.startswith(('http://','https://')):
+                          out.append((l.rsplit(',',1)[-1].strip(),u,l))
+              return out
+          a=rows('tv.m3u'); b=rows('tv-all.m3u')
+          assert len(a)==400 and a==b
+          assert len({u for _,u,_ in a})==400
+          assert not any('group-title="卫视台"' in meta for _,_,meta in a[53:])
+          m=json.loads(Path('harvest/curated-manifest.json').read_text(encoding='utf-8'))
+          assert m['stage']=='hong_kong_verified_station_only_curated_v4'
+          assert m['channels']==400 and m['core_preserved']==53
+          print('FINALIZER_STATION_ONLY_VALID channels=400 core=53')
+          PY
