@@ -1,0 +1,55 @@
+name: Audit core candidate truncation once
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/audit-core-candidate-truncation-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    if: contains(github.event.head_commit.message, '[audit-core-truncation]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit match and pre-probe truncation only
+        run: |
+          python3 - <<'PY'
+          import json, urllib.parse
+          from collections import defaultdict
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'scripts')
+          import hk_probe
+          import hk_filter_harvest as f
+
+          formal=hk_probe.load_playlist(Path('tv-core.m3u'))
+          targets=[n for n,_ in formal]
+          formal_urls={n:u for n,u in formal}
+          matcher=f.build_target_matcher(targets)
+          buckets=defaultdict(list)
+          seen=set()
+          for raw in f.load_harvest(Path('harvest/candidates.jsonl')):
+              target=matcher(str(raw.get('name') or ''))
+              if not target: continue
+              url=str(raw.get('url') or '').strip()
+              if target=='CCTV-8' and 'cctv8k' in url.casefold(): continue
+              if url==formal_urls.get(target): continue
+              k=(target,url)
+              if k in seen: continue
+              seen.add(k)
+              buckets[target].append(raw)
+
+          print('target,matched,unique_hosts,selected14,dropped_before_hk')
+          total_match=total_sel=0
+          for t in targets:
+              rows=buckets.get(t,[])
+              hosts={urllib.parse.urlsplit(str(r.get('url') or '')).hostname or '' for r in rows}
+              sel=f.diverse_take(rows,14)
+              total_match+=len(rows); total_sel+=len(sel)
+              print(f'{t},{len(rows)},{len(hosts)},{len(sel)},{max(0,len(rows)-len(sel))}')
+          print(f'TOTAL matched={total_match} selected14={total_sel} dropped={total_match-total_sel}')
+          PY
