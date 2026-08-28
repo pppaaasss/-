@@ -1,0 +1,45 @@
+name: Swap CCTV15 quality once
+on:
+  push:
+    branches: [master]
+    paths: ['.github/workflows/swap-cctv15-quality-once.yml']
+permissions:
+  contents: write
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Swap only CCTV15
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          from datetime import datetime, timezone
+          old='http://107.150.60.122/live/cctv15hd.m3u8'
+          new='http://204.12.221.218:8181/3m1080p/cctv15.m3u8'
+          for fn in ['tv-easy.m3u','tv.m3u','tv-all.m3u','tv-core.m3u']:
+            p=Path(fn); lines=p.read_text(encoding='utf-8').splitlines(); found=False
+            for i,line in enumerate(lines[:-1]):
+              if line.startswith('#EXTINF:') and line.rsplit(',',1)[-1].strip()=='CCTV-15':
+                if lines[i+1].strip()!=old: raise SystemExit(f'{fn}: unexpected current CCTV15 {lines[i+1].strip()}')
+                lines[i+1]=new; found=True; break
+            if not found: raise SystemExit(f'{fn}: CCTV15 not found')
+            p.write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          fp=Path('config/home-route-feedback.json'); d=json.loads(fp.read_text(encoding='utf-8'))
+          arr=d.setdefault('bad',{}).setdefault('cctv15',[])
+          if not any(isinstance(x,dict) and x.get('url')==old for x in arr):
+            arr.append({'url':old,'reason':'home_occasional_buffering','observed_utc':datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')})
+          d['updated_utc']=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          fp.write_text(json.dumps(d,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          grep -q '204.12.221.218:8181/3m1080p/cctv15.m3u8' tv-core.m3u
+          git config user.name home-feedback-publisher
+          git config user.email home-feedback-publisher@users.noreply.github.com
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u config/home-route-feedback.json
+          git diff --cached --check
+          git commit -m 'Switch CCTV15 to alternate 1080p route'
+          git push origin HEAD:master
