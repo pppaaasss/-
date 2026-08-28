@@ -6,6 +6,7 @@ while hk_audit_all_urls.py is still appending results.jsonl.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import urllib.parse
@@ -44,6 +45,11 @@ def score(row: dict) -> float:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--top', type=int, default=1, help='diverse candidates printed per CCTV channel')
+    args = ap.parse_args()
+    top = max(1, min(args.top, 10))
+
     if not AUDIT.exists():
         raise SystemExit(f'missing {AUDIT}')
     formal = hk_probe.load_playlist(FORMAL)
@@ -111,7 +117,7 @@ def main() -> int:
                 continue
             picked.append(r)
             if h: hosts.add(h)
-            if len(picked)>=3: break
+            if len(picked)>=top: break
         if not picked:
             continue
         print(f'\n[{target}] current={formal_urls.get(target,"")}')
