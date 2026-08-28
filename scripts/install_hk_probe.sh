@@ -39,6 +39,7 @@ chmod +x \
   "$INSTALL_DIR/scripts/hk_probe.py" \
   "$INSTALL_DIR/scripts/hk_filter_harvest.py" \
   "$INSTALL_DIR/scripts/hk_auto_update.py" \
+  "$INSTALL_DIR/scripts/dead_only_failover.py" \
   "$INSTALL_DIR/scripts/publish_hk_health.py" \
   "$INSTALL_DIR/scripts/hk_cycle.sh"
 
@@ -87,8 +88,8 @@ EOF
 chmod +x /usr/local/sbin/iptv-hk-filter
 
 cat > "$CRON_FILE" <<'EOF'
-# Hong Kong IPTV read-only monitor every 4 hours.
-# Production playlists stay locked; this job never selects or publishes routes.
+# Hong Kong IPTV monitor every 4 hours.
+# Production changes are allowed only for repeatedly confirmed DEAD routes.
 17 */4 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
 EOF
 chmod 0644 "$CRON_FILE"
@@ -102,6 +103,7 @@ echo "Installed."
 echo "Formal report:     $DATA_DIR/formal/latest.txt"
 echo "Formal JSON:       $DATA_DIR/formal/latest.json"
 echo "GitHub health:     health-monitor:health/latest.json"
+echo "Dead failover:     confirmed DEAD only; fixed core spare pool"
 echo "Log:               $LOG_FILE"
 echo "Cron:              every 4 hours at minute 17"
-echo "Production update: disabled (read-only monitoring)"
+echo "Production update: confirmed DEAD routes only"

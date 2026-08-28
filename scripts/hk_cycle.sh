@@ -35,3 +35,50 @@ python3 scripts/publish_hk_health.py \
   --branch "${IPTV_HEALTH_BRANCH:-health-monitor}" \
   --destination "health/latest.json" \
   --token-file "${IPTV_GITHUB_TOKEN_FILE:-/etc/iptv-hk-probe.github-token}"
+
+python3 scripts/dead_only_failover.py \
+  --formal-report "$DATA_DIR/formal/latest.json" \
+  --config config/dead-only-failover.json \
+  --repo-root "$REPO_DIR" \
+  --summary "$DATA_DIR/dead-only-failover.json" \
+  --apply
+
+changed="$(git diff --name-only -- "${PLAYLISTS[@]}" || true)"
+if [[ -z "$changed" ]]; then
+  echo "$LOG_PREFIX no confirmed DEAD route with a qualified fixed spare"
+  exit 0
+fi
+
+other="$(git diff --name-only | grep -Ev '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u)$' || true)"
+if [[ -n "$other" ]]; then
+  echo "$LOG_PREFIX refusing unexpected modified files: $other" >&2
+  git restore --source=origin/master -- "${PLAYLISTS[@]}"
+  exit 30
+fi
+
+python3 - "$DATA_DIR/dead-only-failover.json" <<'PY'
+import json, sys
+data=json.load(open(sys.argv[1], encoding='utf-8'))
+assert data.get('applied') is True
+assert data.get('selected_updates')
+assert data.get('policy', {}).get('dead_only') is True
+PY
+
+git fetch --quiet origin master
+if [[ "$(git rev-parse HEAD)" != "$(git rev-parse origin/master)" ]]; then
+  echo "$LOG_PREFIX master moved during confirmation; discard and retry next cycle"
+  git reset --hard origin/master >/dev/null
+  exit 0
+fi
+
+git add "${PLAYLISTS[@]}"
+git config user.name "hk-iptv-dead-failover"
+git config user.email "hk-iptv-dead-failover@users.noreply.github.com"
+git commit -m "Replace repeatedly confirmed dead IPTV routes"
+if git push origin HEAD:master; then
+  echo "$LOG_PREFIX confirmed DEAD route replacement pushed"
+else
+  echo "$LOG_PREFIX push failed; restoring remote master" >&2
+  git reset --hard origin/master >/dev/null
+  exit 31
+fi
