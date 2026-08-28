@@ -25,20 +25,27 @@ jobs:
       - name: Record production hashes before harvest
         run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
 
-      - name: Fetch and parse upstream source text only
-        run: python3 scripts/harvest_sources.py --output-dir harvest --workers 12
+      - name: Fetch upstream text and append only never-tested URLs to pending
+        run: python3 scripts/harvest_incremental.py --output-dir harvest --workers 12
 
-      - name: Validate harvest shape
+      - name: Validate incremental harvest shape
         run: |
           python3 - <<'PY'
           import json
           from pathlib import Path
-          manifest=json.loads(Path('harvest/manifest.json').read_text(encoding='utf-8'))
+          manifest=json.loads(Path('harvest/incremental-manifest.json').read_text(encoding='utf-8'))
           assert manifest['stream_probe_performed'] is False
           assert manifest['production_modified'] is False
-          assert manifest['candidate_entries'] >= 100, manifest['candidate_entries']
-          assert manifest['unique_urls'] >= 100, manifest['unique_urls']
-          print('harvest entries',manifest['candidate_entries'],'unique_urls',manifest['unique_urls'])
+          assert manifest['raw_discovered_unique_urls'] >= 100, manifest
+          assert manifest['policy']['github_never_promotes_active_routes'] is True
+          assert manifest['policy']['known_rejected_urls_never_reenter_pending'] is True
+          print(
+              'raw',manifest['raw_discovered_unique_urls'],
+              'active',manifest['active_verified_unique_urls'],
+              'rejected',manifest['rejected_tombstones'],
+              'pending',manifest['pending_unique_urls'],
+              'new',manifest['new_unique_urls_this_run'],
+          )
           PY
 
       - name: Prove formal production playlists unchanged
@@ -68,5 +75,5 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+pppaaasss@users.noreply.github.com'
-          git commit -m 'Refresh raw IPTV source harvest'
+          git commit -m 'Refresh incremental IPTV source discovery'
           git push origin HEAD:master
