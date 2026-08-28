@@ -102,7 +102,9 @@ def publish(report_path: Path, repository: str, branch: str, destination: str, t
         f"Update Hong Kong health {generated} "
         f"GOOD={int(summary.get('good') or 0)} "
         f"DEGRADED={int(summary.get('degraded') or 0)} "
-        f"UNKNOWN={int(summary.get('unknown') or 0)}"
+        f"UNKNOWN={int(summary.get('unknown') or 0)} "
+        f"DEAD={int(summary.get('dead') or 0)} "
+        f"CIRCUIT={int(bool(summary.get('circuit_breaker_open')))}"
     )
     payload = build_put_payload(raw, branch, existing_sha, message)
     result = request_json("PUT", base_url, token, payload=payload)

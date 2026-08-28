@@ -8,7 +8,9 @@ core CCTV/satellite channels.
 Policy:
 - core decoded resolution below 1080 is DEGRADED; CCTV-4K floor is 2160
 - non-core formal channels may use a lower configured floor (normally 720)
-- network timeout/unreachable from Hong Kong is UNKNOWN, never "dead"
+- one or two Hong Kong failures are UNKNOWN, never "dead"
+- the same URL needs three failed runs spanning at least six hours to be DEAD
+- a mass-failure run opens the circuit breaker and does not advance counters
 - HLS segment failure with otherwise valid decode is UNKNOWN
 - production playlists are never modified by this program
 """
@@ -16,6 +18,7 @@ Policy:
 from __future__ import annotations
 
 import argparse
+import calendar
 import concurrent.futures
 import json
 import re
@@ -49,6 +52,10 @@ class ProbeResult:
     startup_s: float = 0.0
     min_height: int = 1080
     error: str = ""
+    observed_status: str = ""
+    consecutive_failures: int = 0
+    failure_age_hours: float = 0.0
+    hk_dead_confirmed: bool = False
 
 
 def parse_rate(raw: str | None) -> float:
@@ -218,7 +225,29 @@ def probe_one(item) -> ProbeResult:
     return r
 
 
-def update_state(results: list[ProbeResult], state_path: Path) -> dict:
+def parse_utc(raw: str) -> float | None:
+    try:
+        return float(calendar.timegm(time.strptime(raw, "%Y-%m-%dT%H:%M:%SZ")))
+    except Exception:
+        return None
+
+
+def utc_text(epoch: float) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(epoch))
+
+
+def update_state(
+    results: list[ProbeResult],
+    state_path: Path,
+    *,
+    now_epoch: float | None = None,
+    dead_after_runs: int = 3,
+    dead_min_age_hours: float = 6.0,
+    circuit_breaker_unknown_ratio: float = 0.25,
+    circuit_breaker_min_unknown: int = 20,
+) -> dict:
+    now_epoch = time.time() if now_epoch is None else float(now_epoch)
+    now = utc_text(now_epoch)
     old = {}
     if state_path.exists():
         try:
@@ -229,25 +258,98 @@ def update_state(results: list[ProbeResult], state_path: Path) -> dict:
     if not isinstance(channels, dict):
         channels = {}
 
+    unknown_count = sum(r.status == "UNKNOWN" for r in results)
+    unknown_ratio = unknown_count / len(results) if results else 0.0
+    circuit_open = (
+        unknown_count >= max(1, int(circuit_breaker_min_unknown))
+        and unknown_ratio >= float(circuit_breaker_unknown_ratio)
+    )
+
     alerts = []
     for r in results:
         prev = channels.get(r.name, {}) if isinstance(channels.get(r.name), dict) else {}
-        consecutive = int(prev.get("consecutive_degraded", 0))
-        consecutive = consecutive + 1 if r.status == "DEGRADED" else 0
+        observed = r.status
+        r.observed_status = observed
+        same_url = str(prev.get("last_url") or "") == r.url
+        previous_failures = int(prev.get("consecutive_failures", 0)) if same_url else 0
+        first_failure = str(prev.get("first_failure_utc") or "") if same_url else ""
+        dead_since = str(prev.get("dead_since_utc") or "") if same_url else ""
+
+        if observed in {"GOOD", "DEGRADED"}:
+            effective = observed
+            consecutive = 0
+            first_failure = ""
+            dead_since = ""
+            failure_age_hours = 0.0
+        else:
+            if circuit_open:
+                consecutive = previous_failures
+            else:
+                consecutive = previous_failures + 1
+                if not first_failure:
+                    first_failure = now
+            first_epoch = parse_utc(first_failure) if first_failure else None
+            failure_age_hours = round(max(0.0, now_epoch - first_epoch) / 3600, 3) if first_epoch else 0.0
+            was_dead = same_url and str(prev.get("status") or "") == "DEAD"
+            newly_dead = (
+                not circuit_open
+                and consecutive >= max(1, int(dead_after_runs))
+                and failure_age_hours >= max(0.0, float(dead_min_age_hours))
+            )
+            effective = "DEAD" if was_dead or newly_dead else "UNKNOWN"
+            if effective == "DEAD" and not dead_since:
+                dead_since = now
+
+        r.status = effective
+        r.consecutive_failures = consecutive
+        r.failure_age_hours = failure_age_hours
+        r.hk_dead_confirmed = effective == "DEAD"
         channels[r.name] = {
-            "status": r.status,
-            "consecutive_degraded": consecutive,
+            "status": effective,
+            "observed_status": observed,
+            "consecutive_failures": consecutive,
+            "first_failure_utc": first_failure,
+            "last_failure_utc": now if observed == "UNKNOWN" else "",
+            "dead_since_utc": dead_since,
             "last_url": r.url,
             "last_height": r.height,
             "min_height": r.min_height,
-            "updated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "updated_utc": now,
         }
-        if consecutive >= 2:
-            alerts.append({"name": r.name, "reason": r.error, "url": r.url, "consecutive": consecutive})
+        if effective == "DEAD":
+            alerts.append({
+                "name": r.name,
+                "reason": r.error,
+                "url": r.url,
+                "consecutive_failures": consecutive,
+                "failure_age_hours": failure_age_hours,
+                "secondary_confirmation_required": True,
+                "replacement_eligible": False,
+            })
 
-    state = {"version": 2, "channels": channels, "alerts": alerts}
+    state = {
+        "version": 3,
+        "policy": {
+            "dead_after_runs": int(dead_after_runs),
+            "dead_min_age_hours": float(dead_min_age_hours),
+            "degraded_is_alive": True,
+            "secondary_confirmation_required": True,
+            "automatic_replacement_enabled": False,
+        },
+        "last_run": {
+            "generated_utc": now,
+            "channels": len(results),
+            "unknown_observations": unknown_count,
+            "unknown_ratio": round(unknown_ratio, 4),
+            "circuit_breaker_open": circuit_open,
+        },
+        "channels": channels,
+        "alerts": alerts,
+    }
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary = state_path.with_suffix(state_path.suffix + ".tmp")
+    temporary.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(state_path)
     return state
 
 
@@ -258,6 +360,10 @@ def main() -> int:
     ap.add_argument("--default-min-height", type=int, default=1080)
     ap.add_argument("--output-dir", default="/var/lib/iptv-hk-probe")
     ap.add_argument("--workers", type=int, default=WORKERS)
+    ap.add_argument("--dead-after-runs", type=int, default=3)
+    ap.add_argument("--dead-min-age-hours", type=float, default=6.0)
+    ap.add_argument("--circuit-breaker-unknown-ratio", type=float, default=0.25)
+    ap.add_argument("--circuit-breaker-min-unknown", type=int, default=20)
     args = ap.parse_args()
 
     playlist = Path(args.playlist)
@@ -281,7 +387,14 @@ def main() -> int:
         results = list(ex.map(probe_one, items))
 
     results.sort(key=lambda x: x.name)
-    state = update_state(results, out / "state.json")
+    state = update_state(
+        results,
+        out / "state.json",
+        dead_after_runs=args.dead_after_runs,
+        dead_min_age_hours=args.dead_min_age_hours,
+        circuit_breaker_unknown_ratio=args.circuit_breaker_unknown_ratio,
+        circuit_breaker_min_unknown=args.circuit_breaker_min_unknown,
+    )
     payload = {
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "probe_region": "Hong Kong",
@@ -292,7 +405,12 @@ def main() -> int:
             "core_height_floor_1080": True,
             "cctv4k_height_floor_2160": True,
             "noncore_default_height_floor": args.default_min_height,
-            "hk_network_failure_is_unknown_not_dead": True,
+            "single_hk_failure_is_unknown": True,
+            "degraded_stream_is_alive": True,
+            "dead_after_consecutive_unknown_runs": args.dead_after_runs,
+            "dead_min_failure_age_hours": args.dead_min_age_hours,
+            "mass_failure_circuit_breaker": True,
+            "dead_requires_secondary_confirmation_before_replacement": True,
             "auto_replace_formal_routes": False,
         },
         "summary": {
@@ -300,7 +418,9 @@ def main() -> int:
             "good": sum(r.status == "GOOD" for r in results),
             "degraded": sum(r.status == "DEGRADED" for r in results),
             "unknown": sum(r.status == "UNKNOWN" for r in results),
-            "hard_alerts_after_two_runs": len(state.get("alerts") or []),
+            "dead": sum(r.status == "DEAD" for r in results),
+            "dead_alerts": len(state.get("alerts") or []),
+            "circuit_breaker_open": bool((state.get("last_run") or {}).get("circuit_breaker_open")),
         },
         "results": [asdict(r) for r in results],
         "alerts": state.get("alerts") or [],
@@ -309,7 +429,7 @@ def main() -> int:
 
     text = [
         f"generated_utc={payload['generated_utc']}",
-        f"CHANNELS={payload['summary']['channels']} GOOD={payload['summary']['good']} DEGRADED={payload['summary']['degraded']} UNKNOWN={payload['summary']['unknown']}",
+        f"CHANNELS={payload['summary']['channels']} GOOD={payload['summary']['good']} DEGRADED={payload['summary']['degraded']} UNKNOWN={payload['summary']['unknown']} DEAD={payload['summary']['dead']} CIRCUIT={int(payload['summary']['circuit_breaker_open'])}",
     ]
     for r in results:
         dims = f"{r.width}x{r.height}" if r.width and r.height else "-"
@@ -317,7 +437,7 @@ def main() -> int:
     if payload["alerts"]:
         text.append("ALERTS:")
         for a in payload["alerts"]:
-            text.append(f"  {a['name']} consecutive={a['consecutive']} {a['reason']}")
+            text.append(f"  {a['name']} consecutive={a['consecutive_failures']} age={a['failure_age_hours']:.1f}h {a['reason']}")
     (out / "latest.txt").write_text("\n".join(text) + "\n", encoding="utf-8")
     print("\n".join(text))
     return 0
