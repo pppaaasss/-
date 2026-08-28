@@ -1,10 +1,14 @@
 {
   "version": 2,
-  "enabled": true,
+  "enabled": false,
+  "mode": "frozen_dead_only",
   "replace_formal_statuses": [
-    "DEGRADED",
-    "UNKNOWN"
+    "DEAD"
   ],
+  "replace_reachable_routes": false,
+  "allow_speed_based_replacement": false,
+  "allow_quality_based_replacement": false,
+  "manual_replacement_requires_user_request": true,
   "minimum_height_default": 1080,
   "minimum_height_overrides": {
     "CCTV-4K": 2160
