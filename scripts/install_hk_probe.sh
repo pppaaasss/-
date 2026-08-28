@@ -86,9 +86,9 @@ EOF
 chmod +x /usr/local/sbin/iptv-hk-filter
 
 cat > "$CRON_FILE" <<'EOF'
-# Hong Kong IPTV judge + automatic formal-route repair every 3 hours.
-# GitHub only harvests source text; all stream probing/selection happens in HK.
-17 */3 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
+# Hong Kong IPTV read-only monitor every 4 hours.
+# Production playlists stay locked; this job never selects or publishes routes.
+17 */4 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
 EOF
 chmod 0644 "$CRON_FILE"
 
@@ -100,13 +100,6 @@ echo
 echo "Installed."
 echo "Formal report:     $DATA_DIR/formal/latest.txt"
 echo "Formal JSON:       $DATA_DIR/formal/latest.json"
-echo "Spare report:      $DATA_DIR/candidates/latest.txt"
-echo "Spare JSON:        $DATA_DIR/candidates/latest.json"
-echo "Auto-update:       $DATA_DIR/auto-update-summary.json"
 echo "Log:               $LOG_FILE"
-echo "Cron:              every 3 hours at minute 17"
-if [[ -s "$TOKEN_FILE" ]]; then
-  echo "GitHub auto-push:   enabled"
-else
-  echo "GitHub auto-push:   waiting for write credential ($TOKEN_FILE)"
-fi
+echo "Cron:              every 4 hours at minute 17"
+echo "Production update: disabled (read-only monitoring)"
