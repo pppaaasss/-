@@ -1,8 +1,82 @@
 {
   "applied": true,
-  "changed_files": [],
-  "decisions": [],
-  "generated_utc": "2026-08-29T05:34:50Z",
+  "changed_files": [
+    "tv-all.m3u",
+    "tv-core.m3u",
+    "tv.m3u"
+  ],
+  "decisions": [
+    {
+      "candidate_count": 0,
+      "channel": "1905电影网",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": [
+        "verified_pool:fixed_evidence_segment_failed"
+      ]
+    },
+    {
+      "candidate_count": 0,
+      "channel": "1905电影网（国内）",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
+      "channel": "CCTV怀旧剧场",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
+      "channel": "CCTV文化精品",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "channel": "NHL Network (1080p)",
+      "reason": "current_route_recovered"
+    },
+    {
+      "candidate_count": 11,
+      "channel": "东南卫视",
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
+    },
+    {
+      "candidate_count": 0,
+      "channel": "东莞新闻综合",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": [
+        "verified_pool:fixed_evidence_below_floor",
+        "verified_pool:fixed_evidence_below_floor"
+      ]
+    },
+    {
+      "candidate_count": 0,
+      "channel": "中国交通",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 1,
+      "channel": "亚洲旅游台",
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
+    },
+    {
+      "candidate_count": 2,
+      "channel": "兵器科技",
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
+    }
+  ],
+  "generated_utc": "2026-08-29T08:24:50Z",
   "policy": {
     "candidate_rechecked_twice": true,
     "current_route_rechecked": true,
@@ -11,5 +85,40 @@
     "github_pending_on_demand": true,
     "home_feedback_veto": true
   },
-  "selected_updates": []
+  "selected_updates": [
+    {
+      "channel": "东南卫视",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u",
+        "tv-core.m3u"
+      ],
+      "new_url": "http://120.40.39.246:352/newlive/live/hls/20/live.m3u8",
+      "old_url": "http://101.66.198.19:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "source_kind": "verified_pool"
+    },
+    {
+      "channel": "亚洲旅游台",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u"
+      ],
+      "new_url": "https://ha.msbot.dpdns.org/4gtv_api.php?id=250",
+      "old_url": "https://ha.msbot.dpdns.org/4gtv_api.php?id=261",
+      "source_kind": "verified_pool"
+    },
+    {
+      "channel": "兵器科技",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u"
+      ],
+      "new_url": "http://173.208.212.130:8181/720p/gfjs.m3u8",
+      "old_url": "https://live.264788.xyz/channel/bingqikeji?streamid=6fc55a0966bdad1e1cdf39a4d37dd776&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk",
+      "source_kind": "verified_pool"
+    }
+  ]
 }
