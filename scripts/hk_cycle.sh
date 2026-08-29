@@ -13,6 +13,39 @@ mkdir -p "$DATA_DIR/formal"
 git fetch --quiet origin master
 git reset --hard origin/master >/dev/null
 
+# Keep an already-installed Hong Kong host on the repository's current cadence.
+# This lets an existing four-hour installation migrate itself to six hours on
+# the next cycle without requiring the installer to be run again manually.
+TIMER_FILE="/etc/systemd/system/iptv-hk-probe.timer"
+CRON_FILE="/etc/cron.d/iptv-hk-probe"
+if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system && -f "$TIMER_FILE" ]]; then
+  if ! grep -qF 'OnCalendar=*-*-* 00/6:17:00' "$TIMER_FILE"; then
+    sed -i \
+      -e 's/Description=Run Hong Kong IPTV health probe every four hours/Description=Run Hong Kong IPTV health probe every six hours/' \
+      -e 's#^OnCalendar=.*#OnCalendar=*-*-* 00/6:17:00#' \
+      "$TIMER_FILE"
+    systemctl daemon-reload
+    systemctl restart iptv-hk-probe.timer
+    echo "$LOG_PREFIX scheduler migrated to 00:17/06:17/12:17/18:17"
+  fi
+elif [[ -f "$CRON_FILE" ]]; then
+  desired='17 */6 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1'
+  if ! grep -qF "$desired" "$CRON_FILE"; then
+    cat > "$CRON_FILE" <<'EOF'
+# Hong Kong IPTV monitor every 6 hours.
+# Production changes are allowed only for repeatedly confirmed DEAD routes.
+17 */6 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
+EOF
+    chmod 0644 "$CRON_FILE"
+    if command -v rc-service >/dev/null 2>&1; then
+      rc-service crond restart
+    elif command -v service >/dev/null 2>&1; then
+      service cron restart || service crond restart
+    fi
+    echo "$LOG_PREFIX cron migrated to minute 17 every six hours"
+  fi
+fi
+
 before="$(sha256sum "${PLAYLISTS[@]}")"
 
 python3 scripts/hk_probe.py \
