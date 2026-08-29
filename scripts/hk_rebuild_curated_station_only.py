@@ -6,7 +6,8 @@ from pathlib import Path
 import hk_rebuild_curated_from_verified_pool as base
 from channel_regions import OUTPUT_GROUP_ORDER
 
-TARGET=400
+MIN_CHANNELS=400
+MAX_CHANNELS=500
 SPORT_CAP=40
 JAPAN_TARGET=20
 SCENIC=re.compile(r'(?:iPanda|自然保护区|自然保護區|景区直播|景區直播|风景直播|風景直播|监控|監控)',re.I)
@@ -72,6 +73,7 @@ def main():
         k=base.canon(r['name'])
         if k in used_keys or r['url'] in used_urls:return False
         if r['group']=='体育' and sports>=SPORT_CAP and not ignore:return False
+        if len(core)+len(chosen)>=MAX_CHANNELS:return False
         used_keys.add(k);used_urls.add(r['url']);chosen.append(r)
         if r['group']=='体育':sports+=1
         return True
@@ -81,18 +83,26 @@ def main():
         if sum(1 for x in chosen if x['group']=='日本')>=JAPAN_TARGET:break
         take(r)
     if bbc:take(bbc[0])
-    for r in hd:take(r)
-    for r in fb:
-        if len(core)+len(chosen)>=TARGET:break
+    # Quality-first range policy: keep every verified 1080p/2160p station up to
+    # the 500-channel ceiling. Only use 720p fallbacks when needed to reach the
+    # 400-channel floor, so the output is allowed to naturally land anywhere
+    # from 400 to 500 instead of being forced to exactly 400.
+    for r in hd:
+        if len(core)+len(chosen)>=MAX_CHANNELS:break
         take(r)
-    if len(core)+len(chosen)<TARGET:
+    for r in fb:
+        if len(core)+len(chosen)>=MIN_CHANNELS:break
+        take(r)
+    if len(core)+len(chosen)<MIN_CHANNELS:
+        # Last resort: permit additional verified sports only to satisfy the
+        # user's minimum lineup size. Never exceed the 500-channel ceiling.
         for r in hd+fb:
-            if len(core)+len(chosen)>=TARGET:break
+            if len(core)+len(chosen)>=MIN_CHANNELS:break
             take(r,ignore=True)
-    chosen=chosen[:TARGET-len(core)]
-    if len(core)+len(chosen)<TARGET:raise SystemExit(f'clean station inventory produced {len(core)+len(chosen)}')
+    total=len(core)+len(chosen)
+    if total<MIN_CHANNELS:raise SystemExit(f'clean station inventory produced {total}, need at least {MIN_CHANNELS}')
     order={g:i for i,g in enumerate(OUTPUT_GROUP_ORDER)};chosen.sort(key=lambda r:(order.get(r['group'],999),r['name']))
-    out=['#EXTM3U x-tvg-url="https://live.fanmingming.cn/e.xml"',f'# HK verified station-only lineup: Chinese-first, channels={TARGET}',f'# generated_utc={time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime())}','']
+    out=['#EXTM3U x-tvg-url="https://live.fanmingming.cn/e.xml"',f'# HK verified station-only lineup: Chinese-first, channels={total}',f'# generated_utc={time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime())}','']
     for b in core:out += [b['extinf'],b['url']]
     for r in chosen:out += [base.existing_extinf(r['name'],r['group'],existing,r),r['url']]
     text='\n'.join(out)+'\n';Path('tv.m3u').write_text(text,encoding='utf-8');Path('tv-all.m3u').write_text(text,encoding='utf-8')
@@ -100,9 +110,9 @@ def main():
     for r in chosen:
         groups[r['group']]+=1;h=int(r.get('height') or 0);heights['2160+' if h>=2160 else '1080' if h>=1080 else '720']+=1
         if h<1080:fallback.append(r['name'])
-    m={'generated_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'stage':'hong_kong_verified_station_only_curated_v5','channels':TARGET,'core_preserved':len(core),'sports_channels':groups.get('体育',0),'bbc_channels':groups.get('国际精选',0),'noncore_quality':dict(heights),'noncore_720_count':len(fallback),'noncore_720_names':fallback,'group_counts':dict(sorted(groups.items())),'rejected':dict(reject),'policy':{'station_like_only':True,'chinese_first':True,'hd_first':True,'target_channels':TARGET,'sports_soft_cap':SPORT_CAP,'japan_target':JAPAN_TARGET,'japan_kana_allowed':True,'noncore_satellite_duplicates_rejected':True,'vod_loop_scenic_event_series_rejected':True,'generic_english_only_sports_or_bbc':True,'core_preserved_exactly':True}}
+    m={'generated_utc':time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime()),'stage':'hong_kong_verified_station_only_curated_v6','channels':total,'core_preserved':len(core),'sports_channels':groups.get('体育',0),'bbc_channels':groups.get('国际精选',0),'noncore_quality':dict(heights),'noncore_720_count':len(fallback),'noncore_720_names':fallback,'group_counts':dict(sorted(groups.items())),'rejected':dict(reject),'policy':{'station_like_only':True,'chinese_first':True,'hd_first':True,'min_channels':MIN_CHANNELS,'max_channels':MAX_CHANNELS,'quality_first_variable_size':True,'sports_soft_cap':SPORT_CAP,'japan_target':JAPAN_TARGET,'japan_kana_allowed':True,'noncore_satellite_duplicates_rejected':True,'vod_loop_scenic_event_series_rejected':True,'generic_english_only_sports_or_bbc':True,'core_preserved_exactly':True}}
     Path('harvest/curated-manifest.json').write_text(json.dumps(m,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-    print(f'STATION_ONLY channels={TARGET} core={len(core)} sports={groups.get("体育",0)} bbc={groups.get("国际精选",0)} japan={groups.get("日本",0)} hd={heights.get("1080",0)+heights.get("2160+",0)} fallback720={len(fallback)}')
+    print(f'STATION_ONLY channels={total} range={MIN_CHANNELS}-{MAX_CHANNELS} core={len(core)} sports={groups.get("体育",0)} bbc={groups.get("国际精选",0)} japan={groups.get("日本",0)} hd={heights.get("1080",0)+heights.get("2160+",0)} fallback720={len(fallback)}')
     print('GROUPS='+json.dumps(dict(sorted(groups.items())),ensure_ascii=False))
 
 if __name__=='__main__':main()
