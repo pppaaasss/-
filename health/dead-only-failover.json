@@ -2,6 +2,8 @@
   "applied": true,
   "changed_files": [
     "tv-all.m3u",
+    "tv-core.m3u",
+    "tv-easy.m3u",
     "tv.m3u"
   ],
   "decisions": [
@@ -36,7 +38,7 @@
       "skipped": []
     },
     {
-      "channel": "CHC动作电影",
+      "channel": "Oman Sports TV (1080p) [Not 24/7]",
       "reason": "current_route_recovered"
     },
     {
@@ -71,25 +73,49 @@
       "skipped": []
     },
     {
-      "candidate_count": 3,
-      "channel": "卡酷少儿",
+      "candidate_count": 11,
+      "channel": "江西卫视",
       "reason": "confirmed_dead_qualified_spare_ready",
-      "source_kind": "verified_pool"
+      "source_kind": "fixed"
+    },
+    {
+      "candidate_count": 0,
+      "channel": "湖南国际",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
+      "channel": "福建公共",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
+      "channel": "福建旅游",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": [
+        "verified_pool:fixed_evidence_segment_failed",
+        "verified_pool:fixed_evidence_segment_failed"
+      ]
     },
     {
       "candidate_count": 2,
-      "channel": "台视财经",
+      "channel": "第一剧场",
       "reason": "confirmed_dead_qualified_spare_ready",
       "source_kind": "verified_pool"
     },
     {
-      "candidate_count": 3,
-      "channel": "民视",
+      "candidate_count": 1,
+      "channel": "纪实科教",
       "reason": "confirmed_dead_qualified_spare_ready",
       "source_kind": "verified_pool"
     }
   ],
-  "generated_utc": "2026-08-29T16:26:41Z",
+  "generated_utc": "2026-08-29T20:23:30Z",
   "policy": {
     "candidate_rechecked_twice": true,
     "current_route_rechecked": true,
@@ -100,36 +126,38 @@
   },
   "selected_updates": [
     {
-      "channel": "卡酷少儿",
+      "channel": "江西卫视",
+      "floor": 1080,
+      "matching_files": [
+        "tv-easy.m3u",
+        "tv.m3u",
+        "tv-all.m3u",
+        "tv-core.m3u"
+      ],
+      "new_url": "http://221.7.175.154:8445/tsfile/live/0010_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "old_url": "http://101.66.198.19:9901/tsfile/live/0138_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "source_kind": "fixed"
+    },
+    {
+      "channel": "第一剧场",
       "floor": 1080,
       "matching_files": [
         "tv.m3u",
         "tv-all.m3u"
       ],
-      "new_url": "http://111.59.139.82:11888/tsfile/live/1056_1.m3u8?key=txiptv&playlive=1&authid=0",
-      "old_url": "http://8.138.7.223/tv/bj.php?id=0008",
+      "new_url": "http://107.150.60.122/live/dyjc.m3u8",
+      "old_url": "https://live.264788.xyz/channel/diyijuchang?streamid=d81e188b59ece96b7e8f1ce34aea3ef8&livekey=01WgOR41rriMmMkzNsd0UoaxJRwetZdxIvtVk",
       "source_kind": "verified_pool"
     },
     {
-      "channel": "台视财经",
+      "channel": "纪实科教",
       "floor": 1080,
       "matching_files": [
         "tv.m3u",
         "tv-all.m3u"
       ],
-      "new_url": "http://38.64.72.148/hls/modn/list/4013/chunklist1.m3u8",
-      "old_url": "http://220.135.241.47:8315/0.ts",
-      "source_kind": "verified_pool"
-    },
-    {
-      "channel": "民视",
-      "floor": 1080,
-      "matching_files": [
-        "tv.m3u",
-        "tv-all.m3u"
-      ],
-      "new_url": "http://38.64.72.148/hls/modn/list/4012/chunklist0.m3u8",
-      "old_url": "http://211.72.174.95:8115/0.ts",
+      "new_url": "http://218.77.84.102:85/tsfile/live/152/2008_1.m3u8?key=txiptv",
+      "old_url": "http://120.76.248.139/live/bfgd/4200000113.m3u8",
       "source_kind": "verified_pool"
     }
   ]
