@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.publish_hk_health import build_put_payload, load_report, validate_destination
+from scripts.publish_hk_health import build_put_payload, load_report, publish, validate_destination
 
 
 def valid_report():
@@ -55,6 +55,15 @@ class HealthPublisherSafetyTests(unittest.TestCase):
         self.assertEqual("health-monitor", payload["branch"])
         self.assertEqual("old-blob", payload["sha"])
         self.assertEqual(raw, base64.b64decode(payload["content"]))
+
+    def test_missing_token_is_a_hard_failure_not_a_silent_success(self):
+        report = self.write_report(valid_report())
+        missing_token = report.with_name("missing-token")
+        try:
+            with self.assertRaisesRegex(RuntimeError, "no token"):
+                publish(report, "pppaaasss/-", "health-monitor", "health/latest.json", missing_token)
+        finally:
+            report.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

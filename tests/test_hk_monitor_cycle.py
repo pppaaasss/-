@@ -19,8 +19,13 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertNotIn("hk_auto_update.py", cycle)
         self.assertLess(cycle.index("dead_only_failover.py"), cycle.index("git add"))
 
-    def test_installer_uses_four_hour_monitoring_schedule(self):
+    def test_installer_uses_verified_four_hour_monitoring_schedule(self):
         installer = (ROOT / "scripts/install_hk_probe.sh").read_text(encoding="utf-8")
+        self.assertIn("OnCalendar=*-*-* 00/4:17:00", installer)
+        self.assertIn("Persistent=true", installer)
+        self.assertIn("systemctl is-enabled --quiet iptv-hk-probe.timer", installer)
+        self.assertIn("systemctl is-active --quiet iptv-hk-probe.timer", installer)
+        self.assertIn("Initial probe or GitHub health upload failed; scheduler not enabled.", installer)
         self.assertIn("17 */4 * * *", installer)
         self.assertNotIn("17 */3 * * *", installer)
         self.assertIn("Production update: confirmed DEAD routes only", installer)

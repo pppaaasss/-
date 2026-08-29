@@ -7,6 +7,7 @@ import argparse
 import base64
 import json
 import re
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -83,8 +84,7 @@ def publish(report_path: Path, repository: str, branch: str, destination: str, t
     except FileNotFoundError:
         token = ""
     if not token:
-        print(f"HK_HEALTH_UPLOAD skipped: no token at {token_file}")
-        return 0
+        raise RuntimeError(f"no token at {token_file}")
 
     quoted_repo = urllib.parse.quote(repository, safe="/")
     quoted_path = urllib.parse.quote(destination, safe="/")
@@ -123,13 +123,17 @@ def main() -> int:
     parser.add_argument("--destination", default="health/latest.json")
     parser.add_argument("--token-file", default="/etc/iptv-hk-probe.github-token")
     args = parser.parse_args()
-    return publish(
-        Path(args.report),
-        args.repository,
-        args.branch,
-        args.destination,
-        Path(args.token_file),
-    )
+    try:
+        return publish(
+            Path(args.report),
+            args.repository,
+            args.branch,
+            args.destination,
+            Path(args.token_file),
+        )
+    except Exception as exc:
+        print(f"HK_HEALTH_UPLOAD failed: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
