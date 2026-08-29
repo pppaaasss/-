@@ -92,7 +92,9 @@ export GIT_TERMINAL_PROMPT=0
 if [[ -s "$TOKEN_FILE" ]]; then
   export GIT_ASKPASS="$ASKPASS"
 fi
-exec "$INSTALL_DIR/scripts/hk_cycle.sh"
+# Run through bash as a second guard. A repository checkout must never turn a
+# harmless executable-bit drift into systemd status=126.
+exec bash "$INSTALL_DIR/scripts/hk_cycle.sh"
 EOF
 chmod +x /usr/local/sbin/iptv-hk-probe
 

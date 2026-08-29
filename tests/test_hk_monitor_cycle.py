@@ -1,4 +1,5 @@
 import json
+import stat
 import unittest
 from pathlib import Path
 
@@ -22,6 +23,7 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
 
     def test_installer_uses_verified_four_hour_monitoring_schedule(self):
         installer = (ROOT / "scripts/install_hk_probe.sh").read_text(encoding="utf-8")
+        self.assertIn('exec bash "$INSTALL_DIR/scripts/hk_cycle.sh"', installer)
         self.assertIn("OnCalendar=*-*-* 00/4:17:00", installer)
         self.assertIn("Persistent=true", installer)
         self.assertIn("systemctl is-enabled --quiet iptv-hk-probe.timer", installer)
@@ -31,6 +33,10 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertNotIn("17 */3 * * *", installer)
         self.assertIn("fixed + GitHub pending spares", installer)
         self.assertIn("Production update: confirmed DEAD routes only", installer)
+
+    def test_periodic_cycle_is_executable_after_git_checkout(self):
+        mode = (ROOT / "scripts/hk_cycle.sh").stat().st_mode
+        self.assertTrue(mode & stat.S_IXUSR)
 
     def test_auto_update_policy_stays_frozen(self):
         policy = json.loads((ROOT / "config/hk-auto-update.json").read_text(encoding="utf-8"))
