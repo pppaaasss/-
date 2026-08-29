@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Replace only repeatedly confirmed DEAD routes with fixed, re-probed spares."""
+"""Replace only repeatedly confirmed DEAD routes with freshly probed spares.
+
+The normal path keeps using the fixed, previously verified core spare. Only
+when a formal route is confirmed DEAD does this module look at additional
+Hong-Kong-verified routes and newly harvested GitHub candidates. Newly
+harvested routes are never trusted on metadata alone: every selected route is
+probed repeatedly from Hong Kong before a production playlist can change.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +23,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scripts import hk_probe  # noqa: E402
+from scripts.hk_filter_harvest import build_target_matcher, diverse_take  # noqa: E402
 from scripts.home_route_policy import rejected_urls  # noqa: E402
 
 
@@ -52,16 +60,39 @@ def playlist_routes(path: Path) -> dict[str, str]:
 
 
 def verified_rows(path: Path) -> dict[str, dict]:
-    rows = {}
+    return {
+        str(row.get("url") or "").strip(): row
+        for row in jsonl_rows(path)
+        if str(row.get("url") or "").strip()
+    }
+
+
+def jsonl_rows(path: Path) -> list[dict]:
+    rows = []
+    if not path.exists():
+        return rows
     for raw in path.read_text(encoding="utf-8").splitlines():
         try:
             row = json.loads(raw)
         except Exception:
             continue
-        url = str(row.get("url") or "").strip() if isinstance(row, dict) else ""
-        if url:
-            rows[url] = row
+        if isinstance(row, dict) and str(row.get("url") or "").strip():
+            rows.append(row)
     return rows
+
+
+def matching_rows(path: Path, channel: str) -> list[dict]:
+    """Return de-duplicated harvested rows matching one formal channel."""
+    matcher = build_target_matcher([channel])
+    by_url: dict[str, dict] = {}
+    for row in jsonl_rows(path):
+        if matcher(str(row.get("name") or "")) != channel:
+            continue
+        url = str(row.get("url") or "").strip()
+        previous = by_url.get(url)
+        if previous is None or len(row.get("sources") or []) > len(previous.get("sources") or []):
+            by_url[url] = row
+    return list(by_url.values())
 
 
 def evidence_ok(name: str, url: str, row: dict, cfg: dict, floor: int) -> tuple[bool, str]:
@@ -84,10 +115,89 @@ def evidence_ok(name: str, url: str, row: dict, cfg: dict, floor: int) -> tuple[
 def fresh_candidate_ok(result: hk_probe.ProbeResult, cfg: dict) -> bool:
     if result.status != "GOOD" or not result.segment_ok:
         return False
+    if int(result.height or 0) < int(result.min_height or 0):
+        return False
     bitrate = float(result.bitrate_mbps or 0)
     if result.codec.casefold() == "h264" and 0 < bitrate < float(cfg.get("minimum_h264_bitrate_mbps", 2.0)):
         return False
     return True
+
+
+def route_allowed(name: str, url: str, row: dict, cfg: dict, bad: set[str], old_url: str) -> bool:
+    if not url or url == old_url or url in bad:
+        return False
+    if cfg.get("reject_token_urls", True) and TOKEN_RE.search(url):
+        return False
+    if len(row.get("sources") or []) < int(cfg.get("minimum_source_references", 1)):
+        return False
+    if name == "CCTV-8" and re.search(r"cctv[-_]?8k|cctv8k|/8k(?:[/?.]|$)", url, re.I):
+        return False
+    return True
+
+
+def verified_quality_key(row: dict) -> tuple:
+    evidence = row.get("hk_verified") or {}
+    return (
+        int(evidence.get("height") or 0),
+        float(evidence.get("bitrate_mbps") or 0),
+        float(evidence.get("segment_mbps") or 0),
+        len(row.get("sources") or []),
+        -float(evidence.get("startup_s") or 999),
+    )
+
+
+def candidate_queue(
+    *,
+    root: Path,
+    cfg: dict,
+    name: str,
+    old_url: str,
+    floor: int,
+    fixed_url: str,
+    evidence: dict[str, dict],
+    bad: set[str],
+) -> tuple[list[dict], list[str]]:
+    """Build a bounded, stable-first queue for one confirmed-dead channel."""
+    queue: list[dict] = []
+    skipped: list[str] = []
+    seen: set[str] = set()
+
+    def add(url: str, row: dict, kind: str, *, require_old_evidence: bool) -> None:
+        if url in seen or not route_allowed(name, url, row, cfg, bad, old_url):
+            return
+        if require_old_evidence:
+            ok, reason = evidence_ok(name, url, row, cfg, floor)
+            if not ok:
+                skipped.append(f"{kind}:{reason}")
+                return
+        seen.add(url)
+        queue.append({"url": url, "kind": kind, "sources": list(row.get("sources") or [])})
+
+    fixed_row = evidence.get(fixed_url) or {}
+    if fixed_url:
+        add(fixed_url, fixed_row, "fixed", require_old_evidence=True)
+
+    verified_limit = max(0, int(cfg.get("maximum_verified_candidates_per_channel", 3)))
+    verified_path = root / str(cfg["verified_pool"])
+    verified = sorted(matching_rows(verified_path, name), key=verified_quality_key, reverse=True)
+    verified = diverse_take(verified, verified_limit) if verified_limit else []
+    for row in verified:
+        url = str(row.get("url") or "").strip()
+        add(url, row, "verified_pool", require_old_evidence=True)
+
+    if cfg.get("dynamic_pending_enabled", True):
+        pending_limit = max(0, int(cfg.get("maximum_pending_candidates_per_channel", 8)))
+        pending_path = root / str(cfg.get("pending_candidate_pool", "harvest/pending.jsonl"))
+        pending = matching_rows(pending_path, name)
+        pending.sort(key=lambda row: (len(row.get("sources") or []), str(row.get("url") or "")), reverse=True)
+        pending = diverse_take(pending, pending_limit) if pending_limit else []
+        for row in pending:
+            url = str(row.get("url") or "").strip()
+            # Pending means unverified. Live Hong Kong probes below are the only
+            # evidence allowed to promote one into a formal playlist.
+            add(url, row, "github_pending", require_old_evidence=False)
+
+    return queue, skipped
 
 
 def replace_exact(path: Path, channel: str, old_url: str, new_url: str) -> bool:
@@ -138,21 +248,10 @@ def run(args, probe=hk_probe.probe_one) -> dict:
         if not matching_files or "tv.m3u" not in matching_files:
             decisions.append({"channel": name, "reason": "stale_or_non_main_route"})
             continue
-        new_url = str(candidates.get(name) or "").strip()
-        if not new_url or new_url == old_url:
-            decisions.append({"channel": name, "reason": "no_fixed_spare"})
-            continue
-        if new_url in bad:
-            decisions.append({"channel": name, "reason": "home_feedback_rejected"})
-            continue
         floor = max(
             int(row.get("min_height") or cfg.get("minimum_height_default", 1080)),
             int((cfg.get("minimum_height_overrides") or {}).get(name, 0)),
         )
-        ok, reason = evidence_ok(name, new_url, evidence.get(new_url) or {}, cfg, floor)
-        if not ok:
-            decisions.append({"channel": name, "reason": reason})
-            continue
 
         current_attempts = []
         for _ in range(max(1, int(cfg.get("current_recheck_attempts", 2)))):
@@ -164,25 +263,57 @@ def run(args, probe=hk_probe.probe_one) -> dict:
             decisions.append({"channel": name, "reason": "current_route_recovered"})
             continue
 
-        candidate_attempts = []
-        for _ in range(max(1, int(cfg.get("candidate_confirm_attempts", 2)))):
-            check = probe((name, new_url, floor))
-            candidate_attempts.append(asdict(check))
-            if not fresh_candidate_ok(check, cfg):
+        queue, skipped = candidate_queue(
+            root=root,
+            cfg=cfg,
+            name=name,
+            old_url=old_url,
+            floor=floor,
+            fixed_url=str(candidates.get(name) or "").strip(),
+            evidence=evidence,
+            bad=bad,
+        )
+        required_attempts = max(1, int(cfg.get("candidate_confirm_attempts", 2)))
+        chosen = None
+        failed = []
+        for candidate in queue:
+            attempts = []
+            for _ in range(required_attempts):
+                check = probe((name, candidate["url"], floor))
+                attempts.append(asdict(check))
+                if not fresh_candidate_ok(check, cfg):
+                    break
+            if len(attempts) == required_attempts and all(
+                fresh_candidate_ok(hk_probe.ProbeResult(**item), cfg) for item in attempts
+            ):
+                chosen = candidate
                 break
-        if len(candidate_attempts) < max(1, int(cfg.get("candidate_confirm_attempts", 2))) or not all(
-            fresh_candidate_ok(hk_probe.ProbeResult(**item), cfg) for item in candidate_attempts
-        ):
-            decisions.append({"channel": name, "reason": "fixed_spare_fresh_probe_failed"})
+            failed.append({"kind": candidate["kind"], "url": candidate["url"]})
+
+        if chosen is None:
+            decisions.append({
+                "channel": name,
+                "reason": "no_qualified_spare_after_fresh_probe",
+                "candidate_count": len(queue),
+                "failed_candidates": failed,
+                "skipped": skipped,
+            })
             continue
+        new_url = chosen["url"]
         selected.append({
             "channel": name,
             "old_url": old_url,
             "new_url": new_url,
+            "source_kind": chosen["kind"],
             "matching_files": matching_files,
             "floor": floor,
         })
-        decisions.append({"channel": name, "reason": "confirmed_dead_fixed_spare_ready"})
+        decisions.append({
+            "channel": name,
+            "reason": "confirmed_dead_qualified_spare_ready",
+            "source_kind": chosen["kind"],
+            "candidate_count": len(queue),
+        })
 
     changed_files = set()
     if args.apply:
@@ -199,6 +330,7 @@ def run(args, probe=hk_probe.probe_one) -> dict:
         "policy": {
             "dead_only": True,
             "fixed_candidate_playlist": str(cfg["fixed_candidate_playlist"]),
+            "github_pending_on_demand": bool(cfg.get("dynamic_pending_enabled", True)),
             "home_feedback_veto": True,
             "current_route_rechecked": True,
             "candidate_rechecked_twice": True,

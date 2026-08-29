@@ -43,9 +43,19 @@ python3 scripts/dead_only_failover.py \
   --summary "$DATA_DIR/dead-only-failover.json" \
   --apply
 
+# Return the on-demand candidate decisions to GitHub as well. This report is
+# read-only unless a repeatedly confirmed DEAD route found a freshly qualified
+# spare; normal and merely degraded channels never enter candidate probing.
+python3 scripts/publish_hk_health.py \
+  --report "$DATA_DIR/dead-only-failover.json" \
+  --repository "${IPTV_GITHUB_REPOSITORY:-pppaaasss/-}" \
+  --branch "${IPTV_HEALTH_BRANCH:-health-monitor}" \
+  --destination "health/dead-only-failover.json" \
+  --token-file "${IPTV_GITHUB_TOKEN_FILE:-/etc/iptv-hk-probe.github-token}"
+
 changed="$(git diff --name-only -- "${PLAYLISTS[@]}" || true)"
 if [[ -z "$changed" ]]; then
-  echo "$LOG_PREFIX no confirmed DEAD route with a qualified fixed spare"
+  echo "$LOG_PREFIX no confirmed DEAD route with a freshly qualified spare"
   exit 0
 fi
 

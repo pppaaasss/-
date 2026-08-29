@@ -15,6 +15,7 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertIn("health-monitor", cycle)
         self.assertIn("dead_only_failover.py", cycle)
         self.assertIn("--apply", cycle)
+        self.assertIn("health/dead-only-failover.json", cycle)
         self.assertIn("confirmed DEAD route replacement", cycle)
         self.assertNotIn("hk_auto_update.py", cycle)
         self.assertLess(cycle.index("dead_only_failover.py"), cycle.index("git add"))
@@ -28,6 +29,7 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertIn("Initial probe or GitHub health upload failed; scheduler not enabled.", installer)
         self.assertIn("17 */4 * * *", installer)
         self.assertNotIn("17 */3 * * *", installer)
+        self.assertIn("fixed + GitHub pending spares", installer)
         self.assertIn("Production update: confirmed DEAD routes only", installer)
 
     def test_auto_update_policy_stays_frozen(self):
@@ -41,6 +43,8 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         dead_only = json.loads((ROOT / "config/dead-only-failover.json").read_text(encoding="utf-8"))
         self.assertTrue(dead_only["enabled"])
         self.assertEqual("candidate/tv-core.m3u", dead_only["fixed_candidate_playlist"])
+        self.assertEqual("harvest/pending.jsonl", dead_only["pending_candidate_pool"])
+        self.assertTrue(dead_only["dynamic_pending_enabled"])
         self.assertEqual(2, dead_only["current_recheck_attempts"])
         self.assertEqual(2, dead_only["candidate_confirm_attempts"])
         self.assertLessEqual(dead_only["maximum_updates_per_cycle"], 3)
