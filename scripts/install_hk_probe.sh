@@ -136,10 +136,10 @@ EOF
 
   cat > "$TIMER_FILE" <<'EOF'
 [Unit]
-Description=Run Hong Kong IPTV health probe every four hours
+Description=Run Hong Kong IPTV health probe every six hours
 
 [Timer]
-OnCalendar=*-*-* 00/4:17:00
+OnCalendar=*-*-* 00/6:17:00
 Persistent=true
 Unit=iptv-hk-probe.service
 
@@ -152,12 +152,12 @@ EOF
   systemctl restart iptv-hk-probe.timer
   systemctl is-enabled --quiet iptv-hk-probe.timer
   systemctl is-active --quiet iptv-hk-probe.timer
-  SCHEDULER="systemd timer at 00:17/04:17/08:17/12:17/16:17/20:17"
+  SCHEDULER="systemd timer at 00:17/06:17/12:17/18:17"
 else
   cat > "$CRON_FILE" <<'EOF'
-# Hong Kong IPTV monitor every 4 hours.
+# Hong Kong IPTV monitor every 6 hours.
 # Production changes are allowed only for repeatedly confirmed DEAD routes.
-17 */4 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
+17 */6 * * * root /usr/local/sbin/iptv-hk-probe >> /var/log/iptv-hk-probe.log 2>&1
 EOF
   chmod 0644 "$CRON_FILE"
   if command -v rc-service >/dev/null 2>&1; then
@@ -173,7 +173,7 @@ EOF
     echo "Cron configuration exists but no cron daemon is running." >&2
     exit 5
   fi
-  SCHEDULER="cron at minute 17 every four hours"
+  SCHEDULER="cron at minute 17 every six hours"
 fi
 
 echo
