@@ -7,10 +7,16 @@ import hashlib
 import json
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.viewer_locked_channels import ensure_locked_channels  # noqa: E402
+
 CANDIDATE = ROOT / "candidate"
 PRODUCTION = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 
@@ -81,6 +87,10 @@ def promote(*, visual_confirmed: bool, audit_run_id: str) -> None:
     before = current_hashes()
     for name in PRODUCTION:
         shutil.copy2(CANDIDATE / name, ROOT / name)
+    # A reviewed full-catalogue promotion may not silently drop channels that
+    # the viewer has confirmed at home.  Missing identities are restored while
+    # existing routes remain untouched for confirmed-dead failover.
+    ensure_locked_channels(ROOT)
     release = {
         "version": 1,
         "promoted_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),

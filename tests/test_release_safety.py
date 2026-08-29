@@ -82,6 +82,10 @@ class ReleaseSafetyTests(unittest.TestCase):
         text = (ROOT / ".github/workflows/rollback-production.yml").read_text(encoding="utf-8")
         self.assertIn("git checkout '${{ steps.previous.outputs.sha }}' -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u", text)
 
+    def test_candidate_promotion_restores_viewer_locked_channel_presence(self) -> None:
+        text = (ROOT / "scripts/candidate_release.py").read_text(encoding="utf-8")
+        self.assertIn("ensure_locked_channels(ROOT)", text)
+
 
 if __name__ == "__main__":
     unittest.main()

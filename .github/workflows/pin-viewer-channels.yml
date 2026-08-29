@@ -29,7 +29,9 @@ jobs:
           git rev-parse HEAD | tee /tmp/production-before-commit.txt
           sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
       - name: Pin viewer-confirmed channels
-        run: python3 scripts/pin_viewer_channels.py
+        run: |
+          python3 scripts/pin_viewer_channels.py
+          python3 scripts/viewer_locked_channels.py
       - name: Normalize final presentation
         run: python3 scripts/organize_apptv_groups.py
       - name: Publish only explicit manual fix
