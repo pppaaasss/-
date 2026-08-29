@@ -16,20 +16,47 @@ from pathlib import Path
 
 API_ROOT = "https://api.github.com"
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
+HEALTH_DESTINATION = "health/latest.json"
+FAILOVER_DESTINATION = "health/dead-only-failover.json"
+PRODUCTION_PLAYLISTS = {"tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u"}
 
 
-def load_report(path: Path) -> tuple[dict, bytes]:
+def load_report(path: Path, destination: str = HEALTH_DESTINATION) -> tuple[dict, bytes]:
     raw = path.read_bytes()
     if len(raw) > 900_000:
         raise RuntimeError(f"health report is too large for safe upload: {len(raw)} bytes")
     report = json.loads(raw.decode("utf-8"))
-    if report.get("production_modified") is not False:
-        raise RuntimeError("refusing report that does not prove production_modified=false")
-    policy = report.get("policy") or {}
-    if policy.get("auto_replace_formal_routes") is not False:
-        raise RuntimeError("refusing report that does not prove auto replacement is disabled")
-    if not isinstance(report.get("results"), list):
-        raise RuntimeError("health report has no results list")
+    if destination == HEALTH_DESTINATION:
+        if report.get("production_modified") is not False:
+            raise RuntimeError("refusing report that does not prove production_modified=false")
+        policy = report.get("policy") or {}
+        if policy.get("auto_replace_formal_routes") is not False:
+            raise RuntimeError("refusing report that does not prove auto replacement is disabled")
+        if not isinstance(report.get("results"), list):
+            raise RuntimeError("health report has no results list")
+    elif destination == FAILOVER_DESTINATION:
+        policy = report.get("policy") or {}
+        if policy.get("dead_only") is not True:
+            raise RuntimeError("failover report does not prove dead-only policy")
+        selected = report.get("selected_updates")
+        changed = report.get("changed_files")
+        decisions = report.get("decisions")
+        if not isinstance(selected, list) or not isinstance(changed, list) or not isinstance(decisions, list):
+            raise RuntimeError("invalid failover report shape")
+        if len(selected) > 3:
+            raise RuntimeError("failover report exceeds per-cycle update limit")
+        if not set(changed).issubset(PRODUCTION_PLAYLISTS):
+            raise RuntimeError("failover report contains an unexpected changed file")
+        for update in selected:
+            if not isinstance(update, dict) or not update.get("channel"):
+                raise RuntimeError("invalid selected failover update")
+            if not update.get("old_url") or not update.get("new_url") or update["old_url"] == update["new_url"]:
+                raise RuntimeError("invalid failover route replacement")
+            matching = set(update.get("matching_files") or [])
+            if not matching or not matching.issubset(PRODUCTION_PLAYLISTS):
+                raise RuntimeError("invalid failover playlist scope")
+    else:
+        raise RuntimeError("unsupported report destination")
     return report, raw
 
 
@@ -38,8 +65,27 @@ def validate_destination(repository: str, branch: str, destination: str) -> None
         raise RuntimeError("invalid GitHub repository name")
     if branch != "health-monitor":
         raise RuntimeError("health reports may only target the health-monitor branch")
-    if destination != "health/latest.json":
-        raise RuntimeError("health reports may only target health/latest.json")
+    if destination not in {HEALTH_DESTINATION, FAILOVER_DESTINATION}:
+        raise RuntimeError("unsupported health report destination")
+
+
+def commit_message(report: dict, destination: str) -> str:
+    generated = str(report.get("generated_utc") or "unknown-time")
+    if destination == FAILOVER_DESTINATION:
+        return (
+            f"Update Hong Kong dead failover {generated} "
+            f"SELECTED={len(report.get('selected_updates') or [])} "
+            f"CHANGED={len(report.get('changed_files') or [])}"
+        )
+    summary = report.get("summary") or {}
+    return (
+        f"Update Hong Kong health {generated} "
+        f"GOOD={int(summary.get('good') or 0)} "
+        f"DEGRADED={int(summary.get('degraded') or 0)} "
+        f"UNKNOWN={int(summary.get('unknown') or 0)} "
+        f"DEAD={int(summary.get('dead') or 0)} "
+        f"CIRCUIT={int(bool(summary.get('circuit_breaker_open')))}"
+    )
 
 
 def build_put_payload(raw: bytes, branch: str, existing_sha: str | None, message: str) -> dict:
@@ -78,7 +124,7 @@ def request_json(method: str, url: str, token: str, payload: dict | None = None,
 
 def publish(report_path: Path, repository: str, branch: str, destination: str, token_file: Path) -> int:
     validate_destination(repository, branch, destination)
-    report, raw = load_report(report_path)
+    report, raw = load_report(report_path, destination)
     try:
         token = token_file.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
@@ -96,16 +142,7 @@ def publish(report_path: Path, repository: str, branch: str, destination: str, t
         allow_404=True,
     )
     existing_sha = str((current or {}).get("sha") or "") or None
-    summary = report.get("summary") or {}
-    generated = str(report.get("generated_utc") or "unknown-time")
-    message = (
-        f"Update Hong Kong health {generated} "
-        f"GOOD={int(summary.get('good') or 0)} "
-        f"DEGRADED={int(summary.get('degraded') or 0)} "
-        f"UNKNOWN={int(summary.get('unknown') or 0)} "
-        f"DEAD={int(summary.get('dead') or 0)} "
-        f"CIRCUIT={int(bool(summary.get('circuit_breaker_open')))}"
-    )
+    message = commit_message(report, destination)
     payload = build_put_payload(raw, branch, existing_sha, message)
     result = request_json("PUT", base_url, token, payload=payload)
     commit_sha = str(((result or {}).get("commit") or {}).get("sha") or "")

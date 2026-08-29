@@ -4,7 +4,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.publish_hk_health import build_put_payload, load_report, publish, validate_destination
+from scripts.publish_hk_health import (
+    build_put_payload,
+    commit_message,
+    load_report,
+    publish,
+    validate_destination,
+)
 
 
 def valid_report():
@@ -14,6 +20,17 @@ def valid_report():
         "policy": {"auto_replace_formal_routes": False},
         "summary": {"channels": 1, "good": 1, "degraded": 0, "unknown": 0},
         "results": [{"name": "CCTV-1", "status": "GOOD"}],
+    }
+
+
+def valid_failover_report():
+    return {
+        "generated_utc": "2026-08-29T05:34:50Z",
+        "applied": True,
+        "selected_updates": [],
+        "changed_files": [],
+        "decisions": [],
+        "policy": {"dead_only": True},
     }
 
 
@@ -48,6 +65,28 @@ class HealthPublisherSafetyTests(unittest.TestCase):
             validate_destination("pppaaasss/-", "master", "health/latest.json")
         with self.assertRaises(RuntimeError):
             validate_destination("pppaaasss/-", "health-monitor", "tv.m3u")
+
+    def test_accepts_scoped_dead_only_failover_report(self):
+        destination = "health/dead-only-failover.json"
+        validate_destination("pppaaasss/-", "health-monitor", destination)
+        path = self.write_report(valid_failover_report())
+        try:
+            report, raw = load_report(path, destination)
+            self.assertTrue(report["policy"]["dead_only"])
+            self.assertIn(b"selected_updates", raw)
+            self.assertIn("SELECTED=0", commit_message(report, destination))
+        finally:
+            path.unlink(missing_ok=True)
+
+    def test_failover_report_rejects_unexpected_file_scope(self):
+        payload = valid_failover_report()
+        payload["changed_files"] = ["README.md"]
+        path = self.write_report(payload)
+        try:
+            with self.assertRaises(RuntimeError):
+                load_report(path, "health/dead-only-failover.json")
+        finally:
+            path.unlink(missing_ok=True)
 
     def test_update_payload_is_bound_to_health_branch(self):
         raw = b'{"production_modified":false}'

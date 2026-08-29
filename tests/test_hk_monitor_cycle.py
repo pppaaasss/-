@@ -17,6 +17,7 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertIn("dead_only_failover.py", cycle)
         self.assertIn("--apply", cycle)
         self.assertIn("health/dead-only-failover.json", cycle)
+        self.assertIn("failover diagnostics upload failed; main health report remains valid", cycle)
         self.assertIn("confirmed DEAD route replacement", cycle)
         self.assertNotIn("hk_auto_update.py", cycle)
         self.assertLess(cycle.index("dead_only_failover.py"), cycle.index("git add"))
