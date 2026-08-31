@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+from scripts.hk_filter_harvest import load_bad_urls
 from scripts.home_route_policy import apply
 
 
@@ -58,6 +59,12 @@ class HomeRoutePolicyTests(unittest.TestCase):
             self.assertTrue(bp.is_stable(channel))
             self.assertTrue(bp.is_core_acceptable(channel))
             self.assertEqual(bp.measured_score(channel), 123.0)
+
+    def test_hong_kong_candidate_filter_loads_rejected_urls_not_channel_keys(self):
+        bad_url = "http://example.test/cctv2.m3u8"
+        with tempfile.TemporaryDirectory() as tmp:
+            feedback = self.make_feedback(Path(tmp), bad_url)
+            self.assertEqual(load_bad_urls(feedback), {bad_url})
 
 
 if __name__ == "__main__":

@@ -25,6 +25,7 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import hk_probe  # noqa: E402
+from home_route_policy import rejected_urls  # noqa: E402
 
 QUALITY_WORDS_RE = re.compile(
     r"(?:超高清|高清|标清|藍光|蓝光|频道|頻道|综合|綜合|财经|財經|综艺|綜藝|体育|體育|"
@@ -91,16 +92,8 @@ def load_harvest(path: Path) -> list[dict]:
 
 
 def load_bad_urls(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return set()
-    bad = data.get("bad") if isinstance(data, dict) else None
-    if isinstance(bad, dict):
-        return {str(x).strip() for x in bad if str(x).strip()}
-    return set()
+    """Return rejected route URLs, not the channel keys that contain them."""
+    return rejected_urls(path)
 
 
 def host_of(url: str) -> str:
