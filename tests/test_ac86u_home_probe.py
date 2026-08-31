@@ -1,4 +1,5 @@
 import functools
+import hashlib
 import http.server
 import tempfile
 import threading
@@ -7,6 +8,7 @@ from pathlib import Path
 from unittest import mock
 
 from router.ac86u import home_probe
+from router.ac86u.home_contract import CANDIDATE_SCHEMA, make_candidate, object_sha256
 from scripts.home_probe_report import validate_home_report
 
 
@@ -23,7 +25,7 @@ def result(name="CCTV-1", url="https://one.test/live.m3u8", status="UNKNOWN"):
 
 
 class AC86UHomeProbeTests(unittest.TestCase):
-    def test_generated_light_report_matches_cross_host_schema(self):
+    def test_generated_1300_report_matches_existing_cross_host_schema(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "one.ts").write_bytes(b"x" * (128 * 1024))
@@ -51,9 +53,11 @@ class AC86UHomeProbeTests(unittest.TestCase):
                     "minimum_mem_available_kib": 1,
                     "actionable": False,
                 }
-                report, _ = home_probe.run(config, requested_mode="light", now_epoch=1_800_000_000)
+                report, _ = home_probe.run(config, run_kind="recheck-1300", now_epoch=1_800_000_000)
                 validate_home_report(report)
                 self.assertEqual("GOOD", report["results"][0]["status"])
+                self.assertEqual("recheck-1300", report["run_kind"])
+                self.assertEqual("not_requested", report["policy"]["candidate_manifest_state"])
             finally:
                 server.shutdown()
                 server.server_close()
@@ -161,12 +165,100 @@ class AC86UHomeProbeTests(unittest.TestCase):
         home_probe.update_candidate_state([second], state, now_epoch=1_800_000_000 + 6 * 3600, config={})
         self.assertTrue(second["candidate_confirmed"])
 
-    def test_auto_mode_is_deep_only_after_72_hours(self):
-        now = 1_800_000_000
-        state = {"last_deep_utc": home_probe.utc_text(now - 71 * 3600)}
-        self.assertEqual("light", home_probe.selected_mode("auto", state, now, {}))
-        state["last_deep_utc"] = home_probe.utc_text(now - 72 * 3600)
-        self.assertEqual("deep", home_probe.selected_mode("auto", state, now, {}))
+    def test_run_profiles_have_only_0200_primary_and_1300_recheck(self):
+        primary = home_probe.run_profile("primary-0200", {})
+        recheck = home_probe.run_profile("recheck-1300", {})
+        self.assertTrue(primary["scan_candidates"])
+        self.assertFalse(recheck["scan_candidates"])
+        self.assertTrue(primary["current_metadata"])
+        self.assertTrue(recheck["current_metadata"])
+        self.assertEqual(home_probe.LIGHT_SAMPLE_BYTES, primary["current_sample_bytes"])
+        self.assertEqual(home_probe.LIGHT_SAMPLE_BYTES, recheck["current_sample_bytes"])
+        with self.assertRaisesRegex(RuntimeError, "unsupported_run_kind"):
+            home_probe.run_profile("six-hour", {})
+
+    def test_candidate_queue_is_persistent_deduplicated_and_drops_current_route(self):
+        one = {
+            "candidate_id": "a" * 64,
+            "channel_key": "cctv1",
+            "url": "https://candidate.test/one.m3u8",
+        }
+        changed = dict(one, url="https://candidate.test/updated.m3u8")
+        current = {
+            "candidate_id": "b" * 64,
+            "channel_key": "cctv1",
+            "url": "https://current.test/one.m3u8",
+        }
+        queue = home_probe.merge_candidate_queue(
+            [one],
+            [changed, current],
+            {"cctv1": "https://current.test/one.m3u8"},
+        )
+        self.assertEqual([changed], queue)
+
+    def test_0200_primary_consumes_candidates_but_1300_never_scans_them(self):
+        formal = b"#EXTM3U\n#EXTINF:-1,CCTV-1\nhttps://current.test/one.m3u8\n"
+        candidate = make_candidate({
+            "name": "CCTV-1",
+            "url": "https://candidate.test/one.m3u8",
+            "sources": ["source-a"],
+        })
+        manifest = {
+            "schema": CANDIDATE_SCHEMA,
+            "generated_utc": "2027-01-15T08:00:00Z",
+            "source_revision": "test",
+            "scope": ["cctv", "provincial_satellite"],
+            "formal_playlist": {
+                "url": "https://repo.test/tv-core.m3u",
+                "sha256": hashlib.sha256(formal).hexdigest(),
+                "channel_count": 1,
+            },
+            "cloud_stream_probe_performed": False,
+            "home_verified": False,
+            "production_eligible": False,
+            "candidate_count": 1,
+            "candidate_set_sha256": object_sha256([candidate]),
+            "candidates": [candidate],
+        }
+
+        def good_probe(name, url, *, floor, **_kwargs):
+            row = home_probe.empty_result(name, url, floor)
+            row.update({
+                "observed_status": "GOOD",
+                "status": "GOOD",
+                "sample_count": 2,
+                "deep_checked": True,
+                "width": 1920,
+                "height": floor,
+                "codec": "h264",
+            })
+            return row
+
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(
+            home_probe, "fetch_playlist", return_value=(formal, "https://repo.test/tv-core.m3u", 0.1)
+        ), mock.patch.object(
+            home_probe,
+            "fetch_candidate_manifest",
+            return_value=(manifest, b"candidate-json", "https://repo.test/home-candidates.json"),
+        ) as candidate_fetch, mock.patch.object(home_probe, "probe_route", side_effect=good_probe):
+            config = {
+                "probe_id": "home-ac86u-test",
+                "output_dir": temporary,
+                "playlist_url": "https://repo.test/tv-core.m3u",
+                "candidate_manifest_url": "https://repo.test/home-candidates.json",
+                "maximum_load1": 10000,
+                "minimum_mem_available_kib": 1,
+            }
+            primary, state = home_probe.run(config, run_kind="primary-0200", now_epoch=1_800_000_000)
+            self.assertEqual("accepted", state["candidate_manifest_state"])
+            self.assertEqual(1, primary["summary"]["candidate_confirmed"])
+            self.assertEqual(0, primary["summary"]["candidate_queue_remaining"])
+            candidate_fetch.assert_called_once()
+
+            candidate_fetch.reset_mock()
+            recheck, _ = home_probe.run(config, run_kind="recheck-1300", now_epoch=1_800_000_100)
+            self.assertEqual("not_requested", recheck["policy"]["candidate_manifest_state"])
+            candidate_fetch.assert_not_called()
 
     def test_resource_guard_protects_router(self):
         self.assertIn("load", home_probe.resource_guard({"load1": 1.6, "mem_available_kib": 200000}, {}))

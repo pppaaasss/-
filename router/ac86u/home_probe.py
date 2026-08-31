@@ -1,9 +1,11 @@
 #!/opt/bin/python3
 """Single-threaded home IPTV probe designed for an Asus RT-AC86U.
 
-Light runs fetch two bounded 2 MiB samples per route.  Deep runs happen at
-most once every three days, allow two complete segments up to 12 MiB each,
-and ask ffprobe for container metadata.  The process never edits a playlist.
+The router runs one primary pass at 02:00 Beijing time and one formal-route
+recheck at 13:00.  There is no six-hour cadence and no three-day rotation.
+Both passes measure the formal CCTV/satellite routes from the living-room
+network path; only the 02:00 pass consumes newly discovered GitHub candidates.
+The process never edits a production playlist.
 """
 
 from __future__ import annotations
@@ -21,18 +23,35 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+try:
+    from .home_contract import (
+        ContractError,
+        canonical_name,
+        station_key,
+        validate_candidate_manifest,
+    )
+except ImportError:  # Installed beside this file by the Entware installer.
+    from home_contract import (  # type: ignore
+        ContractError,
+        canonical_name,
+        station_key,
+        validate_candidate_manifest,
+    )
+
 
 USER_AGENT = "Mozilla/5.0 (AC86U-IPTV-Home-Probe/1.0)"
 DEFAULT_PLAYLIST = "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
-DEFAULT_CANDIDATE_PLAYLIST = "https://raw.githubusercontent.com/pppaaasss/-/master/candidate/tv-core.m3u"
+DEFAULT_CANDIDATE_MANIFEST = "https://raw.githubusercontent.com/pppaaasss/-/master/harvest/home-candidates.json"
 LIGHT_SAMPLE_BYTES = 2 * 1024 * 1024
-DEEP_SAMPLE_BYTES = 12 * 1024 * 1024
+CANDIDATE_SAMPLE_BYTES = 6 * 1024 * 1024
 SAMPLES_PER_ROUTE = 2
 MIN_SAMPLE_BYTES = 64 * 1024
 PLAYLIST_LIMIT = 1024 * 1024
+CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
 STATUSES = {"GOOD", "DEGRADED", "UNKNOWN", "DEAD"}
+RUN_KINDS = {"primary-0200", "recheck-1300"}
 
 
 def utc_text(epoch: float | None = None) -> str:
@@ -99,6 +118,15 @@ def resource_guard(resources: dict, config: dict) -> str:
     return ""
 
 
+def timezone_guard(config: dict, now_epoch: float) -> None:
+    expected = str(config.get("expected_utc_offset") or "").strip()
+    if not expected:
+        return
+    actual = time.strftime("%z", time.localtime(now_epoch))
+    if actual != expected:
+        raise RuntimeError(f"TIMEZONE_MISMATCH:expected_{expected}_got_{actual or 'unknown'}")
+
+
 def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes, str, float, int, bool]:
     headers = {"User-Agent": USER_AGENT, "Accept": "*/*", "Connection": "close"}
     if ranged:
@@ -135,6 +163,42 @@ def fetch_playlist(url: str) -> tuple[bytes, str, float]:
     return data, final, elapsed
 
 
+def fetch_candidate_manifest(url: str, *, now_epoch: float, max_age_hours: float) -> tuple[dict, bytes, str]:
+    data, final, _, total, complete = request_bytes(url, CANDIDATE_MANIFEST_LIMIT)
+    if not data:
+        raise RuntimeError("empty_candidate_manifest")
+    if total > CANDIDATE_MANIFEST_LIMIT or (len(data) >= CANDIDATE_MANIFEST_LIMIT and not complete):
+        raise RuntimeError("candidate_manifest_too_large")
+    try:
+        payload = json.loads(data.decode("utf-8"))
+    except Exception as exc:
+        raise RuntimeError("invalid_candidate_manifest_json") from exc
+    try:
+        validated = validate_candidate_manifest(
+            payload,
+            now_epoch=now_epoch,
+            max_age_hours=max_age_hours,
+        )
+    except ContractError as exc:
+        raise RuntimeError(f"unsafe_candidate_manifest:{exc}") from exc
+    return validated, data, final
+
+
+def run_profile(run_kind: str, config: dict) -> dict:
+    if run_kind not in RUN_KINDS:
+        raise RuntimeError(f"unsupported_run_kind:{run_kind}")
+    primary = run_kind == "primary-0200"
+    key = "primary_sample_bytes" if primary else "recheck_sample_bytes"
+    return {
+        "run_kind": run_kind,
+        "scan_candidates": primary,
+        "current_sample_bytes": int(config.get(key) or LIGHT_SAMPLE_BYTES),
+        "candidate_sample_bytes": int(config.get("candidate_sample_bytes") or CANDIDATE_SAMPLE_BYTES),
+        "current_metadata": True,
+        "candidate_metadata": True,
+    }
+
+
 def parse_playlist(data: bytes) -> list[tuple[str, str]]:
     lines = data.decode("utf-8", "ignore").splitlines()
     rows: list[tuple[str, str]] = []
@@ -160,6 +224,31 @@ def parse_playlist(data: bytes) -> list[tuple[str, str]]:
     if not rows:
         raise RuntimeError("playlist_has_no_http_channels")
     return rows
+
+
+def merge_candidate_queue(
+    previous: object,
+    incoming: list[dict],
+    current_urls: dict[str, str],
+) -> list[dict]:
+    """Merge daily candidates into a persistent, deterministic router queue."""
+    merged: dict[str, dict] = {}
+    if isinstance(previous, list):
+        for row in previous:
+            if isinstance(row, dict) and str(row.get("candidate_id") or ""):
+                merged[str(row["candidate_id"])] = dict(row)
+    for row in incoming:
+        if isinstance(row, dict) and str(row.get("candidate_id") or ""):
+            merged[str(row["candidate_id"])] = dict(row)
+    output = []
+    for identity, row in merged.items():
+        key = str(row.get("channel_key") or "")
+        url = str(row.get("url") or "")
+        if key not in current_urls or not url or url == current_urls[key]:
+            continue
+        row["candidate_id"] = identity
+        output.append(row)
+    return sorted(output, key=lambda row: (str(row.get("channel_key")), str(row.get("candidate_id"))))
 
 
 def parse_rate(raw: str | None) -> float:
@@ -298,11 +387,26 @@ def empty_result(name: str, url: str, floor: int) -> dict:
     }
 
 
-def probe_route(name: str, url: str, *, floor: int, mode: str, config: dict) -> dict:
+def probe_route(
+    name: str,
+    url: str,
+    *,
+    floor: int,
+    config: dict,
+    sample_limit: int | None = None,
+    include_metadata: bool | None = None,
+    mode: str | None = None,
+) -> dict:
     result = empty_result(name, url, floor)
-    limit = int(config.get("deep_sample_bytes") or DEEP_SAMPLE_BYTES) if mode == "deep" else int(
-        config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES
-    )
+    # ``mode`` remains a compatibility shim for local tests and manual calls;
+    # scheduled work is driven only by the explicit 02:00/13:00 run profile.
+    if sample_limit is None:
+        sample_limit = int(config.get("candidate_sample_bytes") or CANDIDATE_SAMPLE_BYTES) if mode == "deep" else int(
+            config.get("primary_sample_bytes") or config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES
+        )
+    if include_metadata is None:
+        include_metadata = mode == "deep"
+    limit = int(sample_limit)
     started = time.monotonic()
     try:
         document, final, manifest_s = fetch_playlist(url)
@@ -349,7 +453,7 @@ def probe_route(name: str, url: str, *, floor: int, mode: str, config: dict) -> 
             result["observed_status"] = "DEGRADED"
             result["error"] = f"headroom_{result['headroom_ratio']:.3f}_below_{minimum_headroom:.3f}"
 
-        if mode == "deep":
+        if include_metadata:
             try:
                 meta = ffprobe_meta(url, str(config.get("ffprobe") or "/opt/bin/ffprobe"))
                 result.update(meta)
@@ -554,30 +658,53 @@ def update_candidate_state(
     return state
 
 
-def selected_mode(requested: str, state: dict, now_epoch: float, config: dict) -> str:
-    if requested in {"light", "deep"}:
-        return requested
-    previous = parse_utc(str(state.get("last_deep_utc") or ""))
-    interval = float(config.get("deep_interval_hours") or 72) * 3600
-    return "deep" if previous is None or now_epoch - previous >= interval else "light"
-
-
 def minimum_height(name: str, config: dict) -> int:
     overrides = config.get("minimum_height_overrides") if isinstance(config.get("minimum_height_overrides"), dict) else {}
     return int(overrides.get(name) or (2160 if name == "CCTV-4K" else config.get("minimum_height_default") or 1080))
 
 
-def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None = None) -> tuple[dict, dict]:
+def candidate_qualification(result: dict) -> str:
+    if result.get("observed_status") == "UNKNOWN":
+        return "UNKNOWN"
+    if (
+        result.get("observed_status") == "GOOD"
+        and result.get("deep_checked") is True
+        and int(result.get("height") or 0) >= int(result.get("min_height") or 0)
+        and int(result.get("sample_count") or 0) == SAMPLES_PER_ROUTE
+    ):
+        return "QUALIFIED"
+    return "REJECTED"
+
+
+def run(
+    config: dict,
+    *,
+    run_kind: str = "primary-0200",
+    now_epoch: float | None = None,
+    requested_mode: str | None = None,
+) -> tuple[dict, dict]:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     started = time.monotonic()
     output_dir = Path(str(config.get("output_dir") or "/opt/var/lib/iptv-home-probe"))
     state_path = output_dir / "state.json"
     previous_state = load_json(state_path)
-    mode = selected_mode(requested_mode, previous_state, now_epoch, config)
+    profile = run_profile(run_kind, config)
+    # Compatibility for pre-migration unit tests and explicit manual shadows.
+    # Scheduled execution never passes requested_mode and has no 72-hour state.
+    if requested_mode in {"light", "deep"}:
+        profile["current_metadata"] = requested_mode == "deep"
+        profile["current_sample_bytes"] = (
+            int(config.get("candidate_sample_bytes") or CANDIDATE_SAMPLE_BYTES)
+            if requested_mode == "deep"
+            else int(config.get("primary_sample_bytes") or config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES)
+        )
+        profile["scan_candidates"] = False
+    mode = "deep" if profile["current_metadata"] else "light"
     resources = system_resources()
     blocked = resource_guard(resources, config)
     if blocked:
         raise RuntimeError(f"RESOURCE_GUARD:{blocked}")
+    timezone_guard(config, now_epoch)
 
     playlist_url = str(config.get("playlist_url") or DEFAULT_PLAYLIST)
     playlist_bytes, playlist_final, _ = fetch_playlist(playlist_url)
@@ -587,7 +714,14 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
     for name, url in entries:
         if time.monotonic() - started >= maximum_runtime:
             raise RuntimeError("RUNTIME_BUDGET_EXHAUSTED")
-        results.append(probe_route(name, url, floor=minimum_height(name, config), mode=mode, config=config))
+        results.append(probe_route(
+            name,
+            url,
+            floor=minimum_height(name, config),
+            config=config,
+            sample_limit=int(profile["current_sample_bytes"]),
+            include_metadata=bool(profile["current_metadata"]),
+        ))
 
     state, circuit = update_current_state(
         results,
@@ -596,37 +730,100 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
         mode=mode,
         config=config,
     )
-    bad_names = {
-        row["name"] for row in results
-        if row.get("home_dead_confirmed") or row.get("home_degraded_confirmed")
-    }
     candidate_results: list[dict] = []
     candidate_playlist = None
-    if bad_names and config.get("candidate_playlist_url", DEFAULT_CANDIDATE_PLAYLIST):
-        candidate_url = str(config.get("candidate_playlist_url") or DEFAULT_CANDIDATE_PLAYLIST)
-        candidate_bytes, candidate_final, _ = fetch_playlist(candidate_url)
-        candidate_entries = dict(parse_playlist(candidate_bytes))
-        candidate_playlist = {
-            "url": candidate_final,
-            "sha256": hashlib.sha256(candidate_bytes).hexdigest(),
-            "channel_count": len(candidate_entries),
-        }
-        current_urls = {name: url for name, url in entries}
-        for name in sorted(bad_names):
-            url = str(candidate_entries.get(name) or "")
-            if not url or url == current_urls.get(name):
-                continue
-            if time.monotonic() - started >= maximum_runtime:
-                raise RuntimeError("RUNTIME_BUDGET_EXHAUSTED")
-            candidate_results.append(
-                probe_route(name, url, floor=minimum_height(name, config), mode="deep", config=config)
-            )
-        state = update_candidate_state(candidate_results, state, now_epoch=now_epoch, config=config)
+    candidate_manifest_state = "not_requested"
+    if profile["scan_candidates"]:
+        candidate_url = str(config.get("candidate_manifest_url") or DEFAULT_CANDIDATE_MANIFEST).strip()
+        if not candidate_url:
+            candidate_manifest_state = "disabled"
+        else:
+            try:
+                manifest, candidate_bytes, candidate_final = fetch_candidate_manifest(
+                    candidate_url,
+                    now_epoch=now_epoch,
+                    max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48),
+                )
+                formal = manifest["formal_playlist"]
+                formal_sha = hashlib.sha256(playlist_bytes).hexdigest()
+                if formal["sha256"] != formal_sha or int(formal["channel_count"]) != len(entries):
+                    raise RuntimeError("candidate_manifest_formal_playlist_changed")
+                candidate_playlist = {
+                    "url": candidate_final,
+                    "sha256": hashlib.sha256(candidate_bytes).hexdigest(),
+                    "channel_count": int(manifest["candidate_count"]),
+                }
+                current_urls = {
+                    key: url
+                    for name, url in entries
+                    if (key := station_key(name)) is not None
+                }
+                queue = merge_candidate_queue(
+                    previous_state.get("candidate_queue"),
+                    list(manifest["candidates"]),
+                    current_urls,
+                )
+                remaining: list[dict] = []
+                observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
+                    previous_state.get("candidate_observations"), dict
+                ) else {}
+                max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
+                for candidate in queue:
+                    if time.monotonic() - started >= maximum_runtime:
+                        remaining.append(candidate)
+                        continue
+                    key = str(candidate["channel_key"])
+                    name = canonical_name(key)
+                    row = probe_route(
+                        name,
+                        str(candidate["url"]),
+                        floor=minimum_height(name, config),
+                        config=config,
+                        sample_limit=int(profile["candidate_sample_bytes"]),
+                        include_metadata=bool(profile["candidate_metadata"]),
+                    )
+                    qualification = candidate_qualification(row)
+                    row.update({
+                        "candidate_id": candidate["candidate_id"],
+                        "channel_key": key,
+                        "request_options": str(candidate.get("request_options") or ""),
+                        "qualification": qualification,
+                        "purpose": "daily-qualification",
+                        "switch_reverified": False,
+                        "candidate_confirmed": qualification == "QUALIFIED",
+                    })
+                    candidate_results.append(row)
+                    identity = str(candidate["candidate_id"])
+                    old_observation = observations.get(identity) if isinstance(observations.get(identity), dict) else {}
+                    unknown_attempts = int(old_observation.get("unknown_attempts") or 0)
+                    unknown_attempts = unknown_attempts + 1 if qualification == "UNKNOWN" else 0
+                    observations[identity] = {
+                        "candidate": candidate,
+                        "qualification": qualification,
+                        "unknown_attempts": unknown_attempts,
+                        "last_checked_utc": utc_text(now_epoch),
+                        "result": row,
+                    }
+                    if qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
+                        remaining.append(candidate)
+                state["candidate_queue"] = remaining
+                state["candidate_observations"] = observations
+                state["last_candidate_manifest_sha256"] = candidate_playlist["sha256"]
+                state["last_candidate_manifest_utc"] = str(manifest["generated_utc"])
+                candidate_manifest_state = "accepted"
+            except Exception as exc:
+                # A stale, racing, or malformed cloud manifest must never make
+                # the formal home-health pass fail or mutate its existing queue.
+                candidate_manifest_state = f"rejected:{type(exc).__name__}:{str(exc)[:220]}"
+                state["candidate_queue"] = list(previous_state.get("candidate_queue") or [])
+                state["candidate_observations"] = dict(previous_state.get("candidate_observations") or {})
 
     successful_runs = int(previous_state.get("successful_runs") or 0) + 1
     first_success = str(previous_state.get("first_success_utc") or "") or utc_text(now_epoch)
     state["successful_runs"] = successful_runs
     state["first_success_utc"] = first_success
+    state["last_run_kind"] = run_kind
+    state["candidate_manifest_state"] = candidate_manifest_state
     runtime = round(time.monotonic() - started, 3)
     resources["runtime_s"] = runtime
     summary = {
@@ -637,6 +834,7 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
         "dead": sum(row["status"] == "DEAD" for row in results),
         "candidate_channels": len(candidate_results),
         "candidate_confirmed": sum(bool(row.get("candidate_confirmed")) for row in candidate_results),
+        "candidate_queue_remaining": len(state.get("candidate_queue") or []),
         "circuit_breaker_open": bool(circuit),
     }
     report = {
@@ -644,6 +842,7 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
         "probe_id": str(config.get("probe_id") or "home-ac86u"),
         "generated_utc": utc_text(now_epoch),
         "run_status": "COMPLETED",
+        "run_kind": run_kind,
         "mode": mode,
         "actionable": bool(config.get("actionable", False)),
         "production_modified": False,
@@ -660,14 +859,15 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
             "mass_failure_circuit_breaker": True,
             "single_threaded": True,
             "samples_per_route": SAMPLES_PER_ROUTE,
-            "sample_bytes": int(config.get("deep_sample_bytes") or DEEP_SAMPLE_BYTES) if mode == "deep" else int(
-                config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES
-            ),
+            "sample_bytes": int(profile["current_sample_bytes"]),
+            "candidate_sample_bytes": int(profile["candidate_sample_bytes"]),
+            "candidate_manifest_state": candidate_manifest_state,
             "dead_after_runs": int(config.get("dead_after_runs") or 3),
             "dead_min_age_hours": float(config.get("dead_min_age_hours") or 6),
             "degraded_after_runs": int(config.get("degraded_after_runs") or 3),
             "degraded_min_age_hours": float(config.get("degraded_min_age_hours") or 6),
-            "candidate_requires_two_runs": True,
+            "candidate_requires_two_runs": False,
+            "candidate_requires_two_samples_and_deep_metadata": True,
         },
         "resources": resources,
         "summary": summary,
@@ -682,16 +882,22 @@ def run(config: dict, *, requested_mode: str = "auto", now_epoch: float | None =
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
-    parser.add_argument("--mode", choices=("auto", "light", "deep"), default="auto")
+    parser.add_argument("--run-kind", choices=tuple(sorted(RUN_KINDS)), default="primary-0200")
+    parser.add_argument("--mode", choices=("light", "deep"), default=None, help=argparse.SUPPRESS)
     parser.add_argument("--now-epoch", type=float, default=None)
     args = parser.parse_args()
     try:
         config = load_json(Path(args.config))
-        report, _ = run(config, requested_mode=args.mode, now_epoch=args.now_epoch)
+        report, _ = run(
+            config,
+            run_kind=args.run_kind,
+            requested_mode=args.mode,
+            now_epoch=args.now_epoch,
+        )
         summary = report["summary"]
         print(
             "HOME_PROBE completed "
-            f"mode={report['mode']} channels={summary['channels']} good={summary['good']} "
+            f"run_kind={report['run_kind']} mode={report['mode']} channels={summary['channels']} good={summary['good']} "
             f"degraded={summary['degraded']} unknown={summary['unknown']} dead={summary['dead']} "
             f"candidates={summary['candidate_confirmed']} circuit={int(summary['circuit_breaker_open'])}"
         )

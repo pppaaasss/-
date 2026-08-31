@@ -10,4 +10,4 @@ if [ "${1:-}" = "--confirm-living-room-path" ]; then
 else
   /opt/bin/python3 "$BASE/activate.py"
 fi
-exec "$BASE/run.sh" --mode light
+exec "$BASE/run.sh" --run-kind recheck-1300

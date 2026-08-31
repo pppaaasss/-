@@ -10,6 +10,8 @@ purge=0
 [ "${1:-}" = "--purge" ] && purge=1
 
 cru d IPTVHomeProbe >/dev/null 2>&1 || true
+cru d IPTVHomePrimary >/dev/null 2>&1 || true
+cru d IPTVHomeRecheck >/dev/null 2>&1 || true
 if [ -f "$SERVICES_START" ]; then
   temporary="$SERVICES_START.iptv-home.$$"
   awk '

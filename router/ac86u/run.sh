@@ -17,20 +17,24 @@ if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then
   mv -f "$LOG" "$LOG.1"
 fi
 
-mode="auto"
-if [ "${1:-}" = "--mode" ] && [ -n "${2:-}" ]; then
-  mode="$2"
+run_kind="primary-0200"
+if [ "${1:-}" = "--run-kind" ] && [ -n "${2:-}" ]; then
+  run_kind="$2"
 fi
+case "$run_kind" in
+  primary-0200|recheck-1300) ;;
+  *) echo "Unsupported run kind: $run_kind" >&2; exit 2 ;;
+esac
 
 run_probe() {
   if command -v ionice >/dev/null 2>&1; then
-    exec ionice -c 3 nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --mode "$mode"
+    exec ionice -c 3 nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --run-kind "$run_kind"
   fi
-  exec nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --mode "$mode"
+  exec nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --run-kind "$run_kind"
 }
 
 started="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-echo "$started HOME_PROBE_RUN start mode=$mode" >> "$LOG"
+echo "$started HOME_PROBE_RUN start run_kind=$run_kind" >> "$LOG"
 set +e
 (run_probe) >> "$LOG" 2>&1
 probe_rc=$?
