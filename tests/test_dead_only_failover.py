@@ -47,6 +47,8 @@ class DeadOnlyFailoverTests(unittest.TestCase):
             "maximum_pending_candidates_per_channel": 8,
             "minimum_height_default": 1080,
             "minimum_height_overrides": {},
+            "minimum_h264_bitrate_mbps": 5.0,
+            "candidate_host_block_after_home_failures": 2,
             "minimum_source_references": 1,
         }), encoding="utf-8")
         self.report = self.root / "report.json"
@@ -78,7 +80,7 @@ class DeadOnlyFailoverTests(unittest.TestCase):
             return ProbeResult(name="CCTV-1", url=url, status="UNKNOWN", min_height=floor)
         return ProbeResult(
             name="CCTV-1", url=url, status="GOOD", height=1080, min_height=floor,
-            segment_ok=True, codec="h264", bitrate_mbps=3,
+            segment_ok=True, codec="h264", bitrate_mbps=6,
         )
 
     def test_only_confirmed_dead_route_is_replaced_atomically(self):
@@ -116,6 +118,22 @@ class DeadOnlyFailoverTests(unittest.TestCase):
         result = run(self.args(), probe=self.probe)
         self.assertFalse(result["selected_updates"])
 
+    def test_repeatedly_home_bad_host_is_not_used_for_another_channel(self):
+        (self.root / "config/home-route-feedback.json").write_text(
+            json.dumps({
+                "good": {},
+                "bad": {
+                    "cctv8": [{"url": "http://new.test/cctv8.m3u8"}],
+                    "cctv15": [{"url": "http://new.test/cctv15.m3u8"}],
+                },
+            }),
+            encoding="utf-8",
+        )
+        self.write_report()
+        result = run(self.args(), probe=self.probe)
+        self.assertFalse(result["selected_updates"])
+        self.assertEqual(result["policy"]["blocked_candidate_hosts"], ["new.test"])
+
     def test_identical_duplicate_tiles_are_replaced_together(self):
         path = self.root / "tv-easy.m3u"
         path.write_text(path.read_text(encoding="utf-8") + f"#EXTINF:-1,CCTV-1\n{self.old}\n", encoding="utf-8")
@@ -138,7 +156,7 @@ class DeadOnlyFailoverTests(unittest.TestCase):
                 return ProbeResult(name=name, url=url, status="UNKNOWN", min_height=floor)
             return ProbeResult(
                 name=name, url=url, status="GOOD", height=1080, min_height=floor,
-                segment_ok=True, codec="h264", bitrate_mbps=3,
+                segment_ok=True, codec="h264", bitrate_mbps=6,
             )
 
         result = run(self.args(), probe=dynamic_probe)
@@ -174,7 +192,7 @@ class DeadOnlyFailoverTests(unittest.TestCase):
                 return ProbeResult(name=name, url=url, status="UNKNOWN", min_height=floor)
             return ProbeResult(
                 name=name, url=url, status="GOOD", height=1080, min_height=floor,
-                segment_ok=True, codec="h264", bitrate_mbps=3,
+                segment_ok=True, codec="h264", bitrate_mbps=6,
             )
 
         result = run(self.args(), probe=fallback_probe)
@@ -196,7 +214,7 @@ class DeadOnlyFailoverTests(unittest.TestCase):
                 return ProbeResult(name=name, url=url, status="UNKNOWN", min_height=floor)
             return ProbeResult(
                 name=name, url=url, status="GOOD", height=720, min_height=floor,
-                segment_ok=True, codec="h264", bitrate_mbps=3,
+                segment_ok=True, codec="h264", bitrate_mbps=6,
             )
 
         result = run(self.args(), probe=soft_probe)
@@ -269,7 +287,7 @@ class DeadOnlyFailoverTests(unittest.TestCase):
                 return ProbeResult(name=name, url=url, status="UNKNOWN", min_height=floor)
             return ProbeResult(
                 name=name, url=url, status="GOOD", height=1080, min_height=floor,
-                segment_ok=True, codec="h264", bitrate_mbps=3,
+                segment_ok=True, codec="h264", bitrate_mbps=6,
             )
 
         result = run(self.args(), probe=probe_many)

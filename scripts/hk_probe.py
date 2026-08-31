@@ -47,6 +47,7 @@ class ProbeResult:
     field_order: str = ""
     fps: float = 0.0
     bitrate_mbps: float = 0.0
+    stream_mbps: float = 0.0
     segment_ok: bool = False
     segment_mbps: float = 0.0
     startup_s: float = 0.0
@@ -155,36 +156,74 @@ def choose_variant(text: str, base: str) -> str | None:
     return max(variants, key=lambda x: (x[0], x[1]))[2]
 
 
-def newest_segment(text: str, base: str) -> str | None:
+def newest_segment(text: str, base: str) -> tuple[str | None, float]:
     last = None
+    last_duration = 0.0
+    pending_duration = 0.0
     for raw in text.splitlines():
         line = raw.strip()
-        if line and not line.startswith("#"):
+        if line.upper().startswith("#EXTINF:"):
+            match = re.match(r"#EXTINF:([0-9.]+)", line, re.I)
+            pending_duration = float(match.group(1)) if match else 0.0
+        elif line and not line.startswith("#"):
             last = urllib.parse.urljoin(base, line)
-    return last
+            last_duration = pending_duration
+            pending_duration = 0.0
+    return last, last_duration
 
 
-def hls_segment_probe(url: str) -> tuple[bool, float, float, str]:
+def fetch_segment_bytes(url: str, limit: int) -> tuple[bytes, str, float, int]:
+    """Read a bounded segment sample while retaining its full object size."""
+    req = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": USER_AGENT,
+            "Accept": "*/*",
+            "Range": f"bytes=0-{max(0, limit - 1)}",
+        },
+    )
+    started = time.monotonic()
+    with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT) as resp:
+        data = resp.read(limit)
+        elapsed = max(time.monotonic() - started, 0.001)
+        total = 0
+        content_range = str(resp.headers.get("Content-Range") or "")
+        match = re.search(r"/(\d+)$", content_range)
+        if match:
+            total = int(match.group(1))
+        status = int(getattr(resp, "status", 0) or resp.getcode() or 0)
+        if not total and status == 200:
+            try:
+                total = int(resp.headers.get("Content-Length") or 0)
+            except (TypeError, ValueError):
+                total = 0
+        if not total and len(data) < limit:
+            total = len(data)
+        return data, resp.geturl(), elapsed, total
+
+
+def hls_segment_probe(url: str) -> tuple[bool, float, float, float, str]:
     try:
         text, final, manifest_s = fetch_text(url)
         if "#EXTM3U" not in text:
-            return False, 0.0, manifest_s, "not_hls"
+            return False, 0.0, 0.0, manifest_s, "not_hls"
         child = choose_variant(text, final)
         if child:
             text, final, child_s = fetch_text(child)
             manifest_s += child_s
             if "#EXTM3U" not in text:
-                return False, 0.0, manifest_s, "bad_child_playlist"
-        segment = newest_segment(text, final)
+                return False, 0.0, 0.0, manifest_s, "bad_child_playlist"
+        segment, duration = newest_segment(text, final)
         if not segment:
-            return False, 0.0, manifest_s, "no_segment"
-        data, _, seg_s = fetch_bytes(segment, SEGMENT_READ)
+            return False, 0.0, 0.0, manifest_s, "no_segment"
+        data, _, seg_s, total = fetch_segment_bytes(segment, SEGMENT_READ)
         if len(data) < 32 * 1024:
-            return False, 0.0, manifest_s + seg_s, "short_segment"
+            return False, 0.0, 0.0, manifest_s + seg_s, "short_segment"
         mbps = len(data) * 8 / max(seg_s, 0.001) / 1_000_000
-        return True, round(mbps, 3), round(manifest_s + seg_s, 3), ""
+        stream = total * 8 / duration / 1_000_000 if total > 0 and duration > 0 else 0.0
+        return True, round(mbps, 3), round(stream, 3), round(manifest_s + seg_s, 3), ""
     except Exception as exc:
-        return False, 0.0, 0.0, f"{type(exc).__name__}:{str(exc)[:180]}"
+        return False, 0.0, 0.0, 0.0, f"{type(exc).__name__}:{str(exc)[:180]}"
 
 
 def probe_one(item) -> ProbeResult:
@@ -212,9 +251,12 @@ def probe_one(item) -> ProbeResult:
         r.error = f"decoded_height_{r.height}_below_{r.min_height}"
         return r
 
-    ok, speed, startup, err = hls_segment_probe(url)
+    ok, speed, stream, startup, err = hls_segment_probe(url)
     r.segment_ok = ok
     r.segment_mbps = speed
+    r.stream_mbps = stream
+    if r.bitrate_mbps <= 0 and stream > 0:
+        r.bitrate_mbps = stream
     r.startup_s = startup
     if not ok:
         r.status = "UNKNOWN"
@@ -433,7 +475,10 @@ def main() -> int:
     ]
     for r in results:
         dims = f"{r.width}x{r.height}" if r.width and r.height else "-"
-        text.append(f"{r.status:8} {r.name:18} {dims:10} {r.codec:6} floor={r.min_height} seg={r.segment_mbps:.2f}Mbps {r.error}")
+        text.append(
+            f"{r.status:8} {r.name:18} {dims:10} {r.codec:6} floor={r.min_height} "
+            f"stream={r.stream_mbps:.2f}Mbps dl={r.segment_mbps:.2f}Mbps {r.error}"
+        )
     if payload["alerts"]:
         text.append("ALERTS:")
         for a in payload["alerts"]:

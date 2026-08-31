@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Rotate every unqualified CCTV/satellite route on a three-day cadence.
+"""Conservatively manage unqualified CCTV/satellite routes every three days.
 
 The Hong Kong host remains the source of network evidence.  This script is the
 deterministic production publisher: it reads the latest health report and the
 Hong-Kong-verified spare pool, rejects unsafe/ambiguous candidates, and updates
 all four formal playlists together.  There is deliberately no per-run channel
 limit; every qualifying decision in the current round is applied atomically.
+
+Healthy routes are deliberately sticky.  A higher remote benchmark is not a
+reason to disturb a working living-room route.  Home-accepted routes are kept
+unless they are later rejected at home or repeatedly confirmed dead.
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ if str(ROOT) not in sys.path:
 
 from scripts.dead_only_failover import PLAYLISTS, TOKEN_RE, canonical, jsonl_rows  # noqa: E402
 from scripts.hk_filter_harvest import build_target_matcher  # noqa: E402
-from scripts.home_route_policy import rejected_urls  # noqa: E402
+from scripts.home_route_policy import load_feedback, rejected_hosts, rejected_urls  # noqa: E402
 
 
 CCTV8K_RE = re.compile(r"cctv[-_]?8k|cctv8k|/8k(?:[/?.]|$)", re.I)
@@ -135,12 +139,24 @@ def source_count(rows: list[dict]) -> int:
     return len({str(source) for row in rows for source in (row.get("sources") or []) if str(source)})
 
 
+def feedback_urls(feedback: dict, kind: str) -> set[str]:
+    urls: set[str] = set()
+    for entries in (feedback.get(kind) or {}).values():
+        for item in entries or []:
+            value = item.get("url") if isinstance(item, dict) else item
+            url = str(value or "").strip()
+            if url:
+                urls.add(url)
+    return urls
+
+
 def candidate_pool(
     *,
     path: Path,
     targets: list[str],
     current_routes: dict[str, str],
     bad_urls: set[str],
+    blocked_hosts: set[str] | None,
     now_utc: datetime,
     policy: dict,
 ) -> dict[str, list[dict]]:
@@ -157,8 +173,12 @@ def candidate_pool(
     overrides = policy.get("minimum_height_overrides") or {}
     minimum_bitrate = float(policy.get("minimum_h264_bitrate_mbps") or 2.0)
 
+    blocked_hosts = blocked_hosts or set()
     for url, rows in grouped.items():
         if not url or url in bad_urls or TOKEN_RE.search(url):
+            continue
+        host = (urlsplit(url).hostname or "").casefold()
+        if host in blocked_hosts:
             continue
         names = {str(row.get("name") or "").strip() for row in rows}
         matched = {matcher(name) for name in names}
@@ -197,15 +217,17 @@ def candidate_pool(
             continue
         codec = str(evidence.get("codec") or "").casefold()
         bitrate = float(evidence.get("bitrate_mbps") or 0)
-        if codec == "h264" and 0 < bitrate < minimum_bitrate:
+        stream_bitrate = float(evidence.get("stream_mbps") or bitrate or 0)
+        if codec == "h264" and 0 < stream_bitrate < minimum_bitrate:
             continue
         output[target].append({
             "url": url,
-            "host": (urlsplit(url).hostname or "").casefold(),
+            "host": host,
             "height": int(evidence.get("height") or 0),
             "width": int(evidence.get("width") or 0),
             "fps": float(evidence.get("fps") or 0),
             "bitrate_mbps": bitrate,
+            "stream_mbps": stream_bitrate,
             "segment_mbps": float(evidence.get("segment_mbps") or 0),
             "startup_s": float(evidence.get("startup_s") or 0),
             "checked_utc": utc_text(checked),
@@ -217,8 +239,13 @@ def candidate_pool(
 def candidate_score(row: dict, reused_host: bool = False) -> float:
     score = min(int(row.get("height") or 0), 2160) * 10.0
     if float(row.get("fps") or 0) >= 45:
-        score += 15.0
-    score += min(float(row.get("segment_mbps") or 0), 12.0) * 4.0
+        score += 5.0
+    stream = float(row.get("stream_mbps") or row.get("bitrate_mbps") or 0)
+    if stream > 0:
+        score += min(stream, 20.0) * 40.0
+    else:
+        score -= 20.0
+    score += min(float(row.get("segment_mbps") or 0), 12.0) * 2.0
     score -= min(float(row.get("startup_s") or 0), 10.0) * 10.0
     score += min(int(row.get("source_references") or 0), 8) * 2.0
     if reused_host:
@@ -287,6 +314,12 @@ def choose_candidate(
             continue
         if reason == "clearly_weak" and not clearly_better(current_health, row, policy):
             continue
+        if (
+            reason == "quality_degraded"
+            and policy.get("require_known_stream_bitrate_for_quality_upgrade", True)
+            and float(row.get("stream_mbps") or row.get("bitrate_mbps") or 0) <= 0
+        ):
+            continue
         eligible.append(row)
     if not eligible:
         return None
@@ -319,7 +352,14 @@ def run_rotation(
     validate_health(health, now_utc, policy)
     failover = load_json(failover_path) if failover_path and failover_path.exists() else None
     approvals = dead_approvals(failover)
-    bad = rejected_urls(root / str(state.get("home_feedback") or "config/home-route-feedback.json"))
+    feedback_path = root / str(state.get("home_feedback") or "config/home-route-feedback.json")
+    feedback = load_feedback(feedback_path)
+    bad = rejected_urls(feedback_path)
+    accepted = feedback_urls(feedback, "good")
+    blocked_hosts = rejected_hosts(
+        feedback_path,
+        int(policy.get("candidate_host_block_after_home_failures") or 0),
+    )
 
     formal = {name: playlist_routes(root / name) for name in PLAYLISTS}
     core_order = []
@@ -336,6 +376,7 @@ def run_rotation(
         targets=core_order,
         current_routes=current_routes,
         bad_urls=bad,
+        blocked_hosts=blocked_hosts,
         now_utc=now_utc,
         policy=policy,
     )
@@ -369,9 +410,15 @@ def run_rotation(
                 })
                 continue
             reason = "confirmed_dead"
+        elif (
+            policy.get("home_accepted_routes_are_locked", True)
+            and current_url in accepted
+        ):
+            decisions.append({"channel": name, "action": "kept", "reason": "home_accepted_lock"})
+            continue
         elif str(current_health.get("status") or "") == "DEGRADED":
             reason = "quality_degraded"
-        elif weak_current(current_health, policy):
+        elif policy.get("performance_rotation_enabled", False) and weak_current(current_health, policy):
             reason = "clearly_weak"
         else:
             decisions.append({"channel": name, "action": "kept", "reason": "healthy"})
@@ -403,7 +450,7 @@ def run_rotation(
             "old_url": current_url,
             "new_url": chosen["url"],
             "evidence": {key: chosen[key] for key in (
-                "width", "height", "fps", "bitrate_mbps", "segment_mbps",
+                "width", "height", "fps", "bitrate_mbps", "stream_mbps", "segment_mbps",
                 "startup_s", "checked_utc", "source_references",
             )},
         })
@@ -442,6 +489,9 @@ def run_rotation(
             "hong_kong_verified_candidates_only": True,
             "cctv4k_height_floor": 2160,
             "dead_requires_secondary_confirmation": True,
+            "performance_rotation_enabled": bool(policy.get("performance_rotation_enabled", False)),
+            "home_accepted_routes_are_locked": bool(policy.get("home_accepted_routes_are_locked", True)),
+            "blocked_candidate_hosts": sorted(blocked_hosts),
         },
     }
 

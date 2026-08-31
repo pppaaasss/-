@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from scripts.hk_filter_harvest import load_bad_urls
-from scripts.home_route_policy import apply
+from scripts.home_route_policy import apply, rejected_hosts
 
 
 class Channel:
@@ -65,6 +65,19 @@ class HomeRoutePolicyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             feedback = self.make_feedback(Path(tmp), bad_url)
             self.assertEqual(load_bad_urls(feedback), {bad_url})
+
+    def test_host_is_blocked_only_after_two_distinct_home_failures(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            feedback = Path(tmp) / "feedback.json"
+            feedback.write_text(json.dumps({
+                "good": {},
+                "bad": {
+                    "cctv1": [{"url": "http://relay.test/cctv1.m3u8"}],
+                    "cctv8": [{"url": "http://relay.test/cctv8.m3u8"}],
+                    "cctv5": [{"url": "http://single.test/cctv5.m3u8"}],
+                },
+            }), encoding="utf-8")
+            self.assertEqual(rejected_hosts(feedback, 2), {"relay.test"})
 
 
 if __name__ == "__main__":

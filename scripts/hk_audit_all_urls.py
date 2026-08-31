@@ -150,6 +150,7 @@ def probe_one(url: str, meta: dict) -> dict:
         "field_order": "",
         "fps": 0.0,
         "bitrate_mbps": 0.0,
+        "stream_mbps": 0.0,
         "segment_ok": False,
         "segment_mbps": 0.0,
         "startup_s": 0.0,
@@ -167,9 +168,12 @@ def probe_one(url: str, meta: dict) -> dict:
 
     # ffprobe successfully decoded video. Try a real HLS media-segment read as
     # stronger evidence. If this is not HLS, ffprobe success itself is accepted.
-    ok, speed, startup_s, err = hk_probe.hls_segment_probe(url)
+    ok, speed, stream_mbps, startup_s, err = hk_probe.hls_segment_probe(url)
     row["segment_ok"] = bool(ok)
     row["segment_mbps"] = float(speed or 0)
+    row["stream_mbps"] = float(stream_mbps or 0)
+    if float(row.get("bitrate_mbps") or 0) <= 0 and stream_mbps > 0:
+        row["bitrate_mbps"] = float(stream_mbps)
     row["startup_s"] = float(startup_s or 0)
     if ok:
         row["transport"] = "hls_segment_verified"

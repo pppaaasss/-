@@ -35,7 +35,7 @@ jobs:
           python3 -m unittest tests.test_core_health_rotation -v
           python3 -m unittest tests.test_home_route_policy tests.test_dead_only_failover tests.test_publish_hk_health -v
 
-      - name: Run due three-day rotation without a channel cap
+      - name: Run conservative three-day management without a channel cap
         run: |
           args=(--apply)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then

@@ -44,9 +44,13 @@ class CoreHealthRotationTests(unittest.TestCase):
                 "maximum_candidate_age_days": 7,
                 "minimum_height_default": 1080,
                 "minimum_height_overrides": {"CCTV-4K": 2160},
-                "minimum_h264_bitrate_mbps": 2.0,
+                "minimum_h264_bitrate_mbps": 5.0,
                 "minimum_source_references": 2,
                 "minimum_candidate_segment_mbps": 2.0,
+                "performance_rotation_enabled": False,
+                "home_accepted_routes_are_locked": True,
+                "candidate_host_block_after_home_failures": 2,
+                "require_known_stream_bitrate_for_quality_upgrade": True,
                 "weak_segment_mbps_below": 2.5,
                 "weak_startup_seconds_above": 2.0,
             },
@@ -54,7 +58,14 @@ class CoreHealthRotationTests(unittest.TestCase):
         state.update(updates)
         self.state.write_text(json.dumps(state), encoding="utf-8")
 
-    def write_case(self, channels, *, candidate_height=1080, candidate_fps=25.0):
+    def write_case(
+        self,
+        channels,
+        *,
+        candidate_height=1080,
+        candidate_fps=25.0,
+        candidate_bitrate=6.0,
+    ):
         playlist = ["#EXTM3U"]
         health_rows = []
         candidates = []
@@ -82,7 +93,8 @@ class CoreHealthRotationTests(unittest.TestCase):
                     "height": candidate_height,
                     "fps": candidate_fps,
                     "codec": "h264",
-                    "bitrate_mbps": 3.0,
+                    "bitrate_mbps": candidate_bitrate,
+                    "stream_mbps": candidate_bitrate,
                     "segment_mbps": 8.0,
                     "startup_s": 0.5,
                 },
@@ -144,19 +156,69 @@ class CoreHealthRotationTests(unittest.TestCase):
         result = self.run_case()
         self.assertEqual(0, result["replacement_count"])
 
-    def test_performance_rotation_never_downgrades_50fps_to_25fps(self):
-        self.write_case(["CCTV-14"], candidate_height=1080, candidate_fps=25.0)
+    def test_conservative_mode_keeps_a_good_route_despite_better_remote_speed(self):
+        self.write_case(["CCTV-14"], candidate_height=1080, candidate_fps=50.0)
         payload = json.loads(self.health.read_text(encoding="utf-8"))
         payload["results"][0].update({
             "status": "GOOD",
             "height": 1080,
-            "fps": 50.0,
+            "fps": 25.0,
             "segment_mbps": 1.5,
             "startup_s": 3.5,
         })
         self.health.write_text(json.dumps(payload), encoding="utf-8")
         result = self.run_case()
         self.assertEqual(0, result["replacement_count"])
+        self.assertEqual("healthy", result["decisions"][0]["reason"])
+
+    def test_home_accepted_degraded_route_is_locked(self):
+        self.write_case(["CCTV-4"])
+        current = "http://old1.test/live.m3u8"
+        self.feedback.write_text(json.dumps({
+            "good": {"cctv4": [{"url": current}]},
+            "bad": {},
+        }), encoding="utf-8")
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertEqual("home_accepted_lock", result["decisions"][0]["reason"])
+
+    def test_home_rejected_route_is_still_replaced(self):
+        self.write_case(["CCTV-8"])
+        current = "http://old1.test/live.m3u8"
+        self.feedback.write_text(json.dumps({
+            "good": {},
+            "bad": {"cctv8": [{"url": current}]},
+        }), encoding="utf-8")
+        result = self.run_case()
+        self.assertEqual(1, result["replacement_count"])
+        self.assertEqual("home_feedback_rejected", result["decisions"][0]["reason"])
+
+    def test_repeatedly_home_bad_host_is_not_selected_again(self):
+        self.write_case(["CCTV-8"])
+        current = "http://old1.test/live.m3u8"
+        self.feedback.write_text(json.dumps({
+            "good": {},
+            "bad": {
+                "cctv8": [{"url": current}],
+                "cctv2": [{"url": "http://new1.test/failed-a.m3u8"}],
+                "cctv4": [{"url": "http://new1.test/failed-b.m3u8"}],
+            },
+        }), encoding="utf-8")
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertIn("new1.test", result["policy"]["blocked_candidate_hosts"])
+
+    def test_known_low_bitrate_h264_candidate_is_rejected(self):
+        self.write_case(["CCTV-10"], candidate_bitrate=3.0)
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertIn("CCTV-10", result["unresolved_channels"])
+
+    def test_unknown_bitrate_cannot_drive_a_quality_upgrade(self):
+        self.write_case(["CCTV-10"], candidate_bitrate=0.0)
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertIn("CCTV-10", result["unresolved_channels"])
 
     def test_not_due_run_does_not_touch_state_or_playlists(self):
         self.write_case(["CCTV-1"])

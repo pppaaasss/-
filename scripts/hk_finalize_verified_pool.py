@@ -65,6 +65,7 @@ def quality_evidence(result: dict) -> dict:
         "field_order": str(result.get("field_order") or ""),
         "fps": float(result.get("fps") or 0),
         "bitrate_mbps": float(result.get("bitrate_mbps") or 0),
+        "stream_mbps": float(result.get("stream_mbps") or result.get("bitrate_mbps") or 0),
         "segment_ok": bool(result.get("segment_ok")),
         "segment_mbps": float(result.get("segment_mbps") or 0),
         "startup_s": float(result.get("startup_s") or 0),

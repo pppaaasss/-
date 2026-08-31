@@ -17,6 +17,7 @@ import sys
 import time
 from dataclasses import asdict
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -24,7 +25,7 @@ if str(ROOT) not in sys.path:
 
 from scripts import hk_probe  # noqa: E402
 from scripts.hk_filter_harvest import build_target_matcher, diverse_take  # noqa: E402
-from scripts.home_route_policy import rejected_urls  # noqa: E402
+from scripts.home_route_policy import rejected_hosts, rejected_urls  # noqa: E402
 
 
 PLAYLISTS = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
@@ -123,8 +124,18 @@ def fresh_candidate_ok(result: hk_probe.ProbeResult, cfg: dict) -> bool:
     return True
 
 
-def route_allowed(name: str, url: str, row: dict, cfg: dict, bad: set[str], old_url: str) -> bool:
+def route_allowed(
+    name: str,
+    url: str,
+    row: dict,
+    cfg: dict,
+    bad: set[str],
+    blocked_hosts: set[str],
+    old_url: str,
+) -> bool:
     if not url or url == old_url or url in bad:
+        return False
+    if (urlsplit(url).hostname or "").casefold() in blocked_hosts:
         return False
     if cfg.get("reject_token_urls", True) and TOKEN_RE.search(url):
         return False
@@ -156,6 +167,7 @@ def candidate_queue(
     fixed_url: str,
     evidence: dict[str, dict],
     bad: set[str],
+    blocked_hosts: set[str],
 ) -> tuple[list[dict], list[str]]:
     """Build a bounded, stable-first queue for one confirmed-dead channel."""
     queue: list[dict] = []
@@ -163,7 +175,9 @@ def candidate_queue(
     seen: set[str] = set()
 
     def add(url: str, row: dict, kind: str, *, require_old_evidence: bool) -> None:
-        if url in seen or not route_allowed(name, url, row, cfg, bad, old_url):
+        if url in seen or not route_allowed(
+            name, url, row, cfg, bad, blocked_hosts, old_url
+        ):
             return
         if require_old_evidence:
             ok, reason = evidence_ok(name, url, row, cfg, floor)
@@ -230,7 +244,12 @@ def run(args, probe=hk_probe.probe_one) -> dict:
 
     candidates = playlist_routes(root / str(cfg["fixed_candidate_playlist"]))
     evidence = verified_rows(root / str(cfg["verified_pool"]))
-    bad = rejected_urls(root / str(cfg["home_feedback"]))
+    feedback_path = root / str(cfg["home_feedback"])
+    bad = rejected_urls(feedback_path)
+    blocked_hosts = rejected_hosts(
+        feedback_path,
+        int(cfg.get("candidate_host_block_after_home_failures", 0)),
+    )
     formal = {name: playlist_routes(root / name) for name in PLAYLISTS}
     configured_maximum = int(cfg.get("maximum_updates_per_cycle", 0))
     maximum = configured_maximum if configured_maximum > 0 else None
@@ -273,6 +292,7 @@ def run(args, probe=hk_probe.probe_one) -> dict:
             fixed_url=str(candidates.get(name) or "").strip(),
             evidence=evidence,
             bad=bad,
+            blocked_hosts=blocked_hosts,
         )
         required_attempts = max(1, int(cfg.get("candidate_confirm_attempts", 2)))
         chosen = None
@@ -334,6 +354,7 @@ def run(args, probe=hk_probe.probe_one) -> dict:
             "fixed_candidate_playlist": str(cfg["fixed_candidate_playlist"]),
             "github_pending_on_demand": bool(cfg.get("dynamic_pending_enabled", True)),
             "home_feedback_veto": True,
+            "blocked_candidate_hosts": sorted(blocked_hosts),
             "current_route_rechecked": True,
             "candidate_rechecked_twice": True,
         },

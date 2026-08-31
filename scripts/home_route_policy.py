@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from types import ModuleType
 from typing import Any
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_FEEDBACK_PATH = ROOT / "config" / "home-route-feedback.json"
@@ -47,6 +48,30 @@ def rejected_urls(path: Path | str | None = None) -> set[str]:
             if url:
                 rejected.add(url)
     return rejected
+
+
+def rejected_hosts(
+    path: Path | str | None = None,
+    minimum_distinct_urls: int = 2,
+) -> set[str]:
+    """Return relay hosts repeatedly disproved by living-room playback.
+
+    One rejected URL is kept as an exact veto only.  Multiple distinct failed
+    URLs on the same host indicate a home-network/player incompatibility, so
+    automatic selectors must stop moving other channels onto that relay.
+    """
+    if minimum_distinct_urls <= 0:
+        return set()
+    by_host: dict[str, set[str]] = {}
+    for url in rejected_urls(path):
+        host = (urlsplit(url).hostname or "").casefold()
+        if host:
+            by_host.setdefault(host, set()).add(url)
+    return {
+        host
+        for host, urls in by_host.items()
+        if len(urls) >= minimum_distinct_urls
+    }
 
 
 def apply(bp: ModuleType, feedback_path: Path | str | None = None) -> None:
