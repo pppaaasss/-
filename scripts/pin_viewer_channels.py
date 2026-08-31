@@ -13,8 +13,9 @@ from pathlib import Path
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
 # CCTV-1 moves off the home-buffering 221.7 route to the highest-ranked
 # Hong-Kong-verified 1080p50 route.
-# CCTV-4 and CCTV-5 stay aligned with the currently accepted formal routes;
-# never restore their older viewer-rejected pins or downgrade CCTV-5 to 720p.
+# CCTV-4 moves off the home-buffering 120.198 route to the current
+# Hong-Kong-verified 1080p50 route. CCTV-5 stays aligned with its accepted
+# formal route; never restore older viewer-rejected pins or downgrade it to 720p.
 # CCTV-6 moves off the viewer-confirmed black-screen 222.169 route to the current
 # first 1080-labelled best-fan candidate; actual APTV playback remains final authority.
 # CCTV-8 moves off the home-buffering 222.169 route to the highest-ranked
@@ -28,7 +29,7 @@ PLAYLISTS = (
 
 TARGET_URLS = {
     "cctv1": "http://182.140.125.47:808/hls/1/index.m3u8",
-    "cctv4": "http://120.198.95.220:9901/tsfile/live/1018_1.m3u8?key=txiptv&playlive=1&down=1",
+    "cctv4": "http://58.56.162.102:4466/newlive/live/hls/4/live.m3u8",
     "cctv5": "http://112.30.73.119:9901/tsfile/live/0005_2.m3u8",
     "cctv6": "http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0",
     "cctv8": "http://112.30.73.119:229/tsfile/live/0008_2.m3u8?key=txiptv&playlive=0&authid=0",
