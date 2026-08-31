@@ -11,11 +11,14 @@ import re
 from pathlib import Path
 
 # Touch this file to run the targeted pin workflow without rebuilding the catalogue.
-# CCTV-1 uses the 221.7 route from the uploaded cn_all list; viewer cache is now 30s.
-# CCTV-5 uses a previously verified 1080p rescue route; never downgrade it to 720p.
+# CCTV-1 moves off the home-buffering 221.7 route to the highest-ranked
+# Hong-Kong-verified 1080p50 route.
+# CCTV-4 and CCTV-5 stay aligned with the currently accepted formal routes;
+# never restore their older viewer-rejected pins or downgrade CCTV-5 to 720p.
 # CCTV-6 moves off the viewer-confirmed black-screen 222.169 route to the current
 # first 1080-labelled best-fan candidate; actual APTV playback remains final authority.
-# CCTV-8 must stay on the Drama HD feed, never the separate CCTV-8K service.
+# CCTV-8 moves off the home-buffering 222.169 route to the highest-ranked
+# Hong-Kong-verified Drama HD route, never the separate CCTV-8K service.
 PLAYLISTS = (
     Path("tv-easy.m3u"),
     Path("tv.m3u"),
@@ -24,11 +27,11 @@ PLAYLISTS = (
 )
 
 TARGET_URLS = {
-    "cctv1": "http://221.7.175.154:8445/tsfile/live/1000_1.m3u8?key=txiptv&playlive=1&authid=0",
-    "cctv4": "http://221.7.175.154:8445/tsfile/live/1003_1.m3u8?key=txiptv&playlive=1&authid=0",
-    "cctv5": "http://198.204.228.26/live/cctv5hd.m3u8",
+    "cctv1": "http://182.140.125.47:808/hls/1/index.m3u8",
+    "cctv4": "http://120.198.95.220:9901/tsfile/live/1018_1.m3u8?key=txiptv&playlive=1&down=1",
+    "cctv5": "http://112.30.73.119:9901/tsfile/live/0005_2.m3u8",
     "cctv6": "http://112.30.73.119:9901/tsfile/live/0006_2.m3u8?key=txiptv&playlive=0&authid=0",
-    "cctv8": "http://107.150.60.122/live/cctv8hd.m3u8",
+    "cctv8": "http://112.30.73.119:229/tsfile/live/0008_2.m3u8?key=txiptv&playlive=0&authid=0",
 }
 
 
