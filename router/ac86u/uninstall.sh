@@ -22,15 +22,15 @@ if [ -f "$SERVICES_START" ]; then
 fi
 
 if [ "$BASE" = "/opt/share/iptv-home-probe" ] && [ -d "$BASE" ]; then
-  find "$BASE" -depth -delete
+  rm -rf "$BASE"
 fi
 if [ "$purge" -eq 1 ]; then
   if [ "$KEY_DIR" = "/opt/etc/iptv-home-probe" ] && [ -d "$KEY_DIR" ]; then
-    find "$KEY_DIR" -depth -delete
+    rm -rf "$KEY_DIR"
   fi
   [ "$CONFIG" = "/opt/etc/iptv-home-probe.json" ] && rm -f "$CONFIG"
   if [ "$DATA" = "/opt/var/lib/iptv-home-probe" ] && [ -d "$DATA" ]; then
-    find "$DATA" -depth -delete
+    rm -rf "$DATA"
   fi
   echo "Uninstalled and purged the probe key, config, and USB state. Entware packages were kept."
 else

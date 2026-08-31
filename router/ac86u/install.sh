@@ -34,7 +34,12 @@ fi
 
 stage="/opt/tmp/iptv-home-probe-install.$$"
 mkdir -p "$stage" "$BASE" "$KEY_DIR" "$DATA" "$LOG_DIR" /opt/var/run
-trap 'find "$stage" -depth -delete 2>/dev/null || true' EXIT HUP INT TERM
+cleanup_stage() {
+  case "$stage" in
+    /opt/tmp/iptv-home-probe-install.*) rm -rf "$stage" ;;
+  esac
+}
+trap cleanup_stage EXIT HUP INT TERM
 
 files="home_probe.py upload_home_report.py pair.py activate.py run.sh status.sh activate.sh uninstall.sh"
 for name in $files; do
