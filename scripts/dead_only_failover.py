@@ -232,10 +232,11 @@ def run(args, probe=hk_probe.probe_one) -> dict:
     evidence = verified_rows(root / str(cfg["verified_pool"]))
     bad = rejected_urls(root / str(cfg["home_feedback"]))
     formal = {name: playlist_routes(root / name) for name in PLAYLISTS}
-    maximum = max(1, int(cfg.get("maximum_updates_per_cycle", 3)))
+    configured_maximum = int(cfg.get("maximum_updates_per_cycle", 0))
+    maximum = configured_maximum if configured_maximum > 0 else None
 
     for row in report.get("results") or []:
-        if len(selected) >= maximum:
+        if maximum is not None and len(selected) >= maximum:
             break
         name = canonical(str(row.get("name") or ""))
         old_url = str(row.get("url") or "").strip()
@@ -329,6 +330,7 @@ def run(args, probe=hk_probe.probe_one) -> dict:
         "decisions": decisions,
         "policy": {
             "dead_only": True,
+            "no_replacement_count_limit": maximum is None,
             "fixed_candidate_playlist": str(cfg["fixed_candidate_playlist"]),
             "github_pending_on_demand": bool(cfg.get("dynamic_pending_enabled", True)),
             "home_feedback_veto": True,

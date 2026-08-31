@@ -22,15 +22,15 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertNotIn("hk_auto_update.py", cycle)
         self.assertLess(cycle.index("dead_only_failover.py"), cycle.index("git add"))
 
-    def test_installer_uses_verified_four_hour_monitoring_schedule(self):
+    def test_installer_uses_verified_six_hour_monitoring_schedule(self):
         installer = (ROOT / "scripts/install_hk_probe.sh").read_text(encoding="utf-8")
         self.assertIn('exec bash "$INSTALL_DIR/scripts/hk_cycle.sh"', installer)
-        self.assertIn("OnCalendar=*-*-* 00/4:17:00", installer)
+        self.assertIn("OnCalendar=*-*-* 00/6:17:00", installer)
         self.assertIn("Persistent=true", installer)
         self.assertIn("systemctl is-enabled --quiet iptv-hk-probe.timer", installer)
         self.assertIn("systemctl is-active --quiet iptv-hk-probe.timer", installer)
         self.assertIn("Initial probe or GitHub health upload failed; scheduler not enabled.", installer)
-        self.assertIn("17 */4 * * *", installer)
+        self.assertIn("17 */6 * * *", installer)
         self.assertNotIn("17 */3 * * *", installer)
         self.assertIn("fixed + GitHub pending spares", installer)
         self.assertIn("Production update: confirmed DEAD routes only", installer)
@@ -54,7 +54,16 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertTrue(dead_only["dynamic_pending_enabled"])
         self.assertEqual(2, dead_only["current_recheck_attempts"])
         self.assertEqual(2, dead_only["candidate_confirm_attempts"])
-        self.assertLessEqual(dead_only["maximum_updates_per_cycle"], 3)
+        self.assertEqual(0, dead_only["maximum_updates_per_cycle"])
+
+        rotation = json.loads((ROOT / "config/core-health-rotation.json").read_text(encoding="utf-8"))
+        self.assertTrue(rotation["enabled"])
+        self.assertEqual(3, rotation["interval_days"])
+        self.assertTrue(rotation["policy"]["no_replacement_count_limit"])
+
+        workflow = (ROOT / ".github/workflows/rotate-core-health.yml").read_text(encoding="utf-8")
+        self.assertIn("cron: '0 0 * * *'", workflow)
+        self.assertIn("scripts/rotate_core_health.py", workflow)
 
 
 if __name__ == "__main__":

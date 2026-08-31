@@ -43,8 +43,9 @@ def load_report(path: Path, destination: str = HEALTH_DESTINATION) -> tuple[dict
         decisions = report.get("decisions")
         if not isinstance(selected, list) or not isinstance(changed, list) or not isinstance(decisions, list):
             raise RuntimeError("invalid failover report shape")
-        if len(selected) > 3:
-            raise RuntimeError("failover report exceeds per-cycle update limit")
+        selected_channels = [str(row.get("channel") or "") for row in selected if isinstance(row, dict)]
+        if len(selected_channels) != len(set(selected_channels)):
+            raise RuntimeError("failover report contains duplicate channel updates")
         if not set(changed).issubset(PRODUCTION_PLAYLISTS):
             raise RuntimeError("failover report contains an unexpected changed file")
         for update in selected:

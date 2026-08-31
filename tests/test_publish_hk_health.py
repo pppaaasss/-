@@ -88,6 +88,24 @@ class HealthPublisherSafetyTests(unittest.TestCase):
         finally:
             path.unlink(missing_ok=True)
 
+    def test_failover_report_accepts_more_than_three_unique_channel_updates(self):
+        payload = valid_failover_report()
+        payload["selected_updates"] = [
+            {
+                "channel": f"CCTV-{number}",
+                "old_url": f"http://old.test/{number}.m3u8",
+                "new_url": f"http://new.test/{number}.m3u8",
+                "matching_files": ["tv.m3u"],
+            }
+            for number in range(1, 6)
+        ]
+        path = self.write_report(payload)
+        try:
+            report, _ = load_report(path, "health/dead-only-failover.json")
+            self.assertEqual(5, len(report["selected_updates"]))
+        finally:
+            path.unlink(missing_ok=True)
+
     def test_update_payload_is_bound_to_health_branch(self):
         raw = b'{"production_modified":false}'
         payload = build_put_payload(raw, "health-monitor", "old-blob", "health")

@@ -222,6 +222,60 @@ class DeadOnlyFailoverTests(unittest.TestCase):
         result = run(self.args(), probe=self.probe)
         self.assertFalse(result["selected_updates"])
 
+    def test_zero_cycle_limit_means_every_confirmed_dead_channel_is_processed(self):
+        channels = [f"CCTV-{number}" for number in range(1, 6)]
+        playlist = ["#EXTM3U"]
+        candidate = ["#EXTM3U"]
+        evidence = []
+        results = []
+        for number, name in enumerate(channels, 1):
+            old = f"http://old.test/{number}.m3u8"
+            new = f"http://new.test/{number}.m3u8"
+            playlist.extend((f"#EXTINF:-1,{name}", old))
+            candidate.extend((f"#EXTINF:-1,{name}", new))
+            evidence.append(json.dumps({
+                "name": name,
+                "url": new,
+                "sources": ["fixed"],
+                "hk_verified": {"height": 1080, "segment_ok": True},
+            }))
+            results.append({
+                "name": name,
+                "url": old,
+                "status": "DEAD",
+                "hk_dead_confirmed": True,
+                "consecutive_failures": 3,
+                "failure_age_hours": 8,
+                "min_height": 1080,
+            })
+        for filename in PLAYLISTS:
+            (self.root / filename).write_text("\n".join(playlist) + "\n", encoding="utf-8")
+        (self.root / "candidate/tv-core.m3u").write_text(
+            "\n".join(candidate) + "\n", encoding="utf-8"
+        )
+        (self.root / "harvest/candidates.jsonl").write_text("\n".join(evidence) + "\n", encoding="utf-8")
+        config_path = self.root / "config/dead-only-failover.json"
+        config = json.loads(config_path.read_text(encoding="utf-8"))
+        config["maximum_updates_per_cycle"] = 0
+        config_path.write_text(json.dumps(config), encoding="utf-8")
+        self.report.write_text(json.dumps({
+            "summary": {"circuit_breaker_open": False},
+            "results": results,
+        }), encoding="utf-8")
+
+        def probe_many(item):
+            name, url, floor = item
+            if "old.test" in url:
+                return ProbeResult(name=name, url=url, status="UNKNOWN", min_height=floor)
+            return ProbeResult(
+                name=name, url=url, status="GOOD", height=1080, min_height=floor,
+                segment_ok=True, codec="h264", bitrate_mbps=3,
+            )
+
+        result = run(self.args(), probe=probe_many)
+        self.assertEqual(5, len(result["selected_updates"]))
+        self.assertTrue(result["policy"]["no_replacement_count_limit"])
+
 
 if __name__ == "__main__":
     unittest.main()

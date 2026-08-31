@@ -1,0 +1,98 @@
+name: Rotate CCTV and satellite health
+
+on:
+  # GitHub cron has no true "every 3 days" calendar interval. Run the cheap
+  # due-check daily at 08:00 Singapore/Beijing time; the committed state file
+  # permits a production rotation only after three local calendar days.
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-publish-lock
+  cancel-in-progress: false
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Fetch Hong Kong health evidence
+        run: |
+          git fetch origin health-monitor
+          git show origin/health-monitor:health/latest.json > /tmp/health-latest.json
+          git show origin/health-monitor:health/dead-only-failover.json > /tmp/dead-only-failover.json
+
+      - name: Run offline safety tests
+        run: |
+          python3 -m unittest tests.test_core_health_rotation -v
+          python3 -m unittest tests.test_home_route_policy tests.test_dead_only_failover tests.test_publish_hk_health -v
+
+      - name: Run due three-day rotation without a channel cap
+        run: |
+          args=(--apply)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            args+=(--force)
+          fi
+          python3 scripts/rotate_core_health.py \
+            --health-report /tmp/health-latest.json \
+            --failover-report /tmp/dead-only-failover.json \
+            "${args[@]}"
+
+      - name: Validate playlist structure after rotation
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = ('tv-easy.m3u', 'tv.m3u', 'tv-all.m3u', 'tv-core.m3u')
+          for name in files:
+              lines = Path(name).read_text(encoding='utf-8').splitlines()
+              assert lines and lines[0].startswith('#EXTM3U'), name
+              assert sum(line.startswith('#EXTINF') for line in lines) > 0, name
+          PY
+          git diff --check
+
+      - name: Upload the round report
+        if: ${{ always() && hashFiles('rotation/latest.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-health-rotation-${{ github.run_id }}
+          path: rotation/latest.json
+          retention-days: 14
+
+      - name: Commit one atomic rotation
+        run: |
+          rm -rf scripts/__pycache__ tests/__pycache__
+          allowed='^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|config/core-health-rotation\.json|rotation/latest\.json)$'
+          bad="$(git status --porcelain | awk '{print $2}' | grep -Ev "$allowed" || true)"
+          test -z "$bad" || { echo 'Unexpected modified paths:'; echo "$bad"; exit 1; }
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u config/core-health-rotation.json
+          if [ -f rotation/latest.json ]; then
+            git add rotation/latest.json
+          fi
+          if git diff --cached --quiet; then
+            echo 'Rotation is not due; nothing to commit'
+            exit 0
+          fi
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
+            echo 'master moved during rotation; refusing to overwrite newer work'
+            exit 1
+          }
+          count="$(python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('rotation/latest.json')
+          print(json.loads(path.read_text(encoding='utf-8')).get('replacement_count', 0) if path.exists() else 0)
+          PY
+          )"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git commit -m "Run three-day uncapped core health rotation (${count} routes)"
+          git push origin HEAD:master
