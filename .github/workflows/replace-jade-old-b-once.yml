@@ -1,0 +1,80 @@
+name: Replace TVB Jade with user-confirmed route once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/replace-jade-old-b-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  replace-jade:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace Jade route and lock it
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          new_url = "http://r.jdshipin.com/n90gt"
+          playlists = ["tv-easy.m3u", "tv.m3u", "tv-all.m3u"]
+
+          for filename in playlists:
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8", errors="ignore")
+              lines = text.splitlines()
+              changed = False
+              for i, line in enumerate(lines):
+                  if not line.startswith("#EXTINF") or "翡翠台" not in line:
+                      continue
+                  for j in range(i + 1, len(lines)):
+                      candidate = lines[j].strip()
+                      if lines[j].startswith("#EXTINF"):
+                          break
+                      if candidate.startswith(("http://", "https://")):
+                          if candidate != new_url:
+                              lines[j] = new_url
+                              changed = True
+                          break
+              if changed:
+                  path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8", newline="\n")
+              print(f"{filename}: {'updated' if changed else 'already-set-or-not-found'}")
+
+          cfg_path = Path("config/viewer-locked-channels.json")
+          cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+          channels = cfg.setdefault("channels", [])
+          jade = next((item for item in channels if item.get("name") == "翡翠台"), None)
+          if jade is None:
+              jade = {
+                  "name": "翡翠台",
+                  "group": "香港",
+                  "logo": "https://live.fanmingming.cn/tv/翡翠台.png",
+                  "preferred_url": new_url,
+                  "playlists": playlists,
+              }
+              channels.append(jade)
+          else:
+              jade.update({
+                  "group": "香港",
+                  "preferred_url": new_url,
+                  "playlists": playlists,
+              })
+          cfg_path.write_text(json.dumps(cfg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+          PY
+
+      - name: Commit replacement and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tv-easy.m3u tv.m3u tv-all.m3u config/viewer-locked-channels.json
+          git rm .github/workflows/replace-jade-old-b-once.yml
+          git commit -m "Restore user-confirmed TVB Jade route"
+          git push
