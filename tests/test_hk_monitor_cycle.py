@@ -17,6 +17,8 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertIn("dead_only_failover.py", cycle)
         self.assertIn("--apply", cycle)
         self.assertIn("health/dead-only-failover.json", cycle)
+        self.assertIn("health/home-latest.json", cycle)
+        self.assertIn("home receiver not paired yet", cycle)
         self.assertIn("failover diagnostics upload failed; main health report remains valid", cycle)
         self.assertIn("confirmed DEAD route replacement", cycle)
         self.assertNotIn("hk_auto_update.py", cycle)

@@ -27,11 +27,24 @@ def atomic_json(path: Path, value: dict) -> None:
     os.replace(temporary, path)
 
 
-def set_actionable(config_path: Path, *, enabled: bool, now_epoch: float | None = None) -> dict:
+def set_actionable(
+    config_path: Path,
+    *,
+    enabled: bool,
+    confirm_living_room_path: bool = False,
+    now_epoch: float | None = None,
+) -> dict:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     config = json.loads(config_path.read_text(encoding="utf-8"))
     output = Path(str(config.get("output_dir") or "/opt/var/lib/iptv-home-probe"))
     if enabled:
+        if config.get("route_context") != "living-room-path-equivalent":
+            if not confirm_living_room_path:
+                raise RuntimeError(
+                    "first verify router-origin traffic follows the living-room route, then use "
+                    "--confirm-living-room-path"
+                )
+            config["route_context"] = "living-room-path-equivalent"
         if config.get("upload_enabled") is not True:
             raise RuntimeError("pair the Hong Kong receiver before activation")
         upload = json.loads((output / "upload-state.json").read_text(encoding="utf-8"))
@@ -55,9 +68,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
     parser.add_argument("--off", action="store_true")
+    parser.add_argument("--confirm-living-room-path", action="store_true")
     args = parser.parse_args()
     try:
-        set_actionable(Path(args.config), enabled=not args.off)
+        set_actionable(
+            Path(args.config),
+            enabled=not args.off,
+            confirm_living_room_path=args.confirm_living_room_path,
+        )
         if args.off:
             print("HOME_PROBE_ACTIVATE off; uploads continue as non-actionable evidence")
         else:

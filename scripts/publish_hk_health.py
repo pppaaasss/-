@@ -13,11 +13,18 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from scripts.home_probe_report import validate_home_report
+
 
 API_ROOT = "https://api.github.com"
 REPOSITORY_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 HEALTH_DESTINATION = "health/latest.json"
 FAILOVER_DESTINATION = "health/dead-only-failover.json"
+HOME_DESTINATION = "health/home-latest.json"
 PRODUCTION_PLAYLISTS = {"tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u"}
 
 
@@ -56,6 +63,8 @@ def load_report(path: Path, destination: str = HEALTH_DESTINATION) -> tuple[dict
             matching = set(update.get("matching_files") or [])
             if not matching or not matching.issubset(PRODUCTION_PLAYLISTS):
                 raise RuntimeError("invalid failover playlist scope")
+    elif destination == HOME_DESTINATION:
+        validate_home_report(report, require_receiver=True)
     else:
         raise RuntimeError("unsupported report destination")
     return report, raw
@@ -66,12 +75,22 @@ def validate_destination(repository: str, branch: str, destination: str) -> None
         raise RuntimeError("invalid GitHub repository name")
     if branch != "health-monitor":
         raise RuntimeError("health reports may only target the health-monitor branch")
-    if destination not in {HEALTH_DESTINATION, FAILOVER_DESTINATION}:
+    if destination not in {HEALTH_DESTINATION, FAILOVER_DESTINATION, HOME_DESTINATION}:
         raise RuntimeError("unsupported health report destination")
 
 
 def commit_message(report: dict, destination: str) -> str:
     generated = str(report.get("generated_utc") or "unknown-time")
+    if destination == HOME_DESTINATION:
+        summary = report.get("summary") or {}
+        return (
+            f"Update home health {generated} "
+            f"GOOD={int(summary.get('good') or 0)} "
+            f"DEGRADED={int(summary.get('degraded') or 0)} "
+            f"UNKNOWN={int(summary.get('unknown') or 0)} "
+            f"DEAD={int(summary.get('dead') or 0)} "
+            f"ACTIONABLE={int(bool(report.get('actionable')))}"
+        )
     if destination == FAILOVER_DESTINATION:
         return (
             f"Update Hong Kong dead failover {generated} "

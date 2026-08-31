@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -5,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from scripts.dead_only_failover import PLAYLISTS
-from scripts.rotate_core_health import rotation_due, run_rotation
+from scripts.rotate_core_health import playlist_entries, rotation_due, run_rotation
 
 
 UTC = timezone.utc
@@ -17,12 +18,14 @@ class CoreHealthRotationTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         (self.root / "config").mkdir()
         (self.root / "harvest").mkdir()
+        (self.root / "candidate").mkdir()
         self.now = datetime(2026, 9, 3, 0, 0, tzinfo=UTC)
         self.state = self.root / "config/core-health-rotation.json"
         self.health = self.root / "health.json"
         self.failover = self.root / "failover.json"
         self.report = self.root / "rotation/latest.json"
         self.feedback = self.root / "config/home-route-feedback.json"
+        self.home = self.root / "home.json"
         self.feedback.write_text(json.dumps({"good": {}, "bad": {}}), encoding="utf-8")
         self.write_state()
         self.failover.write_text(json.dumps({"selected_updates": []}), encoding="utf-8")
@@ -41,6 +44,7 @@ class CoreHealthRotationTests(unittest.TestCase):
             "policy": {
                 "no_replacement_count_limit": True,
                 "maximum_health_age_hours": 18,
+                "maximum_home_health_age_hours": 18,
                 "maximum_candidate_age_days": 7,
                 "minimum_height_default": 1080,
                 "minimum_height_overrides": {"CCTV-4K": 2160},
@@ -48,6 +52,7 @@ class CoreHealthRotationTests(unittest.TestCase):
                 "minimum_source_references": 2,
                 "minimum_candidate_segment_mbps": 2.0,
                 "performance_rotation_enabled": False,
+                "live_home_probe_enabled": True,
                 "home_accepted_routes_are_locked": True,
                 "candidate_host_block_after_home_failures": 2,
                 "require_known_stream_bitrate_for_quality_upgrade": True,
@@ -67,12 +72,14 @@ class CoreHealthRotationTests(unittest.TestCase):
         candidate_bitrate=6.0,
     ):
         playlist = ["#EXTM3U"]
+        candidate_playlist = ["#EXTM3U"]
         health_rows = []
         candidates = []
         for index, name in enumerate(channels, 1):
             old = f"http://old{index}.test/live.m3u8"
             new = f"http://new{index}.test/live.m3u8"
             playlist.extend((f"#EXTINF:-1,{name}", old))
+            candidate_playlist.extend((f"#EXTINF:-1,{name}", new))
             health_rows.append({
                 "name": name,
                 "url": old,
@@ -102,6 +109,10 @@ class CoreHealthRotationTests(unittest.TestCase):
         text = "\n".join(playlist) + "\n"
         for filename in PLAYLISTS:
             (self.root / filename).write_text(text, encoding="utf-8")
+        (self.root / "candidate/tv-core.m3u").write_text(
+            "\n".join(candidate_playlist) + "\n",
+            encoding="utf-8",
+        )
         self.health.write_text(json.dumps({
             "generated_utc": "2026-09-02T23:30:00Z",
             "summary": {"circuit_breaker_open": False},
@@ -122,7 +133,119 @@ class CoreHealthRotationTests(unittest.TestCase):
             now_utc=self.now,
             force=False,
             apply=apply,
+            home_path=self.home if self.home.exists() else None,
         )
+
+    @staticmethod
+    def home_row(name, url, *, status, candidate=False):
+        samples = [] if status == "DEAD" else [
+            {
+                "url": f"{url.rsplit('/', 1)[0]}/{index}.ts",
+                "downloaded_bytes": 2097152,
+                "total_bytes": 3145728,
+                "duration_s": 4.0,
+                "elapsed_s": 0.5,
+                "download_mbps": 33.554,
+                "stream_mbps": 6.291,
+                "complete": False,
+            }
+            for index in (1, 2)
+        ]
+        row = {
+            "name": name,
+            "url": url,
+            "url_sha256": hashlib.sha256(url.encode()).hexdigest(),
+            "status": status,
+            "observed_status": "UNKNOWN" if status == "DEAD" else status,
+            "sample_count": len(samples),
+            "segment_samples": samples,
+            "startup_s": 0.8 if samples else 0.0,
+            "min_download_mbps": 33.554 if samples else 0.0,
+            "avg_download_mbps": 33.554 if samples else 0.0,
+            "stream_mbps": 6.291 if samples else 0.0,
+            "headroom_ratio": 5.334 if samples else 0.0,
+            "width": 1920 if status == "GOOD" else 1280 if status == "DEGRADED" else 0,
+            "height": 1080 if status == "GOOD" else 720 if status == "DEGRADED" else 0,
+            "codec": "h264" if status != "DEAD" else "",
+            "fps": 50.0 if status != "DEAD" else 0.0,
+            "bitrate_mbps": 6.291 if status != "DEAD" else 0.0,
+            "min_height": 1080,
+            "deep_checked": status != "DEAD",
+            "error": "confirmed_home_failure" if status == "DEAD" else "",
+            "consecutive_failures": 3 if status == "DEAD" else 0,
+            "failure_age_hours": 6.0 if status == "DEAD" else 0.0,
+            "home_dead_confirmed": status == "DEAD",
+            "consecutive_degraded": 3 if status == "DEGRADED" else 0,
+            "degraded_age_hours": 6.0 if status == "DEGRADED" else 0.0,
+            "home_degraded_confirmed": status == "DEGRADED",
+        }
+        if candidate:
+            row["candidate_confirmed"] = True
+        return row
+
+    def write_home_evidence(
+        self,
+        name,
+        *,
+        current_status="DEAD",
+        actionable=True,
+        candidate_confirmed=True,
+        route_context="living-room-path-equivalent",
+        playlist_sha=None,
+    ):
+        current = next(url for channel, url in playlist_entries(self.root / "tv-core.m3u") if channel == name)
+        candidate = next(url for channel, url in playlist_entries(self.root / "candidate/tv-core.m3u") if channel == name)
+        current_row = self.home_row(name, current, status=current_status)
+        candidates = [self.home_row(name, candidate, status="GOOD", candidate=True)] if candidate_confirmed else []
+        counts = {"GOOD": 0, "DEGRADED": 0, "UNKNOWN": 0, "DEAD": 0}
+        counts[current_status] += 1
+        report = {
+            "schema": "iptv-home-probe/v1",
+            "probe_id": "home-ac86u-123",
+            "generated_utc": "2026-09-02T23:30:00Z",
+            "run_status": "COMPLETED",
+            "mode": "deep",
+            "actionable": actionable,
+            "production_modified": False,
+            "probe_region": "home",
+            "route_context": route_context,
+            "playlist": {
+                "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u",
+                "sha256": playlist_sha or hashlib.sha256((self.root / "tv-core.m3u").read_bytes()).hexdigest(),
+                "channel_count": 1,
+            },
+            "candidate_playlist": {
+                "url": "https://raw.githubusercontent.com/pppaaasss/-/master/candidate/tv-core.m3u",
+                "sha256": hashlib.sha256((self.root / "candidate/tv-core.m3u").read_bytes()).hexdigest(),
+                "channel_count": 1,
+            },
+            "policy": {
+                "auto_replace_formal_routes": False,
+                "mass_failure_circuit_breaker": True,
+                "samples_per_route": 2,
+                "sample_bytes": 12582912,
+            },
+            "resources": {"load1": 0.2, "mem_available_kib": 180000, "runtime_s": 40.0},
+            "summary": {
+                "channels": 1,
+                "good": counts["GOOD"],
+                "degraded": counts["DEGRADED"],
+                "unknown": counts["UNKNOWN"],
+                "dead": counts["DEAD"],
+                "candidate_channels": len(candidates),
+                "candidate_confirmed": len(candidates),
+                "circuit_breaker_open": False,
+            },
+            "results": [current_row],
+            "candidate_results": candidates,
+            "transport": {
+                "via": "ssh-forced-command",
+                "receiver_validated": True,
+                "received_utc": "2026-09-02T23:31:00Z",
+                "report_sha256": "b" * 64,
+            },
+        }
+        self.home.write_text(json.dumps(report), encoding="utf-8")
 
     def test_due_after_three_local_calendar_days(self):
         state = json.loads(self.state.read_text(encoding="utf-8"))
@@ -219,6 +342,57 @@ class CoreHealthRotationTests(unittest.TestCase):
         result = self.run_case()
         self.assertEqual(0, result["replacement_count"])
         self.assertIn("CCTV-10", result["unresolved_channels"])
+
+    def test_actionable_home_dead_route_uses_only_home_confirmed_backup(self):
+        self.write_case(["CCTV-1"])
+        payload = json.loads(self.health.read_text(encoding="utf-8"))
+        payload["results"][0].update(status="GOOD", height=1080)
+        self.health.write_text(json.dumps(payload), encoding="utf-8")
+        self.write_home_evidence("CCTV-1")
+        result = self.run_case()
+        self.assertEqual(1, result["replacement_count"])
+        self.assertEqual("home_confirmed_dead", result["decisions"][0]["reason"])
+        self.assertTrue(result["home_probe"]["used"])
+
+    def test_shadow_home_report_never_changes_a_hk_good_route(self):
+        self.write_case(["CCTV-1"])
+        payload = json.loads(self.health.read_text(encoding="utf-8"))
+        payload["results"][0].update(status="GOOD", height=1080)
+        self.health.write_text(json.dumps(payload), encoding="utf-8")
+        self.write_home_evidence("CCTV-1", actionable=False)
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertEqual("shadow", result["home_probe"]["state"])
+
+    def test_home_failure_waits_when_no_home_qualified_backup_exists(self):
+        self.write_case(["CCTV-1"])
+        payload = json.loads(self.health.read_text(encoding="utf-8"))
+        payload["results"][0].update(status="GOOD", height=1080)
+        self.health.write_text(json.dumps(payload), encoding="utf-8")
+        self.write_home_evidence("CCTV-1", candidate_confirmed=False)
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertEqual(["CCTV-1"], result["unresolved_channels"])
+
+    def test_home_report_is_ignored_after_playlist_changes(self):
+        self.write_case(["CCTV-1"])
+        payload = json.loads(self.health.read_text(encoding="utf-8"))
+        payload["results"][0].update(status="GOOD", height=1080)
+        self.health.write_text(json.dumps(payload), encoding="utf-8")
+        self.write_home_evidence("CCTV-1", playlist_sha="f" * 64)
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertEqual("playlist_changed", result["home_probe"]["state"])
+
+    def test_unverified_router_path_is_never_production_evidence(self):
+        self.write_case(["CCTV-1"])
+        payload = json.loads(self.health.read_text(encoding="utf-8"))
+        payload["results"][0].update(status="GOOD", height=1080)
+        self.health.write_text(json.dumps(payload), encoding="utf-8")
+        self.write_home_evidence("CCTV-1", route_context="router-origin-direct-wan")
+        result = self.run_case()
+        self.assertEqual(0, result["replacement_count"])
+        self.assertEqual("route_context_not_verified", result["home_probe"]["state"])
 
     def test_not_due_run_does_not_touch_state_or_playlists(self):
         self.write_case(["CCTV-1"])

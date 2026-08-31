@@ -15,6 +15,7 @@ unless they are later rejected at home or repeatedly confirmed dead.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -30,6 +31,7 @@ if str(ROOT) not in sys.path:
 from scripts.dead_only_failover import PLAYLISTS, TOKEN_RE, canonical, jsonl_rows  # noqa: E402
 from scripts.hk_filter_harvest import build_target_matcher  # noqa: E402
 from scripts.home_route_policy import load_feedback, rejected_hosts, rejected_urls  # noqa: E402
+from scripts.home_probe_report import validate_home_report  # noqa: E402
 
 
 CCTV8K_RE = re.compile(r"cctv[-_]?8k|cctv8k|/8k(?:[/?.]|$)", re.I)
@@ -133,6 +135,84 @@ def validate_health(report: dict, now_utc: datetime, policy: dict) -> None:
     maximum = timedelta(hours=float(policy.get("maximum_health_age_hours") or 18))
     if age < timedelta(minutes=-10) or age > maximum:
         raise RuntimeError(f"health report is stale or future-dated: age={age}")
+
+
+def live_home_evidence(
+    path: Path | None,
+    *,
+    root: Path,
+    now_utc: datetime,
+    policy: dict,
+) -> tuple[dict[str, dict], dict[str, dict], dict]:
+    """Load route-bound home evidence, returning no rows when safely ignored."""
+    status = {"state": "absent", "used": False}
+    if path is None or not path.exists():
+        return {}, {}, status
+    report = load_json(path)
+    validate_home_report(report, require_receiver=True)
+    status.update({
+        "probe_id": str(report.get("probe_id") or ""),
+        "generated_utc": str(report.get("generated_utc") or ""),
+        "actionable": bool(report.get("actionable")),
+    })
+    if policy.get("live_home_probe_enabled", True) is not True:
+        status["state"] = "disabled_by_policy"
+        return {}, {}, status
+    if report.get("actionable") is not True:
+        status["state"] = "shadow"
+        return {}, {}, status
+    if report.get("route_context") != "living-room-path-equivalent":
+        status["state"] = "route_context_not_verified"
+        return {}, {}, status
+    if bool((report.get("summary") or {}).get("circuit_breaker_open")):
+        status["state"] = "circuit_breaker_open"
+        return {}, {}, status
+    generated = parse_utc(str(report.get("generated_utc") or ""))
+    age = now_utc - generated
+    maximum = timedelta(hours=float(policy.get("maximum_home_health_age_hours") or 18))
+    if age < timedelta(minutes=-10) or age > maximum:
+        status["state"] = "stale_or_future"
+        return {}, {}, status
+
+    current_bytes = (root / "tv-core.m3u").read_bytes()
+    expected_sha = hashlib.sha256(current_bytes).hexdigest()
+    if str((report.get("playlist") or {}).get("sha256") or "") != expected_sha:
+        status["state"] = "playlist_changed"
+        return {}, {}, status
+    rows = health_rows(report)
+
+    approved_candidates: dict[str, dict] = {}
+    candidate_meta = report.get("candidate_playlist")
+    candidate_path = root / "candidate/tv-core.m3u"
+    candidate_state = "none"
+    if candidate_meta and candidate_path.exists():
+        candidate_sha = hashlib.sha256(candidate_path.read_bytes()).hexdigest()
+        if str(candidate_meta.get("sha256") or "") == candidate_sha:
+            candidate_routes = playlist_routes(candidate_path)
+            for raw in report.get("candidate_results") or []:
+                if not isinstance(raw, dict):
+                    continue
+                name = canonical(str(raw.get("name") or ""))
+                url = str(raw.get("url") or "").strip()
+                if (
+                    name
+                    and url in candidate_routes.get(name, [])
+                    and raw.get("status") == "GOOD"
+                    and raw.get("candidate_confirmed") is True
+                    and raw.get("deep_checked") is True
+                ):
+                    approved_candidates[name] = raw
+            candidate_state = "matched"
+        else:
+            candidate_state = "playlist_changed"
+    status.update({
+        "state": "ready",
+        "used": True,
+        "playlist_sha256": expected_sha,
+        "candidate_state": candidate_state,
+        "approved_candidate_channels": sorted(approved_candidates),
+    })
+    return rows, approved_candidates, status
 
 
 def source_count(rows: list[dict]) -> int:
@@ -305,12 +385,15 @@ def choose_candidate(
     policy: dict,
     selected_hosts: set[str],
     approved_dead_url: str | None = None,
+    approved_home_url: str | None = None,
 ) -> dict | None:
     eligible = []
     for row in candidates:
         if row["url"] == current_url:
             continue
         if approved_dead_url is not None and row["url"] != approved_dead_url:
+            continue
+        if approved_home_url is not None and row["url"] != approved_home_url:
             continue
         if reason == "clearly_weak" and not clearly_better(current_health, row, policy):
             continue
@@ -336,6 +419,7 @@ def run_rotation(
     now_utc: datetime,
     force: bool = False,
     apply: bool = False,
+    home_path: Path | None = None,
 ) -> dict:
     state = load_json(state_path)
     if not state.get("enabled", True):
@@ -350,6 +434,12 @@ def run_rotation(
         raise RuntimeError("rotation policy must explicitly declare no replacement count limit")
     health = load_json(health_path)
     validate_health(health, now_utc, policy)
+    home_rows, home_candidates, home_status = live_home_evidence(
+        home_path,
+        root=root,
+        now_utc=now_utc,
+        policy=policy,
+    )
     failover = load_json(failover_path) if failover_path and failover_path.exists() else None
     approvals = dead_approvals(failover)
     feedback_path = root / str(state.get("home_feedback") or "config/home-route-feedback.json")
@@ -389,11 +479,27 @@ def run_rotation(
         current_url = current_routes[name]
         all_urls = {url for routes in formal.values() for url in routes.get(name, [])}
         current_health = health_by_name.get(name)
+        current_home = home_rows.get(name)
         reason = ""
         approved_dead_url = None
+        approved_home_url = None
 
         if all_urls & bad:
             reason = "home_feedback_rejected"
+        elif (
+            current_home
+            and str(current_home.get("url") or "").strip() == current_url
+            and current_home.get("home_dead_confirmed") is True
+            and current_home.get("status") == "DEAD"
+        ):
+            reason = "home_confirmed_dead"
+        elif (
+            current_home
+            and str(current_home.get("url") or "").strip() == current_url
+            and current_home.get("home_degraded_confirmed") is True
+            and current_home.get("status") == "DEGRADED"
+        ):
+            reason = "home_confirmed_degraded"
         elif not current_health:
             decisions.append({"channel": name, "action": "kept", "reason": "missing_health_row"})
             continue
@@ -424,6 +530,17 @@ def run_rotation(
             decisions.append({"channel": name, "action": "kept", "reason": "healthy"})
             continue
 
+        if reason in {"home_confirmed_dead", "home_confirmed_degraded"}:
+            approved = home_candidates.get(name)
+            if not approved:
+                decisions.append({
+                    "channel": name,
+                    "action": "kept",
+                    "reason": f"{reason}_without_home_qualified_backup",
+                })
+                continue
+            approved_home_url = str(approved.get("url") or "")
+
         chosen = choose_candidate(
             pool.get(name, []),
             current_url=current_url,
@@ -432,6 +549,7 @@ def run_rotation(
             policy=policy,
             selected_hosts=selected_hosts,
             approved_dead_url=approved_dead_url,
+            approved_home_url=approved_home_url,
         )
         if chosen is None:
             decisions.append({
@@ -453,6 +571,13 @@ def run_rotation(
                 "width", "height", "fps", "bitrate_mbps", "stream_mbps", "segment_mbps",
                 "startup_s", "checked_utc", "source_references",
             )},
+            "home_evidence": ({
+                "current_status": current_home.get("status"),
+                "current_headroom_ratio": current_home.get("headroom_ratio"),
+                "current_stream_mbps": current_home.get("stream_mbps"),
+                "candidate_headroom_ratio": home_candidates[name].get("headroom_ratio"),
+                "candidate_stream_mbps": home_candidates[name].get("stream_mbps"),
+            } if reason in {"home_confirmed_dead", "home_confirmed_degraded"} else None),
         })
 
     rendered = {}
@@ -466,7 +591,10 @@ def run_rotation(
             changed_files.append(filename)
     unresolved = [
         row["channel"] for row in decisions
-        if row["action"] == "kept" and "without_qualified_backup" in row["reason"]
+        if row["action"] == "kept" and (
+            "without_qualified_backup" in row["reason"]
+            or "without_home_qualified_backup" in row["reason"]
+        )
     ]
     result = {
         "generated_utc": utc_text(now_utc),
@@ -481,6 +609,7 @@ def run_rotation(
         "changed_routes_per_file": changed_routes,
         "unresolved_channels": unresolved,
         "decisions": decisions,
+        "home_probe": home_status,
         "policy": {
             "interval_days": int(state.get("interval_days") or 3),
             "no_replacement_count_limit": True,
@@ -492,6 +621,9 @@ def run_rotation(
             "performance_rotation_enabled": bool(policy.get("performance_rotation_enabled", False)),
             "home_accepted_routes_are_locked": bool(policy.get("home_accepted_routes_are_locked", True)),
             "blocked_candidate_hosts": sorted(blocked_hosts),
+            "live_home_probe_enabled": bool(policy.get("live_home_probe_enabled", True)),
+            "home_route_must_match_current_playlist": True,
+            "home_candidate_confirmation_required": True,
         },
     }
 
@@ -526,6 +658,7 @@ def main() -> int:
     parser.add_argument("--state", default="config/core-health-rotation.json")
     parser.add_argument("--health-report", required=True)
     parser.add_argument("--failover-report", default="")
+    parser.add_argument("--home-report", default="")
     parser.add_argument("--report", default="rotation/latest.json")
     parser.add_argument("--now-utc", default="")
     parser.add_argument("--force", action="store_true")
@@ -543,6 +676,7 @@ def main() -> int:
             now_utc=now,
             force=args.force,
             apply=args.apply,
+            home_path=Path(args.home_report) if args.home_report else None,
         )
         return 0
     except Exception as exc:

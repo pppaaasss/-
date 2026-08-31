@@ -29,6 +29,12 @@ jobs:
           git fetch origin health-monitor
           git show origin/health-monitor:health/latest.json > /tmp/health-latest.json
           git show origin/health-monitor:health/dead-only-failover.json > /tmp/dead-only-failover.json
+          if git show origin/health-monitor:health/home-latest.json > /tmp/home-latest.json 2>/dev/null; then
+            echo 'Validated home report is available'
+          else
+            rm -f /tmp/home-latest.json
+            echo 'Home report is not paired yet; continuing with Hong Kong evidence'
+          fi
 
       - name: Run offline safety tests
         run: |
@@ -38,6 +44,9 @@ jobs:
       - name: Run conservative three-day management without a channel cap
         run: |
           args=(--apply)
+          if [ -s /tmp/home-latest.json ]; then
+            args+=(--home-report /tmp/home-latest.json)
+          fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             args+=(--force)
           fi

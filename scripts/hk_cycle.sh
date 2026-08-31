@@ -69,6 +69,24 @@ python3 scripts/publish_hk_health.py \
   --destination "health/latest.json" \
   --token-file "${IPTV_GITHUB_TOKEN_FILE:-/etc/iptv-hk-probe.github-token}"
 
+# A home report can only appear here through the dedicated SSH forced-command
+# receiver.  Publishing is optional until the router has been paired; a bad or
+# absent home report must never break the independent Hong Kong safety chain.
+HOME_REPORT="$DATA_DIR/home/latest.json"
+if [[ -s "$HOME_REPORT" ]]; then
+  if ! python3 scripts/publish_hk_health.py \
+    --report "$HOME_REPORT" \
+    --repository "${IPTV_GITHUB_REPOSITORY:-pppaaasss/-}" \
+    --branch "${IPTV_HEALTH_BRANCH:-health-monitor}" \
+    --destination "health/home-latest.json" \
+    --token-file "${IPTV_GITHUB_TOKEN_FILE:-/etc/iptv-hk-probe.github-token}"
+  then
+    echo "$LOG_PREFIX warning: validated home report upload failed; Hong Kong evidence remains valid" >&2
+  fi
+else
+  echo "$LOG_PREFIX home receiver not paired yet; continuing with Hong Kong evidence only"
+fi
+
 python3 scripts/dead_only_failover.py \
   --formal-report "$DATA_DIR/formal/latest.json" \
   --config config/dead-only-failover.json \
