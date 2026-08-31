@@ -1,7 +1,18 @@
+import functools
+import http.server
+import tempfile
+import threading
 import unittest
+from pathlib import Path
 from unittest import mock
 
 from router.ac86u import home_probe
+from scripts.home_probe_report import validate_home_report
+
+
+class QuietHandler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, *_args):
+        pass
 
 
 def result(name="CCTV-1", url="https://one.test/live.m3u8", status="UNKNOWN"):
@@ -12,6 +23,42 @@ def result(name="CCTV-1", url="https://one.test/live.m3u8", status="UNKNOWN"):
 
 
 class AC86UHomeProbeTests(unittest.TestCase):
+    def test_generated_light_report_matches_cross_host_schema(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "one.ts").write_bytes(b"x" * (128 * 1024))
+            (root / "two.ts").write_bytes(b"y" * (128 * 1024))
+            (root / "live.m3u8").write_text(
+                "#EXTM3U\n#EXTINF:4,\none.ts\n#EXTINF:4,\ntwo.ts\n",
+                encoding="utf-8",
+            )
+            handler = functools.partial(QuietHandler, directory=temporary)
+            server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                port = server.server_address[1]
+                (root / "tv-core.m3u").write_text(
+                    f"#EXTM3U\n#EXTINF:-1,CCTV-1\nhttp://127.0.0.1:{port}/live.m3u8\n",
+                    encoding="utf-8",
+                )
+                config = {
+                    "probe_id": "home-ac86u-test",
+                    "output_dir": str(root / "state"),
+                    "playlist_url": f"http://127.0.0.1:{port}/tv-core.m3u",
+                    "candidate_playlist_url": "",
+                    "maximum_load1": 10000,
+                    "minimum_mem_available_kib": 1,
+                    "actionable": False,
+                }
+                report, _ = home_probe.run(config, requested_mode="light", now_epoch=1_800_000_000)
+                validate_home_report(report)
+                self.assertEqual("GOOD", report["results"][0]["status"])
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=2)
+
     def test_recent_segments_are_distinct_and_newest(self):
         playlist = """#EXTM3U
 #EXTINF:4,
