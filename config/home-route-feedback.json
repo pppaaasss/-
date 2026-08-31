@@ -1,13 +1,28 @@
 {
   "version": 1,
-  "updated_utc": "2026-08-31T06:42:40Z",
+  "updated_utc": "2026-08-31T07:05:37Z",
   "policy": {
     "formal_playlists_are_user_controlled": true,
     "candidate_scans_must_not_publish_formal_playlists": true,
     "home_playback_overrides_github_runner": true,
     "bad_routes_are_hard_rejected_from_candidates": true
   },
-  "good": {},
+  "good": {
+    "cctv4": [
+      {
+        "url": "http://74.91.26.218:82/live/cctv4hd.m3u8",
+        "reason": "home_accepted_720p_fallback",
+        "observed_utc": "2026-08-31T07:05:37Z"
+      }
+    ],
+    "cctv11": [
+      {
+        "url": "http://74.91.26.218:82/live/cctv11hd.m3u8",
+        "reason": "home_accepted_720p_fallback",
+        "observed_utc": "2026-08-31T07:05:37Z"
+      }
+    ]
+  },
   "bad": {
     "cctv1": [
       {
@@ -63,6 +78,11 @@
         "url": "http://113.57.140.161:10081/newlive/live/hls/12/live.m3u8",
         "reason": "home_user_requested_replacement",
         "observed_utc": "2026-08-31T06:42:40Z"
+      },
+      {
+        "url": "http://61.136.172.236:9901/tsfile/live/0011_1.m3u8?key=txiptv&playlive=1&authid=0",
+        "reason": "home_user_requested_720p_fallback",
+        "observed_utc": "2026-08-31T07:05:37Z"
       }
     ],
     "cctv15": [
@@ -131,11 +151,6 @@
     ],
     "cctv4": [
       {
-        "url": "http://74.91.26.218:82/live/cctv4hd.m3u8",
-        "reason": "home_decoded_720p",
-        "observed_utc": "2026-08-28T05:16:57Z"
-      },
-      {
         "url": "http://111.59.24.227:8181/tsfile/live/0004_1.m3u8?key=txiptv&playlive=1&authid=0",
         "reason": "home_buffering_spinner",
         "observed_utc": "2026-08-29T02:10:54.223Z"
@@ -154,6 +169,11 @@
         "url": "http://58.56.162.102:4466/newlive/live/hls/4/live.m3u8",
         "reason": "home_buffering_spinner",
         "observed_utc": "2026-08-31T06:04:32Z"
+      },
+      {
+        "url": "http://112.46.105.20:8009/hls/4/index.m3u8",
+        "reason": "home_user_requested_720p_fallback",
+        "observed_utc": "2026-08-31T07:05:37Z"
       }
     ],
     "cctv10": [
@@ -185,6 +205,11 @@
         "url": "http://221.7.175.154:8445/tsfile/live/1011_1.m3u8?key=txiptv&playlive=1&authid=0",
         "reason": "home_quality_rejected_suspected_fake_1080p",
         "observed_utc": "2026-08-28T05:23:43Z"
+      },
+      {
+        "url": "http://ali-m-l.cztv.com/channels/lantian/channel21/1080p.m3u8",
+        "reason": "home_user_requested_replacement",
+        "observed_utc": "2026-08-31T07:05:37Z"
       }
     ],
     "tvb_wireless_news": [
