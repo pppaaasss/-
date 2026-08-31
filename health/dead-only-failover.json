@@ -72,6 +72,13 @@
     },
     {
       "candidate_count": 0,
+      "channel": "动漫秀场",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
       "channel": "北京生活",
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
@@ -109,8 +116,18 @@
       ]
     },
     {
-      "channel": "镇江2套",
-      "reason": "current_route_recovered"
+      "candidate_count": 1,
+      "channel": "翡翠台",
+      "failed_candidates": [
+        {
+          "kind": "github_pending",
+          "url": "http://beishan008.asuscomm.com:8889/bysid/1.m3u8"
+        }
+      ],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": [
+        "verified_pool:fixed_evidence_below_floor"
+      ]
     },
     {
       "candidate_count": 1,
@@ -181,8 +198,17 @@
       "skipped": []
     }
   ],
-  "generated_utc": "2026-08-31T10:23:31Z",
+  "generated_utc": "2026-08-31T16:25:41Z",
   "policy": {
+    "blocked_candidate_hosts": [
+      "111.59.24.227",
+      "112.46.105.20",
+      "113.57.140.161",
+      "221.7.175.154",
+      "222.169.85.8",
+      "58.56.162.102",
+      "gmxw.7766.org"
+    ],
     "candidate_rechecked_twice": true,
     "current_route_rechecked": true,
     "dead_only": true,
