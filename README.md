@@ -1,45 +1,8 @@
-# 傻子电视台 · APTV 订阅
+# Home IPTV reports
 
-给 APTV（iPhone、iPad、Apple TV、Mac）使用的自动维护电视直播清单。
+This branch is an isolated inbox for reports produced by the AC86U on the living-room-equivalent network path.
 
-## 订阅地址
-
-- 无脑稳定版（日常首选，核心约 57 台、最多约 180 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv-easy.m3u`
-- 高清地区版（目标约 450 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u`
-- 完整备用版（目标约 560 台）：`https://raw.githubusercontent.com/pppaaasss/-/master/tv-all.m3u`
-
-只想打开就看，在 APTV 里订阅第一条 `tv-easy.m3u`。
-
-## “无脑稳定版”怎么选
-
-GitHub Actions 每四小时自动重建：
-
-1. 并发汇总 iptv-org、fanmingming、YueChan、YanG-1989、vbskycn、best-fan、HerbertHe/ibert、Free-TV、CCSH、Suxuang、BurningC4 等持续维护的公开清单；重点扩充中国大陆地方台、台湾、香港、日本和华语频道。被下架、只含空结果、依赖运营商内网或 RTSP/组播的仓库不会作为生产源。
-2. 只保留真正的线性电视台：去掉广播、电台、购物、网课、单片/单集、VOD/ENDLIST 点播和 MPD；`rtp://239.x` 一类只能在特定运营商局域网使用的组播源不会收录。
-3. 普通频道最多保留 8 条候选 URL；CCTV-5、5+、9、12、16 各保留并优先测试最多 24 条线路，省卫视也会测试多条备线。
-4. 实际请求 HLS 主清单、720p/1080p 变体清单和视频分片，测首开耗时、下载速度和节目本身的真实分片码率；地区版需要连续两轮通过，无脑版需要连续三轮通过，并按照多次构建留下的历史成功率排序。
-5. 最终发布前有一道硬过滤：删除“纪录片 / 电影 / 新闻 / 国际”整组以及误混入其它分组的英文台；保留 CCTV-9、CCTV-13 等央视编号频道。原先堆在“中文综合”的频道会按台名拆到北京、上海、江苏、浙江、广东等省市，无法可靠识别所在地的少量频道才进入“其他地方”；港澳台、日本也会自动归回自己的分组。
-6. 央视和省级卫视同时按分辨率、节目真实码率、下载速度余量和连续成功次数选择。下载速度超过播放所需后只获得有限加分，避免 40 Mbps 下载却只有 1 Mbps 画质的源压过 10 Mbps 下载、4.5 Mbps 清晰画质的源；高码率线路若没有至少约 35% 播放余量也不会晋升。1080p50/1080i50 和最终 CCTV-5/5+ 修复同样执行这套平衡规则。
-7. 最后按 `best-fan/iptv-sources` 状态清单覆盖其它同名的 1080p/2160p 频道；CCTV-1～17、CCTV-5+、CCTV-4K 则固定使用电视实测的 H.264 平衡线路，避开码率约 8～11 Mbps、实际下载却不足的原始 `tsfile`。这个覆盖层只替换 URL，频道数量、名称、分组、台标和顺序均保持不变，并单独锁定 CCTV-5/5+ 的明确台名线路以防串台。
-
-家庭硬优先级：CCTV-1～17、CCTV-4K、CCTV-5+ 和 38 个省级/特色卫视必须排在其它频道之前。核心台优先使用三轮严格通过的线路；暂时没有严格线路时，保留至少连续两次拉到真实视频分片的最佳线路，不能为了漂亮的测速数字把老人常看的台从无脑版删掉。若任一必备 CCTV 或卫视缺失，构建会安全停止并保留上一版父母清单。
-
-CCTV 与主要省级卫视使用核心保底规则：CCTV-5、CCTV-5+、CCTV-9、CCTV-12、CCTV-16 分别独立识别；所有成功拉到真实视频分片的大陆卫视优先进入稳定版，不受普通分组配额限制。同名卫视会合并为一个 APTV 频道，后台多线路只用于竞争最快地址。普通高清门槛不通过时，核心频道可采用已经完成分片验证、但速度或清晰度略低的保底源；完全打不开的死源仍不会写入稳定版。
-
-清单统一接入 fanmingming 的 EPG，并为 CCTV、主要卫视和常见港澳频道补齐规范 `tvg-id`、`tvg-name` 与台标；上游已经提供的其它有效台标仍会保留。
-
-`health-history.json` 保存最近 12 次构建的线路健康记录，避免一次测速偶然很快的线路长期霸占主位。`build-report.txt` 会记录三轮检测、IPv6/双栈覆盖、真实节目码率、各来源通过数、清晰度和速度。`t.freetv.fun`、`epg.pw` 等会返回“信号中断”画面的中转源不会进入任何输出播放单；同一视频分片若冒充四个以上不同央视/卫视，也会被整批拦截并停止发布。
-
-免费公开直播源无法保证有线电视级别的绝对稳定；这套无脑版的目标是自动避开波动线路，把需要手动换源的次数压到最低。测速发生在 GitHub Actions 线路，最终体验仍会受 Apple TV 所在运营商和晚高峰影响。
-
-## 三天一次央视与卫视健康轮换
-
-GitHub Actions 每天北京时间 08:00 做一次轻量到期检查，只有距离上次完成轮换满 3 个本地自然日才执行生产轮换。轮换状态保存在 `config/core-health-rotation.json`，实际决策由 `scripts/rotate_core_health.py` 完成。
-
-每轮没有频道数量上限：逐台检查 `tv-core.m3u` 中的央视和省级/特色卫视，凡家庭端已经淘汰、香港健康报告确认降级，或下载余量与首开时间同时明显偏弱且已有显著更强备份的线路，全部在同一轮更换。四份正式清单必须原子同步；候选必须有香港真实分片验证、至少两个来源引用、标准频道达到 1080p、CCTV-4K 达到 2160p，并排除短令牌、家庭黑名单、CCTV-8K 冒充 CCTV-8 以及同一 URL 对应多个台名的身份冲突。确认死亡的线路仍需二次复测报告批准。没有安全备份的频道保留并写入 `rotation/latest.json`，不会拿可疑线路凑数。
-
-## AC86U 家庭实测（待 U 盘到货后部署）
-
-仓库已经包含 Asuswrt-Merlin/Entware 家庭探针和香港受限接收器。AC86U 每 6 小时单线程读取央视、卫视每台两个 2 MiB 分片，每 3 天做一次受限深检；高负载、低内存、大面积失败、过期报告、线路地址变化和清单变化都会安全停止。家庭坏线和家庭备线都要跨轮确认，24 小时影子期结束且现场核验分流路径后才能参与三天轮换。路由器没有 GitHub 令牌，也不会直接修改播放清单。
-
-完整安装、配对、激活与回滚步骤见 [`docs/ac86u-home-probe.md`](docs/ac86u-home-probe.md)。
+- Router deploy keys may append files only under `inbox/<probe_id>/` by convention.
+- Reports are evidence, not production playlists.
+- Only a protected workflow may validate a report and publish playlist changes from the default branch.
+- A GitHub or transport failure must leave the production playlists unchanged.
