@@ -45,6 +45,13 @@ class HomeCandidateIncrementalTests(unittest.TestCase):
         self.assertIn('production-before.sha256', workflow)
         self.assertIn('production-after.sha256', workflow)
         self.assertNotIn('ffprobe', workflow)
+        self.assertIn('gh pr create', workflow)
+        self.assertIn('gh pr merge', workflow)
+        self.assertIn('base_sha=', workflow)
+        self.assertIn('--match-head-commit', workflow)
+        self.assertIn('MASTER_RULES_API', workflow)
+        self.assertIn('validate_master_rules', workflow)
+        self.assertNotIn('git push origin HEAD:master', workflow)
 
     def test_first_run_bootstraps_without_dumping_historical_pool(self):
         delta, index, summary = build_incremental_manifest(full([row()]), None)

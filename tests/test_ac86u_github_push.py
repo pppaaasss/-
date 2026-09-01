@@ -92,6 +92,29 @@ def report_remote(root: Path) -> Path:
     return remote
 
 
+def master_rules(*, approvals=0, ruleset_id=917, source="pppaaasss/-"):
+    common = {
+        "ruleset_id": ruleset_id,
+        "ruleset_source_type": "Repository",
+        "ruleset_source": source,
+    }
+    return [
+        {
+            **common,
+            "type": "pull_request",
+            "parameters": {
+                "allowed_merge_methods": ["squash"],
+                "required_approving_review_count": approvals,
+                "require_code_owner_review": False,
+                "require_last_push_approval": False,
+                "required_review_thread_resolution": False,
+            },
+        },
+        {**common, "type": "deletion"},
+        {**common, "type": "non_fast_forward"},
+    ]
+
+
 class AC86UGitHubPushTests(unittest.TestCase):
     def config(self, root: Path, *, enabled: bool) -> Path:
         path = root / "config.json"
@@ -196,6 +219,38 @@ class AC86UGitHubPushTests(unittest.TestCase):
 
 
 class AC86UGitHubPairTests(unittest.TestCase):
+    def test_enable_records_the_verified_public_ruleset_before_allowing_pushes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            path = root / "config.json"
+            path.write_text(json.dumps({
+                "probe_id": "home-ac86u-test",
+                "github_repository": "pppaaasss/-",
+                "github_report_branch": "home-reports",
+                "github_push_enabled": False,
+                "protected_publishing_ready": False,
+                "actionable": True,
+            }), encoding="utf-8")
+            known = root / "known_hosts"
+            with (
+                mock.patch.object(
+                    github_pair,
+                    "verify_protected_publisher",
+                    return_value=("a" * 64, "b" * 64, 917),
+                ),
+                mock.patch.object(github_pair, "pin_host_key", return_value=known),
+                mock.patch.object(github_pair, "authenticate") as authenticate,
+            ):
+                enabled = github_pair.enable(path)
+            authenticate.assert_called_once_with(enabled, known)
+            stored = json.loads(path.read_text(encoding="utf-8"))
+        self.assertTrue(stored["github_push_enabled"])
+        self.assertTrue(stored["protected_publishing_ready"])
+        self.assertFalse(stored["actionable"])
+        self.assertEqual(917, stored["master_ruleset_id"])
+        self.assertEqual("a" * 64, stored["publisher_config_sha256"])
+        self.assertEqual("b" * 64, stored["master_rules_sha256"])
+
     def test_official_ed25519_fingerprint_is_pinned_before_enabling(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -248,6 +303,50 @@ class AC86UGitHubPairTests(unittest.TestCase):
             "github_report_branch": "home-reports",
             "protected_publishing_ready": True,
         })
+
+    def test_publisher_and_public_master_rules_must_match_this_probe(self):
+        router = {
+            "probe_id": "home-ac86u-test",
+            "github_repository": "pppaaasss/-",
+            "github_report_branch": "home-reports",
+        }
+        publisher = {
+            "schema": github_pair.PUBLISHER_CONFIG_SCHEMA,
+            "enabled": True,
+            "expected_probe_id": "home-ac86u-test",
+            "repository": "pppaaasss/-",
+            "report_branch": "home-reports",
+            "branch_protection_required": True,
+        }
+        rules = master_rules()
+        self.assertEqual(917, github_pair.validate_protected_publisher(publisher, rules, router))
+
+        wrong_probe = dict(publisher, expected_probe_id="home-ac86u-other")
+        with self.assertRaisesRegex(RuntimeError, "assigned"):
+            github_pair.validate_protected_publisher(wrong_probe, rules, router)
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(publisher, [], router)
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(publisher, master_rules(approvals=1), router)
+        no_squash = master_rules()
+        no_squash[0]["parameters"]["allowed_merge_methods"] = ["merge"]
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(publisher, no_squash, router)
+        manual_conversation = master_rules()
+        manual_conversation[0]["parameters"]["required_review_thread_resolution"] = True
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(publisher, manual_conversation, router)
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(
+                publisher,
+                master_rules(source="another/repository"),
+                router,
+            )
+
+        split = master_rules()
+        split[2]["ruleset_id"] = 918
+        with self.assertRaisesRegex(RuntimeError, "no-human-approval ruleset"):
+            github_pair.validate_protected_publisher(publisher, split, router)
 
 
 if __name__ == "__main__":

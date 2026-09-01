@@ -30,8 +30,20 @@ AC86U 是央视和省级卫视健康度的唯一检测与裁决位置。GitHub �
 - 代码把仓库锁定为 `pppaaasss/-`、报告分支锁定为 `home-reports`。报告先在本地完成版本、探针编号、内容哈希、大小和正式清单绑定校验，再写入 `inbox/<probe_id>/`。
 - GitHub 推送失败时，报告原样留在 U 盘并在下一轮重试；失败本身不能修改正式清单。
 - `home-reports` 是独立报告入口，不保存正式清单。路由器报告只是证据，只有受保护的 GitHub 工作流可以更新四份正式播放清单。
+- `github_pair.py --enable` 会先从 `master` 读取发布配置并核对探针编号，再通过无需账号令牌的 GitHub 公共 Rules API 检查当前生效规则：同一条仓库规则集必须同时要求 PR、0 人工审批、禁止强推、禁止删除并允许 squash；任何一项不满足都不会开启写密钥。
 
 重要限制：GitHub 的可写 Deploy Key 是仓库级凭据，并非分支级凭据。脚本会拒绝推往 `master`，但私钥一旦被盗，攻击者不会受脚本约束。因此必须先在 Phase 5 完成默认分支保护和受保护发布工作流，现场部署时才允许给 Deploy Key 勾选写权限并运行 `--enable`。Phase 5 未就绪时，安装配置中的硬门槛会让推送和正式激活都失败关闭，只保留 U 盘队列。
+
+### `master` 一次性保护设置
+
+这里使用 GitHub **Ruleset**，而不是依赖需要 Administration 权限才能读取明细的旧 Branch protection API。代码只读取 GitHub 对公开仓库开放的“某分支当前生效规则”接口，AC86U 因而不需要保存 PAT。
+
+1. 仓库 `Settings` → `Rules` → `Rulesets` → `New branch ruleset`，名称设为 `home-production-master`，状态设为 `Active`，目标只包含 `master`。
+2. `Bypass list` 必须为空；尤其不要加入仓库管理员、GitHub Actions 或任何 Deploy Key。公开 Rules API 不返回隐藏的绕过名单，因此这一项必须在现场由用户人工确认一次。
+3. 开启 `Restrict deletions`、`Require a pull request before merging` 和 `Block force pushes`。PR 规则中审批数设为 `0`，关闭 Code Owner、最后推送者之外审批和会话解决要求，并允许 `Squash`。
+4. 仓库 `Settings` → `Actions` → `General`：Workflow permissions 设为 `Read and write permissions`，并开启 `Allow GitHub Actions to create and approve pull requests`。这里不要求 Actions 实际审批，只是允许它创建每日自动 PR。
+5. 每日采集和家庭发布工作流都只推送 `automation/...` 临时分支，再创建并 squash 合并 PR；代码中没有直推 `master`。规则集未生效时，采集门禁失败；家庭发布配置未启用时，发布器只返回 `disabled`。
+6. `config/home-publisher.json` 目前故意保持 `enabled: false` 且探针编号为空。只有 U 盘安装后取得真实 `probe_id`、规则集已核验且影子报告通过，才在单独提交中填入编号并启用。
 
 ## 64 GB USB 2.0 到货后的现场顺序
 

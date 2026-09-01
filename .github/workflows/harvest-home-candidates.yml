@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: home-candidate-harvest
@@ -21,6 +22,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
+      - name: Verify the public master ruleset gate
+        run: |
+          python3 - <<'PY'
+          from router.ac86u.github_pair import MASTER_RULES_API, fetch_json, validate_master_rules
+
+          rules, _raw = fetch_json(MASTER_RULES_API)
+          ruleset_id = validate_master_rules(rules)
+          print('active home publication ruleset', ruleset_id)
+          PY
 
       - name: Record production hashes
         run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
@@ -71,10 +82,13 @@ jobs:
           test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
 
       - name: Commit only the home discovery outputs
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           rm -rf scripts/__pycache__ router/ac86u/__pycache__ tests/__pycache__
           git fetch origin master
-          test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
+          base_sha="$(git rev-parse origin/master)"
+          test "$base_sha" = "$(git rev-parse HEAD)" || {
             echo 'master moved during home harvest; refusing to overwrite newer work'
             exit 1
           }
@@ -91,4 +105,19 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+pppaaasss@users.noreply.github.com'
           git commit -m 'Refresh daily home-only IPTV candidates'
-          git push origin HEAD:master
+          branch="automation/home-candidates-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git push origin "HEAD:refs/heads/$branch"
+          pr="$(gh pr create \
+            --base master \
+            --head "$branch" \
+            --title 'Refresh daily home-only IPTV candidates' \
+            --body 'Automated text-only candidate delta. AC86U remains the sole health authority.')"
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$base_sha" || {
+            gh pr close "$pr" --comment 'master moved after validation; a later run will rebuild from the new base.'
+            exit 1
+          }
+          gh pr merge "$pr" \
+            --squash \
+            --delete-branch \
+            --match-head-commit "$(git rev-parse HEAD)"
