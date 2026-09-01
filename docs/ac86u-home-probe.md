@@ -1,6 +1,6 @@
 # RT-AC86U 家庭电视健康探针
 
-> **代码准备中，暂勿在家中安装。** 等 U 盘到货、用户出院回家，并完成 GitHub 发布保护和模拟影子测试后再现场部署。实施进度见 [`home-first-roadmap.md`](home-first-roadmap.md)。
+> **离线代码和贯通模拟已完成，暂勿在家中安装。** 等用户出院回家、U 盘插入 AC86U，并把已验收功能分支合入受保护的 `master` 后再现场部署。实施进度见 [`home-first-roadmap.md`](home-first-roadmap.md)。
 
 AC86U 是央视和省级卫视健康度的唯一检测与裁决位置。GitHub 负责搜集未验证候选和受保护地发布正式清单；香港主机不检测、不转发、不参与替换。整套任务在路由器上定时运行，不依赖 ChatGPT/Codex 在线，也不受对话额度影响。
 
@@ -52,26 +52,35 @@ AC86U 是央视和省级卫视健康度的唯一检测与裁决位置。GitHub �
 1. 把 U 盘插到 AC86U，在梅林中运行 `amtm`。
 2. 使用 `fd` 把 U 盘格式化为 `ext4`，再安装 Entware；确认 `/opt/bin/opkg` 存在。USB 2.0 对这类低速、零转码、顺序写小状态文件的任务足够，发热和兼容性通常也比高速盘更省心。
 3. 确认 Phase 5、Phase 6 和模拟测试均已完成，再从已验收的 `master` 安装。安装命令将在现场部署前做最后一次核对；不要提前从功能分支安装。
-4. 安装后仍为本地影子模式，不改路由、不改播放清单，也不向 GitHub 发报告。查看状态和 Deploy Key 公钥：
+4. 手机连接家中 Wi-Fi，通过仅限局域网的 SSH 登录 AC86U；不需要电脑。功能分支合入 `master` 后，在路由器执行：
+
+   ```sh
+   curl -fL --retry 3 \
+     https://raw.githubusercontent.com/pppaaasss/-/master/router/ac86u/install.sh \
+     -o /tmp/iptv-home-install.sh
+   IPTV_HOME_REF=master sh /tmp/iptv-home-install.sh
+   ```
+
+5. 安装后仍为本地影子模式，不改路由、不改播放清单，也不向 GitHub 发报告。查看状态和 Deploy Key 公钥：
 
    ```sh
    /opt/share/iptv-home-probe/status.sh
    /opt/share/iptv-home-probe/github_pair.py --show-key
    ```
 
-5. 先确认 `master` 已受保护，再在仓库 Settings → Deploy keys 添加这把公钥，并仅为这一把密钥开启写权限。随后由路由器核验 GitHub 指纹、认证并开启报告推送：
+6. 先确认 `master` 已受保护，再在仓库 Settings → Deploy keys 添加这把公钥，并仅为这一把密钥开启写权限。随后由路由器核验 GitHub 指纹、认证并开启报告推送：
 
    ```sh
    /opt/share/iptv-home-probe/github_pair.py --enable
    ```
 
-6. 现场核对 AC86U 自身请求与 Apple TV 的 DNS、出口、ShellClash/Mihomo 分流、IPv4/IPv6 选择一致。只有确认等价后才标记家庭路径；这一步仍保持影子模式，并立即生成一份 `13:00` 类型报告：
+7. 现场核对 AC86U 自身请求与 Apple TV 的 DNS、出口、ShellClash/Mihomo 分流、IPv4/IPv6 选择一致。只有确认等价后才标记家庭路径；这一步仍保持影子模式，并立即生成一份 `13:00` 类型报告：
 
    ```sh
    /opt/share/iptv-home-probe/activate.sh --confirm-living-room-path
    ```
 
-7. 至少取得 4 份成功进入 GitHub 的报告、跨度达到 18 小时，且最新报告新鲜、待发队列为空、熔断器关闭后，才允许正式激活：
+8. 至少取得 4 份成功进入 GitHub 的报告、跨度达到 18 小时，且最新报告新鲜、待发队列为空、熔断器关闭后，才允许正式激活：
 
    ```sh
    /opt/share/iptv-home-probe/activate.sh
