@@ -53,6 +53,18 @@ for name in $files; do
   cp -f "$stage/$name" "$BASE/$name"
   chmod 0755 "$BASE/$name"
 done
+for legacy in pair.py upload_home_report.py; do
+  if [ -f "$BASE/$legacy" ]; then
+    mv -f "$BASE/$legacy" "$BASE/$legacy.retired-hk"
+    chmod 0600 "$BASE/$legacy.retired-hk"
+  fi
+done
+for legacy in id_ed25519 id_ed25519.pub known_hosts; do
+  if [ -f "$KEY_DIR/$legacy" ]; then
+    mv -f "$KEY_DIR/$legacy" "$KEY_DIR/$legacy.retired-hk"
+    chmod 0600 "$KEY_DIR/$legacy.retired-hk"
+  fi
+done
 
 if [ ! -f "$CONFIG" ]; then
   identity="$(nvram get et0macaddr 2>/dev/null || true)"

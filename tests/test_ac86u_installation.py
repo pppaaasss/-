@@ -36,14 +36,25 @@ class AC86UInstallationTests(unittest.TestCase):
         self.assertNotIn("GITHUB_TOKEN", script)
         self.assertIn('"protected_publishing_ready": False', script)
         self.assertIn("Do not grant write access", script)
-        self.assertNotIn("upload_home_report.py", script)
+        install_files = next(
+            line for line in script.splitlines() if line.startswith('files="')
+        )
+        install_names = install_files.split('"', 2)[1].split()
+        self.assertNotIn("upload_home_report.py", install_names)
+        self.assertNotIn("pair.py", install_names)
         self.assertNotIn('"upload_host":', script)
         self.assertIn('for old in ("upload_enabled", "upload_host"', script)
+        self.assertIn('for legacy in pair.py upload_home_report.py', script)
+        self.assertIn('for legacy in id_ed25519 id_ed25519.pub known_hosts', script)
+        self.assertIn('$BASE/$legacy.retired-hk', script)
+        self.assertIn('$KEY_DIR/$legacy.retired-hk', script)
         self.assertNotIn("iptables", script)
         self.assertNotIn("nvram set", script)
 
-    def test_receiver_key_is_forced_and_restricted(self):
+    def test_legacy_receiver_is_retired_before_its_preserved_reference_code(self):
         script = (ROOT / "scripts/install_home_probe_receiver.sh").read_text(encoding="utf-8")
+        self.assertLess(script.index("exit 2"), script.index("while [[ $# -gt 0 ]]"))
+        self.assertIn("no longer part of the supported path", script)
         self.assertIn('restrict,command=\\"$WRAPPER\\"', script)
         self.assertIn("ssh-ed25519", script)
         self.assertIn("passwd -l", script)

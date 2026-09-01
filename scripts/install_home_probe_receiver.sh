@@ -9,6 +9,10 @@ ACCOUNT="iptv-home-probe"
 LIB_DIR="/usr/local/lib/iptv-home-probe"
 WRAPPER="/usr/local/sbin/iptv-home-receive"
 
+echo "RETIRED: home reports go directly from AC86U to the isolated GitHub report branch." >&2
+echo "The Hong Kong SSH receiver is no longer part of the supported path." >&2
+exit 2
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --probe-id) PROBE_ID="${2:-}"; shift 2 ;;
