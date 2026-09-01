@@ -1,0 +1,94 @@
+name: Build daily home-only IPTV candidates
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 00:30 Beijing time: leave 90 minutes before the AC86U 02:00 primary run.
+    - cron: '30 16 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: home-candidate-harvest
+  cancel-in-progress: true
+
+jobs:
+  candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Record production hashes
+        run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
+
+      - name: Fetch source text without cloud stream testing
+        run: |
+          python3 scripts/harvest_incremental.py \
+            --home-only \
+            --home-discovery-output /tmp/home-discovered.jsonl \
+            --output-dir harvest \
+            --workers 12
+
+      - name: Publish only new or changed home candidates
+        run: |
+          python3 scripts/build_home_candidate_manifest.py \
+            --input /tmp/home-discovered.jsonl \
+            --formal tv-core.m3u \
+            --output harvest/home-candidates.json \
+            --index harvest/home-candidate-index.json \
+            --feedback config/home-route-feedback.json
+
+      - name: Validate home-only contracts
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from router.ac86u.home_contract import validate_candidate_manifest
+
+          discovery = json.loads(Path('harvest/home-discovery-manifest.json').read_text(encoding='utf-8'))
+          assert discovery['stream_probe_performed'] is False
+          assert discovery['production_modified'] is False
+          assert discovery['policy']['home_probe_is_the_only_health_authority'] is True
+          assert discovery['policy']['hong_kong_evidence_consulted'] is False
+          assert discovery['policy']['hong_kong_tombstones_consulted'] is False
+          manifest = json.loads(Path('harvest/home-candidates.json').read_text(encoding='utf-8'))
+          validate_candidate_manifest(manifest)
+          assert manifest['cloud_stream_probe_performed'] is False
+          assert manifest['home_verified'] is False
+          assert manifest['production_eligible'] is False
+          print('home candidate delta', manifest['candidate_count'])
+          PY
+          python3 -m unittest tests.test_home_first_contract tests.test_home_candidate_incremental -v
+
+      - name: Prove all four production playlists unchanged
+        run: |
+          sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-after.sha256
+          diff -u /tmp/production-before.sha256 /tmp/production-after.sha256
+          test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
+
+      - name: Commit only the home discovery outputs
+        run: |
+          rm -rf scripts/__pycache__ router/ac86u/__pycache__ tests/__pycache__
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$(git rev-parse HEAD)" || {
+            echo 'master moved during home harvest; refusing to overwrite newer work'
+            exit 1
+          }
+          git add \
+            harvest/home-discovery-manifest.json \
+            harvest/home-candidates.json \
+            harvest/home-candidate-index.json
+          bad="$(git diff --cached --name-only | grep -Ev '^harvest/home-(discovery-manifest|candidates|candidate-index)\.json$' || true)"
+          test -z "$bad" || { echo 'Unexpected staged paths:'; echo "$bad"; exit 1; }
+          if git diff --cached --quiet; then
+            echo 'No home candidate changes'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git commit -m 'Refresh daily home-only IPTV candidates'
+          git push origin HEAD:master
