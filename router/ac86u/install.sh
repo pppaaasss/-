@@ -41,13 +41,14 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="home_probe.py home_contract.py upload_home_report.py pair.py activate.py run.sh status.sh activate.sh uninstall.sh"
+files="home_probe.py home_contract.py home_decision.py upload_home_report.py pair.py activate.py run.sh status.sh uninstall.sh"
 for name in $files; do
   /opt/bin/curl -fL --retry 3 --connect-timeout 15 --max-time 120 \
     "$RAW/$name" -o "$stage/$name"
 done
 /opt/bin/python3 -m py_compile \
-  "$stage/home_probe.py" "$stage/home_contract.py" "$stage/upload_home_report.py" "$stage/pair.py" "$stage/activate.py"
+  "$stage/home_probe.py" "$stage/home_contract.py" "$stage/home_decision.py" \
+  "$stage/upload_home_report.py" "$stage/pair.py" "$stage/activate.py"
 for name in $files; do
   cp -f "$stage/$name" "$BASE/$name"
   chmod 0755 "$BASE/$name"
@@ -95,13 +96,12 @@ payload = {
     "minimum_height_default": 1080,
     "minimum_height_overrides": {"CCTV-4K": 2160},
     "minimum_h264_stream_mbps": 5.0,
-    "dead_after_runs": 3,
-    "dead_min_age_hours": 6,
-    "degraded_after_runs": 3,
-    "degraded_min_age_hours": 6,
+    "minimum_hevc_stream_mbps": 2.5,
+    "minimum_other_stream_mbps": 3.0,
+    "qualified_backup_ttl_hours": 36,
+    "backup_refresh_before_hours": 18,
     "circuit_breaker_min_unknown": 12,
-    "circuit_breaker_unknown_ratio": 0.35,
-    "quality_cache_hours": 96
+    "circuit_breaker_unknown_ratio": 0.35
 }
 path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 path.chmod(0o600)
@@ -150,7 +150,14 @@ echo "Run primary now: $BASE/run.sh --run-kind primary-0200"
 echo "Run recheck now: $BASE/run.sh --run-kind recheck-1300"
 echo "Pairing remains disabled until a pinned VPS host fingerprint is supplied."
 
-if [ "${IPTV_HOME_SKIP_INITIAL_RUN:-0}" != "1" ]; then
+route_context="$(/opt/bin/python3 - "$CONFIG" <<'PY'
+import json, sys
+print(json.load(open(sys.argv[1], encoding="utf-8")).get("route_context", ""))
+PY
+)"
+if [ "${IPTV_HOME_SKIP_INITIAL_RUN:-0}" != "1" ] && [ "$route_context" = "living-room-path-equivalent" ]; then
   "$BASE/run.sh" --run-kind recheck-1300
   "$BASE/status.sh"
+elif [ "$route_context" != "living-room-path-equivalent" ]; then
+  echo "Initial probe skipped until the Apple TV-equivalent route is confirmed."
 fi

@@ -141,6 +141,7 @@ class HomeFirstContractTests(unittest.TestCase):
                 "url_sha256": row["url_sha256"],
                 "request_options": row["request_options"],
                 "qualification": "QUALIFIED",
+                "source_manifest_sha256": hashlib.sha256(b"manifest").hexdigest(),
                 "qualified_utc": "2026-09-01T01:58:00Z",
                 "last_verified_utc": "2026-09-01T02:00:00Z",
                 "expires_utc": "2026-09-02T02:00:00Z",
@@ -198,6 +199,7 @@ class HomeFirstContractTests(unittest.TestCase):
                 "url_sha256": url_sha256(current_url),
                 "status": current_status,
                 "failure_confirmed": current_status == "BAD",
+                "attempt_count": 2 if current_status == "BAD" else 1,
                 "verification": verification(deep=False, height=0 if current_status != "GOOD" else 1080),
             }],
             "candidate_results": [{
@@ -237,13 +239,29 @@ class HomeFirstContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "not reverified"):
             validate_home_report_v2(not_reverified)
 
+        wrong_channel = self.report()
+        wrong_channel["candidate_results"][0]["channel_key"] = "cctv2"
+        wrong_channel["candidate_results"][0]["candidate_id"] = candidate_id(
+            "cctv2",
+            wrong_channel["candidate_results"][0]["url"],
+            wrong_channel["candidate_results"][0]["request_options"],
+        )
+        wrong_channel["decisions"][0]["replacement_candidate_id"] = wrong_channel["candidate_results"][0]["candidate_id"]
+        with self.assertRaisesRegex(ContractError, "not qualified"):
+            validate_home_report_v2(wrong_channel)
+
+        incomplete = self.report()
+        incomplete["decisions"] = []
+        with self.assertRaisesRegex(ContractError, "cover every"):
+            validate_home_report_v2(incomplete)
+
     def test_1300_report_cannot_scan_general_candidates(self):
         report = self.report()
         report["candidate_results"][0]["purpose"] = "daily-qualification"
+        report["candidate_results"][0]["switch_reverified"] = False
         with self.assertRaisesRegex(ContractError, "13:00"):
             validate_home_report_v2(report)
 
 
 if __name__ == "__main__":
     unittest.main()
-

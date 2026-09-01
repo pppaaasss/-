@@ -11,7 +11,6 @@ The process never edits a production playlist.
 from __future__ import annotations
 
 import argparse
-import calendar
 import hashlib
 import json
 import os
@@ -26,16 +25,46 @@ from pathlib import Path
 try:
     from .home_contract import (
         ContractError,
+        REPORT_SCHEMA,
+        ROUTE_CONTEXT,
         canonical_name,
         station_key,
+        validate_backup_pool,
         validate_candidate_manifest,
+        validate_home_report_v2,
+    )
+    from .home_decision import (
+        backup_refresh_candidates,
+        candidate_is_qualified,
+        candidate_result,
+        current_result,
+        eligible_backups,
+        mass_failure_circuit,
+        probe_is_good,
+        update_backup_pool,
+        without_backup,
     )
 except ImportError:  # Installed beside this file by the Entware installer.
     from home_contract import (  # type: ignore
         ContractError,
+        REPORT_SCHEMA,
+        ROUTE_CONTEXT,
         canonical_name,
         station_key,
+        validate_backup_pool,
         validate_candidate_manifest,
+        validate_home_report_v2,
+    )
+    from home_decision import (  # type: ignore
+        backup_refresh_candidates,
+        candidate_is_qualified,
+        candidate_result,
+        current_result,
+        eligible_backups,
+        mass_failure_circuit,
+        probe_is_good,
+        update_backup_pool,
+        without_backup,
     )
 
 
@@ -50,20 +79,12 @@ PLAYLIST_LIMIT = 1024 * 1024
 CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
-STATUSES = {"GOOD", "DEGRADED", "UNKNOWN", "DEAD"}
 RUN_KINDS = {"primary-0200", "recheck-1300"}
 
 
 def utc_text(epoch: float | None = None) -> str:
     value = time.time() if epoch is None else float(epoch)
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(value))
-
-
-def parse_utc(raw: str) -> float | None:
-    try:
-        return float(calendar.timegm(time.strptime(str(raw), "%Y-%m-%dT%H:%M:%SZ")))
-    except Exception:
-        return None
 
 
 def atomic_json(path: Path, payload: dict) -> None:
@@ -248,7 +269,15 @@ def merge_candidate_queue(
             continue
         row["candidate_id"] = identity
         output.append(row)
-    return sorted(output, key=lambda row: (str(row.get("channel_key")), str(row.get("candidate_id"))))
+    return sorted(
+        output,
+        key=lambda row: (
+            int(row["_queue_priority"]) if "_queue_priority" in row else 1,
+            str(row.get("_expires_utc") or "9999"),
+            str(row.get("channel_key")),
+            str(row.get("candidate_id")),
+        ),
+    )
 
 
 def parse_rate(raw: str | None) -> float:
@@ -378,12 +407,6 @@ def empty_result(name: str, url: str, floor: int) -> dict:
         "min_height": int(floor),
         "deep_checked": False,
         "error": "",
-        "consecutive_failures": 0,
-        "failure_age_hours": 0.0,
-        "home_dead_confirmed": False,
-        "consecutive_degraded": 0,
-        "degraded_age_hours": 0.0,
-        "home_degraded_confirmed": False,
     }
 
 
@@ -462,10 +485,21 @@ def probe_route(
                     result["observed_status"] = "DEGRADED"
                     result["error"] = f"decoded_height_{result['height']}_below_{floor}"
                 intrinsic = result["stream_mbps"] or result["bitrate_mbps"]
-                minimum_h264 = float(config.get("minimum_h264_stream_mbps") or 5.0)
-                if result["codec"].casefold() == "h264" and 0 < intrinsic < minimum_h264:
+                codec = result["codec"].casefold()
+                if codec == "h264":
+                    minimum_stream = float(config.get("minimum_h264_stream_mbps") or 5.0)
+                elif codec in {"h265", "hevc"}:
+                    minimum_stream = float(config.get("minimum_hevc_stream_mbps") or 2.5)
+                else:
+                    minimum_stream = float(config.get("minimum_other_stream_mbps") or 3.0)
+                if intrinsic <= 0:
                     result["observed_status"] = "DEGRADED"
-                    result["error"] = f"h264_stream_{intrinsic:.3f}_below_{minimum_h264:.3f}_mbps"
+                    result["error"] = "intrinsic_stream_bitrate_unknown"
+                elif intrinsic < minimum_stream:
+                    result["observed_status"] = "DEGRADED"
+                    result["error"] = (
+                        f"{codec or 'unknown'}_stream_{intrinsic:.3f}_below_{minimum_stream:.3f}_mbps"
+                    )
             except Exception as exc:
                 # Segment evidence remains useful.  Missing ffprobe metadata is
                 # quality-unknown, not proof that a playing route is dead.
@@ -481,199 +515,41 @@ def probe_route(
     return result
 
 
-def quality_cache(result: dict) -> dict:
-    return {
-        "checked_utc": result.get("checked_utc", ""),
-        "status": result.get("observed_status"),
-        "height": int(result.get("height") or 0),
-        "width": int(result.get("width") or 0),
-        "codec": str(result.get("codec") or ""),
-        "fps": float(result.get("fps") or 0),
-        "bitrate_mbps": float(result.get("bitrate_mbps") or 0),
-        "stream_mbps": float(result.get("stream_mbps") or 0),
-        "error": str(result.get("error") or ""),
-    }
-
-
-def apply_cached_quality(result: dict, previous: dict, now_epoch: float, config: dict) -> None:
-    if result.get("observed_status") != "GOOD" or str(previous.get("last_url") or "") != result["url"]:
-        return
-    cached = previous.get("last_deep") if isinstance(previous.get("last_deep"), dict) else {}
-    checked = parse_utc(str(cached.get("checked_utc") or ""))
-    maximum_age = float(config.get("quality_cache_hours") or 96) * 3600
-    if checked is None or now_epoch - checked < 0 or now_epoch - checked > maximum_age:
-        return
-    for field in ("height", "width", "codec", "fps", "bitrate_mbps"):
-        if not result.get(field) and cached.get(field):
-            result[field] = cached[field]
-    if cached.get("status") == "DEGRADED":
-        result["observed_status"] = "DEGRADED"
-        result["status"] = "DEGRADED"
-        result["error"] = f"cached_deep:{str(cached.get('error') or 'quality_degraded')[:220]}"
-
-
-def _age_hours(first: str, now_epoch: float) -> float:
-    epoch = parse_utc(first)
-    return round(max(0.0, now_epoch - epoch) / 3600, 3) if epoch is not None else 0.0
-
-
-def update_current_state(
-    results: list[dict],
-    previous_state: dict,
-    *,
-    now_epoch: float,
-    mode: str,
-    config: dict,
-) -> tuple[dict, bool]:
-    now = utc_text(now_epoch)
-    old_channels = previous_state.get("channels") if isinstance(previous_state.get("channels"), dict) else {}
-    unknown = sum(row.get("observed_status") == "UNKNOWN" for row in results)
-    ratio = unknown / len(results) if results else 1.0
-    circuit = unknown >= int(config.get("circuit_breaker_min_unknown") or 12) and ratio >= float(
-        config.get("circuit_breaker_unknown_ratio") or 0.35
-    )
-    channels: dict[str, dict] = {}
-    dead_runs = int(config.get("dead_after_runs") or 3)
-    dead_hours = float(config.get("dead_min_age_hours") or 6)
-    degraded_runs = int(config.get("degraded_after_runs") or 3)
-    degraded_hours = float(config.get("degraded_min_age_hours") or 6)
-
-    for row in results:
-        previous = old_channels.get(row["name"]) if isinstance(old_channels.get(row["name"]), dict) else {}
-        same_url = str(previous.get("last_url") or "") == row["url"]
-        if mode != "deep":
-            apply_cached_quality(row, previous if same_url else {}, now_epoch, config)
-        observed = str(row["observed_status"])
-        failures = int(previous.get("consecutive_failures") or 0) if same_url else 0
-        degraded = int(previous.get("consecutive_degraded") or 0) if same_url else 0
-        first_failure = str(previous.get("first_failure_utc") or "") if same_url else ""
-        first_degraded = str(previous.get("first_degraded_utc") or "") if same_url else ""
-
-        if not circuit:
-            if observed == "UNKNOWN":
-                failures += 1
-                first_failure = first_failure or now
-            else:
-                failures = 0
-                first_failure = ""
-            if observed == "DEGRADED":
-                degraded += 1
-                first_degraded = first_degraded or now
-            elif observed == "GOOD":
-                degraded = 0
-                first_degraded = ""
-
-        failure_age = _age_hours(first_failure, now_epoch)
-        degraded_age = _age_hours(first_degraded, now_epoch)
-        was_dead = same_url and bool(previous.get("home_dead_confirmed"))
-        was_degraded = same_url and bool(previous.get("home_degraded_confirmed"))
-        dead_confirmed = was_dead or (
-            not circuit and observed == "UNKNOWN" and failures >= dead_runs and failure_age >= dead_hours
-        )
-        degraded_confirmed = was_degraded or (
-            not circuit and observed == "DEGRADED" and degraded >= degraded_runs and degraded_age >= degraded_hours
-        )
-        if observed == "GOOD":
-            dead_confirmed = False
-            degraded_confirmed = False
-        elif observed == "DEGRADED":
-            dead_confirmed = False
-
-        row["consecutive_failures"] = failures
-        row["failure_age_hours"] = failure_age
-        row["home_dead_confirmed"] = bool(dead_confirmed)
-        row["consecutive_degraded"] = degraded
-        row["degraded_age_hours"] = degraded_age
-        row["home_degraded_confirmed"] = bool(degraded_confirmed)
-        row["status"] = "DEAD" if dead_confirmed else observed
-        last_deep = previous.get("last_deep") if same_url and isinstance(previous.get("last_deep"), dict) else {}
-        if mode == "deep" and observed in {"GOOD", "DEGRADED"} and row.get("deep_checked"):
-            row["checked_utc"] = now
-            last_deep = quality_cache(row)
-        channels[row["name"]] = {
-            "last_url": row["url"],
-            "status": row["status"],
-            "observed_status": observed,
-            "consecutive_failures": failures,
-            "first_failure_utc": first_failure,
-            "consecutive_degraded": degraded,
-            "first_degraded_utc": first_degraded,
-            "home_dead_confirmed": bool(dead_confirmed),
-            "home_degraded_confirmed": bool(degraded_confirmed),
-            "last_deep": last_deep,
-            "updated_utc": now,
-        }
-    state = dict(previous_state)
-    state.update({
-        "version": 1,
-        "last_run_utc": now,
-        "last_mode": mode,
-        "last_deep_utc": now if mode == "deep" else str(previous_state.get("last_deep_utc") or ""),
-        "channels": channels,
-        "circuit_breaker_open": circuit,
-    })
-    return state, circuit
-
-
-def update_candidate_state(
-    results: list[dict],
-    state: dict,
-    *,
-    now_epoch: float,
-    config: dict,
-) -> dict:
-    now = utc_text(now_epoch)
-    old = state.get("candidates") if isinstance(state.get("candidates"), dict) else {}
-    updated = dict(old)
-    required_runs = int(config.get("candidate_good_after_runs") or 2)
-    required_hours = float(config.get("candidate_good_min_age_hours") or 6)
-    for row in results:
-        previous = old.get(row["name"]) if isinstance(old.get(row["name"]), dict) else {}
-        same_url = str(previous.get("last_url") or "") == row["url"]
-        runs = int(previous.get("consecutive_good") or 0) if same_url else 0
-        first = str(previous.get("first_good_utc") or "") if same_url else ""
-        fully_qualified = (
-            row.get("observed_status") == "GOOD"
-            and row.get("deep_checked") is True
-            and int(row.get("height") or 0) >= int(row.get("min_height") or 0)
-            and int(row.get("sample_count") or 0) == SAMPLES_PER_ROUTE
-        )
-        if fully_qualified:
-            runs += 1
-            first = first or now
-        else:
-            runs = 0
-            first = ""
-        age = _age_hours(first, now_epoch)
-        confirmed = bool(fully_qualified and runs >= required_runs and age >= required_hours)
-        row["candidate_confirmed"] = confirmed
-        updated[row["name"]] = {
-            "last_url": row["url"],
-            "consecutive_good": runs,
-            "first_good_utc": first,
-            "candidate_confirmed": confirmed,
-            "updated_utc": now,
-        }
-    state["candidates"] = updated
-    return state
-
-
 def minimum_height(name: str, config: dict) -> int:
     overrides = config.get("minimum_height_overrides") if isinstance(config.get("minimum_height_overrides"), dict) else {}
     return int(overrides.get(name) or (2160 if name == "CCTV-4K" else config.get("minimum_height_default") or 1080))
 
 
-def candidate_qualification(result: dict) -> str:
-    if result.get("observed_status") == "UNKNOWN":
-        return "UNKNOWN"
-    if (
-        result.get("observed_status") == "GOOD"
-        and result.get("deep_checked") is True
-        and int(result.get("height") or 0) >= int(result.get("min_height") or 0)
-        and int(result.get("sample_count") or 0) == SAMPLES_PER_ROUTE
-    ):
-        return "QUALIFIED"
-    return "REJECTED"
+def _runtime_unknown(name: str, url: str, channel_key: str, floor: int) -> dict:
+    row = empty_result(name, url, floor)
+    row["channel_key"] = channel_key
+    row["error"] = "runtime_budget_exhausted_before_attempt"
+    return row
+
+
+def _probe_current(
+    name: str,
+    url: str,
+    channel_key: str,
+    *,
+    profile: dict,
+    config: dict,
+) -> dict:
+    row = probe_route(
+        name,
+        url,
+        floor=minimum_height(name, config),
+        config=config,
+        sample_limit=int(profile["current_sample_bytes"]),
+        include_metadata=bool(profile["current_metadata"]),
+    )
+    row["channel_key"] = channel_key
+    return row
+
+
+def _valid_sha(value: object) -> str:
+    text = str(value or "").lower()
+    return text if re.fullmatch(r"[0-9a-f]{64}", text) else hashlib.sha256(b"").hexdigest()
 
 
 def run(
@@ -687,6 +563,7 @@ def run(
     started = time.monotonic()
     output_dir = Path(str(config.get("output_dir") or "/opt/var/lib/iptv-home-probe"))
     state_path = output_dir / "state.json"
+    backup_path = output_dir / "qualified-backups.json"
     previous_state = load_json(state_path)
     profile = run_profile(run_kind, config)
     # Compatibility for pre-migration unit tests and explicit manual shadows.
@@ -699,42 +576,94 @@ def run(
             else int(config.get("primary_sample_bytes") or config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES)
         )
         profile["scan_candidates"] = False
-    mode = "deep" if profile["current_metadata"] else "light"
     resources = system_resources()
     blocked = resource_guard(resources, config)
     if blocked:
         raise RuntimeError(f"RESOURCE_GUARD:{blocked}")
     timezone_guard(config, now_epoch)
+    route_context = str(config.get("route_context") or ROUTE_CONTEXT)
+    if route_context != ROUTE_CONTEXT:
+        raise RuntimeError("ROUTE_CONTEXT_UNVERIFIED")
 
     playlist_url = str(config.get("playlist_url") or DEFAULT_PLAYLIST)
     playlist_bytes, playlist_final, _ = fetch_playlist(playlist_url)
     entries = parse_playlist(playlist_bytes)
     maximum_runtime = float(config.get("maximum_runtime_s") or 3300)
-    results: list[dict] = []
-    for name, url in entries:
-        if time.monotonic() - started >= maximum_runtime:
-            raise RuntimeError("RUNTIME_BUDGET_EXHAUSTED")
-        results.append(probe_route(
-            name,
-            url,
-            floor=minimum_height(name, config),
-            config=config,
-            sample_limit=int(profile["current_sample_bytes"]),
-            include_metadata=bool(profile["current_metadata"]),
-        ))
+    formal_rows: list[tuple[str, str, str]] = []
+    formal_keys: set[str] = set()
+    for playlist_name, url in entries:
+        key = station_key(playlist_name)
+        if key is None or key in formal_keys:
+            raise RuntimeError(f"FORMAL_PLAYLIST_SCOPE_OR_DUPLICATE:{playlist_name}")
+        formal_keys.add(key)
+        formal_rows.append((key, canonical_name(key), url))
 
-    state, circuit = update_current_state(
-        results,
-        previous_state,
-        now_epoch=now_epoch,
-        mode=mode,
-        config=config,
+    # Every formal route gets its first attempt before any retry or candidate
+    # work.  This makes the current household picture the run's top priority.
+    attempts_by_key: dict[str, list[dict]] = {}
+    for key, name, url in formal_rows:
+        if time.monotonic() - started >= maximum_runtime:
+            attempts_by_key[key] = [_runtime_unknown(name, url, key, minimum_height(name, config))]
+            continue
+        attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
+
+    # A non-GOOD first attempt is never enough to replace a route.  Confirm it
+    # once more in the same home run; no arbitrary channel-count limit applies.
+    for key, name, url in formal_rows:
+        attempts = attempts_by_key[key]
+        if probe_is_good(attempts[0]) or time.monotonic() - started >= maximum_runtime:
+            continue
+        attempts.append(_probe_current(name, url, key, profile=profile, config=config))
+
+    circuit = mass_failure_circuit(
+        attempts_by_key,
+        minimum_channels=int(config.get("circuit_breaker_min_unknown") or 12),
+        failure_ratio=float(config.get("circuit_breaker_unknown_ratio") or 0.35),
     )
-    candidate_results: list[dict] = []
+    current_results = [
+        current_result(name, url, attempts_by_key[key], circuit_open=circuit)
+        for key, name, url in formal_rows
+    ]
+    current_urls = {key: url for key, _name, url in formal_rows}
+
+    state = dict(previous_state)
+    state.update({
+        "version": 2,
+        "last_run_utc": utc_text(now_epoch),
+        "last_run_kind": run_kind,
+        "circuit_breaker_open": bool(circuit),
+        "current": {row["channel_key"]: row for row in current_results},
+    })
+
+    existing_pool: dict | None
+    try:
+        existing_pool = load_json(backup_path) if backup_path.exists() else None
+        if existing_pool is not None:
+            validate_backup_pool(
+                existing_pool,
+                expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
+                now_epoch=now_epoch,
+                allow_expired=True,
+            )
+    except Exception:
+        existing_pool = None
+        state["backup_pool_load_error"] = True
+    existing_manifest_sha = _valid_sha(
+        (existing_pool or {}).get("candidate_manifest_sha256")
+        or previous_state.get("last_candidate_manifest_sha256")
+    )
+    candidate_manifest_sha = existing_manifest_sha
+    candidate_report_by_id: dict[str, dict] = {}
+    newly_qualified: list[tuple[dict, dict]] = []
     candidate_playlist = None
     candidate_manifest_state = "not_requested"
     if profile["scan_candidates"]:
-        candidate_url = str(config.get("candidate_manifest_url") or DEFAULT_CANDIDATE_MANIFEST).strip()
+        incoming = backup_refresh_candidates(
+            existing_pool,
+            now_epoch=now_epoch,
+            refresh_before_hours=float(config.get("backup_refresh_before_hours") or 18),
+        )
+        candidate_url = str(config.get("candidate_manifest_url", DEFAULT_CANDIDATE_MANIFEST)).strip()
         if not candidate_url:
             candidate_manifest_state = "disabled"
         else:
@@ -753,70 +682,174 @@ def run(
                     "sha256": hashlib.sha256(candidate_bytes).hexdigest(),
                     "channel_count": int(manifest["candidate_count"]),
                 }
-                current_urls = {
-                    key: url
-                    for name, url in entries
-                    if (key := station_key(name)) is not None
-                }
-                queue = merge_candidate_queue(
-                    previous_state.get("candidate_queue"),
-                    list(manifest["candidates"]),
-                    current_urls,
-                )
-                remaining: list[dict] = []
-                observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
-                    previous_state.get("candidate_observations"), dict
-                ) else {}
-                max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
-                for candidate in queue:
-                    if time.monotonic() - started >= maximum_runtime:
-                        remaining.append(candidate)
-                        continue
-                    key = str(candidate["channel_key"])
-                    name = canonical_name(key)
-                    row = probe_route(
-                        name,
-                        str(candidate["url"]),
-                        floor=minimum_height(name, config),
-                        config=config,
-                        sample_limit=int(profile["candidate_sample_bytes"]),
-                        include_metadata=bool(profile["candidate_metadata"]),
-                    )
-                    qualification = candidate_qualification(row)
-                    row.update({
-                        "candidate_id": candidate["candidate_id"],
-                        "channel_key": key,
-                        "request_options": str(candidate.get("request_options") or ""),
-                        "qualification": qualification,
-                        "purpose": "daily-qualification",
-                        "switch_reverified": False,
-                        "candidate_confirmed": qualification == "QUALIFIED",
-                    })
-                    candidate_results.append(row)
-                    identity = str(candidate["candidate_id"])
-                    old_observation = observations.get(identity) if isinstance(observations.get(identity), dict) else {}
-                    unknown_attempts = int(old_observation.get("unknown_attempts") or 0)
-                    unknown_attempts = unknown_attempts + 1 if qualification == "UNKNOWN" else 0
-                    observations[identity] = {
-                        "candidate": candidate,
-                        "qualification": qualification,
-                        "unknown_attempts": unknown_attempts,
-                        "last_checked_utc": utc_text(now_epoch),
-                        "result": row,
-                    }
-                    if qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
-                        remaining.append(candidate)
-                state["candidate_queue"] = remaining
-                state["candidate_observations"] = observations
-                state["last_candidate_manifest_sha256"] = candidate_playlist["sha256"]
+                candidate_manifest_sha = candidate_playlist["sha256"]
+                for value in manifest["candidates"]:
+                    candidate = dict(value)
+                    candidate["_queue_priority"] = 1
+                    candidate["source_manifest_sha256"] = candidate_manifest_sha
+                    incoming.append(candidate)
+                state["last_candidate_manifest_sha256"] = candidate_manifest_sha
                 state["last_candidate_manifest_utc"] = str(manifest["generated_utc"])
                 candidate_manifest_state = "accepted"
             except Exception as exc:
                 # A stale, racing, or malformed cloud manifest must never make
-                # the formal home-health pass fail or mutate its existing queue.
+                # the formal home-health pass or local backup refresh fail.
                 candidate_manifest_state = f"rejected:{type(exc).__name__}:{str(exc)[:220]}"
-                state["candidate_queue"] = list(previous_state.get("candidate_queue") or [])
-                state["candidate_observations"] = dict(previous_state.get("candidate_observations") or {})
+
+        queue = merge_candidate_queue(
+            previous_state.get("candidate_queue"),
+            incoming,
+            current_urls,
+        )
+        remaining: list[dict] = []
+        observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
+            previous_state.get("candidate_observations"), dict
+        ) else {}
+        max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
+        for candidate in queue:
+            if time.monotonic() - started >= maximum_runtime:
+                remaining.append(candidate)
+                continue
+            key = str(candidate["channel_key"])
+            name = canonical_name(key)
+            row = probe_route(
+                name,
+                str(candidate["url"]),
+                floor=minimum_height(name, config),
+                config=config,
+                sample_limit=int(profile["candidate_sample_bytes"]),
+                include_metadata=bool(profile["candidate_metadata"]),
+            )
+            row["channel_key"] = key
+            report_row = candidate_result(
+                candidate,
+                row,
+                purpose="daily-qualification",
+                switch_reverified=False,
+            )
+            identity = str(candidate["candidate_id"])
+            candidate_report_by_id[identity] = report_row
+            if candidate_is_qualified(row):
+                candidate_with_source = dict(candidate)
+                candidate_with_source["source_manifest_sha256"] = str(
+                    candidate.get("source_manifest_sha256") or candidate_manifest_sha
+                )
+                newly_qualified.append((candidate_with_source, row))
+            old_observation = observations.get(identity) if isinstance(observations.get(identity), dict) else {}
+            unknown_attempts = int(old_observation.get("unknown_attempts") or 0)
+            qualification = str(report_row["qualification"])
+            unknown_attempts = unknown_attempts + 1 if qualification == "UNKNOWN" else 0
+            observations[identity] = {
+                "candidate": candidate,
+                "qualification": qualification,
+                "unknown_attempts": unknown_attempts,
+                "last_checked_utc": utc_text(now_epoch),
+                "result": report_row,
+            }
+            if qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
+                remaining.append(candidate)
+        state["candidate_queue"] = remaining
+        state["candidate_observations"] = observations
+
+    pool = update_backup_pool(
+        existing_pool,
+        newly_qualified,
+        probe_id=str(config.get("probe_id") or "home-ac86u"),
+        now_epoch=now_epoch,
+        formal_playlist_sha256=hashlib.sha256(playlist_bytes).hexdigest(),
+        candidate_manifest_sha256=candidate_manifest_sha,
+        current_urls=current_urls,
+        ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
+    )
+
+    actionable = bool(config.get("actionable", False))
+    decisions: list[dict] = []
+    for row in current_results:
+        key = str(row["channel_key"])
+        status = str(row["status"])
+        if status == "GOOD":
+            decisions.append({
+                "channel_key": key,
+                "action": "KEEP",
+                "reason": "healthy_home_route",
+                "replacement_candidate_id": None,
+            })
+            continue
+        if status == "UNKNOWN":
+            decisions.append({
+                "channel_key": key,
+                "action": "UNRESOLVED",
+                "reason": "insufficient_home_evidence",
+                "replacement_candidate_id": None,
+            })
+            continue
+        if not actionable:
+            decisions.append({
+                "channel_key": key,
+                "action": "UNRESOLVED",
+                "reason": "shadow_mode",
+                "replacement_candidate_id": None,
+            })
+            continue
+
+        replacement: str | None = None
+        reverify_attempted = False
+        budget_exhausted = False
+        for backup in eligible_backups(pool, key, now_epoch=now_epoch):
+            if time.monotonic() - started >= maximum_runtime:
+                budget_exhausted = True
+                break
+            reverify_attempted = True
+            name = canonical_name(key)
+            raw = probe_route(
+                name,
+                str(backup["url"]),
+                floor=minimum_height(name, config),
+                config=config,
+                sample_limit=int(profile["candidate_sample_bytes"]),
+                include_metadata=True,
+            )
+            raw["channel_key"] = key
+            identity = str(backup["candidate_id"])
+            evidence = candidate_result(
+                backup,
+                raw,
+                purpose="switch-reverification",
+                switch_reverified=True,
+            )
+            candidate_report_by_id[identity] = evidence
+            if candidate_is_qualified(raw):
+                replacement = identity
+                pool = update_backup_pool(
+                    pool,
+                    [(backup, raw)],
+                    probe_id=str(config.get("probe_id") or "home-ac86u"),
+                    now_epoch=now_epoch,
+                    formal_playlist_sha256=hashlib.sha256(playlist_bytes).hexdigest(),
+                    candidate_manifest_sha256=candidate_manifest_sha,
+                    current_urls=current_urls,
+                    ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
+                )
+                break
+            pool = without_backup(pool, identity)
+
+        if replacement:
+            decisions.append({
+                "channel_key": key,
+                "action": "REPLACE",
+                "reason": "confirmed_home_failure_and_reverified_backup",
+                "replacement_candidate_id": replacement,
+            })
+        else:
+            reason = "runtime_budget_before_reverification" if budget_exhausted else (
+                "home_backups_failed_reverification" if reverify_attempted else "no_home_qualified_backup"
+            )
+            decisions.append({
+                "channel_key": key,
+                "action": "UNRESOLVED",
+                "reason": reason,
+                "replacement_candidate_id": None,
+            })
 
     successful_runs = int(previous_state.get("successful_runs") or 0) + 1
     first_success = str(previous_state.get("first_success_utc") or "") or utc_text(now_epoch)
@@ -824,34 +857,42 @@ def run(
     state["first_success_utc"] = first_success
     state["last_run_kind"] = run_kind
     state["candidate_manifest_state"] = candidate_manifest_state
+    state["qualified_backup_pool"] = pool
     runtime = round(time.monotonic() - started, 3)
     resources["runtime_s"] = runtime
+    candidate_results = sorted(candidate_report_by_id.values(), key=lambda row: str(row["candidate_id"]))
     summary = {
-        "channels": len(results),
-        "good": sum(row["status"] == "GOOD" for row in results),
-        "degraded": sum(row["status"] == "DEGRADED" for row in results),
-        "unknown": sum(row["status"] == "UNKNOWN" for row in results),
-        "dead": sum(row["status"] == "DEAD" for row in results),
+        "channels": len(current_results),
+        "good": sum(row["status"] == "GOOD" for row in current_results),
+        "bad": sum(row["status"] == "BAD" for row in current_results),
+        "unknown": sum(row["status"] == "UNKNOWN" for row in current_results),
         "candidate_channels": len(candidate_results),
-        "candidate_confirmed": sum(bool(row.get("candidate_confirmed")) for row in candidate_results),
+        "candidate_confirmed": sum(row.get("qualification") == "QUALIFIED" for row in candidate_results),
         "candidate_queue_remaining": len(state.get("candidate_queue") or []),
+        "qualified_backups": int(pool["backup_count"]),
+        "replacements": sum(row["action"] == "REPLACE" for row in decisions),
+        "unresolved": sum(row["action"] == "UNRESOLVED" for row in decisions),
         "circuit_breaker_open": bool(circuit),
     }
     report = {
-        "schema": "iptv-home-probe/v1",
+        "schema": REPORT_SCHEMA,
         "probe_id": str(config.get("probe_id") or "home-ac86u"),
         "generated_utc": utc_text(now_epoch),
         "run_status": "COMPLETED",
         "run_kind": run_kind,
-        "mode": mode,
-        "actionable": bool(config.get("actionable", False)),
+        "actionable": actionable,
         "production_modified": False,
-        "probe_region": "home",
-        "route_context": str(config.get("route_context") or "router-origin-direct-wan"),
-        "playlist": {
+        "route_context": route_context,
+        "formal_playlist": {
             "url": playlist_final,
             "sha256": hashlib.sha256(playlist_bytes).hexdigest(),
-            "channel_count": len(entries),
+            "channel_count": len(formal_rows),
+        },
+        "baseline": {
+            "home_network_ok": not circuit,
+            "github_reachable": True,
+            "route_verified": True,
+            "mass_failure_circuit_breaker": bool(circuit),
         },
         "candidate_playlist": candidate_playlist,
         "policy": {
@@ -862,18 +903,27 @@ def run(
             "sample_bytes": int(profile["current_sample_bytes"]),
             "candidate_sample_bytes": int(profile["candidate_sample_bytes"]),
             "candidate_manifest_state": candidate_manifest_state,
-            "dead_after_runs": int(config.get("dead_after_runs") or 3),
-            "dead_min_age_hours": float(config.get("dead_min_age_hours") or 6),
-            "degraded_after_runs": int(config.get("degraded_after_runs") or 3),
-            "degraded_min_age_hours": float(config.get("degraded_min_age_hours") or 6),
-            "candidate_requires_two_runs": False,
+            "current_failure_requires_two_attempts": True,
             "candidate_requires_two_samples_and_deep_metadata": True,
+            "qualified_backup_ttl_hours": float(config.get("qualified_backup_ttl_hours") or 36),
         },
         "resources": resources,
         "summary": summary,
-        "results": results,
+        "current_results": current_results,
         "candidate_results": candidate_results,
+        "decisions": decisions,
     }
+    validate_backup_pool(
+        pool,
+        expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
+        now_epoch=now_epoch,
+    )
+    validate_home_report_v2(
+        report,
+        expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
+        now_epoch=now_epoch,
+    )
+    atomic_json(backup_path, pool)
     atomic_json(output_dir / "latest.json", report)
     atomic_json(state_path, state)
     return report, state
@@ -897,9 +947,10 @@ def main() -> int:
         summary = report["summary"]
         print(
             "HOME_PROBE completed "
-            f"run_kind={report['run_kind']} mode={report['mode']} channels={summary['channels']} good={summary['good']} "
-            f"degraded={summary['degraded']} unknown={summary['unknown']} dead={summary['dead']} "
-            f"candidates={summary['candidate_confirmed']} circuit={int(summary['circuit_breaker_open'])}"
+            f"run_kind={report['run_kind']} channels={summary['channels']} good={summary['good']} "
+            f"bad={summary['bad']} unknown={summary['unknown']} backups={summary['qualified_backups']} "
+            f"replacements={summary['replacements']} candidates={summary['candidate_confirmed']} "
+            f"circuit={int(summary['circuit_breaker_open'])}"
         )
         return 0
     except Exception as exc:

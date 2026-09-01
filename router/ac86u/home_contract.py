@@ -346,6 +346,7 @@ def validate_backup_pool(
         ids.add(identity)
         if row.get("qualification") != "QUALIFIED":
             raise ContractError(f"backup[{index}] is not qualified")
+        _sha(row.get("source_manifest_sha256"), f"backup[{index}].source_manifest_sha256")
         qualified = parse_utc(row.get("qualified_utc"), f"backup[{index}].qualified_utc")
         verified = parse_utc(row.get("last_verified_utc"), f"backup[{index}].last_verified_utc")
         expires = parse_utc(row.get("expires_utc"), f"backup[{index}].expires_utc")
@@ -372,11 +373,14 @@ def _current_result(value: object, label: str) -> tuple[str, str, str, bool]:
     confirmed = _boolean(row.get("failure_confirmed"), f"{label}.failure_confirmed")
     if confirmed != (status == "BAD"):
         raise ContractError(f"{label} BAD/failure confirmation is inconsistent")
+    attempts = int(_number(row.get("attempt_count"), f"{label}.attempt_count", 1, 2))
+    if status == "BAD" and attempts != 2:
+        raise ContractError(f"{label} BAD status lacks two attempts")
     _verification(row.get("verification"), f"{label}.verification", require_deep=False)
     return key, url, status, confirmed
 
 
-def _candidate_result(value: object, label: str) -> tuple[str, str]:
+def _candidate_result(value: object, label: str) -> tuple[str, str, str, bool]:
     row = _object(value, label)
     key = _channel_key(row.get("channel_key"), f"{label}.channel_key")
     url = _url(row.get("url"), f"{label}.url")
@@ -387,8 +391,14 @@ def _candidate_result(value: object, label: str) -> tuple[str, str]:
     status = str(row.get("qualification") or "")
     if status not in {"QUALIFIED", "REJECTED", "UNKNOWN"}:
         raise ContractError(f"{label}.qualification is invalid")
+    purpose = str(row.get("purpose") or "")
+    if purpose not in {"daily-qualification", "switch-reverification"}:
+        raise ContractError(f"{label}.purpose is invalid")
+    switch_reverified = _boolean(row.get("switch_reverified"), f"{label}.switch_reverified")
+    if switch_reverified and (purpose != "switch-reverification" or status != "QUALIFIED"):
+        raise ContractError(f"{label} has invalid switch reverification evidence")
     _verification(row.get("verification"), f"{label}.verification", require_deep=status == "QUALIFIED")
-    return identity, status
+    return identity, key, status, switch_reverified
 
 
 def validate_home_report_v2(
@@ -430,12 +440,12 @@ def validate_home_report_v2(
         current_by_key[key] = (url, status, confirmed)
 
     candidates = _list(report.get("candidate_results"), "home report.candidate_results", MAX_CANDIDATES)
-    candidate_status: dict[str, str] = {}
+    candidate_status: dict[str, tuple[str, str, bool]] = {}
     for index, value in enumerate(candidates):
-        identity, status = _candidate_result(value, f"candidate_results[{index}]")
+        identity, key, status, switch_reverified = _candidate_result(value, f"candidate_results[{index}]")
         if identity in candidate_status:
             raise ContractError("home report duplicates a candidate result")
-        candidate_status[identity] = status
+        candidate_status[identity] = (key, status, switch_reverified)
     if report.get("run_kind") == "recheck-1300" and any(
         row.get("purpose") != "switch-reverification" for row in candidates if isinstance(row, dict)
     ):
@@ -459,11 +469,13 @@ def validate_home_report_v2(
             if not actionable or not baseline_safe or current_status != "BAD" or not confirmed:
                 raise ContractError("replacement lacks safe confirmed home evidence")
             identity = _sha(replacement, f"decisions[{index}].replacement_candidate_id")
-            if candidate_status.get(identity) != "QUALIFIED":
+            evidence = candidate_status.get(identity)
+            if evidence is None or evidence[0] != key or evidence[1] != "QUALIFIED":
                 raise ContractError("replacement candidate was not qualified at home")
-            candidate_row = next(row for row in candidates if row.get("candidate_id") == identity)
-            if candidate_row.get("switch_reverified") is not True:
+            if evidence[2] is not True:
                 raise ContractError("replacement candidate was not reverified before switching")
         elif replacement is not None:
             raise ContractError("non-replacement decision contains a replacement candidate")
+    if decision_keys != set(current_by_key):
+        raise ContractError("home report decisions do not cover every current channel")
     return report

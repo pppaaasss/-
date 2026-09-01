@@ -23,10 +23,10 @@ for filename in ("latest.json", "state.json", "upload-state.json"):
     if filename == "latest.json":
         summary = value.get("summary") or {}
         print(
-            f"latest:         {value.get('generated_utc')} run={value.get('run_kind', '-')} mode={value.get('mode')} "
-            f"GOOD={summary.get('good', 0)} DEGRADED={summary.get('degraded', 0)} "
-            f"UNKNOWN={summary.get('unknown', 0)} DEAD={summary.get('dead', 0)} "
-            f"QUEUE={summary.get('candidate_queue_remaining', 0)} "
+            f"latest:         {value.get('generated_utc')} run={value.get('run_kind', '-')} "
+            f"GOOD={summary.get('good', 0)} BAD={summary.get('bad', 0)} "
+            f"UNKNOWN={summary.get('unknown', 0)} BACKUPS={summary.get('qualified_backups', 0)} "
+            f"REPLACE={summary.get('replacements', 0)} QUEUE={summary.get('candidate_queue_remaining', 0)} "
             f"CIRCUIT={int(bool(summary.get('circuit_breaker_open')))}"
         )
     elif filename == "upload-state.json":
