@@ -48,8 +48,8 @@ if [ "$probe_rc" -ne 0 ]; then
   exit "$probe_rc"
 fi
 
-if ! nice -n 15 /opt/bin/python3 "$BASE/upload_home_report.py" --config "$CONFIG" >> "$LOG" 2>&1; then
-  echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') HOME_PROBE_RUN upload failed; local report retained" >> "$LOG"
+if ! nice -n 15 /opt/bin/python3 "$BASE/push_home_report.py" --config "$CONFIG" >> "$LOG" 2>&1; then
+  echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') HOME_PROBE_RUN GitHub push failed; local report queued" >> "$LOG"
   exit 3
 fi
 echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') HOME_PROBE_RUN complete" >> "$LOG"

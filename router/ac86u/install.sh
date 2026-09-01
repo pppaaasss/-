@@ -29,7 +29,7 @@ fi
 
 /opt/bin/opkg update
 /opt/bin/opkg install \
-  python3 ffprobe curl ca-bundle ca-certificates \
+  python3 ffprobe curl git ca-bundle ca-certificates \
   openssh-client openssh-client-utils openssh-keygen
 
 stage="/opt/tmp/iptv-home-probe-install.$$"
@@ -41,14 +41,14 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="home_probe.py home_contract.py home_decision.py upload_home_report.py pair.py activate.py run.sh status.sh uninstall.sh"
+files="home_probe.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py run.sh status.sh uninstall.sh"
 for name in $files; do
   /opt/bin/curl -fL --retry 3 --connect-timeout 15 --max-time 120 \
     "$RAW/$name" -o "$stage/$name"
 done
 /opt/bin/python3 -m py_compile \
   "$stage/home_probe.py" "$stage/home_contract.py" "$stage/home_decision.py" \
-  "$stage/upload_home_report.py" "$stage/pair.py" "$stage/activate.py"
+  "$stage/push_home_report.py" "$stage/github_pair.py" "$stage/activate.py"
 for name in $files; do
   cp -f "$stage/$name" "$BASE/$name"
   chmod 0755 "$BASE/$name"
@@ -72,16 +72,17 @@ payload = {
     "schedule_timezone": "Asia/Shanghai",
     "expected_utc_offset": "+0800",
     "route_context": "router-origin-direct-wan",
-    "upload_enabled": False,
     "actionable": False,
-    "upload_host": "",
-    "upload_port": 22,
-    "upload_user": "iptv-home-probe",
+    "github_push_enabled": False,
+    "protected_publishing_ready": False,
+    "github_repository": "pppaaasss/-",
+    "github_report_branch": "home-reports",
+    "github_deploy_private_key": "/opt/etc/iptv-home-probe/github_report_ed25519",
+    "github_known_hosts": "/opt/etc/iptv-home-probe/github_known_hosts",
+    "git": "/opt/bin/git",
     "ssh": "/opt/bin/ssh",
     "ssh_keyscan": "/opt/bin/ssh-keyscan",
     "ssh_keygen": "/opt/bin/ssh-keygen",
-    "ssh_private_key": "/opt/etc/iptv-home-probe/id_ed25519",
-    "ssh_known_hosts": "/opt/etc/iptv-home-probe/known_hosts",
     "ffprobe": "/opt/bin/ffprobe",
     "maximum_load1": 1.5,
     "minimum_mem_available_kib": 65536,
@@ -107,13 +108,33 @@ path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True
 path.chmod(0o600)
 PY
 fi
+/opt/bin/python3 - "$CONFIG" <<'PY'
+import json, os, sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+value = json.loads(path.read_text(encoding="utf-8"))
+value.setdefault("github_push_enabled", False)
+value.setdefault("protected_publishing_ready", False)
+value.setdefault("github_repository", "pppaaasss/-")
+value.setdefault("github_report_branch", "home-reports")
+value.setdefault("github_deploy_private_key", "/opt/etc/iptv-home-probe/github_report_ed25519")
+value.setdefault("github_known_hosts", "/opt/etc/iptv-home-probe/github_known_hosts")
+value.setdefault("git", "/opt/bin/git")
+for old in ("upload_enabled", "upload_host", "upload_port", "upload_user", "ssh_private_key", "ssh_known_hosts"):
+    value.pop(old, None)
+temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+temporary.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+temporary.chmod(0o600)
+os.replace(temporary, path)
+PY
 chmod 0700 "$KEY_DIR" "$DATA"
 chmod 0600 "$CONFIG"
-if [ ! -f "$KEY_DIR/id_ed25519" ]; then
-  /opt/bin/ssh-keygen -q -t ed25519 -N '' -C "iptv-home-probe" -f "$KEY_DIR/id_ed25519"
+if [ ! -f "$KEY_DIR/github_report_ed25519" ]; then
+  /opt/bin/ssh-keygen -q -t ed25519 -N '' -C "iptv-home-report-deploy-key" -f "$KEY_DIR/github_report_ed25519"
 fi
-chmod 0600 "$KEY_DIR/id_ed25519"
-chmod 0644 "$KEY_DIR/id_ed25519.pub"
+chmod 0600 "$KEY_DIR/github_report_ed25519"
+chmod 0644 "$KEY_DIR/github_report_ed25519.pub"
 
 mkdir -p /jffs/scripts
 services_tmp="$SERVICES_START.iptv-home.$$"
@@ -142,13 +163,14 @@ cru a IPTVHomeRecheck "0 13 * * * $BASE/run.sh --run-kind recheck-1300"
 
 echo
 echo "Installed in safe local-shadow mode. No playlist or routing rule was changed."
-echo "Probe public key (use only for the restricted VPS receiver):"
-cat "$KEY_DIR/id_ed25519.pub"
+echo "Repository-scoped GitHub deploy public key (add with write access only to pppaaasss/-):"
+cat "$KEY_DIR/github_report_ed25519.pub"
 echo
 echo "Status:  $BASE/status.sh"
 echo "Run primary now: $BASE/run.sh --run-kind primary-0200"
 echo "Run recheck now: $BASE/run.sh --run-kind recheck-1300"
-echo "Pairing remains disabled until a pinned VPS host fingerprint is supplied."
+echo "Do not grant write access or run github_pair.py --enable until protected publishing is ready."
+echo "GitHub SSH uses port 443 and the pinned official Ed25519 fingerprint; no home port is opened."
 
 route_context="$(/opt/bin/python3 - "$CONFIG" <<'PY'
 import json, sys
