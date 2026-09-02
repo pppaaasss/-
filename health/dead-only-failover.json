@@ -1,6 +1,9 @@
 {
   "applied": true,
-  "changed_files": [],
+  "changed_files": [
+    "tv-all.m3u",
+    "tv.m3u"
+  ],
   "decisions": [
     {
       "candidate_count": 0,
@@ -40,15 +43,15 @@
       "skipped": []
     },
     {
-      "channel": "Dynamo Kyiv TV (1080p)",
-      "reason": "current_route_recovered"
-    },
-    {
       "candidate_count": 0,
       "channel": "JOJG-DTV (1080i)",
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
       "skipped": []
+    },
+    {
+      "channel": "Sport 5 (1080p)",
+      "reason": "current_route_recovered"
     },
     {
       "candidate_count": 0,
@@ -70,6 +73,12 @@
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
       "skipped": []
+    },
+    {
+      "candidate_count": 2,
+      "channel": "世界地理",
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
     },
     {
       "candidate_count": 0,
@@ -216,7 +225,7 @@
       "skipped": []
     }
   ],
-  "generated_utc": "2026-09-01T22:24:40Z",
+  "generated_utc": "2026-09-02T04:25:18Z",
   "policy": {
     "blocked_candidate_hosts": [
       "111.59.24.227",
@@ -235,5 +244,17 @@
     "home_feedback_veto": true,
     "no_replacement_count_limit": true
   },
-  "selected_updates": []
+  "selected_updates": [
+    {
+      "channel": "世界地理",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u"
+      ],
+      "new_url": "http://183.11.239.36:808/hls/11/index.m3u8",
+      "old_url": "http://hmfs.f3322.net:3388/hls/28/index.m3u8",
+      "source_kind": "verified_pool"
+    }
+  ]
 }
