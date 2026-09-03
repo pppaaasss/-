@@ -1,6 +1,9 @@
 {
   "applied": true,
-  "changed_files": [],
+  "changed_files": [
+    "tv-all.m3u",
+    "tv.m3u"
+  ],
   "decisions": [
     {
       "candidate_count": 0,
@@ -35,13 +38,6 @@
     {
       "candidate_count": 0,
       "channel": "CGNTV Japan (1080p)",
-      "failed_candidates": [],
-      "reason": "no_qualified_spare_after_fresh_probe",
-      "skipped": []
-    },
-    {
-      "candidate_count": 0,
-      "channel": "JOEX-DTV (540p) [540p]",
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
       "skipped": []
@@ -107,13 +103,6 @@
     },
     {
       "candidate_count": 0,
-      "channel": "易门综合",
-      "failed_candidates": [],
-      "reason": "no_qualified_spare_after_fresh_probe",
-      "skipped": []
-    },
-    {
-      "candidate_count": 0,
       "channel": "福建公共",
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
@@ -151,8 +140,10 @@
       "skipped": []
     },
     {
+      "candidate_count": 4,
       "channel": "风云足球",
-      "reason": "current_route_recovered"
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
     },
     {
       "candidate_count": 1,
@@ -223,7 +214,7 @@
       "skipped": []
     }
   ],
-  "generated_utc": "2026-09-03T04:25:14Z",
+  "generated_utc": "2026-09-03T10:26:17Z",
   "policy": {
     "blocked_candidate_hosts": [
       "111.59.24.227",
@@ -242,5 +233,17 @@
     "home_feedback_veto": true,
     "no_replacement_count_limit": true
   },
-  "selected_updates": []
+  "selected_updates": [
+    {
+      "channel": "风云足球",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u"
+      ],
+      "new_url": "http://115.150.63.77:9902/tsfile/live/1028_1.m3u8",
+      "old_url": "http://120.238.84.45:9901/tsfile/live/1087_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "source_kind": "verified_pool"
+    }
+  ]
 }
