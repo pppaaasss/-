@@ -29,14 +29,19 @@ def main():
             source_rules = sum(bool(re.search(r'(?:^|[,\s(])(?:SRC-[A-Z-]+|PROCESS-[A-Z-]+|IN-[A-Z-]+|UID|DSCP),', x.lstrip(' -\"\''))) for x in lines)
             providers = sum('RULE-SET,' in x for x in lines)
             print('CLASH_RULES: source_sensitive=%d rule_set_refs=%d' % (source_rules, providers), flush=True)
+            if providers:
+                print('RULE_SET_CONTENTS: NOT_AUDITED (reference count only)', flush=True)
             break
         except (OSError, IndexError):
             continue
     try:
         with home_probe.transport_context(config) as transport:
             addresses = transport.dialer.resolver.resolve("raw.githubusercontent.com")
-            print("LAN_DNS: OK, A=%d AAAA=%d" % (
+            dns_stats = transport.dialer.resolver.diagnostics()
+            dns_status = "PARTIAL" if any(x["errors"] for x in dns_stats.values()) else "OK"
+            print("LAN_DNS: %s, A=%d AAAA=%d" % (dns_status,
                 sum(":" not in x for x in addresses), sum(":" in x for x in addresses)), flush=True)
+            print("LAN_DNS_QUERIES: " + json.dumps(dns_stats, sort_keys=True), flush=True)
             data, _, _ = home_probe.fetch_playlist("https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u")
             entries = home_probe.parse_playlist(data)
             print("TV_PLAYLIST: %d channels" % len(entries), flush=True)
@@ -48,6 +53,10 @@ def main():
                 "name", "status", "sample_count", "height", "codec", "deep_checked", "min_download_mbps", "error"
             )}, ensure_ascii=False), flush=True)
             print("CONNECTIONS: IPv4=%d IPv6=%d" % (transport.dialer.ipv4, transport.dialer.ipv6), flush=True)
+            print("LAN_DNS_QUERIES_TOTAL: " + json.dumps(
+                transport.dialer.resolver.diagnostics(), sort_keys=True), flush=True)
+            if not transport.dialer.ipv6:
+                print("IPV6_PATH: NOT_TESTED (no successful IPv6 connection)", flush=True)
         print("TEMP_RULE: REMOVED", flush=True)
         print("Manual check only; production and route verification remain unchanged.")
         return 0

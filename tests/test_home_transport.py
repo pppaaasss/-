@@ -38,6 +38,34 @@ def answer(ident=12, host='a.test', kind=1, cname=False):
 
 
 class DNSTests(unittest.TestCase):
+    def test_empty_aaaa_is_distinct_from_failed_aaaa(self):
+        resolver = ht.Landns()
+        with mock.patch.object(resolver, 'query', side_effect=[([], 60), (['127.0.0.1'], 60)]) as query:
+            self.assertEqual(['127.0.0.1'], resolver.resolve('a.test'))
+            self.assertEqual(['127.0.0.1'], resolver.resolve('a.test'))
+            self.assertEqual(2, query.call_count)
+        self.assertEqual({'answers': 0, 'empty': 1, 'errors': 0}, resolver.diagnostics()['AAAA'])
+
+    def test_partial_dns_failure_does_not_hide_family_recovery(self):
+        resolver = ht.Landns()
+        with mock.patch.object(resolver, 'query', side_effect=[
+            TimeoutError('AAAA timeout'), (['127.0.0.1'], 60),
+            (['::1'], 60), (['127.0.0.1'], 60),
+        ]):
+            self.assertEqual(['127.0.0.1'], resolver.resolve('a.test'))
+            self.assertEqual(['::1', '127.0.0.1'], resolver.resolve('a.test'))
+        self.assertEqual({'answers': 1, 'empty': 0, 'errors': 1}, resolver.diagnostics()['AAAA'])
+        self.assertEqual(2, resolver.diagnostics()['A']['answers'])
+
+    def test_total_dns_failure_remains_visible_and_is_not_cached(self):
+        resolver = ht.Landns()
+        with mock.patch.object(resolver, 'query', side_effect=TimeoutError('DNS timeout')):
+            with self.assertRaises(OSError):
+                resolver.resolve('a.test')
+        self.assertEqual(1, resolver.diagnostics()['A']['errors'])
+        self.assertEqual(1, resolver.diagnostics()['AAAA']['errors'])
+        self.assertEqual({}, resolver.cache)
+
     def test_compressed_a_and_cname_answers(self):
         self.assertEqual((['127.0.0.1'], 20), ht.dns_reply(answer(cname=True), 12, 'a.test', 1))
 

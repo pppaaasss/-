@@ -1,11 +1,11 @@
 # 2026-09-05 电视项目 Work 接班文档
 
-> 2026-09-05 23:50 截图已验证 SO_MARK: OK / MARKED_HTTPS: HTTP/1.1 206 / TEMP_RULE: REMOVED。U 盘、Entware、原探针安装完成；家庭路径仍未完成验证。后续新增共享 DNS/HTTP/HTTPS/ffprobe 传输适配和一次 CCTV-1 临时测试，待手机运行。发布器仍关闭、没有真实家庭报告。
+> 2026-09-06 00:21（北京时间）现场：CCTV-1 手动传输检测 GOOD，1080p/H.264，两份样本较低下载速度 32.968 Mbps；IPv4=7、IPv6=0，临时规则已删除。U 盘、Entware、探针已安装。仅该频道本次诊断通过；53 个 RULE-SET 引用内容、IPv6 和电视线路绑定仍待核对，尚无正式家庭报告，发布器关闭。最新接续见 [00:21 检查记录](home-checkpoint-2026-09-06.md)。
 
 这是额度中断后可直接续做的断点。继续现有实现，不从头设计；先读取本文件、[`home-first-roadmap.md`](home-first-roadmap.md)、[`ac86u-home-probe.md`](ac86u-home-probe.md) 和 [`work-review-2026-09-05.md`](work-review-2026-09-05.md)，随后获取实时 GitHub 分支。
 
 
-## 23:50 验证结果与随后代码更新（最新）
+## 2026-09-05 23:50 历史记录（现场验证已在次日完成）
 
 - 用户已运行提交 `1a266e89eeaddda51287de7bf43e1d83a5f42a3e` 的 route_check.py。截图三项成功：SO_MARK OK、GitHub HTTPS 206、临时规则删除。这是路由器实测，不能再写成尚未测试标记连接。
 - 新增 `home_transport.py`：仅监听随机 localhost 端口的 HTTP/CONNECT 入口；Python 与 ffprobe 共用该入口。DNS A/AAAA 显式通过 TCP 查询 192.168.50.1:53，处理响应压缩、CNAME、TTL、校验问题节，无额外安装包。
@@ -18,7 +18,7 @@
 - **尚未现场确认**：新 TCP LAN DNS、双栈选择、实际 ffprobe 是否全走入口；源地址/规则集是否使路由器与电视分组不同；电视显示的另一 IPv6 DNS 差异；重启/卸载恢复；tv.m3u 与 tv-core 的江苏卫视 URL 差异。
 - 下一步读取 transport_check 的 LAN_DNS / TV_PLAYLIST / CHANNEL_RESULT / CONNECTIONS / CLASH_RULES 输出，再决定实际接入与路径确认；这份单频道实验不能算 4 份家庭影子报告中的一份。
 
-## 23:29 现场进度（最新，后面的旧记录不覆盖本节）
+## 2026-09-05 23:29 历史现场记录
 
 - 路由器 RT-AC86U，386.14_2 Koolshare/MerlinClash，aarch64；用户通过手机 Termux SSH 操作。用户已授权初始化新 U 盘，不再重复询问格式化。
 - `/dev/sda1` 已格式化 ext4、卷标 IPTV，挂载 `/tmp/mnt/IPTV`，容量 57.4 GiB；`/tmp/opt` 指向该盘的 `entware`，原有 `/opt -> tmp/opt` 保留。禁止重复格式化/安装 Entware。
@@ -39,7 +39,7 @@
 - 本轮本地验证：7 项新诊断测试（成功/连接超时/中断/不支持 SO_MARK/既有规则/HTTP 错误/清理失败）及安装、部署回归共 23 项通过；隔离安装实际执行两次，验证 UUID 格式和重复安装保留 ID；router/ac86u 所有 Shell 语法通过。网络与防火墙调用在诊断单测中模拟，不能当成路由器实测。未重复跑全仓 222 项历史基线。
 - 晚高峰检测/次日凌晨处理晚间卡顿的用户新增规则尚未实现；晚上仅检测正式台、不换台不测备用，晚上确认差的旧源次日降至最低优先，白天恢复不自动洗白。建议过 20:30 时间，仍需准确记录最终时点。
 
-### 当前下一步
+### 当时的下一步（已被顶部最新接续覆盖）
 
 1. 手机下载本提交的 `route_check.py` 到 `/tmp`，清除 LD_* 后执行，观察 SO_MARK / MARKED_HTTPS / TEMP_RULE 输出。
 2. 若连接可用，再实现程序传输和 DNS 的完整适配，同时处理 ffprobe、IPv6、源地址分组以及真实 tv.m3u 的核心地址绑定；目前尚未做这些改动。

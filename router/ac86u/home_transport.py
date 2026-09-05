@@ -104,6 +104,13 @@ class Landns:
     def __init__(self, server="192.168.50.1", port=53):
         self.server = str(ipaddress.ip_address(server))
         self.port, self.cache, self.lock = port, {}, threading.Lock()
+        # Counts describe actual queries, not cache hits; no hostnames or URLs.
+        self.stats = {label: {"answers": 0, "empty": 0, "errors": 0}
+                      for label in ("A", "AAAA")}
+
+    def diagnostics(self):
+        with self.lock:
+            return {label: dict(counts) for label, counts in self.stats.items()}
 
     def query(self, host, kind):
         ident = secrets.randbelow(65536)
@@ -138,9 +145,13 @@ class Landns:
             try:
                 values[kind], life = self.query(host, kind)
                 ttl = min(ttl, life)
+                outcome = "answers" if values[kind] else "empty"
             except (OSError, ValueError) as exc:
                 errors.append(str(exc))
                 values[kind] = []
+                outcome = "errors"
+            with self.lock:
+                self.stats["AAAA" if kind == 28 else "A"][outcome] += 1
         addresses = []
         for index in range(max(len(values[28]), len(values[1]))):
             for kind in (28, 1):
@@ -148,10 +159,13 @@ class Landns:
                     addresses.append(values[kind][index])
         if not addresses:
             raise OSError("LAN DNS returned no addresses: " + "; ".join(errors))
-        with self.lock:
-            if len(self.cache) >= 256:
-                self.cache.clear()
-            self.cache[host] = time.monotonic() + ttl, addresses
+        # Keep the working family usable, but retry a failed family next time.
+        # A transient AAAA failure must not become a cached IPv4-only answer.
+        if not errors:
+            with self.lock:
+                if len(self.cache) >= 256:
+                    self.cache.clear()
+                self.cache[host] = time.monotonic() + ttl, addresses
         return addresses
 
 
