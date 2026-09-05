@@ -12,6 +12,10 @@ LOCK_FILE="/run/iptv-hk-probe.lock"
 TOKEN_FILE="/etc/iptv-hk-probe.github-token"
 ASKPASS="/usr/local/libexec/iptv-hk-git-askpass"
 
+echo "RETIRED: do not install the Hong Kong IPTV monitor; AC86U is the sole health authority." >&2
+echo "The legacy installer remains below only as rollback evidence." >&2
+exit 2
+
 if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
   echo "Run as root: sudo bash scripts/install_hk_probe.sh" >&2
   exit 1

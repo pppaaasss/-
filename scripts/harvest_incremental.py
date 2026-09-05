@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Fetch upstream IPTV text and keep only never-tested URLs in pending.
+"""Fetch upstream IPTV text for legacy or home-first candidate discovery.
 
-GitHub performs text discovery only. It never promotes a route to the active
-pool and never resurrects a URL rejected by the Hong Kong probe.
+GitHub performs text discovery only and never promotes a route.  ``--home-only``
+writes a current text snapshot for the AC86U candidate builder without reading
+Hong Kong probe results, active pools, or rejection tombstones.
 
 Repository pool semantics:
 - harvest/candidates.jsonl: Hong Kong verified GOOD active pool
@@ -15,6 +16,7 @@ import argparse
 import concurrent.futures
 import hashlib
 import json
+import os
 import sys
 import time
 from collections import defaultdict
@@ -83,10 +85,32 @@ def normalize_rows(rows: list[dict]) -> list[dict]:
     return out
 
 
+def atomic_jsonl(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(
+        "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
+def atomic_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, path)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--output-dir", default="harvest")
     ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--home-only", action="store_true")
+    ap.add_argument("--home-discovery-output", default="")
     args = ap.parse_args()
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -134,6 +158,39 @@ def main() -> int:
             })
 
     discovered = normalize_rows(raw)
+    if args.home_only:
+        if not args.home_discovery_output:
+            raise SystemExit("--home-only requires --home-discovery-output")
+        destination = Path(args.home_discovery_output)
+        atomic_jsonl(destination, discovered)
+        raw_urls = {str(row.get("url") or "").strip() for row in discovered}
+        manifest = {
+            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "stage": "github_home_text_discovery_only",
+            "stream_probe_performed": False,
+            "production_modified": False,
+            "source_definitions": len(source_defs),
+            "sources_fetched_ok": sum(bool(item.get("ok")) for item in source_stats),
+            "sources_failed": len(failures),
+            "discovered_entries": len(discovered),
+            "discovered_unique_urls": len(raw_urls),
+            "policy": {
+                "github_only_discovers_text": True,
+                "github_never_qualifies_routes": True,
+                "home_probe_is_the_only_health_authority": True,
+                "hong_kong_evidence_consulted": False,
+                "hong_kong_tombstones_consulted": False,
+            },
+            "sources": sorted(source_stats, key=lambda item: (str(item.get("group")), str(item.get("source")))),
+            "failures": failures,
+        }
+        atomic_json(out / "home-discovery-manifest.json", manifest)
+        print(
+            f"HOME_TEXT_DISCOVERY urls={len(raw_urls)} entries={len(discovered)} "
+            f"sources_ok={manifest['sources_fetched_ok']} sources_failed={len(failures)}"
+        )
+        return 0 if len(discovered) >= 100 else 2
+
     active = normalize_rows(read_jsonl(out / "candidates.jsonl"))
     existing_pending = normalize_rows(read_jsonl(out / "pending.jsonl"))
     tombstones = read_tombstones(out / "rejected-url-sha256.txt")

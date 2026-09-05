@@ -1,122 +1,135 @@
 # RT-AC86U 家庭电视健康探针
 
-这套东西已经按“U 盘到货后直接部署”准备好，但目前没有远程改动家里的路由器。它解决的是香港测速和客厅实际体验不一致的问题：AC86U 在家里定时抽取央视、卫视的真实视频分片，把经过校验的报告交给香港 VPS；三天轮换只有在同一条正式线路和家庭备线都被反复验证后才会参考这份报告。
+> **离线代码和贯通模拟已完成，暂勿在家中安装。** 等用户出院回家、U 盘插入 AC86U，并把已验收功能分支合入受保护的 `master` 后再现场部署。实施进度见 [`home-first-roadmap.md`](home-first-roadmap.md)。
 
-它不依赖 ChatGPT/Codex 在线，也不受 5 小时额度影响。路由器上没有 GitHub 令牌，不能修改仓库和正式清单。
+AC86U 是央视和省级卫视健康度的唯一检测与裁决位置。GitHub 负责搜集未验证候选和受保护地发布正式清单；香港主机不检测、不转发、不参与替换。整套任务在路由器上定时运行，不依赖 ChatGPT/Codex 在线，也不受对话额度影响。
 
-## 已锁死的安全边界
+## 固定运行规则
 
-- 每 6 小时一次轻检，单线程，每台读取两个不同分片，每段最多 2 MiB。
-- 每 72 小时最多一次深检，每段最多 12 MiB，并用 `ffprobe` 读取分辨率、编码、帧率和码率；不运行 `ffmpeg` 转码，不解码画面。
-- 进程使用 `nice -n 15`；1 分钟负载高于 1.5 或可用内存低于 64 MiB 时本轮自动跳过。
-- 单轮总预算 3300 秒；使用原子目录锁，上一轮未结束时不会叠跑。
-- 连续 3 轮且跨度至少 6 小时才确认家庭死亡或降级；大面积同时失败会打开熔断器，不累计坏线次数。
-- 家庭坏线的备线也必须在家里完成两次深检、跨度至少 6 小时且保持 GOOD，才能进入三天轮换。
-- 报告绑定正式清单 SHA-256 和线路 URL；清单或地址变过，旧报告自动作废。
-- 首次配对后至少 4 次成功上传、跨度至少 18 小时，仍只处于影子模式。没有显式激活就永不参与生产决策。
-- 家庭报告只进入三天统一轮换，不放宽香港的 6 小时“确认死亡才切换”规则，也没有任何频道数量上限。
-- 所有状态和日志都在 U 盘 `/opt` 下。JFFS 只增加一个很小的 Merlin `services-start` 定时任务登记块。
+- 北京时间 `02:00`：检查全部正式央视和省级卫视；维护即将过期的家庭备用；拉取 GitHub 当日新增或变更候选并在家庭实际路径逐项验证。
+- 北京时间 `13:00`：只检查全部正式央视和省级卫视；需要换源时直接使用仍在有效期内的凌晨家庭合格备用；下午不拉取候选、不测试备用、换前也不复测备用。
+- 好线路保持原样，不做三天轮换；`UNKNOWN` 永不触发替换；同一轮没有“最多替换几台”的业务上限。
+- 当前线路须在同一轮家庭路径连续两次不合格，才记为 `BAD`。一次失败后恢复只记为 `UNKNOWN`。
+- 候选须在家庭路径通过两个不同视频分片、下载余量、真实分辨率、编码和最低节目码率检查，才能进入 36 小时家庭备用池；凌晨故障处理先验证对应备用；下午携带该备用的凌晨验证时间和到期时间，不产生新的备用检测。
+- 用户在电视上确认的卡顿、模糊、串台或错误频道拥有最高优先级，可否决自动结果。
 
-理论流量上限：约 58 台时，一轮轻检最多约 232 MiB，一天约 0.9 GiB；三天一次深检最多约 1.36 GiB。大多数分片小于上限，实际通常更低。备线只在对应正式线路已经确认不合格时测试，不会把整套候选池常年扫一遍。
+## 资源与故障保护
 
-## U 盘到货后的顺序
+- 单线程运行，使用 `nice -n 15`；有 `ionice` 时同时使用最低 I/O 优先级。
+- 1 分钟负载高于 1.5、可用内存低于 64 MiB 或上一轮仍在运行时，本轮跳过。
+- 单轮检测预算最多 1200 秒（20 分钟），单次读取设时间预算，为 02:25/13:25 的报告读取留出上传余量。没有跑完的候选保存在 U 盘队列，下一次 `02:00` 续跑。正式线路检查和故障备用验证优先于普通候选，候选按频道交错处理、优先缺备用的台；不会为了赶完压垮 AC86U。
+- 正式线路通常读取两个各不超过 2 MiB 的分片；只有第一次不合格才完整复测。候选读取两个各不超过 6 MiB 的分片并调用 `ffprobe`，不做转码。
+- 家庭断网、GitHub 不可达、路径不一致、报告不完整或大面积同时异常都会保持原正式清单；至少 12 台同时未知且达到比例阈值时整轮熔断。
+- 状态、队列和日志位于 U 盘 `/opt`。U 盘掉线时任务不运行，不影响原有上网、分流或电视订阅。
 
-以下操作等出院后再做。格式化会清空 U 盘，确认盘里没有要保留的内容。
+## GitHub 直连边界
 
-1. 把 64 GB USB 2.0 U 盘插到 AC86U。
-2. SSH 登录梅林，运行 `amtm`，用 `fd` 把 U 盘格式化为 `ext4`。不要选 NTFS/exFAT，也暂时不要建交换分区。
-3. 继续在 `amtm` 安装 Entware，确认 `/opt/bin/opkg` 存在。
-4. 先只安装本地影子探针：
+- 路由器只主动连接 `ssh.github.com:443`，家里不开放入站端口，也不经过香港中转。
+- 不保存 GitHub 账号令牌。安装器生成独立 Ed25519 Deploy Key，私钥权限固定为 `0600`。
+- SSH 主机密钥必须与 GitHub 官方 Ed25519 指纹 `SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU` 完全一致；不允许首次连接自动接受未知主机。
+- 代码把仓库锁定为 `pppaaasss/-`、报告分支锁定为 `home-reports`。报告先在本地完成版本、探针编号、内容哈希、大小和正式清单绑定校验，再写入 `inbox/<probe_id>/`。
+- GitHub 推送失败时，报告原样留在 U 盘并在下一轮重试；失败本身不能修改正式清单。
+- `home-reports` 是独立报告入口，不保存正式清单。路由器报告只是证据，只有受保护的 GitHub 工作流可以更新四份正式播放清单。
+- `github_pair.py --enable` 会先从 `master` 读取发布配置：发布关闭且编号为空时允许影子配对；已经指定编号时必须匹配。随后通过无需账号令牌的 GitHub 公共 Rules API 检查当前生效规则：同一条仓库规则集必须同时要求 PR、0 人工审批、禁止强推、禁止删除并允许 squash；规则不满足就不会开启报告推送；影子配对不要求开启正式发布。
+
+重要限制：GitHub 的可写 Deploy Key 是仓库级凭据，并非分支级凭据。脚本会拒绝推往 `master`，但私钥一旦被盗，攻击者不会受脚本约束。因此必须先在 Phase 5 完成默认分支保护和受保护发布工作流，现场部署时才允许给 Deploy Key 勾选写权限并运行 `--enable`。Phase 5 未就绪时，安装配置中的硬门槛会让推送和正式激活都失败关闭，只保留 U 盘队列。
+
+### `master` 一次性保护设置
+
+这里使用 GitHub **Ruleset**，而不是依赖需要 Administration 权限才能读取明细的旧 Branch protection API。代码只读取 GitHub 对公开仓库开放的“某分支当前生效规则”接口，AC86U 因而不需要保存 PAT。
+
+1. 仓库 `Settings` → `Rules` → `Rulesets` → `New branch ruleset`，名称设为 `home-production-master`，状态设为 `Active`，目标只包含 `master`。
+2. `Bypass list` 必须为空；尤其不要加入仓库管理员、GitHub Actions 或任何 Deploy Key。公开 Rules API 不返回隐藏的绕过名单，因此这一项必须在现场由用户人工确认一次。
+3. 开启 `Restrict deletions`、`Require a pull request before merging` 和 `Block force pushes`。PR 规则中审批数设为 `0`，关闭 Code Owner、最后推送者之外审批和会话解决要求，并允许 `Squash`。
+4. 仓库 `Settings` → `Actions` → `General`：Workflow permissions 设为 `Read and write permissions`，并开启 `Allow GitHub Actions to create and approve pull requests`。这里不要求 Actions 实际审批，只是允许它创建每日自动 PR。
+5. 每日采集和家庭发布工作流都只推送 `automation/...` 临时分支，再创建并 squash 合并 PR；代码中没有直推 `master`。规则集未生效时，采集门禁失败；家庭发布配置未启用时，工作流只校验影子报告，不写四份台单；未指定编号且报告目录只有一个有效探针时，允许只读识别该目录。
+6. `config/home-publisher.json` 目前故意保持 `enabled: false` 且探针编号为空。只有 U 盘安装后取得真实 `probe_id`、规则集已核验且影子报告通过，才在单独提交中填入编号并启用。
+
+## 64 GB USB 2.0 到货后的现场顺序
+
+以下步骤现在只作为准备清单，等出院回家后执行。格式化会清空 U 盘，先确认盘里没有要保留的数据。
+
+1. 把 U 盘插到 AC86U，在梅林中运行 `amtm`。
+2. 使用 `fd` 把 U 盘格式化为 `ext4`，再安装 Entware；确认 `/opt/bin/opkg` 存在。USB 2.0 对这类低速、零转码、顺序写小状态文件的任务足够，发热和兼容性通常也比高速盘更省心。
+3. 确认 Phase 5、Phase 6 和模拟测试均已完成，再从已验收的 `master` 安装。安装命令将在现场部署前做最后一次核对；不要提前从功能分支安装。
+4. 手机连接家中 Wi-Fi，通过仅限局域网的 SSH 登录 AC86U；不需要电脑。功能分支合入 `master` 后，在路由器执行：
 
    ```sh
-   IPTV_HOME_SKIP_INITIAL_RUN=1 sh -c "$(curl -fsSL https://raw.githubusercontent.com/pppaaasss/-/master/router/ac86u/install.sh)"
+   curl -fL --retry 3 \
+     https://raw.githubusercontent.com/pppaaasss/-/master/router/ac86u/install.sh \
+     -o /tmp/iptv-home-install.sh
+   IPTV_HOME_REF=master sh /tmp/iptv-home-install.sh
    ```
 
-5. 查看探针编号和专用公钥：
+5. 安装后仍为本地影子模式，不改路由、不改播放清单，也不向 GitHub 发报告。查看状态和 Deploy Key 公钥：
 
    ```sh
    /opt/share/iptv-home-probe/status.sh
-   /opt/bin/python3 /opt/share/iptv-home-probe/pair.py --show-key
+   /opt/share/iptv-home-probe/github_pair.py --show-key
    ```
 
-安装器只安装 Entware 的 `python3`、`ffprobe`、`curl`、CA 证书和 OpenSSH 客户端组件；不会改 ShellClash/Mihomo、DNS、透明代理端口、防火墙或电视订阅。
+6. 先确认 `master` 已受保护，再在仓库 Settings → Deploy keys 添加这把公钥，并仅为这一把密钥开启写权限。随后由路由器核验 GitHub 指纹、认证并开启报告推送：
 
-## 配对香港 VPS
+   ```sh
+   /opt/share/iptv-home-probe/github_pair.py --enable
+   ```
 
-先在香港 VPS 的现有仓库目录执行，参数必须使用路由器刚显示的实际探针编号和整行 `ssh-ed25519` 公钥：
+7. 现场核对 AC86U 自身请求与 Apple TV 的 DNS、出口、ShellClash/Mihomo 分流、IPv4/IPv6 选择一致。只有确认等价后才标记家庭路径；这一步仍保持影子模式，并立即生成一份 `13:00` 类型报告：
 
-```sh
-cd /opt/iptv-hk-probe
-git pull --ff-only origin master
-sudo bash scripts/install_home_probe_receiver.sh \
-  --probe-id '实际探针编号' \
-  --public-key '路由器显示的整行 ssh-ed25519 公钥'
-```
+   ```sh
+   /opt/share/iptv-home-probe/activate.sh --confirm-living-room-path
+   ```
 
-安装结束会显示 VPS 的 Ed25519 主机指纹。回到路由器，用实际 VPS 地址、SSH 端口和刚显示的 `SHA256:...` 指纹配对：
+8. 用户验收影子结果后，至少取得 4 份不同生成时间、家庭基线正常且成功进入 GitHub 的报告，报告生成时间跨度达到 18 小时（同一报告重复上传不增加数量），且最新报告新鲜、待发队列为空、熔断器关闭后，才允许正式激活：
 
-```sh
-/opt/bin/python3 /opt/share/iptv-home-probe/pair.py \
-  --host '香港VPS地址' \
-  --port 22 \
-  --fingerprint 'SHA256:实际指纹'
-```
+   ```sh
+   /opt/share/iptv-home-probe/activate.sh
+   ```
 
-指纹不一致时脚本会硬失败，不会接受“先连上再说”。路由器专用密钥在 VPS 上只能执行报告接收命令，不能取得 shell、端口转发、PTY 或代理权限。
+9. 激活检查通过后仍须由用户确认，在独立提交中填写真实 `expected_probe_id` 并设置发布器 `enabled=true`；没有这一步，正式清单继续保持。现场核验前不得提前设置。
 
-开始第一次轻检并查看结果：
+### 现场必须核对的已知差异
 
-```sh
-/opt/share/iptv-home-probe/run.sh --mode light
-/opt/share/iptv-home-probe/status.sh
-```
+- 当前 `tv-core.m3u` 是 53 个唯一受管频道。`tv-easy.m3u` 有 176 条记录、175 个唯一名称，深圳卫视重复一次；52 个受管频道中有 13 个卫视地址与 core 不同，且缺东方卫视。
+- 先确认 Apple TV 实际订阅，再核对不同地址的实际家庭路径。不能用 core 的通过结果代替 easy 的不同地址，也不能未经对应家庭报告直接覆盖这些地址。
+- 家庭反馈现在由 AC86U 获取，明确串台、卡顿等反馈可否决自动 GOOD；已接受的画质兜底不因静态分辨率/码率门槛被强制淘汰，但仍检查可播放性和速度余量。
+- 首次候选工作流产生初始候选队列，路由器按预算分批验证；后续工作流仅发新增/变化项。GitHub 仍不检测视频线路。
+- GitHub Actions 定时任务可能延迟，20 分钟是检测预算，不是云端准点执行保证；现场记录每轮完成、上传及读取时间。
 
-## 影子期与正式启用
+## 日常查看、停用与恢复
 
-定时任务在路由器本地时间 `00:07、06:07、12:07、18:07` 运行。先让它跑满至少 24 小时。期间报告会上传，但 `actionable=false`，GitHub 轮换明确忽略它。
-
-AC86U 自身发起的连接不一定天然经过 Apple TV 完全相同的 ShellClash/Mihomo 路径。因此正式启用前必须现场核对当前活动配置和分流命中，不能盲目点开。普通激活命令会因路径未核验而拒绝；确认两者等价后才运行：
-
-```sh
-/opt/share/iptv-home-probe/activate.sh --confirm-living-room-path
-```
-
-激活脚本还会检查至少 4 次上传、18 小时跨度、最新报告新鲜且熔断器关闭。任何一项不满足都会保持影子模式。激活后也要等下一份 `actionable=true` 报告，三天轮换才可能使用它。
-
-## 日常查看与停用
-
-查看状态和最近日志：
+查看状态、实际待发数量和最近日志：
 
 ```sh
 /opt/share/iptv-home-probe/status.sh
 ```
 
-只取消生产影响、继续留作影子观测：
+关闭生产影响但保留检测和影子报告：
 
 ```sh
 /opt/share/iptv-home-probe/activate.sh --off
 ```
 
-暂停定时任务：
+关闭 GitHub 推送但保留本地报告队列：
 
 ```sh
-cru d IPTVHomeProbe
+/opt/share/iptv-home-probe/github_pair.py --off
 ```
 
-卸载代码和定时任务、保留密钥/配置/历史以便恢复：
+卸载代码和两条定时任务、保留配置、密钥和历史以便恢复：
 
 ```sh
 /opt/share/iptv-home-probe/uninstall.sh
 ```
 
-彻底清除密钥、配置和 USB 历史，应在卸载代码前执行：
+彻底删除配置、Deploy Key 私钥和 USB 历史只能显式执行：
 
 ```sh
 /opt/share/iptv-home-probe/uninstall.sh --purge
 ```
 
-卸载不会移除 Entware 包，也不会动现有分流。如果 U 盘掉线，`/opt` 下的程序不会运行，路由器原本的上网、分流和电视订阅仍保持原状。
+卸载不会删除 Entware 包，也不会改 ShellClash/Mihomo、DNS、透明代理、防火墙或电视订阅。若 Deploy Key 不再使用，还必须在 GitHub 仓库设置中单独撤销。
 
-## 能做与不能做
+## 自动检测的能力边界
 
-探针能判断打不开、持续卡顿余量不足、分辨率不足、H.264 实际节目码率偏低，以及备线在家庭网络是否真的可用。它不能仅靠网络字节可靠识别“CCTV-15 实际播成广东卫视”这类内容串台；这种语义错误仍以人工观看反馈为最高优先级，精确 URL 和重复失败主机黑名单继续生效。
+探针能判断持续打不开、卡顿余量不足、分辨率不足、H.264/H.265 实际节目码率偏低，以及备线在家庭网络是否真的可用。仅靠网络和视频元数据不能可靠识别“CCTV-15 实际播成广东卫视”这类内容串台；此类语义错误始终以用户实际观看反馈为最高优先级。

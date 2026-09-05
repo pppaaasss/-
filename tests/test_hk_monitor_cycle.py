@@ -8,40 +8,30 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class HongKongMonitorSafetyTests(unittest.TestCase):
-    def test_periodic_cycle_gates_the_only_production_writer(self):
+    def test_periodic_cycle_self_retires_before_any_probe_or_writer(self):
         cycle = (ROOT / "scripts/hk_cycle.sh").read_text(encoding="utf-8")
-        self.assertIn("--playlist tv.m3u", cycle)
-        self.assertIn("locked production playlists unchanged", cycle)
-        self.assertIn("publish_hk_health.py", cycle)
-        self.assertIn("health-monitor", cycle)
-        self.assertIn("dead_only_failover.py", cycle)
-        self.assertIn("--apply", cycle)
-        self.assertIn("health/dead-only-failover.json", cycle)
-        self.assertIn("health/home-latest.json", cycle)
-        self.assertIn("home receiver not paired yet", cycle)
-        self.assertIn("failover diagnostics upload failed; main health report remains valid", cycle)
-        self.assertIn("confirmed DEAD route replacement", cycle)
-        self.assertNotIn("hk_auto_update.py", cycle)
-        self.assertLess(cycle.index("dead_only_failover.py"), cycle.index("git add"))
+        retirement = cycle.index("exit 0")
+        self.assertIn("systemctl disable --now iptv-hk-probe.timer", cycle)
+        self.assertIn('mv -f "$CRON_FILE" "$CRON_FILE.retired"', cycle)
+        self.assertIn("no probe, upload, failover, or production write", cycle)
+        self.assertLess(retirement, cycle.index("git fetch"))
+        self.assertLess(retirement, cycle.index("hk_probe.py"))
+        self.assertLess(retirement, cycle.index("dead_only_failover.py"))
+        self.assertLess(retirement, cycle.index("git push origin HEAD:master"))
 
-    def test_installer_uses_verified_six_hour_monitoring_schedule(self):
+    def test_legacy_installers_refuse_to_create_hong_kong_paths(self):
         installer = (ROOT / "scripts/install_hk_probe.sh").read_text(encoding="utf-8")
-        self.assertIn('exec bash "$INSTALL_DIR/scripts/hk_cycle.sh"', installer)
-        self.assertIn("OnCalendar=*-*-* 00/6:17:00", installer)
-        self.assertIn("Persistent=true", installer)
-        self.assertIn("systemctl is-enabled --quiet iptv-hk-probe.timer", installer)
-        self.assertIn("systemctl is-active --quiet iptv-hk-probe.timer", installer)
-        self.assertIn("Initial probe or GitHub health upload failed; scheduler not enabled.", installer)
-        self.assertIn("17 */6 * * *", installer)
-        self.assertNotIn("17 */3 * * *", installer)
-        self.assertIn("fixed + GitHub pending spares", installer)
-        self.assertIn("Production update: confirmed DEAD routes only", installer)
+        receiver = (ROOT / "scripts/install_home_probe_receiver.sh").read_text(encoding="utf-8")
+        self.assertLess(installer.index("exit 2"), installer.index("apt-get"))
+        self.assertLess(receiver.index("exit 2"), receiver.index("while [[ $# -gt 0 ]]"))
+        self.assertIn("AC86U is the sole health authority", installer)
+        self.assertIn("directly from AC86U", receiver)
 
     def test_periodic_cycle_is_executable_after_git_checkout(self):
         mode = (ROOT / "scripts/hk_cycle.sh").stat().st_mode
         self.assertTrue(mode & stat.S_IXUSR)
 
-    def test_auto_update_policy_stays_frozen(self):
+    def test_hong_kong_and_three_day_production_policies_are_disabled(self):
         policy = json.loads((ROOT / "config/hk-auto-update.json").read_text(encoding="utf-8"))
         self.assertFalse(policy["enabled"])
         self.assertEqual(["DEAD"], policy["replace_formal_statuses"])
@@ -50,7 +40,8 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertFalse(policy["allow_quality_based_replacement"])
 
         dead_only = json.loads((ROOT / "config/dead-only-failover.json").read_text(encoding="utf-8"))
-        self.assertTrue(dead_only["enabled"])
+        self.assertFalse(dead_only["enabled"])
+        self.assertEqual("home-first-ac86u", dead_only["retired_by"])
         self.assertEqual("candidate/tv-core.m3u", dead_only["fixed_candidate_playlist"])
         self.assertEqual("harvest/pending.jsonl", dead_only["pending_candidate_pool"])
         self.assertTrue(dead_only["dynamic_pending_enabled"])
@@ -59,13 +50,22 @@ class HongKongMonitorSafetyTests(unittest.TestCase):
         self.assertEqual(0, dead_only["maximum_updates_per_cycle"])
 
         rotation = json.loads((ROOT / "config/core-health-rotation.json").read_text(encoding="utf-8"))
-        self.assertTrue(rotation["enabled"])
+        self.assertFalse(rotation["enabled"])
+        self.assertEqual("home-first-ac86u", rotation["retired_by"])
         self.assertEqual(3, rotation["interval_days"])
         self.assertTrue(rotation["policy"]["no_replacement_count_limit"])
 
         workflow = (ROOT / ".github/workflows/rotate-core-health.yml").read_text(encoding="utf-8")
-        self.assertIn("cron: '0 0 * * *'", workflow)
+        harvest = (ROOT / ".github/workflows/harvest-sources.yml").read_text(encoding="utf-8")
+        self.assertNotIn("schedule:", workflow)
+        self.assertNotIn("cron:", workflow)
+        self.assertIn("contents: read", workflow)
+        self.assertIn("if: ${{ false }}", workflow)
         self.assertIn("scripts/rotate_core_health.py", workflow)
+        self.assertNotIn("schedule:", harvest)
+        self.assertNotIn("cron:", harvest)
+        self.assertIn("contents: read", harvest)
+        self.assertIn("if: ${{ false }}", harvest)
 
 
 if __name__ == "__main__":

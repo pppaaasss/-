@@ -1,13 +1,10 @@
-name: Harvest IPTV source texts only
+name: RETIRED - legacy six-hour source harvest
 
 on:
   workflow_dispatch:
-  schedule:
-    # Fetch public source text four times a day. No stream probing here.
-    - cron: '43 */6 * * *'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: iptv-source-harvest
@@ -15,6 +12,9 @@ concurrency:
 
 jobs:
   harvest:
+    # Preserved only as rollback evidence. The 00:30 home-candidate workflow
+    # is the sole scheduled discovery path.
+    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

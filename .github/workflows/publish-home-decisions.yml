@@ -1,0 +1,121 @@
+name: Publish home-qualified IPTV decisions
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 02:25 and 13:25 Beijing time, after the two AC86U checks.
+    - cron: '25 18 * * *'
+    - cron: '25 5 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: production-publish-lock
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify the public master ruleset gate
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          from router.ac86u.github_pair import (
+              MASTER_RULES_API,
+              fetch_json,
+              validate_master_rules,
+          )
+
+          publisher = json.loads(Path('config/home-publisher.json').read_text(encoding='utf-8'))
+          if publisher.get('enabled') is not True:
+              print('home publisher is disabled; no production decision can be applied')
+          else:
+              rules, _raw = fetch_json(MASTER_RULES_API)
+              ruleset_id = validate_master_rules(rules)
+              print('active home publication ruleset', ruleset_id)
+          PY
+
+      - name: Fetch the isolated home report branch
+        run: |
+          git fetch --no-tags origin refs/heads/home-reports:refs/remotes/origin/home-reports
+          rm -rf /tmp/home-reports
+          git worktree add --detach /tmp/home-reports refs/remotes/origin/home-reports
+
+      - name: Run offline home publication gates
+        run: |
+          python3 -m unittest tests.test_home_publish -v
+          python3 -m unittest tests.test_home_first_contract tests.test_home_decision -v
+
+      - name: Validate latest report and apply exact routes only
+        run: |
+          python3 scripts/publish_home_decisions.py \
+            --inbox /tmp/home-reports/inbox \
+            --config config/home-publisher.json \
+            --apply --inspect-shadow
+
+      - name: Validate the one-snapshot output scope
+        run: |
+          rm -rf scripts/__pycache__ router/ac86u/__pycache__ tests/__pycache__
+          allowed='^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json)$'
+          bad="$(git status --porcelain | awk '{print $2}' | grep -Ev "$allowed" || true)"
+          test -z "$bad" || { echo 'Unexpected modified paths:'; echo "$bad"; exit 1; }
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ('tv-easy.m3u', 'tv.m3u', 'tv-all.m3u', 'tv-core.m3u'):
+              lines = Path(name).read_text(encoding='utf-8').splitlines()
+              assert lines and lines[0].startswith('#EXTM3U'), name
+              assert any(line.startswith('#EXTINF') for line in lines), name
+          PY
+          git diff --check
+
+      - name: Commit one atomic home publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json)"; then
+            echo 'No new actionable home report'
+            exit 0
+          fi
+          test -f home-publish/latest.json
+          git fetch origin master
+          base_sha="$(git rev-parse origin/master)"
+          test "$base_sha" = "$(git rev-parse HEAD)" || {
+            echo 'master moved during home publication; refusing a stale update'
+            exit 1
+          }
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json
+          bad="$(git diff --cached --name-only | grep -Ev '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json)$' || true)"
+          test -z "$bad" || { echo 'Unexpected staged paths:'; echo "$bad"; exit 1; }
+          count="$(python3 - <<'PY'
+          import json
+          print(json.load(open('home-publish/latest.json', encoding='utf-8'))['replacement_count'])
+          PY
+          )"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+pppaaasss@users.noreply.github.com'
+          git commit -m "Publish home-qualified IPTV decisions (${count} routes)"
+          branch="automation/home-publish-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git push origin "HEAD:refs/heads/$branch"
+          pr="$(gh pr create \
+            --base master \
+            --head "$branch" \
+            --title "Publish home-qualified IPTV decisions (${count} routes)" \
+            --body 'Automated publication from one validated AC86U report. Exact reported routes only.')"
+          git fetch origin master
+          test "$(git rev-parse origin/master)" = "$base_sha" || {
+            gh pr close "$pr" --comment 'master moved after validation; the next home report must bind to the new playlist.'
+            exit 1
+          }
+          gh pr merge "$pr" \
+            --squash \
+            --delete-branch \
+            --match-head-commit "$(git rev-parse HEAD)"
