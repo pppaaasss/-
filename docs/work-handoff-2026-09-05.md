@@ -1,9 +1,22 @@
 # 2026-09-05 电视项目 Work 接班文档
 
-> 2026-09-05 23:29 北京时间现场断点：U 盘、Entware 和探针已安装；仍未验证电视路径，尚无家庭报告。NETNS 和 owner 匹配现场测试失败。新增 `router/ac86u/route_check.py` 只供单次标记连接测试，尚未在路由器运行。发布器继续关闭。下方旧安装前状态属于历史记录，以本节为准。
+> 2026-09-05 23:50 截图已验证 SO_MARK: OK / MARKED_HTTPS: HTTP/1.1 206 / TEMP_RULE: REMOVED。U 盘、Entware、原探针安装完成；家庭路径仍未完成验证。后续新增共享 DNS/HTTP/HTTPS/ffprobe 传输适配和一次 CCTV-1 临时测试，待手机运行。发布器仍关闭、没有真实家庭报告。
 
 这是额度中断后可直接续做的断点。继续现有实现，不从头设计；先读取本文件、[`home-first-roadmap.md`](home-first-roadmap.md)、[`ac86u-home-probe.md`](ac86u-home-probe.md) 和 [`work-review-2026-09-05.md`](work-review-2026-09-05.md)，随后获取实时 GitHub 分支。
 
+
+## 23:50 验证结果与随后代码更新（最新）
+
+- 用户已运行提交 `1a266e89eeaddda51287de7bf43e1d83a5f42a3e` 的 route_check.py。截图三项成功：SO_MARK OK、GitHub HTTPS 206、临时规则删除。这是路由器实测，不能再写成尚未测试标记连接。
+- 新增 `home_transport.py`：仅监听随机 localhost 端口的 HTTP/CONNECT 入口；Python 与 ffprobe 共用该入口。DNS A/AAAA 显式通过 TCP 查询 192.168.50.1:53，处理响应压缩、CNAME、TTL、校验问题节，无额外安装包。
+- IPv4 出站连接 SO_MARK 进入现有 merlinclash 链；IPv6 按当前空 IPv6 nat/mangle 的状态直连；有 250ms 间隔的双栈连接尝试。每次出站前检查临时 OUTPUT 跳转规则仍在，规则失效时不悄悄退成直接 IPv4。
+- 临时规则按进程 mark 精确添加/删除；没有清空现有链、修改 Clash YAML、指定某个代理节点或更改电视设置。强杀/掉电与 Clash 重启等长期运行恢复尚未验收，因此不能先启用计划任务适配。
+- `home_probe.py` 支持可选 `runtime_transport=merlinclash-marked`。默认行为与路径确认门槛保留，新增代码没有替用户把 route_context 标成等价。ffprobe HTTP/HTTPS 及子播放列表、分片使用相同代理参数/环境；Python 强制使用此入口，避免 no_proxy 绕过。
+- 新 `transport_check.py` **只做一次手动诊断**：临时复制配置，查询 LAN DNS，下载当前电视订阅 tv.m3u，找到 CCTV-1，做两份样本和 ffprobe；打印地址族连接计数。不会调用正式 run、生成家庭报告、改配置、启用发布或运行备用检测。另仅读取当前 Clash 配置统计内联源地址/进程规则和 RULE-SET 引用，不输出密钥/订阅节点。
+- 手机下一步只下载 home_transport.py、home_probe.py、transport_check.py 到 `/tmp/iptv-transport-check`；PYTHONPATH 指向原 `/opt/share/iptv-home-probe` 来复用已安装的契约/决策模块。没有覆盖正在安装的原探针，不重新安装 Entware 或所有依赖。
+- 本轮验证：53 项通过（15 项新传输测试及已有核心探针/部署/安装/单次标记测试）。新测试有真实本地 TCP DNS、HTTP/HTTPS 请求、证书校验、真实 ffprobe HTTP/HTTPS HLS 与分片、IPv6 成功和 IPv6 失败回退、DNS 失败保持 UNKNOWN、精确规则清理。防火墙调用仍在本地测试中模拟；本地 ffprobe 是 6.1.1，家中为 6.1.4。Python 编译、安装脚本语法、git diff --check 通过。未重新跑全仓旧基线。
+- **尚未现场确认**：新 TCP LAN DNS、双栈选择、实际 ffprobe 是否全走入口；源地址/规则集是否使路由器与电视分组不同；电视显示的另一 IPv6 DNS 差异；重启/卸载恢复；tv.m3u 与 tv-core 的江苏卫视 URL 差异。
+- 下一步读取 transport_check 的 LAN_DNS / TV_PLAYLIST / CHANNEL_RESULT / CONNECTIONS / CLASH_RULES 输出，再决定实际接入与路径确认；这份单频道实验不能算 4 份家庭影子报告中的一份。
 
 ## 23:29 现场进度（最新，后面的旧记录不覆盖本节）
 

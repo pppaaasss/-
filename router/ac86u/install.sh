@@ -42,13 +42,14 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="home_probe.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh status.sh uninstall.sh"
+files="home_probe.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh status.sh uninstall.sh"
 for name in $files; do
   /opt/bin/curl -4 -fL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 15 --max-time 120 \
     "$RAW/$name" -o "$stage/$name"
 done
 /opt/bin/python3 -m py_compile \
   "$stage/home_probe.py" "$stage/home_contract.py" "$stage/home_decision.py" \
+  "$stage/home_transport.py" "$stage/transport_check.py" \
   "$stage/push_home_report.py" "$stage/github_pair.py" "$stage/activate.py"
 for name in $files; do
   cp -f "$stage/$name" "$BASE/$name"

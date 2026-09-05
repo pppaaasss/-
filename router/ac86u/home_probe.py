@@ -11,11 +11,13 @@ The process never edits a production playlist.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
 import os
 import re
 import socket
+import signal
 import subprocess
 import sys
 import time
@@ -84,6 +86,42 @@ CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
 RUN_KINDS = {"primary-0200", "recheck-1300"}
+_active_transport = None
+
+
+@contextlib.contextmanager
+def transport_context(config):
+    global _active_transport
+    if config.get("runtime_transport") != "merlinclash-marked":
+        yield None
+        return
+    try:
+        from .home_transport import HomeTransport
+    except ImportError:
+        from home_transport import HomeTransport
+    if _active_transport is not None:
+        raise RuntimeError("nested home transport unsupported")
+    with HomeTransport(config.get("lan_dns_server", "192.168.50.1")) as transport:
+        _active_transport = transport
+        try:
+            yield transport
+        finally:
+            _active_transport = None
+
+
+def open_request(request):
+    try:
+        opener = _active_transport.opener.open if _active_transport else urllib.request.urlopen
+        return opener(request, timeout=HTTP_TIMEOUT)
+    except urllib.error.HTTPError as exc:
+        if _active_transport and exc.headers.get("X-IPTV-Transport-Error"):
+            exc.close()
+            raise RuntimeError("local_transport_failure") from exc
+        raise
+    except urllib.error.URLError as exc:
+        if _active_transport:
+            raise RuntimeError("transport_connect_unknown:" + str(exc.reason)) from exc
+        raise
 
 
 def utc_text(epoch: float | None = None) -> str:
@@ -158,7 +196,7 @@ def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes,
         headers["Range"] = f"bytes=0-{max(0, limit - 1)}"
     request = urllib.request.Request(url, headers=headers)
     started = time.monotonic()
-    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response:
+    with open_request(request) as response:
         # read1 returns available bytes instead of waiting for an entire large
         # sample. Stop slow/trickling streams at a wall-clock transfer budget.
         chunks = []
@@ -379,7 +417,11 @@ def ffprobe_meta(url: str, ffprobe: str) -> dict:
         "-of", "json",
         url,
     ]
-    process = subprocess.run(command, capture_output=True, text=True, timeout=FFPROBE_TIMEOUT)
+    options = {}
+    if _active_transport:
+        command[-1:-1] = ["-http_proxy", _active_transport.url]
+        options["env"] = _active_transport.child_env()
+    process = subprocess.run(command, capture_output=True, text=True, timeout=FFPROBE_TIMEOUT, **options)
     if process.returncode != 0:
         raise RuntimeError((process.stderr or "ffprobe_failed").strip()[-240:])
     payload = json.loads(process.stdout or "{}")
@@ -606,7 +648,7 @@ def _valid_sha(value: object) -> str:
     return text if re.fullmatch(r"[0-9a-f]{64}", text) else hashlib.sha256(b"").hexdigest()
 
 
-def run(
+def _run(
     config: dict,
     *,
     run_kind: str = "primary-0200",
@@ -1017,7 +1059,16 @@ def run(
     return report, state
 
 
+def run(config, **kwargs):
+    with transport_context(config):
+        return _run(config, **kwargs)
+
+
 def main() -> int:
+    def stop(_signum, _frame):
+        raise InterruptedError("home probe interrupted")
+    for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+        signal.signal(signum, stop)
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
     parser.add_argument("--run-kind", choices=tuple(sorted(RUN_KINDS)), default="primary-0200")
