@@ -54,12 +54,12 @@ def set_actionable(
         raw = report_path.read_bytes()
         report = json.loads(raw.decode("utf-8"))
         validate_home_report_v2(report, expected_probe_id=str(config.get("probe_id") or ""))
-        count = int(github.get("successful_reports") or 0)
-        first = parse_utc(str(github.get("first_push_utc") or ""))
-        last = parse_utc(str(github.get("last_push_utc") or ""))
-        if count < 4 or last - first < 18 * 3600:
+        evidence = github.get("successful_report_evidence") or {}
+        times = sorted(parse_utc(stamp) for stamp, item in evidence.items()
+                       if item.get("safe") is True and item.get("probe_id") == config.get("probe_id"))
+        if len(times) < 4 or times[-1] - times[0] < 18 * 3600:
             raise RuntimeError("shadow window incomplete: need 4 GitHub reports spanning at least 18 hours")
-        if int(github.get("pending_reports") or 0) != 0:
+        if int(github.get("pending_reports") or 0) != 0 or any((output / "pending-reports").glob("*.json")):
             raise RuntimeError("local GitHub report queue is not empty")
         if github.get("last_report_generated_utc") != report.get("generated_utc"):
             raise RuntimeError("latest local report has not been acknowledged by GitHub")

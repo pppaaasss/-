@@ -176,7 +176,7 @@ class HomeFirstContractTests(unittest.TestCase):
             "schema": REPORT_SCHEMA,
             "probe_id": "home-ac86u-123",
             "generated_utc": "2026-09-01T13:00:00Z",
-            "run_kind": "recheck-1300",
+            "run_kind": "primary-0200",
             "run_status": "COMPLETED",
             "production_modified": False,
             "actionable": True,
@@ -257,6 +257,7 @@ class HomeFirstContractTests(unittest.TestCase):
 
     def test_1300_report_cannot_scan_general_candidates(self):
         report = self.report()
+        report["run_kind"] = "recheck-1300"
         report["candidate_results"][0]["purpose"] = "daily-qualification"
         report["candidate_results"][0]["switch_reverified"] = False
         with self.assertRaisesRegex(ContractError, "13:00"):

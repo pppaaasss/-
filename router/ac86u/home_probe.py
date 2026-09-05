@@ -15,10 +15,12 @@ import hashlib
 import json
 import os
 import re
+import socket
 import subprocess
 import sys
 import time
 import urllib.parse
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -37,6 +39,7 @@ try:
         backup_refresh_candidates,
         candidate_is_qualified,
         candidate_result,
+        cached_backup_result,
         current_result,
         eligible_backups,
         mass_failure_circuit,
@@ -59,6 +62,7 @@ except ImportError:  # Installed beside this file by the Entware installer.
         backup_refresh_candidates,
         candidate_is_qualified,
         candidate_result,
+        cached_backup_result,
         current_result,
         eligible_backups,
         mass_failure_circuit,
@@ -155,7 +159,20 @@ def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes,
     request = urllib.request.Request(url, headers=headers)
     started = time.monotonic()
     with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response:
-        data = response.read(limit)
+        # read1 returns available bytes instead of waiting for an entire large
+        # sample. Stop slow/trickling streams at a wall-clock transfer budget.
+        chunks = []
+        size = 0
+        reader = getattr(response, "read1", response.read)
+        while size < limit:
+            if time.monotonic() - started >= HTTP_TIMEOUT:
+                raise TimeoutError("stream_sample_transfer_timeout")
+            chunk = reader(min(64 * 1024, limit - size))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
+        data = b"".join(chunks)
         elapsed = max(time.monotonic() - started, 0.001)
         status = int(getattr(response, "status", 0) or response.getcode() or 0)
         total = 0
@@ -481,7 +498,8 @@ def probe_route(
                 meta = ffprobe_meta(url, str(config.get("ffprobe") or "/opt/bin/ffprobe"))
                 result.update(meta)
                 result["deep_checked"] = True
-                if result["height"] < floor:
+                viewer_accepted = bool(config.get("viewer_accepted_quality"))
+                if result["height"] < floor and not viewer_accepted:
                     result["observed_status"] = "DEGRADED"
                     result["error"] = f"decoded_height_{result['height']}_below_{floor}"
                 intrinsic = result["stream_mbps"] or result["bitrate_mbps"]
@@ -493,9 +511,9 @@ def probe_route(
                 else:
                     minimum_stream = float(config.get("minimum_other_stream_mbps") or 3.0)
                 if intrinsic <= 0:
-                    result["observed_status"] = "DEGRADED"
+                    result["observed_status"] = "UNKNOWN"
                     result["error"] = "intrinsic_stream_bitrate_unknown"
-                elif intrinsic < minimum_stream:
+                elif intrinsic < minimum_stream and not viewer_accepted:
                     result["observed_status"] = "DEGRADED"
                     result["error"] = (
                         f"{codec or 'unknown'}_stream_{intrinsic:.3f}_below_{minimum_stream:.3f}_mbps"
@@ -508,8 +526,12 @@ def probe_route(
                 )
         result["status"] = result["observed_status"]
     except Exception as exc:
-        result["observed_status"] = "UNKNOWN"
-        result["status"] = "UNKNOWN"
+        reason = exc.reason if isinstance(exc, urllib.error.URLError) else exc
+        explicit_failure = (
+            isinstance(exc, urllib.error.HTTPError) and exc.code in {404, 410, 500, 502, 503, 504}
+        ) or isinstance(reason, (TimeoutError, ConnectionError, socket.timeout))
+        result["observed_status"] = "UNAVAILABLE" if explicit_failure else "UNKNOWN"
+        result["status"] = result["observed_status"]
         result["error"] = f"{type(exc).__name__}:{str(exc)[:240]}"
     result["probe_runtime_s"] = round(time.monotonic() - started, 3)
     return result
@@ -535,16 +557,48 @@ def _probe_current(
     profile: dict,
     config: dict,
 ) -> dict:
+    current_config = dict(config)
+    feedback = config.get("home_feedback") or {}
+    current_config["viewer_accepted_quality"] = url in feedback_urls(feedback, "good")
     row = probe_route(
         name,
         url,
         floor=minimum_height(name, config),
-        config=config,
+        config=current_config,
         sample_limit=int(profile["current_sample_bytes"]),
         include_metadata=bool(profile["current_metadata"]),
     )
     row["channel_key"] = channel_key
+    if url in feedback_urls(feedback, "bad"):
+        row["observed_status"] = row["status"] = "DEGRADED"
+        row["error"] = "viewer_confirmed_bad_route"
     return row
+
+
+def feedback_urls(feedback: dict, category: str) -> set[str]:
+    return {
+        str(item.get("url") if isinstance(item, dict) else item).strip()
+        for rows in (feedback.get(category) or {}).values()
+        for item in rows
+    }
+
+
+def load_home_feedback(config: dict, output_dir: Path) -> tuple[dict, str, str]:
+    url = str(config.get("home_feedback_url") or "")
+    if not url:
+        return dict(config.get("home_feedback") or {}), "not_configured", ""
+    cache = output_dir / "home-feedback.json"
+    try:
+        raw, _final, _elapsed = fetch_playlist(url)
+        value = json.loads(raw)
+        if not isinstance(value, dict) or any(not isinstance(value.get(k, {}), dict) for k in ("good", "bad")):
+            raise ValueError("invalid home feedback")
+        feedback_urls(value, "bad")
+        feedback_urls(value, "good")
+        atomic_json(cache, value)
+        return value, "fresh", hashlib.sha256(raw).hexdigest()
+    except Exception:
+        return load_json(cache), "unavailable", ""
 
 
 def _valid_sha(value: object) -> str:
@@ -588,7 +642,11 @@ def run(
     playlist_url = str(config.get("playlist_url") or DEFAULT_PLAYLIST)
     playlist_bytes, playlist_final, _ = fetch_playlist(playlist_url)
     entries = parse_playlist(playlist_bytes)
-    maximum_runtime = float(config.get("maximum_runtime_s") or 3300)
+    maximum_runtime = min(float(config.get("maximum_runtime_s") or 1200), 1200)
+    config = dict(config)
+    feedback, feedback_state, feedback_sha = load_home_feedback(config, output_dir)
+    config["home_feedback"] = feedback
+    veto_urls = feedback_urls(feedback, "bad")
     formal_rows: list[tuple[str, str, str]] = []
     formal_keys: set[str] = set()
     for playlist_name, url in entries:
@@ -657,6 +715,47 @@ def run(
     newly_qualified: list[tuple[dict, dict]] = []
     candidate_playlist = None
     candidate_manifest_state = "not_requested"
+    actionable = bool(config.get("actionable", False)) and feedback_state != "unavailable"
+    choices: dict[str, str] = {}
+    attempted_keys: set[str] = set()
+    attempted_ids: set[str] = set()
+    budget_keys: set[str] = set()
+    bad_keys = {str(row["channel_key"]) for row in current_results if row["status"] == "BAD"}
+    if existing_pool:
+        for backup in list(existing_pool["backups"]):
+            if backup["url"] in veto_urls or backup.get("request_options"):
+                existing_pool = without_backup(existing_pool, backup["candidate_id"])
+
+    # Repair evidence comes first. 13:00 only reads existing primary evidence;
+    # it never requests a backup URL, even when a replacement is needed.
+    if not circuit:
+        for key in sorted(bad_keys):
+            for backup in eligible_backups(existing_pool, key, now_epoch=now_epoch):
+                identity = str(backup["candidate_id"])
+                if run_kind == "recheck-1300":
+                    if backup.get("verified_run_kind") != "primary-0200":
+                        continue
+                    candidate_report_by_id[identity] = cached_backup_result(backup)
+                    choices[key] = identity
+                    break
+                if time.monotonic() - started >= maximum_runtime:
+                    budget_keys.add(key)
+                    break
+                attempted_keys.add(key)
+                attempted_ids.add(identity)
+                raw = probe_route(
+                    canonical_name(key), backup["url"], floor=minimum_height(canonical_name(key), config),
+                    config=config, sample_limit=int(profile["candidate_sample_bytes"]), include_metadata=True,
+                )
+                raw["channel_key"] = key
+                evidence = candidate_result(backup, raw, purpose="switch-reverification", switch_reverified=True)
+                candidate_report_by_id[identity] = evidence
+                if candidate_is_qualified(raw):
+                    choices[key] = identity
+                    newly_qualified.append((backup, raw))
+                    break
+                existing_pool = without_backup(existing_pool, identity)
+
     if profile["scan_candidates"]:
         incoming = backup_refresh_candidates(
             existing_pool,
@@ -701,13 +800,29 @@ def run(
             incoming,
             current_urls,
         )
+        rounds = {}
+        per_channel = {}
+        for candidate in queue:
+            key = candidate["channel_key"]
+            rounds[candidate["candidate_id"]] = per_channel.get(key, 0)
+            per_channel[key] = per_channel.get(key, 0) + 1
+        queue.sort(key=lambda row: (
+            rounds[row["candidate_id"]],
+            0 if row["channel_key"] in bad_keys and row["channel_key"] not in choices else 1,
+            len(eligible_backups(existing_pool, row["channel_key"], now_epoch=now_epoch)),
+            int(row.get("_queue_priority", 1)),
+            str(row.get("_expires_utc", "9999")),
+            str(row["channel_key"]), str(row["candidate_id"]),
+        ))
         remaining: list[dict] = []
         observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
             previous_state.get("candidate_observations"), dict
         ) else {}
         max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
         for candidate in queue:
-            if time.monotonic() - started >= maximum_runtime:
+            if candidate["candidate_id"] in attempted_ids or candidate["url"] in veto_urls or candidate.get("request_options"):
+                continue
+            if circuit or time.monotonic() - started >= maximum_runtime:
                 remaining.append(candidate)
                 continue
             key = str(candidate["channel_key"])
@@ -735,6 +850,15 @@ def run(
                     candidate.get("source_manifest_sha256") or candidate_manifest_sha
                 )
                 newly_qualified.append((candidate_with_source, row))
+                if key in bad_keys and key not in choices:
+                    # This full home check was performed after the current
+                    # failure in this same primary run; use it immediately.
+                    choices[key] = identity
+                    candidate_report_by_id[identity] = candidate_result(
+                        candidate, row, purpose="switch-reverification", switch_reverified=True,
+                    )
+            elif existing_pool:
+                existing_pool = without_backup(existing_pool, identity)
             old_observation = observations.get(identity) if isinstance(observations.get(identity), dict) else {}
             unknown_attempts = int(old_observation.get("unknown_attempts") or 0)
             qualification = str(report_row["qualification"])
@@ -762,7 +886,6 @@ def run(
         ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
     )
 
-    actionable = bool(config.get("actionable", False))
     decisions: list[dict] = []
     for row in current_results:
         key = str(row["channel_key"])
@@ -792,52 +915,14 @@ def run(
             })
             continue
 
-        replacement: str | None = None
-        reverify_attempted = False
-        budget_exhausted = False
-        for backup in eligible_backups(pool, key, now_epoch=now_epoch):
-            if time.monotonic() - started >= maximum_runtime:
-                budget_exhausted = True
-                break
-            reverify_attempted = True
-            name = canonical_name(key)
-            raw = probe_route(
-                name,
-                str(backup["url"]),
-                floor=minimum_height(name, config),
-                config=config,
-                sample_limit=int(profile["candidate_sample_bytes"]),
-                include_metadata=True,
-            )
-            raw["channel_key"] = key
-            identity = str(backup["candidate_id"])
-            evidence = candidate_result(
-                backup,
-                raw,
-                purpose="switch-reverification",
-                switch_reverified=True,
-            )
-            candidate_report_by_id[identity] = evidence
-            if candidate_is_qualified(raw):
-                replacement = identity
-                pool = update_backup_pool(
-                    pool,
-                    [(backup, raw)],
-                    probe_id=str(config.get("probe_id") or "home-ac86u"),
-                    now_epoch=now_epoch,
-                    formal_playlist_sha256=hashlib.sha256(playlist_bytes).hexdigest(),
-                    candidate_manifest_sha256=candidate_manifest_sha,
-                    current_urls=current_urls,
-                    ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
-                )
-                break
-            pool = without_backup(pool, identity)
-
+        replacement = choices.get(key)
+        reverify_attempted = key in attempted_keys
+        budget_exhausted = key in budget_keys
         if replacement:
             decisions.append({
                 "channel_key": key,
                 "action": "REPLACE",
-                "reason": "confirmed_home_failure_and_reverified_backup",
+                "reason": "confirmed_home_failure_and_cached_primary_backup" if run_kind == "recheck-1300" else "confirmed_home_failure_and_reverified_backup",
                 "replacement_candidate_id": replacement,
             })
         else:
@@ -895,6 +980,7 @@ def run(
             "mass_failure_circuit_breaker": bool(circuit),
         },
         "candidate_playlist": candidate_playlist,
+        "home_feedback_sha256": feedback_sha,
         "policy": {
             "auto_replace_formal_routes": False,
             "mass_failure_circuit_breaker": True,
@@ -903,6 +989,8 @@ def run(
             "sample_bytes": int(profile["current_sample_bytes"]),
             "candidate_sample_bytes": int(profile["candidate_sample_bytes"]),
             "candidate_manifest_state": candidate_manifest_state,
+            "home_feedback_state": feedback_state,
+            "afternoon_backup_probes": False,
             "current_failure_requires_two_attempts": True,
             "candidate_requires_two_samples_and_deep_metadata": True,
             "qualified_backup_ttl_hours": float(config.get("qualified_backup_ttl_hours") or 36),

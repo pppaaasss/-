@@ -130,6 +130,10 @@ class AC86UInstallationTests(unittest.TestCase):
             (output / "latest.json").write_bytes(raw)
             (output / "github-state.json").write_text(json.dumps({
                 "successful_reports": 4,
+                "successful_report_evidence": {
+                    f"2026-09-02T{hour:02d}:00:00Z": {"safe": True, "probe_id": report["probe_id"]}
+                    for hour in (0, 6, 12, 18)
+                },
                 "first_push_utc": "2026-09-02T00:00:00Z",
                 "last_push_utc": "2026-09-02T18:00:00Z",
                 "last_report_generated_utc": report["generated_utc"],

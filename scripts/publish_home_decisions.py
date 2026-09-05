@@ -299,11 +299,18 @@ def publish_latest(
     inbox: Path,
     now_epoch: float | None = None,
     apply: bool = False,
+    inspect_shadow: bool = False,
 ) -> dict:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     config = load_config(config_path)
     if config["enabled"] is not True:
-        return {"status": "disabled", "replacement_count": 0}
+        if not inspect_shadow:
+            return {"status": "disabled", "replacement_count": 0}
+        if not config["expected_probe_id"]:
+            identities = [p.name for p in inbox.iterdir() if p.is_dir() and not p.is_symlink() and PROBE_ID_RE.fullmatch(p.name)] if inbox.exists() else []
+            if len(identities) != 1:
+                return {"status": "shadow_no_unique_probe", "replacement_count": 0}
+            config = dict(config, expected_probe_id=identities[0])
     path = latest_report_path(inbox, str(config["expected_probe_id"]))
     if path is None:
         return {"status": "no_report", "replacement_count": 0}
@@ -316,7 +323,7 @@ def publish_latest(
     formal_path = root / str(config["formal_playlist"])
     formal_raw = formal_path.read_bytes()
     report_binding(report, formal_raw, config)
-    if report.get("actionable") is not True:
+    if config["enabled"] is not True or report.get("actionable") is not True:
         return {"status": "shadow", "replacement_count": 0, "report_sha256": report_sha}
     baseline = report["baseline"]
     if not all(baseline[field] is True for field in ("home_network_ok", "github_reachable", "route_verified")):
@@ -325,6 +332,9 @@ def publish_latest(
         return {"status": "circuit_open", "replacement_count": 0, "report_sha256": report_sha}
 
     feedback_path = root / str(config.get("home_feedback") or "config/home-route-feedback.json")
+    feedback_sha = str(report.get("home_feedback_sha256") or "")
+    if feedback_sha and feedback_sha != sha256_bytes(feedback_path.read_bytes()):
+        raise RuntimeError("viewer feedback changed after the home report; wait for the next home decision")
     replacements = replacement_plan(report, feedback_path)
     originals = {name: (root / name).read_bytes() for name in PRODUCTION_FILES}
     rendered: dict[str, bytes] = {}
@@ -373,6 +383,7 @@ def main() -> int:
     parser.add_argument("--inbox", required=True)
     parser.add_argument("--now-epoch", type=float, default=None)
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--inspect-shadow", action="store_true", help="Validate reports while disabled, without any production write")
     args = parser.parse_args()
     root = Path(args.repo_root).resolve()
     config_path = Path(args.config)
@@ -385,6 +396,7 @@ def main() -> int:
             inbox=Path(args.inbox),
             now_epoch=args.now_epoch,
             apply=args.apply,
+            inspect_shadow=args.inspect_shadow,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0

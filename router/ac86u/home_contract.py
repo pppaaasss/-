@@ -392,7 +392,7 @@ def _candidate_result(value: object, label: str) -> tuple[str, str, str, bool]:
     if status not in {"QUALIFIED", "REJECTED", "UNKNOWN"}:
         raise ContractError(f"{label}.qualification is invalid")
     purpose = str(row.get("purpose") or "")
-    if purpose not in {"daily-qualification", "switch-reverification"}:
+    if purpose not in {"daily-qualification", "switch-reverification", "primary-cache"}:
         raise ContractError(f"{label}.purpose is invalid")
     switch_reverified = _boolean(row.get("switch_reverified"), f"{label}.switch_reverified")
     if switch_reverified and (purpose != "switch-reverification" or status != "QUALIFIED"):
@@ -446,10 +446,22 @@ def validate_home_report_v2(
         if identity in candidate_status:
             raise ContractError("home report duplicates a candidate result")
         candidate_status[identity] = (key, status, switch_reverified)
-    if report.get("run_kind") == "recheck-1300" and any(
-        row.get("purpose") != "switch-reverification" for row in candidates if isinstance(row, dict)
-    ):
-        raise ContractError("13:00 report may only probe a candidate for switch reverification")
+    for row in candidates:
+        cached = row.get("purpose") == "primary-cache"
+        if report["run_kind"] == "recheck-1300" and not cached:
+            raise ContractError("13:00 report must use cached primary evidence; no backup probes")
+        if cached:
+            if report["run_kind"] != "recheck-1300" or row.get("verified_run_kind") != "primary-0200":
+                raise ContractError("cached backup was not verified by a primary run")
+            if row.get("switch_reverified") is not False or row.get("qualification") != "QUALIFIED":
+                raise ContractError("cached backup must not claim a new probe")
+            verified = parse_utc(row.get("last_verified_utc"), "cached backup.last_verified_utc")
+            expires = parse_utc(row.get("expires_utc"), "cached backup.expires_utc")
+            generated = parse_utc(report["generated_utc"], "home report.generated_utc")
+            if not verified <= generated <= expires or not 0 < (expires - verified).total_seconds() <= 36 * 3600:
+                raise ContractError("cached backup is expired or has invalid verification times")
+            if now_epoch is not None and expires.timestamp() < now_epoch:
+                raise ContractError("cached backup expired before publication")
 
     decisions = _list(report.get("decisions"), "home report.decisions", MAX_RESULTS)
     decision_keys: set[str] = set()
@@ -472,7 +484,7 @@ def validate_home_report_v2(
             evidence = candidate_status.get(identity)
             if evidence is None or evidence[0] != key or evidence[1] != "QUALIFIED":
                 raise ContractError("replacement candidate was not qualified at home")
-            if evidence[2] is not True:
+            if report["run_kind"] == "primary-0200" and evidence[2] is not True:
                 raise ContractError("replacement candidate was not reverified before switching")
         elif replacement is not None:
             raise ContractError("non-replacement decision contains a replacement candidate")

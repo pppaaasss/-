@@ -131,7 +131,7 @@ class HomePublishTests(unittest.TestCase):
             'schema': REPORT_SCHEMA,
             'probe_id': self.probe_id,
             'generated_utc': generated,
-            'run_kind': 'recheck-1300',
+            'run_kind': 'primary-0200',
             'run_status': 'COMPLETED',
             'production_modified': False,
             'actionable': True,

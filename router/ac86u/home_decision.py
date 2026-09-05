@@ -80,8 +80,8 @@ def current_result(name: str, url: str, attempts: list[dict], *, circuit_open: b
     """Collapse one or two full route attempts into a fail-closed result.
 
     A first-pass GOOD route is kept.  A first failure followed by recovery is
-    UNKNOWN (flaky but not safe to replace).  Two non-GOOD attempts become BAD
-    only when the mass-failure circuit is closed.
+    UNKNOWN (flaky but not safe to replace). Only two explicit failures become
+    BAD; repeated unknown observations never constitute failure evidence.
     """
     if not attempts:
         raise RuntimeError("current route has no probe attempts")
@@ -95,7 +95,10 @@ def current_result(name: str, url: str, attempts: list[dict], *, circuit_open: b
     elif len(attempts) >= 2 and probe_is_good(attempts[1]):
         status = "UNKNOWN"
         chosen = attempts[1]
-    elif len(attempts) >= 2:
+    elif len(attempts) >= 2 and all(
+        attempt.get("observed_status") in {"DEGRADED", "UNAVAILABLE"}
+        for attempt in attempts
+    ):
         status = "BAD"
         chosen = attempts[-1]
     else:
@@ -140,6 +143,24 @@ def candidate_result(
     }
 
 
+def cached_backup_result(backup: dict) -> dict:
+    """Carry primary-run evidence into 13:00 without a network probe."""
+    return {
+        "candidate_id": backup["candidate_id"],
+        "channel_key": backup["channel_key"],
+        "url": backup["url"],
+        "request_options": backup.get("request_options", ""),
+        "qualification": "QUALIFIED",
+        "purpose": "primary-cache",
+        "switch_reverified": False,
+        "verified_run_kind": backup.get("verified_run_kind"),
+        "last_verified_utc": backup["last_verified_utc"],
+        "expires_utc": backup["expires_utc"],
+        "verification": dict(backup["verification"]),
+        "error": "",
+    }
+
+
 def _parse_utc(value: str) -> datetime:
     return datetime.fromisoformat(str(value).replace("Z", "+00:00")).astimezone(UTC)
 
@@ -154,6 +175,7 @@ def update_backup_pool(
     candidate_manifest_sha256: str,
     current_urls: dict[str, str],
     ttl_hours: float,
+    run_kind: str = "primary-0200",
 ) -> dict:
     now = datetime.fromtimestamp(float(now_epoch), tz=UTC)
     kept: dict[str, dict] = {}
@@ -190,6 +212,7 @@ def update_backup_pool(
             "source_manifest_sha256": str(candidate.get("source_manifest_sha256") or candidate_manifest_sha256),
             "qualified_utc": str(previous.get("qualified_utc") or now_text),
             "last_verified_utc": now_text,
+            "verified_run_kind": run_kind,
             "expires_utc": expires_text,
             "verification": probe_verification(result),
         }

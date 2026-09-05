@@ -41,7 +41,7 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="home_probe.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py run.sh status.sh uninstall.sh"
+files="home_probe.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh status.sh uninstall.sh"
 for name in $files; do
   /opt/bin/curl -fL --retry 3 --connect-timeout 15 --max-time 120 \
     "$RAW/$name" -o "$stage/$name"
@@ -81,6 +81,7 @@ payload = {
     "output_dir": sys.argv[2],
     "playlist_url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u",
     "candidate_manifest_url": "https://raw.githubusercontent.com/pppaaasss/-/master/harvest/home-candidates.json",
+    "home_feedback_url": "https://raw.githubusercontent.com/pppaaasss/-/master/config/home-route-feedback.json",
     "schedule_timezone": "Asia/Shanghai",
     "expected_utc_offset": "+0800",
     "route_context": "router-origin-direct-wan",
@@ -98,7 +99,7 @@ payload = {
     "ffprobe": "/opt/bin/ffprobe",
     "maximum_load1": 1.5,
     "minimum_mem_available_kib": 65536,
-    "maximum_runtime_s": 3300,
+    "maximum_runtime_s": 1200,
     "primary_sample_bytes": 2097152,
     "recheck_sample_bytes": 2097152,
     "candidate_sample_bytes": 6291456,
@@ -133,6 +134,8 @@ value.setdefault("github_report_branch", "home-reports")
 value.setdefault("github_deploy_private_key", "/opt/etc/iptv-home-probe/github_report_ed25519")
 value.setdefault("github_known_hosts", "/opt/etc/iptv-home-probe/github_known_hosts")
 value.setdefault("git", "/opt/bin/git")
+value.setdefault("home_feedback_url", "https://raw.githubusercontent.com/pppaaasss/-/master/config/home-route-feedback.json")
+value["maximum_runtime_s"] = min(float(value.get("maximum_runtime_s") or 1200), 1200)
 for old in ("upload_enabled", "upload_host", "upload_port", "upload_user", "ssh_private_key", "ssh_known_hosts"):
     value.pop(old, None)
 temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")

@@ -195,7 +195,7 @@ class AC86UHomeProbeTests(unittest.TestCase):
             home_probe, "segment_sample", side_effect=samples
         ), mock.patch.object(home_probe, "ffprobe_meta", return_value=meta):
             row = home_probe.probe_route("CCTV-10", "https://x.test/live.m3u8", floor=1080, mode="deep", config={})
-        self.assertEqual("DEGRADED", row["status"])
+        self.assertEqual("UNKNOWN", row["status"])
         self.assertIn("bitrate_unknown", row["error"])
 
     def test_bad_route_without_home_backup_is_unresolved(self):
@@ -245,8 +245,8 @@ class AC86UHomeProbeTests(unittest.TestCase):
         self.assertEqual(8, report["summary"]["bad"])
         self.assertEqual(8, report["summary"]["replacements"])
         self.assertTrue(all(row["action"] == "REPLACE" for row in report["decisions"]))
-        self.assertTrue(all(row["purpose"] == "switch-reverification" for row in report["candidate_results"]))
-        self.assertEqual(24, probe.call_count)  # 8 first + 8 confirmations + 8 backup reverifications.
+        self.assertTrue(all(row["purpose"] == "primary-cache" for row in report["candidate_results"]))
+        self.assertEqual(16, probe.call_count)  # 8 first + 8 confirmations; zero backup probes.
 
     def test_good_current_route_is_kept_without_testing_a_better_backup(self):
         formal = b"#EXTM3U\n#EXTINF:-1,CCTV-1\nhttps://current.test/cctv1.m3u8\n"
@@ -285,9 +285,10 @@ class AC86UHomeProbeTests(unittest.TestCase):
                     "probe_id": "home-ac86u-test",
                     "output_dir": temporary,
                     "actionable": True,
+                    "candidate_manifest_url": "",
                     "maximum_load1": 10000,
                     "minimum_mem_available_kib": 1,
-                }, run_kind="recheck-1300", now_epoch=NOW)
+                }, run_kind="primary-0200", now_epoch=NOW)
             pool = home_probe.load_json(Path(temporary) / "qualified-backups.json")
         self.assertEqual("UNRESOLVED", report["decisions"][0]["action"])
         self.assertEqual("home_backups_failed_reverification", report["decisions"][0]["reason"])

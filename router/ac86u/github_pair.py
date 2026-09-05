@@ -119,11 +119,12 @@ def validate_master_rules(rules: object) -> int:
 
 
 def validate_protected_publisher(publisher: dict, rules: object, config: dict) -> int:
-    if publisher.get("schema") != PUBLISHER_CONFIG_SCHEMA or publisher.get("enabled") is not True:
-        raise RuntimeError("protected home publisher is not enabled on master")
+    if publisher.get("schema") != PUBLISHER_CONFIG_SCHEMA or not isinstance(publisher.get("enabled"), bool):
+        raise RuntimeError("protected home publisher configuration is invalid")
     if publisher.get("repository") != REPOSITORY or publisher.get("report_branch") != REPORT_BRANCH:
         raise RuntimeError("protected home publisher destination does not match")
-    if publisher.get("expected_probe_id") != config.get("probe_id"):
+    expected = str(publisher.get("expected_probe_id") or "")
+    if (expected and expected != config.get("probe_id")) or (publisher["enabled"] and not expected):
         raise RuntimeError("protected home publisher is not assigned to this probe")
     if publisher.get("branch_protection_required") is not True:
         raise RuntimeError("protected home publisher does not require branch protection")

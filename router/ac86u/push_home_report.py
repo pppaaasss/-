@@ -277,10 +277,20 @@ def push(
         atomic_json(state_path, state)
         raise RuntimeError(error)
 
-    for path in pending:
-        path.unlink()
     acknowledged = len(validated)
-    state["successful_reports"] = int(state.get("successful_reports") or 0) + acknowledged
+    evidence = dict(state.get("successful_report_evidence") or {})
+    for report, raw in validated:
+        baseline = report["baseline"]
+        evidence[report["generated_utc"]] = {
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "safe": all(baseline.get(k) is True for k in ("home_network_ok", "github_reachable", "route_verified"))
+                    and baseline.get("mass_failure_circuit_breaker") is False,
+            "probe_id": report["probe_id"],
+        }
+    # A retried upload is the same observation, not another shadow report.
+    evidence = dict(sorted(evidence.items())[-64:])
+    state["successful_report_evidence"] = evidence
+    state["successful_reports"] = len(evidence)
     state["successful_pushes"] = int(state.get("successful_pushes") or 0) + 1
     state["first_push_utc"] = str(state.get("first_push_utc") or "") or utc_text()
     state["last_push_utc"] = utc_text()
@@ -289,6 +299,8 @@ def push(
     state["pending_reports"] = 0
     state.pop("last_error", None)
     atomic_json(state_path, state)
+    for path in pending:
+        path.unlink()
     print(f"HOME_GITHUB_PUSH accepted={acknowledged} pending=0 branch={config['github_report_branch']}")
     return True
 

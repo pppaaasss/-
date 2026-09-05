@@ -60,7 +60,7 @@ jobs:
           python3 scripts/publish_home_decisions.py \
             --inbox /tmp/home-reports/inbox \
             --config config/home-publisher.json \
-            --apply
+            --apply --inspect-shadow
 
       - name: Validate the one-snapshot output scope
         run: |
