@@ -1,8 +1,10 @@
 # 傻子电视台 · APTV 订阅
 
+> 2026-09-05 已获用户确认，通过 [PR #5](https://github.com/pppaaasss/-/pull/5) 合入 `master`（`ae0c5fdd59b20c41e40cb61177bb15d364f58d36`）。当前断点：等待用户把 U 盘插入 AC86U，下一步仅只读确认磁盘、挂载及路由器环境。发布器仍关闭、编号为空，尚未安装探针或进行真实影子验收。下方“待合并”表述若属于历史记录，不再作为当前待办。
+
 给 APTV（iPhone、iPad、Apple TV、Mac）使用的家庭优先电视直播清单。
 
-> 新自动维护链路仍处于代码准备/影子阶段。当前四份正式清单未被迁移代码修改；等用户出院回家、U 盘装好并完成 AC86U 实际路径核验后才启用生产发布。
+> 新自动维护链路已合入 master，处于待现场安装/影子阶段。当前四份正式清单未被迁移代码修改；等用户出院回家、U 盘装好并完成 AC86U 实际路径核验后才启用生产发布。
 
 ## 订阅地址
 
@@ -33,4 +35,4 @@ GitHub 的旧每 6 小时采集也已停用，由每天一次的家庭候选增�
 
 路由器端使用 Asuswrt-Merlin + Entware，状态、队列和日志都放在 64 GB USB 2.0 的 `/opt`。探针单线程、低优先级、不做转码，超过资源或运行时间预算会保存队列后退出，不影响原有上网和电视订阅。
 
-`config/home-publisher.json` 目前故意保持 `enabled: false`，路由器安装器也默认本地影子模式。2026-09-05 同步与修复已完成，等待用户确认合入 master；测试与台单差异见 [`docs/work-review-2026-09-05.md`](docs/work-review-2026-09-05.md)。完整步骤见 [`docs/ac86u-home-probe.md`](docs/ac86u-home-probe.md)，实施断点见 [`docs/home-first-roadmap.md`](docs/home-first-roadmap.md)。
+`config/home-publisher.json` 目前故意保持 `enabled: false`，路由器安装器也默认本地影子模式。2026-09-05 同步与修复已完成并合入 master，等待 U 盘现场部署；测试与台单差异见 [`docs/work-review-2026-09-05.md`](docs/work-review-2026-09-05.md)。完整步骤见 [`docs/ac86u-home-probe.md`](docs/ac86u-home-probe.md)，实施断点见 [`docs/home-first-roadmap.md`](docs/home-first-roadmap.md)。
