@@ -1,6 +1,9 @@
 {
   "applied": true,
-  "changed_files": [],
+  "changed_files": [
+    "tv-all.m3u",
+    "tv.m3u"
+  ],
   "decisions": [
     {
       "candidate_count": 0,
@@ -19,8 +22,18 @@
       "skipped": []
     },
     {
+      "candidate_count": 1,
       "channel": "CCTV-4K",
-      "reason": "current_route_recovered"
+      "failed_candidates": [
+        {
+          "kind": "github_pending",
+          "url": "http://107.150.60.122/live/cctv4k.m3u8"
+        }
+      ],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": [
+        "verified_pool:fixed_evidence_below_floor"
+      ]
     },
     {
       "candidate_count": 0,
@@ -44,6 +57,10 @@
       "skipped": []
     },
     {
+      "channel": "Go3 Sport 1 (1080p)",
+      "reason": "current_route_recovered"
+    },
+    {
       "candidate_count": 0,
       "channel": "JOJG-DTV (1080i)",
       "failed_candidates": [],
@@ -53,6 +70,22 @@
     {
       "channel": "Match! Ultra (720p)",
       "reason": "current_route_recovered"
+    },
+    {
+      "channel": "NHK Eテレ（東京）",
+      "reason": "current_route_recovered"
+    },
+    {
+      "candidate_count": 1,
+      "channel": "Sport 5 (1080p)",
+      "failed_candidates": [
+        {
+          "kind": "verified_pool",
+          "url": "http://stream.mcquack.net/333/index.m3u8"
+        }
+      ],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
     },
     {
       "candidate_count": 0,
@@ -307,6 +340,33 @@
     },
     {
       "candidate_count": 0,
+      "channel": "江西公共农业",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 9,
+      "channel": "江西新闻",
+      "reason": "confirmed_dead_qualified_spare_ready",
+      "source_kind": "verified_pool"
+    },
+    {
+      "candidate_count": 0,
+      "channel": "江西经济生活",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
+      "channel": "江西都市",
+      "failed_candidates": [],
+      "reason": "no_qualified_spare_after_fresh_probe",
+      "skipped": []
+    },
+    {
+      "candidate_count": 0,
       "channel": "海南文旅频道",
       "failed_candidates": [],
       "reason": "no_qualified_spare_after_fresh_probe",
@@ -316,18 +376,6 @@
       "candidate_count": 0,
       "channel": "海南自贸",
       "failed_candidates": [],
-      "reason": "no_qualified_spare_after_fresh_probe",
-      "skipped": []
-    },
-    {
-      "candidate_count": 1,
-      "channel": "湖南国际",
-      "failed_candidates": [
-        {
-          "kind": "github_pending",
-          "url": "http://phoneal.qing.mgtv.com/nn_live/nn_x64/Y2hzPSZkZWY9MSZ1aXA9MTA2LjE0LjM4LjU1JnRlcm09NSZtYWNpZD02ODZlOGNmOGM4OGU3N2VjOWEwNzkzMjg5ZjUzNDg0MmFiZWM0ZjNjJnFpZD0mcmF1dGhfZW5hYmxlPW9uJmNkbmV4X2lkPWFsX3Bob25lMyZlcz0xNzg4MzI4NTExJnV1aWQ9MjZkZWE4ODdkN2EzNzEyYmM3NDYwZDhmYzZlY2QzZDUtNmEwZTI2Mzcmcz1jMzJkZTNlMmNkZDQ0MzkyNTU2MTljOGQ4ZDNkMjkzYSZ1aWQ9Jm5kdj1pb3MtNi41LjAmdj0yJmFzPTAmX2NhckNvZGU9MA,,/HNGGMPP360.m3u8"
-        }
-      ],
       "reason": "no_qualified_spare_after_fresh_probe",
       "skipped": []
     },
@@ -761,7 +809,7 @@
       "skipped": []
     }
   ],
-  "generated_utc": "2026-09-04T22:24:34Z",
+  "generated_utc": "2026-09-05T04:27:33Z",
   "policy": {
     "blocked_candidate_hosts": [
       "111.59.24.227",
@@ -780,5 +828,17 @@
     "home_feedback_veto": true,
     "no_replacement_count_limit": true
   },
-  "selected_updates": []
+  "selected_updates": [
+    {
+      "channel": "江西新闻",
+      "floor": 1080,
+      "matching_files": [
+        "tv.m3u",
+        "tv-all.m3u"
+      ],
+      "new_url": "http://182.150.23.74:808/hls/30/index.m3u8",
+      "old_url": "http://192.151.150.154/live/jxtv7.m3u8",
+      "source_kind": "verified_pool"
+    }
+  ]
 }
