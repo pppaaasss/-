@@ -1,4 +1,5 @@
 #!/bin/sh
+unset LD_LIBRARY_PATH LD_PRELOAD
 set -eu
 
 CONFIG="/opt/etc/iptv-home-probe.json"

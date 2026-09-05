@@ -1,4 +1,5 @@
 #!/bin/sh
+unset LD_LIBRARY_PATH LD_PRELOAD
 set -eu
 
 BASE="/opt/share/iptv-home-probe"
@@ -27,9 +28,11 @@ case "$run_kind" in
 esac
 
 run_probe() {
-  if command -v ionice >/dev/null 2>&1; then
-    exec ionice -c 3 nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --run-kind "$run_kind"
-  fi
+  for ionice_path in /opt/bin/ionice /usr/bin/ionice /bin/ionice; do
+    if [ -x "$ionice_path" ]; then
+      exec "$ionice_path" -c 3 nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --run-kind "$run_kind"
+    fi
+  done
   exec nice -n 15 /opt/bin/python3 "$BASE/home_probe.py" --config "$CONFIG" --run-kind "$run_kind"
 }
 

@@ -1,4 +1,5 @@
 #!/bin/sh
+unset LD_LIBRARY_PATH LD_PRELOAD
 set -eu
 
 BASE="/opt/share/iptv-home-probe"
@@ -43,7 +44,7 @@ trap cleanup_stage EXIT HUP INT TERM
 
 files="home_probe.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh status.sh uninstall.sh"
 for name in $files; do
-  /opt/bin/curl -fL --retry 3 --connect-timeout 15 --max-time 120 \
+  /opt/bin/curl -4 -fL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 15 --max-time 120 \
     "$RAW/$name" -o "$stage/$name"
 done
 /opt/bin/python3 -m py_compile \
@@ -67,10 +68,7 @@ for legacy in id_ed25519 id_ed25519.pub known_hosts; do
 done
 
 if [ ! -f "$CONFIG" ]; then
-  identity="$(nvram get et0macaddr 2>/dev/null || true)"
-  [ -n "$identity" ] || identity="$(date +%s)-$$"
-  suffix="$(printf '%s' "$identity" | cksum | awk '{print $1}')"
-  probe_id="home-ac86u-$suffix"
+  probe_id="$(/opt/bin/python3 -c 'import uuid; print("home-ac86u-" + uuid.uuid4().hex[:12])')"
   IPTV_HOME_PROBE_ID="$probe_id" /opt/bin/python3 - "$CONFIG" "$DATA" <<'PY'
 import json, os, sys
 from pathlib import Path
