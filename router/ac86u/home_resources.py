@@ -36,7 +36,7 @@ def sample_resources(config, resources_reader):
         resources.update(cpu_busy_percent=round(busy, 1), iowait_percent=round(wait, 1),
                          sample_seconds=1)
         available = int(resources.get('mem_available_kib') or 0)
-        minimum = max(40 * 1024, int(config.get('minimum_mem_available_kib') or 0))
+        minimum = max(50 * 1024, int(config.get('minimum_mem_available_kib') or 0))
         if available <= 0:
             reason = 'memory_sample_unavailable'
         elif available < minimum:

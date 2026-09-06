@@ -25,7 +25,7 @@ def recovery_check(config):
 
     # Resume with 8 MiB of margin above the unchanged in-batch stop threshold.
     recovery = dict(config, minimum_mem_available_kib=
-                    max(40 * 1024, int(config.get('minimum_mem_available_kib') or 0)) + 8 * 1024)
+                    max(50 * 1024, int(config.get('minimum_mem_available_kib') or 0)) + 8 * 1024)
     return sample_resources(recovery, memory)
 
 
@@ -49,7 +49,7 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_r
     config_path = Path(config_path)
     original = config_path.read_bytes()
     config = json.loads(original)
-    config["minimum_mem_available_kib"] = 40 * 1024
+    config["minimum_mem_available_kib"] = 50 * 1024
     root = Path(config.get('output_dir') or '/opt/var/lib/iptv-home-probe') / 'pipeline-trial'
     root.mkdir(parents=True, exist_ok=True)
     status_path = root / 'auto-status.json'

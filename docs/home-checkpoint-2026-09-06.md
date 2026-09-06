@@ -226,3 +226,8 @@ python -m unittest tests.test_home_transport tests.test_ac86u_home_probe tests.t
 17:13 崩溃日志明确包含 persistent out of memory / Kernel panic，证明留存崩溃由持续内存不足触发；尚未取得完整进程 RSS 表，具体占用来源未确定。用户随后表示已关闭梯子。17:44 uptime 36 分钟，auto STOPPED_BATCH_ERROR exit 2；临时规则 0x496023be 删除失败。17:47 路由器查询显示 merlinclash 链不存在，OUTPUT 中未列出该临时规则。
 
 修复 HomeTransport.close：删除失败后用成功的 iptables -S OUTPUT 查询确认本进程 mark 已不存在，避免 -C 因跳转目标消失返回非 1 而误报清理失败；查询失败或 mark 仍在继续报告错误。新增测试覆盖链被移除、查询失败、带/不带掩码的残留规则。没有创建空分流链或切换直连，当前检测仍依赖原来的 merlinclash 家庭线路。用户需恢复代理服务后才能按原线路续跑。现有 40/48 MiB、3 Mbps 和 headroom 1.35 不变。
+
+
+## 17:47 后用户决定开启代理并使用 50 MiB 门槛
+
+用户“我开启吧，直接按50来吧”：由用户恢复路由器代理，暂停门槛调至 51200 KiB（50 MiB），续跑门槛 59392 KiB（58 MiB），安装默认和试跑运行时同步更新，包含上一提交的缺失规则清理修复。H.264 3 Mbps、headroom 1.35 不变。修复不保证消除之前的内存耗尽；当前未获得 OOM 进程占用明细。用户需开启代理后在 Termux 部署新提交，尚未现场确认。
