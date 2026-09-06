@@ -1,5 +1,15 @@
 # 2026-09-06 家庭传输检测与接续
 
+## 09:44 手动扫描资源判断修正
+
+- 09:40 批量进程 27860 在首次资源检查就 STOPPED，原因 `load1_above_1.5`；未开始频道探测，不能当作频道失败。结果为 `manual/tv-20260906-094045-27860.json`。
+- 09:44 用户截图：load1/5/15 为 2.27/2.44/2.43，MemAvailable=119656 KiB（约 117 MiB），一次 top 显示 100% idle。单次 top 不证明持续空闲，但只凭 load1>1.5 就拒绝手动诊断过于粗糙。
+- `manual_tv_scan.py` 改为启动前和每条线路前采样一秒 `/proc/stat` 差值；CPU busy>=85%、iowait>=20% 或可用内存不足 64 MiB（配置更高则遵守更高值）时停止。load1 仅记录。采样失败、无计时增量、非 iowait 计数回退或内存未知时停止；iowait 回退按零增量处理并明确记录，不把 guest 重复计入。阈值是手动诊断的运行选择，未修改正式 home_probe 的保护或路由验收条件。
+- 每次打印 RESOURCES，JSON 与最终 SUMMARY 保存 last_resources。保留 nice=15、单条依次检测、20 分钟上限、独立锁、已测结果保留和精确临时规则清理。当前只需要从手机更新一个手动扫描脚本；已有临时目录的三份传输文件继续使用。
+- 14 项手动扫描/资源测试与 18 项共享传输测试全部通过（32 项）；涵盖高 load 但 CPU 空闲、CPU/IO/内存压力、计数异常、guest 排除、启动拒绝、中途停止保存与清理。diff 检查通过。尚未在用户路由器运行新版，不能宣称 54 条线路测试完成。
+
+计数说明依据 [Linux /proc 文档](https://docs.kernel.org/filesystems/proc.html)：iowait 并非精确的等待测量，计数可能下降；这里仅作为压力指示。下一步用户在 Termux 更新并启动，读取 `/tmp/iptv-manual-scan.log`。
+
 ## 09:28 最新现场结果与批量手动诊断
 
 - 09:18：53 个提供者中读到 52 份文件，共 10,572 条规则；来源条件为空、未解析/嵌套为 0。类型计数：DOMAIN 245、DOMAIN-KEYWORD 112、DOMAIN-REGEX 1、DOMAIN-SUFFIX 9858、IP-CIDR 329、IP-CIDR6 26、USER-AGENT 1。
