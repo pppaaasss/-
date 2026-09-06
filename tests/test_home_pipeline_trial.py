@@ -47,6 +47,8 @@ class PipelineTrialTests(unittest.TestCase):
                 row['deep_checked'] = False
             if bad and url == 'https://current.test/1':
                 row.update(status='DEGRADED', observed_status='DEGRADED', error='h264_stream_2.000_below_5.000_mbps')
+                if bad == 'headroom':
+                    row.update(headroom_ratio=.8, min_download_mbps=4.8, error='headroom_0.800_below_1.350')
             return row
         before = dict(self.config)
         with mock.patch.object(probe, 'fetch_playlist', return_value=(FORMAL, self.config['playlist_url'], 0.1)), \
@@ -81,6 +83,16 @@ class PipelineTrialTests(unittest.TestCase):
         self.assertEqual('not_requested', second['policy']['candidate_manifest_state'])
         self.assertEqual('primary-cache', second['candidate_results'][0]['purpose'])
 
+    def test_confirmed_low_headroom_still_fails_quality_but_candidates_are_tested(self):
+        self.config.update(circuit_breaker_min_unknown=1, circuit_breaker_unknown_ratio=.35,
+                           minimum_headroom_ratio=1.35)
+        report, _, calls = self.run_trial(bad='headroom')
+        self.assertFalse(report['summary']['circuit_breaker_open'])
+        self.assertEqual('BAD', report['current_results'][0]['status'])
+        self.assertEqual('headroom_0.800_below_1.350', report['current_results'][0]['error'])
+        self.assertEqual(2, report['summary']['candidate_confirmed'])
+        self.assertTrue(any('candidate.test' in c.args[1] for c in calls.call_args_list))
+
     def test_resource_stop_saves_queue_and_next_run_does_not_restart_same_manifest(self):
         self.config['sample_actual_resources'] = True
         ok = ('', {'mem_available_kib': 100000})
@@ -107,6 +119,14 @@ class PipelineTrialTests(unittest.TestCase):
         self.assertEqual(2, report['summary']['unknown'])
         self.assertEqual(4, sum('current.test' in c.args[1] for c in calls.call_args_list))
 
+    def test_unavailable_without_metadata_keeps_connection_failure_evidence(self):
+        raw = measured('CCTV-1', 'https://current.test/1', 1080, 'UNAVAILABLE')
+        raw.update(sample_count=0, deep_checked=False, error='HTTPError:HTTP Error 404: Not Found')
+        with mock.patch.object(probe, 'probe_route', return_value=raw):
+            row = probe._probe_current('CCTV-1', raw['url'], 'cctv1',
+                profile=probe.run_profile('primary-0200', {}), config={})
+        self.assertEqual('UNAVAILABLE', row['observed_status'])
+
     def test_actual_tv_binding_failure_stops_before_stream_tests(self):
         with mock.patch.object(probe, 'resource_check', return_value=('', {})), \
              mock.patch.object(probe, 'fetch_playlist', side_effect=[(FORMAL, '', 0),
@@ -116,13 +136,13 @@ class PipelineTrialTests(unittest.TestCase):
                 probe.run(self.config, trial=True, now_epoch=NOW)
         calls.assert_not_called()
 
-    def test_low_bitrate_with_headroom_is_not_a_network_outage(self):
+    def test_completed_low_quality_transfers_are_not_a_network_outage(self):
         quality = measured('CCTV-1', 'https://current.test/1', 1080, 'DEGRADED')
         quality['error'] = 'h264_stream_2.000_below_5.000_mbps'
         rows = {str(i): [quality, quality] for i in range(20)}
         self.assertFalse(mass_failure_circuit(rows, minimum_channels=12, failure_ratio=.35))
         quality['headroom_ratio'] = .8
-        self.assertTrue(mass_failure_circuit(rows, minimum_channels=12, failure_ratio=.35))
+        self.assertFalse(mass_failure_circuit(rows, minimum_channels=12, failure_ratio=.35))
         quality['observed_status'] = 'UNKNOWN'
         self.assertTrue(mass_failure_circuit(rows, minimum_channels=12, failure_ratio=.35))
 

@@ -627,7 +627,8 @@ def _probe_current(
         include_metadata=bool(profile["current_metadata"]),
     )
     row["channel_key"] = channel_key
-    if profile['current_metadata'] and not row.get('deep_checked'):
+    if (profile['current_metadata'] and not row.get('deep_checked')
+            and row.get('observed_status') in {'GOOD', 'DEGRADED'}):
         row['observed_status'] = row['status'] = 'UNKNOWN'
         row['error'] = row.get('error') or 'quality_not_verified'
     if url in feedback_urls(feedback, "bad"):
@@ -768,7 +769,6 @@ def _run(
         attempts_by_key,
         minimum_channels=int(config.get("circuit_breaker_min_unknown") or 12),
         failure_ratio=float(config.get("circuit_breaker_unknown_ratio") or 0.35),
-        minimum_headroom=float(config.get("minimum_headroom_ratio") or 1.35),
     )
     current_results = [
         current_result(name, url, attempts_by_key[key], circuit_open=circuit)

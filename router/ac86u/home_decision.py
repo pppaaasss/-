@@ -69,20 +69,20 @@ def mass_failure_circuit(
     *,
     minimum_channels: int,
     failure_ratio: float,
-    minimum_headroom: float = 1.35,
 ) -> bool:
-    """Stop all replacement decisions when one run looks globally unhealthy."""
+    """Detect widespread failed/unknown transfers, not per-route quality loss.
+
+    Two completed samples prove this route was reachable even when its speed,
+    resolution or bitrate is inadequate. Those failures still require repair;
+    counting them as an outage prevents the very backup search they need.
+    """
     if not attempts_by_key:
         return True
     failed = sum(
-        not any(probe_is_good(attempt) or (
-            attempt.get("observed_status") == "DEGRADED"
+        not any(
+            attempt.get("observed_status") in {"GOOD", "DEGRADED"}
             and int(attempt.get("sample_count") or 0) == 2
-            and attempt.get("deep_checked") is True
-            and float(attempt.get("headroom_ratio") or 0) >= minimum_headroom
-            and "_stream_" in str(attempt.get("error") or "")
-            and "_below_" in str(attempt.get("error") or "")
-        ) for attempt in attempts)
+            for attempt in attempts)
         for attempts in attempts_by_key.values()
     )
     return failed >= max(1, int(minimum_channels)) and failed / len(attempts_by_key) >= float(failure_ratio)
@@ -98,11 +98,11 @@ def current_result(name: str, url: str, attempts: list[dict], *, circuit_open: b
     if not attempts:
         raise RuntimeError("current route has no probe attempts")
     first = attempts[0]
-    if circuit_open:
-        status = "UNKNOWN"
-        chosen = first
-    elif probe_is_good(first):
+    if probe_is_good(first):
         status = "GOOD"
+        chosen = first
+    elif circuit_open:
+        status = "UNKNOWN"
         chosen = first
     elif len(attempts) >= 2 and probe_is_good(attempts[1]):
         status = "UNKNOWN"

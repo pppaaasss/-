@@ -304,14 +304,16 @@ class AC86UHomeProbeTests(unittest.TestCase):
         )
         formal_bytes = formal.encode()
 
-        def degraded(name, url, *, floor, **_kwargs):
-            return measured(name, url, floor, "DEGRADED")
+        def unreachable(name, url, *, floor, **_kwargs):
+            row = measured(name, url, floor, "UNAVAILABLE")
+            row.update(sample_count=0, deep_checked=False, error='connection_failed')
+            return row
 
         with tempfile.TemporaryDirectory() as temporary:
             seed_backup_pool(temporary, formal_bytes, channels)
             with mock.patch.object(
                 home_probe, "fetch_playlist", return_value=(formal_bytes, "https://repo.test/tv-core.m3u", 0.1)
-            ), mock.patch.object(home_probe, "probe_route", side_effect=degraded) as probe:
+            ), mock.patch.object(home_probe, "probe_route", side_effect=unreachable) as probe:
                 report, _ = home_probe.run({
                     "probe_id": "home-ac86u-test",
                     "output_dir": temporary,

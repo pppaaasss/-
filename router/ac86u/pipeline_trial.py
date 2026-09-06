@@ -57,7 +57,16 @@ def main():
             print('CANDIDATE_MANIFEST: ' + state['candidate_manifest_state'], flush=True)
             print('RESOURCES: ' + json.dumps(report['resources']), flush=True)
             print('TRANSPORT: ' + json.dumps(report.get('transport')), flush=True)
-            print('TRIAL_ONLY: current/recheck/candidate/pool/report complete; production disabled', flush=True)
+            if report['summary']['circuit_breaker_open']:
+                stage = 'PAUSED_NETWORK_CIRCUIT'
+            elif args.run_kind == 'recheck-1300':
+                stage = 'CACHE_ONLY'
+            elif report['summary']['candidate_queue_remaining']:
+                stage = 'PARTIAL_QUEUE_SAVED'
+            else:
+                stage = 'QUEUE_FINISHED'
+            print('CANDIDATE_STAGE: ' + stage, flush=True)
+            print('TRIAL_ONLY: report saved; production disabled', flush=True)
             return 0
         except TrialStopped:
             print('PIPELINE_STOPPED: interrupted; last completed run remains saved', flush=True)
