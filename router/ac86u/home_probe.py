@@ -962,6 +962,31 @@ def _run(
                 # the formal home-health pass or local backup refresh fail.
                 candidate_manifest_state = f"rejected:{type(exc).__name__}:{str(exc)[:220]}"
 
+        # Import the legacy pool once as unverified candidates. Keep the main
+        # manifest digest intact so completed historical scans are not replayed.
+        supplemental_file = config.get("trial_supplemental_candidate_file")
+        if trial and supplemental_file:
+            supplemental_bytes = Path(supplemental_file).read_bytes()
+            supplemental_sha = hashlib.sha256(supplemental_bytes).hexdigest()
+            if supplemental_sha != previous_state.get("legacy_candidate_manifest_sha256"):
+                supplemental = json.loads(supplemental_bytes)
+                validate_candidate_manifest(supplemental, now_epoch=now_epoch,
+                    max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48))
+                binding = supplemental["formal_playlist"]
+                if (binding["sha256"] != hashlib.sha256(playlist_bytes).hexdigest()
+                        or int(binding["channel_count"]) != len(entries)):
+                    raise RuntimeError("legacy_candidate_manifest_formal_playlist_changed")
+                known_ids = set((previous_state.get("candidate_observations") or {}).keys())
+                known_ids.update(row["candidate_id"] for row in (previous_state.get("candidate_queue") or []))
+                additions = []
+                for value in supplemental["candidates"]:
+                    if value["candidate_id"] not in known_ids:
+                        additions.append(dict(value, _queue_priority=1,
+                            source_manifest_sha256=supplemental_sha))
+                incoming.extend(additions)
+                state["legacy_candidate_manifest_sha256"] = supplemental_sha
+                progress("LEGACY_CANDIDATES_ADDED: " + str(len(additions)))
+
         queue = merge_candidate_queue(
             previous_state.get("candidate_queue"),
             incoming + recovered + bitrate_recovered,

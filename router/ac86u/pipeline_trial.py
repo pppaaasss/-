@@ -46,6 +46,7 @@ def main():
                       minimum_mem_available_kib=50 * 1024,
                       minimum_headroom_ratio=1.35, minimum_h264_stream_mbps=3.0, actionable=False, github_push_enabled=False,
                       trial_candidate_file=str(Path(__file__).with_name('home-trial-candidates.json.gz')),
+                      trial_supplemental_candidate_file=str(Path(__file__).with_name('home-legacy-candidates.json')),
                       candidate_manifest_url='https://raw.githubusercontent.com/pppaaasss/-/home-first-ac86u/harvest/home-trial-candidates.json.gz')
         print('PIPELINE_START: ' + args.run_kind + ' headroom=1.35 h264_min_mbps=3.0 memory_stop_mib=50 memory_resume_mib=58', flush=True)
         print('PIPELINE_PHASE: ' + args.phase, flush=True)

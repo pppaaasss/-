@@ -64,6 +64,26 @@ class PipelineTrialTests(unittest.TestCase):
         validate_home_report_v2(report, trial=True)
         return report, state, calls
 
+    def test_legacy_supplement_preserves_pool_and_imports_only_unseen_candidates_once(self):
+        _, before, _ = self.run_trial()
+        manifest = json.loads(gzip.decompress((self.root / 'candidates.json.gz').read_bytes()))
+        new = make_candidate(dict(name='CCTV-1', url='https://legacy.test/1', sources=['legacy']))
+        manifest['candidates'].append(new)
+        manifest['candidate_count'] = len(manifest['candidates'])
+        manifest['candidate_set_sha256'] = object_sha256(manifest['candidates'])
+        supplement = self.root / 'legacy.json'
+        supplement.write_text(json.dumps(manifest))
+        self.config['trial_supplemental_candidate_file'] = str(supplement)
+        report, state, calls = self.run_trial()
+        self.assertEqual(3, report['summary']['qualified_backups'])
+        self.assertEqual(before['last_candidate_manifest_sha256'], state['last_candidate_manifest_sha256'])
+        self.assertEqual(1, sum('legacy.test' in c.args[1] for c in calls.call_args_list))
+        self.assertFalse(any('candidate.test' in c.args[1] for c in calls.call_args_list))
+        self.assertIn('legacy_candidate_manifest_sha256', state)
+        self.assertEqual([], state['candidate_queue'])
+        _, _, calls = self.run_trial()
+        self.assertFalse(any('legacy.test' in c.args[1] for c in calls.call_args_list))
+
     def test_primary_retries_and_qualifies_then_recheck_uses_cache_without_candidate_requests(self):
         report, state, calls = self.run_trial(bad=True)
         self.assertEqual(2, sum(c.args[1] == 'https://current.test/1' for c in calls.call_args_list))

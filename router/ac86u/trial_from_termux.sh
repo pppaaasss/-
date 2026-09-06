@@ -18,6 +18,9 @@ done
 curl -4 -fSL --retry 2 --connect-timeout 10 --max-time 120 \
     "$iptv_base/harvest/home-trial-candidates.json.gz" \
     -o "$iptv_stage/$iptv_folder/home-trial-candidates.json.gz"
+curl -4 -fSL --retry 2 --connect-timeout 10 --max-time 120 \
+    "$iptv_base/harvest/home-legacy-candidates.json" \
+    -o "$iptv_stage/$iptv_folder/home-legacy-candidates.json"
 cat > "$iptv_stage/$iptv_folder/start.py" <<'PY'
 from pathlib import Path
 import subprocess
