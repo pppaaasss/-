@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import hashlib
+import gzip
 import json
 import os
 import re
@@ -31,6 +32,8 @@ try:
         ContractError,
         REPORT_SCHEMA,
         ROUTE_CONTEXT,
+        TRIAL_REPORT_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         canonical_name,
         station_key,
         validate_backup_pool,
@@ -54,6 +57,8 @@ except ImportError:  # Installed beside this file by the Entware installer.
         ContractError,
         REPORT_SCHEMA,
         ROUTE_CONTEXT,
+        TRIAL_REPORT_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         canonical_name,
         station_key,
         validate_backup_pool,
@@ -179,6 +184,17 @@ def resource_guard(resources: dict, config: dict) -> str:
     if available and available < min_memory:
         return f"memory_below_{min_memory}_kib"
     return ""
+
+
+def resource_check(config):
+    if config.get("sample_actual_resources"):
+        try:
+            from .home_resources import sample_resources
+        except ImportError:
+            from home_resources import sample_resources
+        return sample_resources(config, system_resources)
+    resources = system_resources()
+    return resource_guard(resources, config), resources
 
 
 def timezone_guard(config: dict, now_epoch: float) -> None:
@@ -611,6 +627,9 @@ def _probe_current(
         include_metadata=bool(profile["current_metadata"]),
     )
     row["channel_key"] = channel_key
+    if profile['current_metadata'] and not row.get('deep_checked'):
+        row['observed_status'] = row['status'] = 'UNKNOWN'
+        row['error'] = row.get('error') or 'quality_not_verified'
     if url in feedback_urls(feedback, "bad"):
         row["observed_status"] = row["status"] = "DEGRADED"
         row["error"] = "viewer_confirmed_bad_route"
@@ -654,6 +673,7 @@ def _run(
     run_kind: str = "primary-0200",
     now_epoch: float | None = None,
     requested_mode: str | None = None,
+    trial: bool = False,
 ) -> tuple[dict, dict]:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     started = time.monotonic()
@@ -672,13 +692,12 @@ def _run(
             else int(config.get("primary_sample_bytes") or config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES)
         )
         profile["scan_candidates"] = False
-    resources = system_resources()
-    blocked = resource_guard(resources, config)
+    blocked, resources = resource_check(config)
     if blocked:
         raise RuntimeError(f"RESOURCE_GUARD:{blocked}")
     timezone_guard(config, now_epoch)
-    route_context = str(config.get("route_context") or ROUTE_CONTEXT)
-    if route_context != ROUTE_CONTEXT:
+    route_context = TRIAL_ROUTE_CONTEXT if trial else str(config.get("route_context") or ROUTE_CONTEXT)
+    if not trial and route_context != ROUTE_CONTEXT:
         raise RuntimeError("ROUTE_CONTEXT_UNVERIFIED")
 
     playlist_url = str(config.get("playlist_url") or DEFAULT_PLAYLIST)
@@ -686,6 +705,26 @@ def _run(
     entries = parse_playlist(playlist_bytes)
     maximum_runtime = min(float(config.get("maximum_runtime_s") or 1200), 1200)
     config = dict(config)
+    if trial:
+        config['actionable'] = False
+    resource_stop = ''
+
+    def budget_available():
+        nonlocal resource_stop
+        if resource_stop or time.monotonic() - started >= maximum_runtime:
+            return False
+        if config.get('sample_actual_resources'):
+            resource_stop, sample = resource_check(config)
+            resources.update(sample)
+            if resource_stop:
+                resources['stop_reason'] = resource_stop
+                print('RESOURCE_STOP: ' + resource_stop, flush=True)
+                return False
+        return time.monotonic() - started < maximum_runtime
+
+    def progress(message):
+        if config.get('progress_log'):
+            print(message, flush=True)
     feedback, feedback_state, feedback_sha = load_home_feedback(config, output_dir)
     config["home_feedback"] = feedback
     veto_urls = feedback_urls(feedback, "bad")
@@ -698,27 +737,38 @@ def _run(
         formal_keys.add(key)
         formal_rows.append((key, canonical_name(key), url))
 
+    tv_binding = None
+    if trial:
+        tv_bytes, _tv_final, _ = fetch_playlist('https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u')
+        tv_routes = {(station_key(name), url) for name, url in parse_playlist(tv_bytes)}
+        if any((key, url) not in tv_routes for key, _name, url in formal_rows):
+            raise RuntimeError('TV_CORE_ROUTE_BINDING_CHANGED')
+        tv_binding = hashlib.sha256(tv_bytes).hexdigest()
+
     # Every formal route gets its first attempt before any retry or candidate
     # work.  This makes the current household picture the run's top priority.
     attempts_by_key: dict[str, list[dict]] = {}
     for key, name, url in formal_rows:
-        if time.monotonic() - started >= maximum_runtime:
+        if not budget_available():
             attempts_by_key[key] = [_runtime_unknown(name, url, key, minimum_height(name, config))]
             continue
+        progress('CURRENT: ' + name)
         attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
 
     # A non-GOOD first attempt is never enough to replace a route.  Confirm it
     # once more in the same home run; no arbitrary channel-count limit applies.
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
-        if probe_is_good(attempts[0]) or time.monotonic() - started >= maximum_runtime:
+        if probe_is_good(attempts[0]) or not budget_available():
             continue
+        progress('RECHECK: ' + name)
         attempts.append(_probe_current(name, url, key, profile=profile, config=config))
 
     circuit = mass_failure_circuit(
         attempts_by_key,
         minimum_channels=int(config.get("circuit_breaker_min_unknown") or 12),
         failure_ratio=float(config.get("circuit_breaker_unknown_ratio") or 0.35),
+        minimum_headroom=float(config.get("minimum_headroom_ratio") or 1.35),
     )
     current_results = [
         current_result(name, url, attempts_by_key[key], circuit_open=circuit)
@@ -744,6 +794,7 @@ def _run(
                 expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
                 now_epoch=now_epoch,
                 allow_expired=True,
+                trial=trial,
             )
     except Exception:
         existing_pool = None
@@ -780,11 +831,12 @@ def _run(
                     candidate_report_by_id[identity] = cached_backup_result(backup)
                     choices[key] = identity
                     break
-                if time.monotonic() - started >= maximum_runtime:
+                if not budget_available():
                     budget_keys.add(key)
                     break
                 attempted_keys.add(key)
                 attempted_ids.add(identity)
+                progress('BACKUP_RECHECK: ' + canonical_name(key))
                 raw = probe_route(
                     canonical_name(key), backup["url"], floor=minimum_height(canonical_name(key), config),
                     config=config, sample_limit=int(profile["candidate_sample_bytes"]), include_metadata=True,
@@ -809,11 +861,23 @@ def _run(
             candidate_manifest_state = "disabled"
         else:
             try:
-                manifest, candidate_bytes, candidate_final = fetch_candidate_manifest(
-                    candidate_url,
-                    now_epoch=now_epoch,
-                    max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48),
-                )
+                if trial and config.get('trial_candidate_file'):
+                    local_path = Path(config['trial_candidate_file'])
+                    reader = gzip.open if local_path.suffix == '.gz' else open
+                    with reader(local_path, 'rb') as handle:
+                        candidate_bytes = handle.read(CANDIDATE_MANIFEST_LIMIT + 1)
+                    if len(candidate_bytes) > CANDIDATE_MANIFEST_LIMIT:
+                        raise RuntimeError('candidate_manifest_too_large')
+                    manifest = json.loads(candidate_bytes)
+                    validate_candidate_manifest(manifest, now_epoch=now_epoch,
+                        max_age_hours=float(config.get('candidate_manifest_max_age_hours') or 48))
+                    candidate_final = candidate_url
+                else:
+                    manifest, candidate_bytes, candidate_final = fetch_candidate_manifest(
+                        candidate_url,
+                        now_epoch=now_epoch,
+                        max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48),
+                    )
                 formal = manifest["formal_playlist"]
                 formal_sha = hashlib.sha256(playlist_bytes).hexdigest()
                 if formal["sha256"] != formal_sha or int(formal["channel_count"]) != len(entries):
@@ -824,7 +888,8 @@ def _run(
                     "channel_count": int(manifest["candidate_count"]),
                 }
                 candidate_manifest_sha = candidate_playlist["sha256"]
-                for value in manifest["candidates"]:
+                values = manifest['candidates'] if candidate_manifest_sha != previous_state.get('last_candidate_manifest_sha256') else []
+                for value in values:
                     candidate = dict(value)
                     candidate["_queue_priority"] = 1
                     candidate["source_manifest_sha256"] = candidate_manifest_sha
@@ -864,11 +929,12 @@ def _run(
         for candidate in queue:
             if candidate["candidate_id"] in attempted_ids or candidate["url"] in veto_urls or candidate.get("request_options"):
                 continue
-            if circuit or time.monotonic() - started >= maximum_runtime:
+            if circuit or not budget_available():
                 remaining.append(candidate)
                 continue
             key = str(candidate["channel_key"])
             name = canonical_name(key)
+            progress('CANDIDATE: ' + name + ' ' + str(candidate['candidate_id'])[:12])
             row = probe_route(
                 name,
                 str(candidate["url"]),
@@ -926,6 +992,8 @@ def _run(
         candidate_manifest_sha256=candidate_manifest_sha,
         current_urls=current_urls,
         ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
+        run_kind=run_kind,
+        trial=trial,
     )
 
     decisions: list[dict] = []
@@ -1002,7 +1070,7 @@ def _run(
         "circuit_breaker_open": bool(circuit),
     }
     report = {
-        "schema": REPORT_SCHEMA,
+        "schema": TRIAL_REPORT_SCHEMA if trial else REPORT_SCHEMA,
         "probe_id": str(config.get("probe_id") or "home-ac86u"),
         "generated_utc": utc_text(now_epoch),
         "run_status": "COMPLETED",
@@ -1018,12 +1086,14 @@ def _run(
         "baseline": {
             "home_network_ok": not circuit,
             "github_reachable": True,
-            "route_verified": True,
+            "route_verified": not trial,
             "mass_failure_circuit_breaker": bool(circuit),
         },
         "candidate_playlist": candidate_playlist,
         "home_feedback_sha256": feedback_sha,
         "policy": {
+            "trial_tv_binding_sha256": tv_binding,
+            "candidate_manifest_origin": "staged-file" if trial and config.get('trial_candidate_file') else "network",
             "auto_replace_formal_routes": False,
             "mass_failure_circuit_breaker": True,
             "single_threaded": True,
@@ -1047,11 +1117,13 @@ def _run(
         pool,
         expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
         now_epoch=now_epoch,
+        trial=trial,
     )
     validate_home_report_v2(
         report,
         expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
         now_epoch=now_epoch,
+        trial=trial,
     )
     atomic_json(backup_path, pool)
     atomic_json(output_dir / "latest.json", report)
@@ -1060,8 +1132,16 @@ def _run(
 
 
 def run(config, **kwargs):
-    with transport_context(config):
-        return _run(config, **kwargs)
+    if kwargs.get('trial'):
+        config = dict(config, actionable=False, github_push_enabled=False,
+                      output_dir=str(Path(config.get('output_dir') or '/opt/var/lib/iptv-home-probe') / 'pipeline-trial'))
+    with transport_context(config) as transport:
+        report, state = _run(config, **kwargs)
+    if kwargs.get('trial') and transport is not None:
+        report['transport'] = dict(IPv4=transport.dialer.ipv4, IPv6=transport.dialer.ipv6,
+            dns_queries=transport.dialer.resolver.diagnostics(), temporary_rule_cleaned=not transport.installed)
+        atomic_json(Path(config['output_dir']) / 'latest.json', report)
+    return report, state
 
 
 def main() -> int:

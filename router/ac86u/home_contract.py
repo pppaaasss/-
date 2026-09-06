@@ -24,6 +24,9 @@ CANDIDATE_SCHEMA = "iptv-home-candidates/v1"
 BACKUP_SCHEMA = "iptv-home-qualified-backups/v1"
 REPORT_SCHEMA = "iptv-home-report/v2"
 ROUTE_CONTEXT = "living-room-path-equivalent"
+TRIAL_ROUTE_CONTEXT = "merlinclash-marked-unverified"
+TRIAL_REPORT_SCHEMA = "iptv-home-pipeline-trial/v1"
+TRIAL_BACKUP_SCHEMA = "iptv-home-trial-backups/v1"
 
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 PROBE_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,47}$")
@@ -314,15 +317,16 @@ def validate_backup_pool(
     expected_probe_id: str | None = None,
     now_epoch: float | None = None,
     allow_expired: bool = False,
+    trial: bool = False,
 ) -> dict:
     pool = _object(payload, "backup pool")
-    if pool.get("schema") != BACKUP_SCHEMA:
+    if pool.get("schema") != (TRIAL_BACKUP_SCHEMA if trial else BACKUP_SCHEMA):
         raise ContractError("unsupported backup pool schema")
     probe_id = _text(pool.get("probe_id"), "backup pool.probe_id", 48)
     if not PROBE_ID_RE.fullmatch(probe_id) or (expected_probe_id and probe_id != expected_probe_id):
         raise ContractError("backup pool probe_id is invalid")
     generated = _freshness(pool.get("generated_utc"), "backup pool.generated_utc", now_epoch=now_epoch, max_age_hours=None)
-    if pool.get("route_context") != ROUTE_CONTEXT:
+    if pool.get("route_context") != (TRIAL_ROUTE_CONTEXT if trial else ROUTE_CONTEXT):
         raise ContractError("backup pool was not measured on the living-room path")
     _sha(pool.get("formal_playlist_sha256"), "backup pool.formal_playlist_sha256")
     _sha(pool.get("candidate_manifest_sha256"), "backup pool.candidate_manifest_sha256")
@@ -407,9 +411,10 @@ def validate_home_report_v2(
     expected_probe_id: str | None = None,
     now_epoch: float | None = None,
     max_age_hours: float | None = None,
+    trial: bool = False,
 ) -> dict:
     report = _object(payload, "home report")
-    if report.get("schema") != REPORT_SCHEMA:
+    if report.get("schema") != (TRIAL_REPORT_SCHEMA if trial else REPORT_SCHEMA):
         raise ContractError("unsupported home report schema")
     probe_id = _text(report.get("probe_id"), "home report.probe_id", 48)
     if not PROBE_ID_RE.fullmatch(probe_id) or (expected_probe_id and probe_id != expected_probe_id):
@@ -420,10 +425,12 @@ def validate_home_report_v2(
     if report.get("run_status") != "COMPLETED" or report.get("production_modified") is not False:
         raise ContractError("router report must be complete and must not modify production")
     actionable = _boolean(report.get("actionable"), "home report.actionable")
-    if report.get("route_context") != ROUTE_CONTEXT:
+    if report.get("route_context") != (TRIAL_ROUTE_CONTEXT if trial else ROUTE_CONTEXT):
         raise ContractError("home report did not use the living-room-equivalent path")
     _playlist_binding(report.get("formal_playlist"), "home report.formal_playlist")
     baseline = _object(report.get("baseline"), "home report.baseline")
+    if trial and (actionable or baseline.get("route_verified") is not False):
+        raise ContractError("trial must not claim actionable or verified household evidence")
     baseline_safe = all(
         _boolean(baseline.get(field), f"home report.baseline.{field}")
         for field in ("home_network_ok", "github_reachable", "route_verified")

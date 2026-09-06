@@ -117,7 +117,7 @@ class ResourceTests(unittest.TestCase):
     def sample(self, delta, memory=119656):
         before = [1000] * 8
         after = [a + b for a, b in zip(before, delta)]
-        with mock.patch.object(scan, 'cpu_ticks', side_effect=[before, after]), \
+        with mock.patch.object(scan.home_resources, 'cpu_ticks', side_effect=[before, after]), \
              mock.patch.object(scan.time, 'sleep'), \
              mock.patch.object(scan.probe, 'system_resources', return_value={
                  'load1': 2.27, 'mem_available_kib': memory}):
@@ -149,7 +149,7 @@ class ResourceTests(unittest.TestCase):
 
     def test_guest_ticks_not_double_counted(self):
         with mock.patch.object(Path, 'read_text', return_value='cpu 10 20 30 40 50 60 70 80 900 1000\n'):
-            self.assertEqual([10, 20, 30, 40, 50, 60, 70, 80], scan.cpu_ticks())
+            self.assertEqual([10, 20, 30, 40, 50, 60, 70, 80], scan.home_resources.cpu_ticks())
 
 
 if __name__ == '__main__':

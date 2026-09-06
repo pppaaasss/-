@@ -106,7 +106,8 @@ class AC86UHomeProbeTests(unittest.TestCase):
                 }
                 report, _ = home_probe.run(config, run_kind="recheck-1300", now_epoch=1_800_000_000)
                 validate_home_report_v2(report)
-                self.assertEqual("GOOD", report["current_results"][0]["status"])
+                # Arbitrary x/y bytes are reachable but cannot prove video quality.
+                self.assertEqual("UNKNOWN", report["current_results"][0]["status"])
                 self.assertEqual("recheck-1300", report["run_kind"])
                 self.assertEqual("not_requested", report["policy"]["candidate_manifest_state"])
             finally:
