@@ -461,7 +461,7 @@ class AC86UHomeProbeTests(unittest.TestCase):
 
     def test_resource_guard_protects_router(self):
         self.assertIn("load", home_probe.resource_guard({"load1": 1.6, "mem_available_kib": 200000}, {}))
-        self.assertIn("memory", home_probe.resource_guard({"load1": 0.2, "mem_available_kib": 64000}, {}))
+        self.assertIn("memory", home_probe.resource_guard({"load1": 0.2, "mem_available_kib": 16000}, {}))
 
 
 if __name__ == "__main__":

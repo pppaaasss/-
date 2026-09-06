@@ -7,7 +7,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from router.ac86u.pipeline_auto import next_action, run_batches
+from router.ac86u.pipeline_auto import next_action, run_batches, recovery_check
+from router.ac86u import home_resources
 
 
 def report(remaining, **summary):
@@ -20,6 +21,24 @@ class AutoPipelineTests(unittest.TestCase):
         patch = mock.patch('router.ac86u.pipeline_auto.recovery_check', return_value=('', {}))
         patch.start()
         self.addCleanup(patch.stop)
+
+    def test_user_memory_threshold_and_recovery_margin(self):
+        ticks = [[0, 0, 0, 100, 0, 0, 0, 0], [1, 0, 0, 199, 0, 0, 0, 0]]
+        for available, expected in [(16383, 'memory_below_16384'), (16384, ''), (62000, '')]:
+            with mock.patch.object(home_resources, 'cpu_ticks', side_effect=ticks), mock.patch.object(home_resources.time, 'sleep'):
+                reason, _ = home_resources.sample_resources({}, lambda: dict(mem_available_kib=available))
+                self.assertEqual(expected, reason)
+        with mock.patch.object(home_resources, 'sample_resources', return_value=('', {})) as sample:
+            recovery_check(dict(minimum_mem_available_kib=16384))
+            self.assertEqual(24576, sample.call_args.args[0]['minimum_mem_available_kib'])
+        root, config = self.fixture()
+        config.write_text(json.dumps(dict(output_dir=str(root), minimum_mem_available_kib=65536)))
+        def check(settings):
+            self.assertEqual(16384, settings['minimum_mem_available_kib'])
+            (root / 'pipeline-trial/auto-stop').touch()
+            return 'waiting', {}
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, run_batches(config, check_resources=check, sleep=lambda _: None))
 
     def test_empty_queue_only_completes_with_valid_manifest_and_no_stop(self):
         self.assertEqual('COMPLETE', next_action(report(0), None, 0)[0])
