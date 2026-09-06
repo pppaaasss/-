@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 from router.ac86u.pipeline_auto import next_action, run_batches
 
@@ -15,11 +16,16 @@ def report(remaining, **summary):
 
 
 class AutoPipelineTests(unittest.TestCase):
+    def setUp(self):
+        patch = mock.patch('router.ac86u.pipeline_auto.recovery_check', return_value=('', {}))
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def test_empty_queue_only_completes_with_valid_manifest_and_no_stop(self):
         self.assertEqual('COMPLETE', next_action(report(0), None, 0)[0])
         for field, value, expected in (
             ('policy', dict(candidate_manifest_state='rejected:expired'), 'STOPPED_MANIFEST'),
-            ('resources', dict(stop_reason='low_memory'), 'STOPPED_RESOURCES'),
+            ('resources', dict(stop_reason='low_memory'), 'WAITING_RESOURCES'),
             ('summary', dict(candidate_queue_remaining=0, circuit_breaker_open=True), 'STOPPED_NETWORK'),
         ):
             row = report(0)
@@ -82,6 +88,40 @@ class AutoPipelineTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(2, run_batches(config, runner=lambda _: SimpleNamespace(returncode=2)))
         self.assertEqual('STOPPED_BATCH_ERROR', json.loads(
+            (root / 'pipeline-trial/auto-status.json').read_text())['state'])
+
+    def test_resource_wait_recovery_mid_batch_stop_and_start_race_continue(self):
+        root, config = self.fixture()
+        checks = iter([('low_memory', {}), ('', {}), ('', {}), ('low_memory', {}), ('', {})])
+        child_results = iter([75, 'partial', 'complete'])
+        sleeps = []
+
+        def runner(args):
+            step = next(child_results)
+            if step == 75:
+                return SimpleNamespace(returncode=75)
+            row = report(10 if step == 'partial' else 0)
+            if step == 'partial':
+                row['resources']['stop_reason'] = 'memory_below_65536'
+            (root / 'pipeline-trial/latest.json').write_text(json.dumps(row))
+            return SimpleNamespace(returncode=0)
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, run_batches(config, runner=runner, sleep=sleeps.append,
+                                            check_resources=lambda _: next(checks)))
+        self.assertEqual([60, 60, 60, 60], sleeps)
+        status = json.loads((root / 'pipeline-trial/auto-status.json').read_text())
+        self.assertEqual('COMPLETE', status['state'])
+        self.assertEqual(2, status['rounds'])
+
+    def test_user_can_stop_while_resources_remain_low(self):
+        root, config = self.fixture()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, run_batches(config,
+                runner=lambda _: self.fail('must not launch when memory is low'),
+                check_resources=lambda _: ('low_memory', {}),
+                sleep=lambda _: (root / 'pipeline-trial/auto-stop').touch()))
+        self.assertEqual('STOPPED_BY_USER', json.loads(
             (root / 'pipeline-trial/auto-status.json').read_text())['state'])
 
 

@@ -9,11 +9,31 @@ import time
 from pathlib import Path
 
 
+def recovery_check(config):
+    try:
+        from .home_resources import sample_resources
+    except ImportError:
+        from home_resources import sample_resources
+
+    def memory():
+        values = {}
+        for line in Path('/proc/meminfo').read_text().splitlines():
+            if line.startswith('MemAvailable:'):
+                values['mem_available_kib'] = int(line.split()[1])
+                break
+        return values
+
+    # Resume with 8 MiB of margin above the unchanged in-batch stop threshold.
+    recovery = dict(config, minimum_mem_available_kib=
+                    max(64 * 1024, int(config.get('minimum_mem_available_kib') or 0)) + 8 * 1024)
+    return sample_resources(recovery, memory)
+
+
 def next_action(report, previous_remaining, stalled):
     summary = report['summary']
     remaining = int(summary['candidate_queue_remaining'])
     if report.get('resources', {}).get('stop_reason'):
-        return 'STOPPED_RESOURCES', remaining, stalled
+        return 'WAITING_RESOURCES', remaining, 0 if previous_remaining is None or remaining < previous_remaining else stalled
     if summary['circuit_breaker_open']:
         return 'STOPPED_NETWORK', remaining, stalled
     if report['policy']['candidate_manifest_state'] != 'accepted':
@@ -24,7 +44,8 @@ def next_action(report, previous_remaining, stalled):
     return ('STOPPED_NO_PROGRESS' if stalled >= 3 else 'CONTINUING'), remaining, stalled
 
 
-def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep):
+def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_resources=None):
+    check_resources = recovery_check if check_resources is None else check_resources
     config_path = Path(config_path)
     original = config_path.read_bytes()
     config = json.loads(original)
@@ -58,12 +79,22 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep):
             if config_path.read_bytes() != original:
                 status('STOPPED_CONFIG_CHANGED')
                 return 2
+            reason, resources = check_resources(config)
+            if reason:
+                status('WAITING_RESOURCES', reason=reason, resources=resources, retry_seconds=60)
+                sleep(60)
+                continue
             result = runner([sys.executable, '-u', str(Path(__file__).with_name('pipeline_trial.py')),
                              '--config', str(config_path)])
             if result.returncode == 1:
                 # An already running manual batch owns run.lock; wait for it.
                 status('WAITING_FOR_RUNNING_BATCH')
                 sleep(30)
+                continue
+            if result.returncode == 75:
+                # Resources can fall between the controller check and child start.
+                status('WAITING_RESOURCES', reason='batch_start_resource_guard', retry_seconds=60)
+                sleep(60)
                 continue
             if result.returncode:
                 status('STOPPED_BATCH_ERROR', exit_code=result.returncode)
@@ -76,6 +107,9 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep):
                 status('STOPPED_REPORT_ERROR', error=type(exc).__name__)
                 return 2
             status(state)
+            if state == 'WAITING_RESOURCES':
+                sleep(60)
+                continue
             if state != 'CONTINUING':
                 return 0 if state == 'COMPLETE' else 2
             sleep(30)

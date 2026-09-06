@@ -73,6 +73,8 @@ def main():
             return 130
         except Exception as exc:
             print('PIPELINE_FAILED: ' + type(exc).__name__ + ' ' + str(exc)[:250], flush=True)
+            if isinstance(exc, RuntimeError) and str(exc).startswith('RESOURCE_GUARD:'):
+                return 75
             return 2
         finally:
             print('CONFIG_UNCHANGED: ' + str(hashlib.sha256(original).digest() ==
