@@ -245,3 +245,7 @@ python -m unittest tests.test_home_transport tests.test_ac86u_home_probe tests.t
 用户明确要求查清异常以支持未来自动运行。本次修复：trial锁冲突独立退出码73，auto只有73等待，1或信号终止标记STOPPED_RUNTIME_ERROR、记录现场、停止盲目重试；发起子进程前RUNNING_BATCH避免旧WAITING误导，清LD及PYTHONHOME/PYTHONPATH，使用-E -s保留本地模块目录。新增不依赖Python的runtime_audit.sh：正常时建立执行文件/libpython SHA256基线及版本上下文；故障记录哈希差异、真实RSS/映射库、内存、ext4挂载、容量、USB/磁盘/OOM内核错误、末80行任务日志、正常与-I -S启动退出码。每次诊断最多两次12秒启动，最多保留基线/前次/最近/首故障，不自动重装，不变更池与阈值。trial包装携带脚本，auto获得锁后首建基线；正式run.sh失败也收集、成功后首建基线，installer携带脚本；未开启正式cron或生产替换。30项测试通过，含锁73、Python退出1/信号不循环、不读旧成功报告、环境清理，以及shell在模拟Python损坏时仍保存首故障与健康校验基线。
 
 根因尚未确诊。直接读取CPython v3.13.9 Python/import.c官方源码（GitHub连接器）确认FROZEN_INVALID用于冻结数据无效，也用于PyMarshal_ReadObjectFromString失败；后者清除原始异常，所以错误文字本身不能区分损坏/分配失败等。官方源码：https://github.com/python/cpython/blob/v3.13.9/Python/import.c 。-I失败且重装恢复不能独立证明U盘坏，也不能排除资源/包不一致/内存读取问题；故障前没有哈希，旧文件已被重装覆盖。需用户执行新版取得正常基线与实际版本/库映射，若复发保留重装前诊断再对照，不能宣布根因修复或无人值守验收完成。
+
+## 用户新增正式自动流程约束：每日新源不设整体完成期限
+
+用户明确强调未来GitHub每日新源交给家庭路由器检测时，不限制整轮完成时间，路由器性能弱，允许持续/跨日处理。02:00只触发；单批预算仅用于保存/释放资源并自动续跑，保留单源网络超时与资源保护。未完成队列不能因次日清单或13:00触发而被覆盖、清空或强杀；与主源/晚高峰检测串行协调。详见roadmap新增章节。此次仅记录正式接通时必须实现/验收的要求，未改变当前正在运行的任务或宣称正式流程已上线。
