@@ -1,5 +1,15 @@
 # 2026-09-06 家庭传输检测与接续
 
+## 15:23 候选元数据失败分类修复（当前开发版本）
+
+截图1000021742的最近报告：CCTV-1为REJECTED但唯一错误是quality_unknown:RuntimeError:ffprobe_failed；CCTV-10另有headroom0.951低于1.35。前者是候选分类错误：传输GOOD但deep_checked=false，被candidate_result默认分支归为REJECTED；后者存在独立实测余量失败，不能放行。
+
+修复：传输GOOD但深度检查未完成/样本不完整→UNKNOWN；实测DEGRADED/UNAVAILABLE仍REJECTED。主流程从历史candidate_observations恢复仅因quality_unknown开头且没有完成深度检查的旧REJECTED，改记UNKNOWN、重置未知尝试并重新入队一次；不恢复有独立headroom错误前缀的记录。后续仍按正常未知重试规则处理，不能无限复活。ffprobe非零退出现在记录真实returncode及stderr，替代模糊ffprobe_failed。
+
+36项决策、试运行、自动续跑和完整发布集成测试通过，包括真实队列恢复一次且下一轮不重复复活。尚未在路由器部署此修复，也未确认ffprobe二进制故障；下一步只读检查ffprobe -version及退出码、安装包版本与内核错误。用户此前要求继续自动跑，不擅自停止已有控制器。
+
+现场进度：861c667新版在14:50接手；15:21已保存9轮、剩余2278，备用池1，多次memory_below_65536。用户让当前任务继续，已放弃15:12在本地开始但未提交的采样内存优化与RUNNING状态刷新；不能声称这些优化已部署。
+
 ## 14:38 后：候选续跑不再重复检查正式频道（当前版本）
 
 现场修复：Python 即使 `-I -S` 也段错误，opkg/curl 正常；重装同版本 libpython3、python3-base 后截图1000021730出现 PYTHON_OK。根因未证实，不能认定USB损坏。/tmp旧脚本已丢失，重新下载647547c启动，截图1000021731确认 STARTED / PIPELINE_START；上次已保存候选剩余2443。

@@ -138,7 +138,11 @@ def candidate_result(
 ) -> dict:
     if candidate_is_qualified(result):
         qualification = "QUALIFIED"
-    elif result.get("observed_status") == "UNKNOWN":
+    elif result.get("observed_status") == "UNKNOWN" or (
+        result.get("observed_status") == "GOOD" and (
+            result.get("deep_checked") is not True or int(result.get("sample_count") or 0) != 2
+        )
+    ):
         qualification = "UNKNOWN"
     else:
         qualification = "REJECTED"

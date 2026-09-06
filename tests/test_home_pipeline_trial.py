@@ -178,6 +178,36 @@ class PipelineTrialTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'TRIAL_PHASE_INVALID'):
             probe._run(dict(self.config, trial_phase='candidates'), trial=False, now_epoch=NOW)
 
+    def test_legacy_metadata_only_rejection_is_requeued_once(self):
+        report, _, _ = self.run_trial()
+        path = self.root / 'pipeline-trial/state.json'
+        state = json.loads(path.read_text())
+        observations = list(state['candidate_observations'].values())
+        for i, observation in enumerate(observations):
+            observation['qualification'] = 'REJECTED'
+            observation['result'].update(qualification='REJECTED',
+                error=('headroom_0.9_below_1.35;' if i else '') + 'quality_unknown:RuntimeError:ffprobe_failed')
+            observation['result']['verification']['deep_checked'] = False
+        recovered = probe.recover_metadata_unknown(state)
+        self.assertEqual(1, len(recovered))
+        self.assertEqual('UNKNOWN', observations[0]['qualification'])
+        self.assertEqual([], probe.recover_metadata_unknown(state))
+        # Recreate the legacy state and exercise the actual queue merge/probe.
+        observations[0]['qualification'] = 'REJECTED'
+        state['candidate_queue'] = []
+        path.write_text(json.dumps(state))
+        self.config['trial_phase'] = 'candidates'
+        _, state, calls = self.run_trial()
+        self.assertEqual([recovered[0]['url']], [c.args[1] for c in calls.call_args_list])
+        _, _, calls = self.run_trial()
+        self.assertEqual([], calls.call_args_list)
+
+    def test_ffprobe_failure_exposes_native_exit_code(self):
+        result = mock.Mock(returncode=-11, stderr='', stdout='')
+        with mock.patch.object(probe.subprocess, 'run', return_value=result):
+            with self.assertRaisesRegex(RuntimeError, 'ffprobe_exit_-11:no_stderr'):
+                probe.ffprobe_meta('https://stream.test/live.m3u8', '/opt/bin/ffprobe')
+
     def test_completed_low_quality_transfers_are_not_a_network_outage(self):
         quality = measured('CCTV-1', 'https://current.test/1', 1080, 'DEGRADED')
         quality['error'] = 'h264_stream_2.000_below_5.000_mbps'

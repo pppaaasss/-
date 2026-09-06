@@ -318,6 +318,32 @@ def parse_playlist(data: bytes) -> list[tuple[str, str]]:
     return rows
 
 
+
+def recover_metadata_unknown(previous_state: dict) -> list[dict]:
+    """Restore legacy candidates rejected solely because metadata was missing.
+
+    Change the saved classification once, so continuation does not repeatedly
+    resurrect already retried UNKNOWN rows. Explicit headroom failures stay bad.
+    """
+    recovered = []
+    observations = previous_state.get('candidate_observations')
+    if not isinstance(observations, dict):
+        return recovered
+    for observation in observations.values():
+        if not isinstance(observation, dict):
+            continue
+        row = observation.get('result') or {}
+        verification = row.get('verification') or {}
+        if (observation.get('qualification') == 'REJECTED'
+                and str(row.get('error') or '').startswith('quality_unknown:')
+                and verification.get('deep_checked') is not True
+                and isinstance(observation.get('candidate'), dict)):
+            observation.update(qualification='UNKNOWN', unknown_attempts=0)
+            row.update(qualification='UNKNOWN', switch_reverified=False)
+            recovered.append(dict(observation['candidate']))
+    return recovered
+
+
 def merge_candidate_queue(
     previous: object,
     incoming: list[dict],
@@ -439,7 +465,7 @@ def ffprobe_meta(url: str, ffprobe: str) -> dict:
         options["env"] = _active_transport.child_env()
     process = subprocess.run(command, capture_output=True, text=True, timeout=FFPROBE_TIMEOUT, **options)
     if process.returncode != 0:
-        raise RuntimeError((process.stderr or "ffprobe_failed").strip()[-240:])
+        raise RuntimeError("ffprobe_exit_" + str(process.returncode) + ":" + (process.stderr or "no_stderr").strip()[-200:])
     payload = json.loads(process.stdout or "{}")
     streams = payload.get("streams") or []
     if not streams:
@@ -862,6 +888,7 @@ def _run(
                 existing_pool = without_backup(existing_pool, identity)
 
     if profile["scan_candidates"]:
+        recovered = recover_metadata_unknown(previous_state)
         incoming = backup_refresh_candidates(
             existing_pool,
             now_epoch=now_epoch,
@@ -915,7 +942,7 @@ def _run(
 
         queue = merge_candidate_queue(
             previous_state.get("candidate_queue"),
-            incoming,
+            incoming + recovered,
             current_urls,
         )
         rounds = {}
@@ -932,6 +959,8 @@ def _run(
             str(row.get("_expires_utc", "9999")),
             str(row["channel_key"]), str(row["candidate_id"]),
         ))
+        if recovered:
+            progress("METADATA_UNKNOWN_REQUEUED: " + str(len(recovered)))
         remaining: list[dict] = []
         observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
             previous_state.get("candidate_observations"), dict

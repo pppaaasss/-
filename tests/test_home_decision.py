@@ -181,6 +181,12 @@ class HomeDecisionTests(unittest.TestCase):
         self.assertEqual("REJECTED", rejected["qualification"])
         self.assertFalse(rejected["switch_reverified"])
 
+    def test_missing_metadata_is_unknown_but_measured_quality_failure_is_rejected(self):
+        for observed, expected in [('GOOD', 'UNKNOWN'), ('DEGRADED', 'REJECTED'), ('UNAVAILABLE', 'REJECTED')]:
+            row = candidate_result(candidate(), raw_probe(observed, deep=False),
+                purpose='daily-qualification', switch_reverified=False)
+            self.assertEqual(expected, row['qualification'])
+
     def test_pool_is_bounded_per_channel_and_expiring_rows_are_refreshed(self):
         items = [candidate(f"backup-{index}") for index in range(MAX_BACKUPS_PER_CHANNEL + 3)]
         pool = update_backup_pool(
