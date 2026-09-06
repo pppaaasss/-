@@ -97,7 +97,7 @@ payload = {
     "ssh_keygen": "/opt/bin/ssh-keygen",
     "ffprobe": "/opt/bin/ffprobe",
     "maximum_load1": 1.5,
-    "minimum_mem_available_kib": 16384,
+    "minimum_mem_available_kib": 40960,
     "maximum_runtime_s": 1200,
     "primary_sample_bytes": 2097152,
     "recheck_sample_bytes": 2097152,

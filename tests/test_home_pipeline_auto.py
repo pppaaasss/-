@@ -24,17 +24,17 @@ class AutoPipelineTests(unittest.TestCase):
 
     def test_user_memory_threshold_and_recovery_margin(self):
         ticks = [[0, 0, 0, 100, 0, 0, 0, 0], [1, 0, 0, 199, 0, 0, 0, 0]]
-        for available, expected in [(16383, 'memory_below_16384'), (16384, ''), (62000, '')]:
+        for available, expected in [(40959, 'memory_below_40960'), (40960, ''), (62000, '')]:
             with mock.patch.object(home_resources, 'cpu_ticks', side_effect=ticks), mock.patch.object(home_resources.time, 'sleep'):
                 reason, _ = home_resources.sample_resources({}, lambda: dict(mem_available_kib=available))
                 self.assertEqual(expected, reason)
         with mock.patch.object(home_resources, 'sample_resources', return_value=('', {})) as sample:
-            recovery_check(dict(minimum_mem_available_kib=16384))
-            self.assertEqual(24576, sample.call_args.args[0]['minimum_mem_available_kib'])
+            recovery_check(dict(minimum_mem_available_kib=40960))
+            self.assertEqual(49152, sample.call_args.args[0]['minimum_mem_available_kib'])
         root, config = self.fixture()
         config.write_text(json.dumps(dict(output_dir=str(root), minimum_mem_available_kib=65536)))
         def check(settings):
-            self.assertEqual(16384, settings['minimum_mem_available_kib'])
+            self.assertEqual(40960, settings['minimum_mem_available_kib'])
             (root / 'pipeline-trial/auto-stop').touch()
             return 'waiting', {}
         with contextlib.redirect_stdout(io.StringIO()):

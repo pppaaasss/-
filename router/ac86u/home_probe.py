@@ -177,7 +177,7 @@ def system_resources() -> dict:
 
 def resource_guard(resources: dict, config: dict) -> str:
     max_load = float(config.get("maximum_load1") or 1.5)
-    min_memory = int(config.get("minimum_mem_available_kib") or 16 * 1024)
+    min_memory = int(config.get("minimum_mem_available_kib") or 40 * 1024)
     if float(resources.get("load1") or 0) > max_load:
         return f"load1_above_{max_load:g}"
     available = int(resources.get("mem_available_kib") or 0)
