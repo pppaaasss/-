@@ -256,3 +256,35 @@ class FirewallTests(unittest.TestCase):
                 with ht.HomeTransport():
                     pass
         self.assertFalse(any(c.args[0] in {'-I','-D'} for c in firewall.call_args_list))
+
+    def test_removed_plugin_chain_counts_as_already_clean(self):
+        transport = ht.HomeTransport()
+        transport.installed = True
+        with mock.patch.object(ht, 'iptables', side_effect=[
+            subprocess.CompletedProcess([], 2, '', 'No chain/target/match by that name'),
+            subprocess.CompletedProcess([], 0, '-P OUTPUT ACCEPT\n', ''),
+        ]) as firewall:
+            transport.close()
+        self.assertFalse(transport.installed)
+        self.assertEqual(('-S', 'OUTPUT'), firewall.call_args_list[-1].args)
+
+    def test_failed_listing_does_not_hide_cleanup_failure(self):
+        transport = ht.HomeTransport()
+        transport.installed = True
+        with mock.patch.object(ht, 'iptables', return_value=subprocess.CompletedProcess([], 4, '', 'lock busy')):
+            with self.assertRaisesRegex(RuntimeError, 'cleanup failed'):
+                transport.close()
+        self.assertTrue(transport.installed)
+
+    def test_remaining_mark_is_not_reported_clean(self):
+        for suffix in ['', '/0xffffffff']:
+            transport = ht.HomeTransport()
+            transport.installed = True
+            listing = f'-A OUTPUT -p tcp -m mark --mark {transport.mark:#x}{suffix} -j merlinclash\n'
+            with mock.patch.object(ht, 'iptables', side_effect=[
+                subprocess.CompletedProcess([], 1, '', 'delete failed'),
+                subprocess.CompletedProcess([], 0, listing, ''),
+            ]):
+                with self.assertRaisesRegex(RuntimeError, 'cleanup failed'):
+                    transport.close()
+            self.assertTrue(transport.installed)

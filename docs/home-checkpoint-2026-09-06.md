@@ -219,3 +219,10 @@ python -m unittest tests.test_home_transport tests.test_ac86u_home_probe tests.t
 16:47 截图确认 efb567b 已生效（暂停 16 MiB、恢复 24 MiB），检测 PID 10260。16:59 截图 uptime 8 分钟，/tmp 日志和检测进程消失，表明约 16:51 路由器重启；原因未确认，不能断言由内存门槛导致。用户明确“开始继续跑吧，估计16太少了，改成40把”。
 
 将检测暂停门槛调整为 40960 KiB（40 MiB），恢复门槛保留 8 MiB 余量为 49152 KiB（48 MiB）。同步安装默认、资源采样、试跑工作进程及自动控制器；覆盖旧配置值，启动日志显示 memory_stop_mib=40 memory_resume_mib=48。H.264 3 Mbps 和 headroom 1.35 不变。用户需要通过 Termux 下载新提交后在路由器恢复运行，继续使用 USB 上已保存的候选队列。最后已完成批次截图为剩余 1985、合格备用 15。
+
+
+## 17:47：代理链消失导致清理误报
+
+17:13 崩溃日志明确包含 persistent out of memory / Kernel panic，证明留存崩溃由持续内存不足触发；尚未取得完整进程 RSS 表，具体占用来源未确定。用户随后表示已关闭梯子。17:44 uptime 36 分钟，auto STOPPED_BATCH_ERROR exit 2；临时规则 0x496023be 删除失败。17:47 路由器查询显示 merlinclash 链不存在，OUTPUT 中未列出该临时规则。
+
+修复 HomeTransport.close：删除失败后用成功的 iptables -S OUTPUT 查询确认本进程 mark 已不存在，避免 -C 因跳转目标消失返回非 1 而误报清理失败；查询失败或 mark 仍在继续报告错误。新增测试覆盖链被移除、查询失败、带/不带掩码的残留规则。没有创建空分流链或切换直连，当前检测仍依赖原来的 merlinclash 家庭线路。用户需恢复代理服务后才能按原线路续跑。现有 40/48 MiB、3 Mbps 和 headroom 1.35 不变。

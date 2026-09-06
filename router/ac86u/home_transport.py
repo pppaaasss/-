@@ -14,6 +14,7 @@ import ipaddress
 import os
 import secrets
 import selectors
+import shlex
 import socket
 import struct
 import subprocess
@@ -378,6 +379,20 @@ class HomeTransport:
             self.close()
             raise
 
+    def rule_absent(self):
+        # -C may fail with code 2 when its jump target was removed by the
+        # router plugin. Inspect OUTPUT without referring to that target.
+        result = iptables("-S", "OUTPUT", check=False)
+        if result.returncode != 0:
+            return False
+        for line in result.stdout.splitlines():
+            tokens = shlex.split(line)
+            if "--mark" in tokens:
+                value = tokens[tokens.index("--mark") + 1].split("/")[0]
+                if int(value, 0) == self.mark:
+                    return False
+        return True
+
     def close(self):
         self.dialer.close()
         if self.server:
@@ -388,7 +403,7 @@ class HomeTransport:
         if self.installed:
             try:
                 result = iptables("-D", "OUTPUT", *self.rule, check=False)
-                clean = result.returncode == 0 or iptables("-C", "OUTPUT", *self.rule, check=False).returncode == 1
+                clean = result.returncode == 0 or self.rule_absent()
             except Exception:
                 clean = False
             if not clean:
