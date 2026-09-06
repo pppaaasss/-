@@ -202,6 +202,25 @@ class PipelineTrialTests(unittest.TestCase):
         _, _, calls = self.run_trial()
         self.assertEqual([], calls.call_args_list)
 
+    def test_lower_h264_threshold_recovers_matching_history_once(self):
+        self.run_trial()
+        state = json.loads((self.root / 'pipeline-trial/state.json').read_text())
+        observations = list(state['candidate_observations'].values())
+        for obs in observations:
+            obs['qualification'] = 'REJECTED'
+            obs['result']['error'] = 'h264_stream_2.900_below_5.000_mbps'
+        observations[0]['result']['error'] = 'h264_stream_3.000_below_5.000_mbps'
+        recovered = probe.recover_lower_h264_threshold(state, 3.0)
+        self.assertEqual(1, len(recovered))
+        self.assertEqual([], probe.recover_lower_h264_threshold(state, 3.0))
+        state['candidate_queue'] = []
+        observations[0]['qualification'] = 'REJECTED'
+        observations[0].pop('h264_requeued_minimum_mbps')
+        (self.root / 'pipeline-trial/state.json').write_text(json.dumps(state))
+        self.config.update(trial_phase='candidates', minimum_h264_stream_mbps=3.0)
+        _, _, calls = self.run_trial()
+        self.assertEqual([recovered[0]['url']], [c.args[1] for c in calls.call_args_list])
+
     def test_ffprobe_failure_exposes_native_exit_code(self):
         result = mock.Mock(returncode=-11, stderr='', stdout='')
         with mock.patch.object(probe.subprocess, 'run', return_value=result):

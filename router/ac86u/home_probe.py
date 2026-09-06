@@ -344,6 +344,26 @@ def recover_metadata_unknown(previous_state: dict) -> list[dict]:
     return recovered
 
 
+def recover_lower_h264_threshold(previous_state: dict, minimum: float) -> list[dict]:
+    """Retry saved bitrate rejections that now meet the configured threshold."""
+    recovered = []
+    observations = previous_state.get('candidate_observations') or {}
+    for observation in observations.values():
+        row = observation.get('result') or {}
+        match = re.fullmatch(r'h264_stream_([0-9.]+)_below_([0-9.]+)_mbps',
+                             str(row.get('error') or ''))
+        if (observation.get('qualification') != 'REJECTED' or not match
+                or not isinstance(observation.get('candidate'), dict)):
+            continue
+        marker = float(observation.get('h264_requeued_minimum_mbps', float('inf')))
+        if float(match[1]) >= minimum and float(match[2]) > minimum and marker > minimum:
+            observation.update(qualification='UNKNOWN', unknown_attempts=0,
+                               h264_requeued_minimum_mbps=minimum)
+            row.update(qualification='UNKNOWN', switch_reverified=False)
+            recovered.append(dict(observation['candidate']))
+    return recovered
+
+
 def merge_candidate_queue(
     previous: object,
     incoming: list[dict],
@@ -589,7 +609,7 @@ def probe_route(
                 intrinsic = result["stream_mbps"] or result["bitrate_mbps"]
                 codec = result["codec"].casefold()
                 if codec == "h264":
-                    minimum_stream = float(config.get("minimum_h264_stream_mbps") or 5.0)
+                    minimum_stream = float(config.get("minimum_h264_stream_mbps") or 3.0)
                 elif codec in {"h265", "hevc"}:
                     minimum_stream = float(config.get("minimum_hevc_stream_mbps") or 2.5)
                 else:
@@ -889,6 +909,8 @@ def _run(
 
     if profile["scan_candidates"]:
         recovered = recover_metadata_unknown(previous_state)
+        bitrate_recovered = recover_lower_h264_threshold(
+            previous_state, float(config.get("minimum_h264_stream_mbps") or 3.0))
         incoming = backup_refresh_candidates(
             existing_pool,
             now_epoch=now_epoch,
@@ -942,7 +964,7 @@ def _run(
 
         queue = merge_candidate_queue(
             previous_state.get("candidate_queue"),
-            incoming + recovered,
+            incoming + recovered + bitrate_recovered,
             current_urls,
         )
         rounds = {}
@@ -961,6 +983,8 @@ def _run(
         ))
         if recovered:
             progress("METADATA_UNKNOWN_REQUEUED: " + str(len(recovered)))
+        if bitrate_recovered:
+            progress("H264_THRESHOLD_REQUEUED: " + str(len(bitrate_recovered)))
         remaining: list[dict] = []
         observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
             previous_state.get("candidate_observations"), dict

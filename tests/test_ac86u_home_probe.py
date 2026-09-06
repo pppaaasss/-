@@ -163,18 +163,24 @@ class AC86UHomeProbeTests(unittest.TestCase):
                 "duration_s": 4.0,
                 "elapsed_s": 0.5,
                 "download_mbps": 33.554,
-                "stream_mbps": 4.194,
+                "stream_mbps": 2.9,
                 "complete": True,
             }
             for index in (1, 2)
         ]
         meta = {"width": 1920, "height": 1080, "codec": "h264", "fps": 50.0, "bitrate_mbps": 0.0}
-        with mock.patch.object(home_probe, "fetch_playlist", return_value=(playlist, "https://x.test/live.m3u8", 0.1)), mock.patch.object(
-            home_probe, "segment_sample", side_effect=samples
-        ), mock.patch.object(home_probe, "ffprobe_meta", return_value=meta):
-            row = home_probe.probe_route("CCTV-10", "https://x.test/live.m3u8", floor=1080, mode="deep", config={})
-        self.assertEqual("DEGRADED", row["status"])
-        self.assertIn("h264_stream", row["error"])
+        for bitrate, expected in [(2.9, "DEGRADED"), (3.0, "GOOD"), (4.194, "GOOD")]:
+            with self.subTest(bitrate=bitrate):
+                for sample in samples:
+                    sample["stream_mbps"] = bitrate
+                with mock.patch.object(home_probe, "fetch_playlist", return_value=(playlist, "https://x.test/live.m3u8", 0.1)), mock.patch.object(
+                    home_probe, "segment_sample", side_effect=samples
+                ), mock.patch.object(home_probe, "ffprobe_meta", return_value=meta):
+                    row = home_probe.probe_route("CCTV-10", "https://x.test/live.m3u8", floor=1080, mode="deep", config={})
+                self.assertEqual(expected, row["status"])
+                if expected == "DEGRADED":
+                    self.assertIn("below_3.000_mbps", row["error"])
+
 
     def test_deep_probe_rejects_unknown_intrinsic_bitrate(self):
         playlist = b"#EXTM3U\n#EXTINF:0,\n1.ts\n#EXTINF:0,\n2.ts\n"
