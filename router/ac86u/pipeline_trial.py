@@ -26,6 +26,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='/opt/etc/iptv-home-probe.json')
     parser.add_argument('--run-kind', choices=sorted(probe.RUN_KINDS), default='primary-0200')
+    parser.add_argument('--phase', choices=['full', 'candidates', 'final'], default='full')
     args = parser.parse_args()
     original = Path(args.config).read_bytes()
     config = json.loads(original)
@@ -40,16 +41,17 @@ def main():
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
             signal.signal(sig, stop)
         os.nice(15)
-        config.update(runtime_transport='merlinclash-marked', lan_dns_server='192.168.50.1',
+        config.update(trial_phase=args.phase, runtime_transport='merlinclash-marked', lan_dns_server='192.168.50.1',
                       sample_actual_resources=True, progress_log=True,
                       minimum_headroom_ratio=1.35, actionable=False, github_push_enabled=False,
                       trial_candidate_file=str(Path(__file__).with_name('home-trial-candidates.json.gz')),
                       candidate_manifest_url='https://raw.githubusercontent.com/pppaaasss/-/home-first-ac86u/harvest/home-trial-candidates.json.gz')
         print('PIPELINE_START: ' + args.run_kind + ' headroom=1.35', flush=True)
+        print('PIPELINE_PHASE: ' + args.phase, flush=True)
         print('OUTPUT: ' + str(root / 'latest.json'), flush=True)
         try:
             report, state = probe.run(config, run_kind=args.run_kind, trial=True)
-            for row in report['current_results']:
+            for row in ([] if args.phase == 'candidates' else report['current_results']):
                 if row['status'] != 'GOOD':
                     print('CURRENT_ISSUE: ' + json.dumps(dict(name=row['name'], status=row['status'],
                         reason=row['error'], attempts=row['attempt_count']), ensure_ascii=False), flush=True)

@@ -12,7 +12,7 @@ from router.ac86u.pipeline_auto import next_action, run_batches
 
 def report(remaining, **summary):
     return dict(summary=dict(candidate_queue_remaining=remaining, circuit_breaker_open=False, **summary),
-                resources={}, policy=dict(candidate_manifest_state='accepted'))
+                resources={}, policy=dict(candidate_manifest_state='accepted', final_review_complete=True))
 
 
 class AutoPipelineTests(unittest.TestCase):
@@ -46,7 +46,7 @@ class AutoPipelineTests(unittest.TestCase):
 
     def test_waits_for_manual_batch_then_continues_to_completion(self):
         root, config = self.fixture()
-        results = iter([None, 2579, 2500, 0])
+        results = iter([None, 2579, 2500, 0, 0])
         calls, sleeps = [], []
 
         def runner(args):
@@ -62,9 +62,10 @@ class AutoPipelineTests(unittest.TestCase):
             self.assertEqual(0, run_batches(config, runner=runner, sleep=sleeps.append))
         status = json.loads((root / 'pipeline-trial/auto-status.json').read_text())
         self.assertEqual('COMPLETE', status['state'])
-        self.assertEqual(3, status['rounds'])
-        self.assertEqual(4, len(calls))
-        self.assertEqual([30, 30, 30], sleeps)
+        self.assertEqual(4, status['rounds'])
+        self.assertEqual(5, len(calls))
+        self.assertEqual(["candidates"] * 4 + ["final"], [c[-1] for c in calls])
+        self.assertEqual([30, 30, 30, 30], sleeps)
         self.assertEqual(before, config.read_bytes())
 
     def test_stop_request_finishes_current_batch_without_starting_another(self):
@@ -92,8 +93,8 @@ class AutoPipelineTests(unittest.TestCase):
 
     def test_resource_wait_recovery_mid_batch_stop_and_start_race_continue(self):
         root, config = self.fixture()
-        checks = iter([('low_memory', {}), ('', {}), ('', {}), ('low_memory', {}), ('', {})])
-        child_results = iter([75, 'partial', 'complete'])
+        checks = iter([('low_memory', {}), ('', {}), ('', {}), ('low_memory', {}), ('', {}), ('', {})])
+        child_results = iter([75, 'partial', 'complete', 'complete'])
         sleeps = []
 
         def runner(args):
@@ -109,10 +110,48 @@ class AutoPipelineTests(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(0, run_batches(config, runner=runner, sleep=sleeps.append,
                                             check_resources=lambda _: next(checks)))
-        self.assertEqual([60, 60, 60, 60], sleeps)
+        self.assertEqual([60, 60, 60, 60, 30], sleeps)
         status = json.loads((root / 'pipeline-trial/auto-status.json').read_text())
         self.assertEqual('COMPLETE', status['state'])
-        self.assertEqual(2, status['rounds'])
+        self.assertEqual(3, status['rounds'])
+
+    def test_final_review_must_finish_before_controller_claims_completion(self):
+        root, config = self.fixture()
+        phases = []
+        def runner(args):
+            phases.append(args[-1])
+            row = report(0)
+            row['policy']['final_review_complete'] = False
+            (root / 'pipeline-trial/latest.json').write_text(json.dumps(row))
+            return SimpleNamespace(returncode=0)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(2, run_batches(config, runner=runner, sleep=lambda _: None))
+        self.assertEqual(['candidates', 'final', 'final', 'final'], phases)
+        self.assertEqual('STOPPED_FINAL_INCOMPLETE', json.loads(
+            (root / 'pipeline-trial/auto-status.json').read_text())['state'])
+
+    def test_upgrade_waits_for_old_controller_to_release_lock(self):
+        import fcntl
+        root, config = self.fixture()
+        directory = root / 'pipeline-trial'
+        directory.mkdir()
+        phases, sleeps = [], []
+        with (directory / 'auto.lock').open('a') as old:
+            fcntl.flock(old, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            def sleep(seconds):
+                sleeps.append(seconds)
+                if seconds == 5:
+                    self.assertTrue((directory / 'auto-stop').exists())
+                    fcntl.flock(old, fcntl.LOCK_UN)
+            def runner(args):
+                self.assertFalse((directory / 'auto-stop').exists())
+                phases.append(args[-1])
+                (directory / 'latest.json').write_text(json.dumps(report(0)))
+                return SimpleNamespace(returncode=0)
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, run_batches(config, runner=runner, sleep=sleep, replace_running=True))
+        self.assertEqual(['candidates', 'final'], phases)
+        self.assertEqual([5, 30], sleeps)
 
     def test_user_can_stop_while_resources_remain_low(self):
         root, config = self.fixture()

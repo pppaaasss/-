@@ -24,8 +24,9 @@ import subprocess
 import sys
 base = Path(__file__).resolve().parent
 entry = 'pipeline_auto.py' if len(sys.argv) > 1 and sys.argv[1] == 'auto' else 'pipeline_trial.py'
+extra = ['--replace-running'] if entry == 'pipeline_auto.py' else []
 with open('/tmp/iptv-pipeline-trial.log', 'a') as log:
-    process = subprocess.Popen([sys.executable, '-u', str(base / entry)],
+    process = subprocess.Popen([sys.executable, '-u', str(base / entry)] + extra,
         stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
 print('PIPELINE_PID:', process.pid)
 PY

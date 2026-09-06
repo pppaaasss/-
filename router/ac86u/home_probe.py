@@ -682,7 +682,12 @@ def _run(
     state_path = output_dir / "state.json"
     backup_path = output_dir / "qualified-backups.json"
     previous_state = load_json(state_path)
+    phase = str(config.get('trial_phase') or 'full')
+    if phase not in {'full', 'candidates', 'final'} or (phase != 'full' and (not trial or run_kind != 'primary-0200')):
+        raise RuntimeError('TRIAL_PHASE_INVALID')
     profile = run_profile(run_kind, config)
+    if phase == 'final':
+        profile['scan_candidates'] = False
     # Compatibility for pre-migration unit tests and explicit manual shadows.
     # Scheduled execution never passes requested_mode and has no 72-hour state.
     if requested_mode in {"light", "deep"}:
@@ -746,26 +751,32 @@ def _run(
             raise RuntimeError('TV_CORE_ROUTE_BINDING_CHANGED')
         tv_binding = hashlib.sha256(tv_bytes).hexdigest()
 
-    # Every formal route gets its first attempt before any retry or candidate
-    # work.  This makes the current household picture the run's top priority.
+    # Queue-draining trial batches reserve their entire stream budget for
+    # candidates. Deferred formal rows are explicitly UNKNOWN, never cached GOOD.
     attempts_by_key: dict[str, list[dict]] = {}
+    current_pending = set()
     for key, name, url in formal_rows:
-        if not budget_available():
-            attempts_by_key[key] = [_runtime_unknown(name, url, key, minimum_height(name, config))]
+        if phase == 'candidates' or not budget_available():
+            row = _runtime_unknown(name, url, key, minimum_height(name, config))
+            if phase == 'candidates':
+                row['error'] = 'formal_check_deferred_until_queue_finished'
+            attempts_by_key[key] = [row]
+            current_pending.add(key)
             continue
         progress('CURRENT: ' + name)
         attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
 
-    # A non-GOOD first attempt is never enough to replace a route.  Confirm it
-    # once more in the same home run; no arbitrary channel-count limit applies.
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
-        if probe_is_good(attempts[0]) or not budget_available():
+        if key in current_pending or probe_is_good(attempts[0]):
+            continue
+        if not budget_available():
+            current_pending.add(key)
             continue
         progress('RECHECK: ' + name)
         attempts.append(_probe_current(name, url, key, profile=profile, config=config))
 
-    circuit = mass_failure_circuit(
+    circuit = phase != 'candidates' and mass_failure_circuit(
         attempts_by_key,
         minimum_channels=int(config.get("circuit_breaker_min_unknown") or 12),
         failure_ratio=float(config.get("circuit_breaker_unknown_ratio") or 0.35),
@@ -1084,7 +1095,7 @@ def _run(
             "channel_count": len(formal_rows),
         },
         "baseline": {
-            "home_network_ok": not circuit,
+            "home_network_ok": phase != "candidates" and not circuit,
             "github_reachable": True,
             "route_verified": not trial,
             "mass_failure_circuit_breaker": bool(circuit),
@@ -1092,6 +1103,9 @@ def _run(
         "candidate_playlist": candidate_playlist,
         "home_feedback_sha256": feedback_sha,
         "policy": {
+            "trial_phase": phase,
+            "formal_check_deferred": phase == 'candidates',
+            "final_review_complete": phase == 'final' and not current_pending and not budget_keys,
             "trial_tv_binding_sha256": tv_binding,
             "candidate_manifest_origin": "staged-file" if trial and config.get('trial_candidate_file') else "network",
             "auto_replace_formal_routes": False,

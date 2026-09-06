@@ -136,6 +136,48 @@ class PipelineTrialTests(unittest.TestCase):
                 probe.run(self.config, trial=True, now_epoch=NOW)
         calls.assert_not_called()
 
+    def test_candidate_batches_skip_formal_streams_then_final_rechecks_bad_and_backup(self):
+        self.config['trial_phase'] = 'candidates'
+        report, state, calls = self.run_trial(bad=True)
+        self.assertFalse(any('current.test' in c.args[1] for c in calls.call_args_list))
+        self.assertEqual(2, len(calls.call_args_list))
+        self.assertTrue(report['policy']['formal_check_deferred'])
+        self.assertFalse(report['baseline']['home_network_ok'])
+        self.assertFalse(report['summary']['circuit_breaker_open'])
+        self.assertTrue(all(r['status'] == 'UNKNOWN' and 'deferred' in r['error']
+                            for r in report['current_results']))
+        self.assertEqual([], state['candidate_queue'])
+        self.config['trial_phase'] = 'final'
+        report, state, calls = self.run_trial(bad=True)
+        self.assertEqual(2, sum(c.args[1] == 'https://current.test/1' for c in calls.call_args_list))
+        self.assertEqual(1, sum(c.args[1] == 'https://current.test/2' for c in calls.call_args_list))
+        self.assertEqual(1, sum('candidate.test' in c.args[1] for c in calls.call_args_list))
+        self.assertEqual('switch-reverification', report['candidate_results'][0]['purpose'])
+        self.assertTrue(report['policy']['final_review_complete'])
+        self.assertFalse(report['actionable'])
+
+    def test_final_resource_interruption_cannot_claim_completed_review(self):
+        self.config.update(trial_phase='final', sample_actual_resources=True)
+        ok = ('', {'mem_available_kib': 100000})
+        report, _, _ = self.run_trial(resources=[ok, ok, ('cpu_busy', {'cpu_busy_percent': 90})])
+        self.assertFalse(report['policy']['final_review_complete'])
+        self.assertEqual('cpu_busy', report['resources']['stop_reason'])
+
+    def test_candidate_resume_preserves_remaining_queue_without_rechecking_formal(self):
+        self.config.update(trial_phase='candidates', sample_actual_resources=True)
+        ok = ('', {'mem_available_kib': 100000})
+        report, state, calls = self.run_trial(resources=[ok, ok, ('cpu_busy', {'cpu_busy_percent': 90})])
+        self.assertEqual(1, len(state['candidate_queue']))
+        report, state, calls = self.run_trial()
+        self.assertEqual(1, len(calls.call_args_list))
+        self.assertIn('candidate.test', calls.call_args_list[0].args[1])
+        self.assertEqual([], state['candidate_queue'])
+        self.assertEqual(2, report['summary']['qualified_backups'])
+
+    def test_phase_optimization_is_rejected_for_production_runs(self):
+        with self.assertRaisesRegex(RuntimeError, 'TRIAL_PHASE_INVALID'):
+            probe._run(dict(self.config, trial_phase='candidates'), trial=False, now_epoch=NOW)
+
     def test_completed_low_quality_transfers_are_not_a_network_outage(self):
         quality = measured('CCTV-1', 'https://current.test/1', 1080, 'DEGRADED')
         quality['error'] = 'h264_stream_2.000_below_5.000_mbps'
