@@ -1,5 +1,5 @@
 #!/bin/sh
-unset LD_LIBRARY_PATH LD_PRELOAD
+unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH
 set -eu
 
 BASE="/opt/share/iptv-home-probe"
@@ -48,7 +48,14 @@ if [ "$probe_rc" -eq 75 ]; then
 fi
 if [ "$probe_rc" -ne 0 ]; then
   echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ') HOME_PROBE_RUN probe failed rc=$probe_rc" >> "$LOG"
+  if [ -f "$BASE/runtime_audit.sh" ]; then
+    /bin/sh "$BASE/runtime_audit.sh" "$DATA" failure "$LOG" >/dev/null 2>&1 || true
+  fi
   exit "$probe_rc"
+fi
+
+if [ -f "$BASE/runtime_audit.sh" ] && [ ! -f "$DATA/runtime-diagnostics/baseline.sha256" ]; then
+  /bin/sh "$BASE/runtime_audit.sh" "$DATA" baseline "$LOG" >/dev/null 2>&1 || true
 fi
 
 if ! nice -n 15 /opt/bin/python3 "$BASE/push_home_report.py" --config "$CONFIG" >> "$LOG" 2>&1; then

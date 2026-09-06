@@ -11,7 +11,7 @@ trap 'rm -rf "$iptv_stage"' EXIT HUP INT TERM
 iptv_folder="iptv-pipeline-$iptv_ref"
 mkdir "$iptv_stage/$iptv_folder"
 iptv_base="https://raw.githubusercontent.com/pppaaasss/-/$iptv_ref"
-for iptv_name in home_probe.py home_resources.py home_transport.py home_contract.py home_decision.py pipeline_trial.py pipeline_auto.py; do
+for iptv_name in home_probe.py home_resources.py home_transport.py home_contract.py home_decision.py pipeline_trial.py pipeline_auto.py runtime_audit.sh; do
     curl -4 -fSL --retry 2 --connect-timeout 10 --max-time 60 \
         "$iptv_base/router/ac86u/$iptv_name" -o "$iptv_stage/$iptv_folder/$iptv_name"
 done

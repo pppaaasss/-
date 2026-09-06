@@ -237,3 +237,11 @@ python -m unittest tests.test_home_transport tests.test_ac86u_home_probe tests.t
 用户要求现在补进旧源一起测试。核对17a8032版本：旧harvest/candidates.jsonl去重后有369条属于当前53频道、非当前播放地址的旧源，覆盖50频道，原2619条试跑清单中包含0条。旧池未删除，原清单只从pending生成，遗漏旧已验证池。新增home-legacy-candidates.json，369条一律作为未经过家庭验证候选；保留原清单及其哈希，以独立导入标记只入队一次，并跳过已有观察记录或队列中的身份。旧香港资格不授予家庭合格。手机包装脚本携带补充清单，正常auto交接等待当前批次保存，沿用原state和备用池。H264=3Mbps、内存50/58MiB、headroom1.35保持。26项trial/auto测试通过，新增测试证实原池保留、只测新增、下一批不重复入队。
 
 现场18:27最近保存：剩余1518，备用34，rounds4，WAITING_RESOURCES；调度17023仍在。18:23贵州4.160Mbps/下载13.689、四川4.179/8.135，两次采样且解析成功；部分其他源仍超时/本地传输失败。新补充任务尚未在家庭路由器执行，需用户运行发布后的手机命令。
+
+## Python运行时复发调查：20:05—20:13现场与自动记录修复
+
+截图1782确认369旧源已入队。1784最新pool50、remaining1456。1785只有auto22503，Python启动报Frozen object named _frozen_importlib_external is invalid / _PyImport_InitExternal，auto错误标记WAITING_FOR_RUNNING_BATCH、rounds32、remaining1424。1786清LD后-I启动同样失败exit1，MemFree111908KiB，筛选内核错误未输出。1787正常停调度、备份state/pool/report至backup-before-python-20260906-201104，重装libpython3和python3-base 3.13.9-2后PYTHON_OK。已给原11d747版本nohup续跑命令，尚无续跑现场结果。
+
+用户明确要求查清异常以支持未来自动运行。本次修复：trial锁冲突独立退出码73，auto只有73等待，1或信号终止标记STOPPED_RUNTIME_ERROR、记录现场、停止盲目重试；发起子进程前RUNNING_BATCH避免旧WAITING误导，清LD及PYTHONHOME/PYTHONPATH，使用-E -s保留本地模块目录。新增不依赖Python的runtime_audit.sh：正常时建立执行文件/libpython SHA256基线及版本上下文；故障记录哈希差异、真实RSS/映射库、内存、ext4挂载、容量、USB/磁盘/OOM内核错误、末80行任务日志、正常与-I -S启动退出码。每次诊断最多两次12秒启动，最多保留基线/前次/最近/首故障，不自动重装，不变更池与阈值。trial包装携带脚本，auto获得锁后首建基线；正式run.sh失败也收集、成功后首建基线，installer携带脚本；未开启正式cron或生产替换。30项测试通过，含锁73、Python退出1/信号不循环、不读旧成功报告、环境清理，以及shell在模拟Python损坏时仍保存首故障与健康校验基线。
+
+根因尚未确诊。直接读取CPython v3.13.9 Python/import.c官方源码（GitHub连接器）确认FROZEN_INVALID用于冻结数据无效，也用于PyMarshal_ReadObjectFromString失败；后者清除原始异常，所以错误文字本身不能区分损坏/分配失败等。官方源码：https://github.com/python/cpython/blob/v3.13.9/Python/import.c 。-I失败且重装恢复不能独立证明U盘坏，也不能排除资源/包不一致/内存读取问题；故障前没有哈希，旧文件已被重装覆盖。需用户执行新版取得正常基线与实际版本/库映射，若复发保留重装前诊断再对照，不能宣布根因修复或无人值守验收完成。

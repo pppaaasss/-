@@ -72,7 +72,7 @@ class AutoPipelineTests(unittest.TestCase):
             calls.append(args)
             remaining = next(results)
             if remaining is None:
-                return SimpleNamespace(returncode=1)
+                return SimpleNamespace(returncode=73)
             (root / 'pipeline-trial/latest.json').write_text(json.dumps(report(remaining)))
             return SimpleNamespace(returncode=0)
 
@@ -109,6 +109,48 @@ class AutoPipelineTests(unittest.TestCase):
             self.assertEqual(2, run_batches(config, runner=lambda _: SimpleNamespace(returncode=2)))
         self.assertEqual('STOPPED_BATCH_ERROR', json.loads(
             (root / 'pipeline-trial/auto-status.json').read_text())['state'])
+
+    def test_python_exit_one_and_signals_stop_without_waiting_or_reading_old_report(self):
+        for code in (1, -4, -11):
+            root, config = self.fixture()
+            directory = root / 'pipeline-trial'
+            directory.mkdir()
+            (directory / 'latest.json').write_text(json.dumps(report(0)))
+            calls, sleeps = [], []
+            def runner(args):
+                calls.append(args)
+                status = json.loads((directory / 'auto-status.json').read_text())
+                self.assertEqual('RUNNING_BATCH', status['state'])
+                return SimpleNamespace(returncode=code)
+            with mock.patch('router.ac86u.pipeline_auto.collect_runtime_evidence', return_value='saved') as collect, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(2, run_batches(config, runner=runner, sleep=sleeps.append))
+            self.assertEqual(1, len(calls))
+            self.assertEqual([], sleeps)
+            collect.assert_called_once_with(directory)
+            state = json.loads((directory / 'auto-status.json').read_text())
+            self.assertEqual('STOPPED_RUNTIME_ERROR', state['state'])
+            self.assertEqual(code, state['exit_code'])
+            self.assertEqual(0, state['rounds'])
+
+    def test_child_environment_removes_only_python_and_loader_overrides(self):
+        from router.ac86u.pipeline_auto import run_child
+        with mock.patch.dict('os.environ', {'LD_PRELOAD': 'bad', 'LD_LIBRARY_PATH': 'bad',
+                'PYTHONHOME': 'bad', 'PYTHONPATH': 'bad', 'PATH': '/opt/bin:/bin'}, clear=True), \
+                mock.patch('router.ac86u.pipeline_auto.subprocess.run') as run:
+            run_child(['python', '-u', 'trial.py'])
+        self.assertEqual({'PATH': '/opt/bin:/bin'}, run.call_args.kwargs['env'])
+
+    def test_manual_lock_collision_has_dedicated_exit_code(self):
+        import fcntl
+        from router.ac86u import pipeline_trial
+        root, config = self.fixture()
+        directory = root / 'pipeline-trial'
+        directory.mkdir()
+        with (directory / 'run.lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            with mock.patch('sys.argv', ['trial', '--config', str(config)]), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(73, pipeline_trial.main())
 
     def test_resource_wait_recovery_mid_batch_stop_and_start_race_continue(self):
         root, config = self.fixture()

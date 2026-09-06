@@ -37,7 +37,7 @@ def main():
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             print('ALREADY_RUNNING', flush=True)
-            return 1
+            return 73
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
             signal.signal(sig, stop)
         os.nice(15)

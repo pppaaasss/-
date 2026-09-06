@@ -3,6 +3,7 @@
 import argparse
 import fcntl
 import json
+import os
 import subprocess
 import sys
 import time
@@ -44,7 +45,27 @@ def next_action(report, previous_remaining, stalled):
     return ('STOPPED_NO_PROGRESS' if stalled >= 3 else 'CONTINUING'), remaining, stalled
 
 
-def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_resources=None, replace_running=False):
+def run_child(args):
+    environment = dict(os.environ)
+    for name in ('LD_LIBRARY_PATH', 'LD_PRELOAD', 'PYTHONHOME', 'PYTHONPATH'):
+        environment.pop(name, None)
+    return subprocess.run(args, env=environment)
+
+
+def collect_runtime_evidence(root, mode='failure'):
+    script = Path(__file__).with_name('runtime_audit.sh')
+    if not script.exists():
+        return 'diagnostic_script_missing'
+    try:
+        # The collector is shell-based and still works if new Python processes fail.
+        result = subprocess.run(['/bin/sh', str(script), str(root), mode],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=45)
+        return 'runtime-diagnostics/latest.txt' if result.returncode == 0 else 'diagnostic_collection_failed'
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return 'diagnostic_collection_failed:' + type(exc).__name__
+
+
+def run_batches(config_path, *, runner=run_child, sleep=time.sleep, check_resources=None, replace_running=False):
     check_resources = recovery_check if check_resources is None else check_resources
     config_path = Path(config_path)
     original = config_path.read_bytes()
@@ -94,6 +115,8 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_r
                         sleep(5)
         # Clear a stop request from a previous, explicitly restarted controller.
         stop_path.unlink(missing_ok=True)
+        if runner is run_child and not (root / 'runtime-diagnostics/baseline.sha256').exists():
+            print('RUNTIME_EVIDENCE: ' + collect_runtime_evidence(root, mode='baseline'), flush=True)
         status('STARTED')
         while True:
             if stop_path.exists():
@@ -107,10 +130,11 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_r
                 status('WAITING_RESOURCES', reason=reason, resources=resources, retry_seconds=60)
                 sleep(60)
                 continue
-            result = runner([sys.executable, '-u', str(Path(__file__).with_name('pipeline_trial.py')),
+            status('RUNNING_BATCH')
+            result = runner([sys.executable, '-E', '-s', '-u', str(Path(__file__).with_name('pipeline_trial.py')),
                              '--config', str(config_path), '--phase', phase])
-            if result.returncode == 1:
-                # An already running manual batch owns run.lock; wait for it.
+            if result.returncode == 73:
+                # Only the explicit lock-busy code means another batch owns run.lock.
                 status('WAITING_FOR_RUNNING_BATCH')
                 sleep(30)
                 continue
@@ -120,7 +144,14 @@ def run_batches(config_path, *, runner=subprocess.run, sleep=time.sleep, check_r
                 sleep(60)
                 continue
             if result.returncode:
-                status('STOPPED_BATCH_ERROR', exit_code=result.returncode)
+                if result.returncode == 1 or result.returncode < 0:
+                    status('STOPPED_RUNTIME_ERROR', exit_code=result.returncode,
+                           diagnostics='collecting')
+                    evidence = collect_runtime_evidence(root)
+                    status('STOPPED_RUNTIME_ERROR', exit_code=result.returncode,
+                           diagnostics=evidence)
+                else:
+                    status('STOPPED_BATCH_ERROR', exit_code=result.returncode)
                 return 2
             rounds += 1
             try:
