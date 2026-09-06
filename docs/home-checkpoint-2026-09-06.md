@@ -1,5 +1,24 @@
 # 2026-09-06 家庭传输检测与接续
 
+## 09:28 最新现场结果与批量手动诊断
+
+- 09:18：53 个提供者中读到 52 份文件，共 10,572 条规则；来源条件为空、未解析/嵌套为 0。类型计数：DOMAIN 245、DOMAIN-KEYWORD 112、DOMAIN-REGEX 1、DOMAIN-SUFFIX 9858、IP-CIDR 329、IP-CIDR6 26、USER-AGENT 1。
+- 09:20：UA 位于 `rule_configs/Providers/Other/DAZN.yaml`，条件为 `USER-AGENT,DAZN*`。未读到的 ipcidr 提供者位于 `yaml_bak/zhuli500m/cb4394f308aeae2eb81b8f96633bcc8b`，实际错误 UnicodeDecodeError，文件存在；内容仍未解码核验。
+- 09:25：直接向 192.168.50.1:53 发 TCP DNS 请求，GitHub 的 A 返回 RCODE=0/ANSWER_RECORDS=4；AAAA 返回 RCODE=0/ANSWER_RECORDS=0，均未截断。这是正常空 AAAA 答复，不是 DNS 超时，不证明全家 IPv6 路径是否可用。
+- 路由器直接 curl 再次遇到 28/56 超时；改为 Termux 下载三个文件，再通过 tar + SSH 一次传到 `/tmp/iptv-transport-check` 并执行。**手机传文件成功**，以后优先使用此方式，避免重复从路由器直接下载。手机当前回到 `~ $`，不是路由器 SSH 提示符。
+- 09:28 实测修正版单频道检查：CCTV-1 GOOD、两份样本、1080p/H.264、较低下载速度 29.1 Mbps；IPv4=7/IPv6=0；DNS 总计 A 有答复 1、AAAA 空答复 1，错误均为 0；TEMP_RULE REMOVED。脚本仍显示 NOT_AUDITED 是因为它只计引用，独立文件检查证据见上述记录。
+
+新增独立 `manual_tv_scan.py`，下一步由用户从手机传入临时目录后后台运行：
+
+- 以 tv-core 的频道键确定受管范围，但**每条检测 URL 来自电视实际 tv.m3u**。准确核对后是 53 个频道、54 条不同地址：江苏卫视普通版与 core 相同，另有江苏卫视4K 条目。此前“江苏卫视地址不一致”的表述遗漏了这个变体，现予纠正；普通 53 台与 core 没有该地址冲突。两条江苏线路都单独测试，不任意选一条。
+- 每台两份 2 MiB 上限样本并请求 ffprobe 元数据；质量未确认不显示 GOOD。缺失频道不自动采用 core 地址；同一频道的不同 TV URL 全部单独测试，标称 4K 的条目最低高度为 2160。只做一轮诊断，不查备用、候选或生成替换决定。
+- 每台之间检查资源，低优先级运行，20 分钟预算；时间到/中断保留已完成结果和未测频道，清理精确临时规则。同类手动扫描用独立 flock 防重入。
+- JSON 单独保存到 `/opt/var/lib/iptv-home-probe/manual/tv-日期时间-PID.json`，schema 为 `iptv-manual-tv-scan-v1`，route_verified=false、production_use=false，不能作为正式家庭报告上传/验收。输出台名、URL 哈希和质量字段，不打印原始线路地址。
+- Shell 后台日志为 `/tmp/iptv-manual-scan.log`；仅手动命令启动，未加入安装器/cron，原运行配置和四份台单不变。
+- 七项新测试通过：真实电视 URL 选择、排除非受管台、多地址全测/缺失不回退 core、4K 变体质量要求、缺元数据 UNKNOWN、中断清理及保存、预算停止和核心范围校验。共享传输原有 18 项测试本轮也通过；Python 编译、diff 检查通过。批量家庭结果尚待用户运行，不能把这些测试当成家庭 53 台检测通过。
+
+下一步获取批量启动/进度/最终 SUMMARY，再根据问题频道处理；家庭路径最终确认、ipcidr 文件解码、电视 IPv6 DNS 差异、GitHub 保护/配对、四份跨 18 小时影子报告与晚高峰策略仍未完成。批量诊断不会绕过这些门槛启用生产。
+
 ## 09:13 接续更新
 
 用户截图 `1000021694.jpg` 显示当前配置 behavior 计数：52 classical、1 ipcidr。
