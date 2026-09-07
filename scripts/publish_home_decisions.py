@@ -23,6 +23,7 @@ from router.ac86u.home_contract import (  # noqa: E402
     PROBE_ID_RE,
     canonical_name,
     station_key,
+    validate_candidate_manifest,
     validate_home_report_v2,
 )
 from router.ac86u.push_home_report import REPORT_LIMIT, report_filename  # noqa: E402
@@ -269,6 +270,17 @@ def replay_status(receipt_path: Path, report: dict, report_sha: str) -> str:
     return "new"
 
 
+def rebind_candidate_manifest(raw: bytes, formal_raw: bytes) -> bytes:
+    """Rebind unchanged discovery data after a formal route change."""
+    manifest = json.loads(raw)
+    validate_candidate_manifest(manifest)
+    _lines, entries = playlist_entries(formal_raw)
+    manifest['formal_playlist']['sha256'] = sha256_bytes(formal_raw)
+    manifest['formal_playlist']['channel_count'] = len({entry.key for entry in entries})
+    validate_candidate_manifest(manifest)
+    return (json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + '\n').encode('utf-8')
+
+
 def write_transaction(
     root: Path,
     rendered: dict[str, bytes],
@@ -277,8 +289,13 @@ def write_transaction(
     receipt: dict,
 ) -> None:
     previous_receipt = receipt_path.read_bytes() if receipt_path.exists() else None
+    rendered, originals = dict(rendered), dict(originals)
+    candidate_path = 'harvest/home-candidates.json'
+    if (root / candidate_path).exists() and rendered['tv-core.m3u'] != originals['tv-core.m3u']:
+        originals[candidate_path] = (root / candidate_path).read_bytes()
+        rendered[candidate_path] = rebind_candidate_manifest(originals[candidate_path], rendered['tv-core.m3u'])
     try:
-        for name in PRODUCTION_FILES:
+        for name in rendered:
             atomic_bytes(root / name, rendered[name])
         atomic_json(receipt_path, receipt)
     except Exception:

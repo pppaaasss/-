@@ -70,7 +70,7 @@ jobs:
       - name: Validate the one-snapshot output scope
         run: |
           rm -rf scripts/__pycache__ router/ac86u/__pycache__ tests/__pycache__
-          allowed='^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json)$'
+          allowed='^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json|harvest/home-candidates\.json)$'
           bad="$(git status --porcelain | awk '{print $2}' | grep -Ev "$allowed" || true)"
           test -z "$bad" || { echo 'Unexpected modified paths:'; echo "$bad"; exit 1; }
           python3 - <<'PY'
@@ -86,7 +86,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json)"; then
+          if test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json harvest/home-candidates.json)"; then
             echo 'No new actionable home report'
             exit 0
           fi
@@ -97,8 +97,8 @@ jobs:
             echo 'master moved during home publication; refusing a stale update'
             exit 1
           }
-          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json
-          bad="$(git diff --cached --name-only | grep -Ev '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json)$' || true)"
+          git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u home-publish/latest.json harvest/home-candidates.json
+          bad="$(git diff --cached --name-only | grep -Ev '^(tv-easy\.m3u|tv\.m3u|tv-all\.m3u|tv-core\.m3u|home-publish/latest\.json|harvest/home-candidates\.json)$' || true)"
           test -z "$bad" || { echo 'Unexpected staged paths:'; echo "$bad"; exit 1; }
           count="$(python3 - <<'PY'
           import json

@@ -46,6 +46,36 @@ def playlist(routes):
 
 
 class HomePublishTests(unittest.TestCase):
+    def candidate_fixture(self):
+        from scripts.build_home_candidate_manifest import build_manifest
+        manifest, _ = build_manifest(discovery_rows=[],
+            formal_bytes=(self.root / 'tv-core.m3u').read_bytes(), formal_url=FORMAL_URL,
+            source_revision='a' * 40, generated_utc='2026-09-02T12:00:00Z')
+        path = self.root / 'harvest/home-candidates.json'
+        path.parent.mkdir()
+        path.write_text(json.dumps(manifest))
+        return path, manifest
+
+    def test_route_publication_rebinds_discovery_without_refreshing_history(self):
+        path, before = self.candidate_fixture()
+        self.queue(self.report())
+        self.publish()
+        after = json.loads(path.read_text())
+        self.assertEqual(hashlib.sha256((self.root / 'tv-core.m3u').read_bytes()).hexdigest(),
+                         after['formal_playlist']['sha256'])
+        for key in before:
+            if key != 'formal_playlist':
+                self.assertEqual(before[key], after[key], key)
+
+    def test_manifest_rolls_back_with_playlists_when_receipt_fails(self):
+        path, _ = self.candidate_fixture()
+        before = path.read_bytes()
+        self.queue(self.report())
+        with mock.patch.object(publisher_module, 'atomic_json', side_effect=OSError('disk full')):
+            with self.assertRaises(OSError):
+                self.publish()
+        self.assertEqual(before, path.read_bytes())
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
