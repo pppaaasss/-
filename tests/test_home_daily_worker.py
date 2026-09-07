@@ -29,21 +29,23 @@ class DailyWorkerTests(unittest.TestCase):
             self.assertEqual(afternoon, next_job(root, today)[0])
             self.assertEqual(peak, next_job(root, epoch('2026-09-08T12:00:00'))[0])
 
-    def test_no_round_or_duration_cap_and_final_required(self):
-        job = dict(id='old', kind='primary-0200', phase='candidates', batches=10000, created=0)
-        report = dict(summary=dict(candidate_queue_remaining=123), policy=dict(candidate_manifest_state='accepted'))
-        result, publish = advance(job, report, 100000000)
+    def test_publish_before_and_between_candidate_batches_without_dropping_queue(self):
+        job = dict(id='old', kind='primary-0200', phase='final', batches=10000, created=0)
+        report = dict(summary=dict(candidate_queue_remaining=123), policy=dict(batch_complete=True))
+        result, publish = advance(job, report, 100)
+        self.assertTrue(publish)
+        self.assertEqual('candidates', result['phase'])
         self.assertEqual('PENDING', result['state'])
+        report['policy']['candidate_manifest_state'] = 'accepted'
+        result, publish = advance(result, report, 101)
         self.assertFalse(publish)
-        report['summary']['candidate_queue_remaining'] = 0
-        result, publish = advance(result, report, 100000001)
         self.assertEqual('final', result['phase'])
-        self.assertFalse(publish)
-        report['policy']['batch_complete'] = False
-        result, publish = advance(result, report, 100000002)
-        self.assertNotEqual('COMPLETE', result['state'])
-        report['policy']['batch_complete'] = True
-        result, publish = advance(result, report, 100000003)
+        result, publish = advance(result, report, 102)
+        self.assertTrue(publish)
+        self.assertEqual('candidates', result['phase'])
+        report['summary']['candidate_queue_remaining'] = 0
+        result, _ = advance(result, report, 103)
+        result, publish = advance(result, report, 104)
         self.assertTrue(publish)
         self.assertEqual('COMPLETE', result['state'])
 

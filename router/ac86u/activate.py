@@ -1,5 +1,5 @@
 #!/opt/bin/python3
-"""Confirm the living-room path, then activate after a GitHub shadow window."""
+"""Confirm the living-room path, then activate after a verified GitHub report."""
 
 from __future__ import annotations
 
@@ -38,6 +38,7 @@ def set_actionable(
     *,
     enabled: bool,
     now_epoch: float | None = None,
+    report_path: Path | None = None,
 ) -> dict:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -50,21 +51,20 @@ def set_actionable(
         if config.get("protected_publishing_ready") is not True:
             raise RuntimeError("protected GitHub publishing is not ready")
         github = json.loads((output / "github-state.json").read_text(encoding="utf-8"))
-        report_path = output / "latest.json"
+        report_path = report_path or output / "latest.json"
         raw = report_path.read_bytes()
         report = json.loads(raw.decode("utf-8"))
         validate_home_report_v2(report, expected_probe_id=str(config.get("probe_id") or ""))
         evidence = github.get("successful_report_evidence") or {}
-        times = sorted(parse_utc(stamp) for stamp, item in evidence.items()
-                       if item.get("safe") is True and item.get("probe_id") == config.get("probe_id"))
-        if len(times) < 4 or times[-1] - times[0] < 18 * 3600:
-            raise RuntimeError("shadow window incomplete: need 4 GitHub reports spanning at least 18 hours")
-        if int(github.get("pending_reports") or 0) != 0 or any((output / "pending-reports").glob("*.json")):
-            raise RuntimeError("local GitHub report queue is not empty")
-        if github.get("last_report_generated_utc") != report.get("generated_utc"):
-            raise RuntimeError("latest local report has not been acknowledged by GitHub")
-        if github.get("last_report_sha256") != hashlib.sha256(raw).hexdigest():
-            raise RuntimeError("latest GitHub report hash does not match the local report")
+        acknowledged = evidence.get(report.get("generated_utc")) or {}
+        digest = hashlib.sha256(raw).hexdigest()
+        if not (acknowledged.get("safe") is True and acknowledged.get("probe_id") == config.get("probe_id")):
+            raise RuntimeError("need one successfully uploaded household report before activation")
+        acknowledged_sha = acknowledged.get("sha256")
+        if not acknowledged_sha and github.get("last_report_generated_utc") == report.get("generated_utc"):
+            acknowledged_sha = github.get("last_report_sha256")
+        if acknowledged_sha != digest:
+            raise RuntimeError("GitHub report hash does not match the selected local report")
         generated = parse_utc(str(report.get("generated_utc") or ""))
         if now_epoch - generated > 7 * 3600 or now_epoch - generated < -600:
             raise RuntimeError("latest local report is not fresh")
@@ -86,6 +86,7 @@ def confirm_living_room_path(config_path: Path) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
+    parser.add_argument("--report", help="An already acknowledged report, when latest.json is a candidate batch")
     action = parser.add_mutually_exclusive_group()
     action.add_argument("--off", action="store_true")
     action.add_argument("--confirm-living-room-path", action="store_true")
@@ -99,7 +100,7 @@ def main() -> int:
             set_actionable(path, enabled=False)
             print("HOME_PROBE_ACTIVATE off; GitHub shadow reports continue")
         else:
-            set_actionable(path, enabled=True)
+            set_actionable(path, enabled=True, report_path=Path(args.report) if args.report else None)
             print("HOME_PROBE_ACTIVATE ready; future home decisions may enter protected publishing")
         return 0
     except Exception as exc:

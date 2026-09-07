@@ -8,6 +8,8 @@ DATA="/opt/var/lib/iptv-home-probe"
 LOG="/opt/var/log/iptv-home-probe.log"
 LOCK="/opt/var/run/iptv-home-probe.lock"
 
+[ ! -f "$DATA/background-upgrade.locked" ] || exit 0
+
 mkdir -p "$DATA" "$(dirname "$LOG")" "$(dirname "$LOCK")"
 # The worker owns a kernel flock released automatically on exit or reboot.
 # Leave legacy manual execution available while the new worker is disabled.

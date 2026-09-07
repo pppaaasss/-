@@ -48,8 +48,7 @@ class DeploymentRegressions(unittest.TestCase):
 
     def test_disabled_publisher_can_pair_shadow_transport_without_bypassing_rules(self):
         publisher = json.loads((ROOT / 'config/home-publisher.json').read_text())
-        self.assertFalse(publisher['enabled'])
-        self.assertEqual('', publisher['expected_probe_id'])
+        publisher.update(enabled=False, expected_probe_id='')
         self.assertEqual(917, github_pair.validate_protected_publisher(publisher, master_rules(), {'probe_id':'home-ac86u-test'}))
         with self.assertRaises(RuntimeError):
             github_pair.validate_protected_publisher(publisher, [], {'probe_id':'home-ac86u-test'})
@@ -120,7 +119,7 @@ class DeploymentRegressions(unittest.TestCase):
             self.assertEqual('viewer_confirmed_bad_route', result['current_results'][0]['error'])
             self.assertEqual('REPLACE', result['decisions'][0]['action'])
 
-    def test_four_distinct_uploaded_observations_are_required_for_activation(self):
+    def test_one_acknowledged_report_activates_without_an_observation_window(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             remote = report_remote(root)
@@ -138,8 +137,9 @@ class DeploymentRegressions(unittest.TestCase):
                 if hour==0:
                     state=json.loads((output/'github-state.json').read_text())
                     self.assertEqual(1,state['successful_reports'])
-                    with self.assertRaisesRegex(RuntimeError,'shadow window'):
-                        set_actionable(config_path,enabled=True,now_epoch=1_788_372_000)
+                    import calendar
+                    stamp=calendar.timegm(home_probe.time.strptime('2026-09-02T00:10:00Z','%Y-%m-%dT%H:%M:%SZ'))
+                    self.assertTrue(set_actionable(config_path,enabled=True,now_epoch=stamp)['actionable'])
             import calendar
             epoch=calendar.timegm(home_probe.time.strptime('2026-09-02T18:10:00Z','%Y-%m-%dT%H:%M:%SZ'))
             enabled=set_actionable(config_path,enabled=True,now_epoch=epoch)

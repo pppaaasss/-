@@ -3,7 +3,6 @@
 import argparse
 from datetime import datetime, timezone, timedelta
 import fcntl
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -14,11 +13,9 @@ import time
 try:
     from .home_probe import atomic_json, resource_check
     from .peak_policy import in_peak
-    from .home_contract import make_candidate, validate_backup_pool
 except ImportError:
     from home_probe import atomic_json, resource_check
     from peak_policy import in_peak
-    from home_contract import make_candidate, validate_backup_pool
 
 KINDS = ('primary-0200', 'recheck-1300', 'peak-2000')
 ZONE = timezone(timedelta(hours=8))
@@ -33,7 +30,7 @@ def enqueue(root, kind, epoch):
     with (directory / 'enqueue.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if not path.exists():
-            atomic_json(path, dict(id=path.stem, kind=kind, phase='candidates' if kind == KINDS[0] else 'full',
+            atomic_json(path, dict(id=path.stem, kind=kind, phase='final' if kind == KINDS[0] else 'full',
                                   state='PENDING', created=epoch, retry_after=0, batches=0))
     return path
 
@@ -61,12 +58,15 @@ def advance(job, report, epoch):
     if summary.get('circuit_breaker_open'):
         return dict(job, state='WAITING_NETWORK', retry_after=epoch + 300), False
     if job['phase'] == 'candidates':
+        job['candidate_manifest_checked'] = True
         if str(policy.get('candidate_manifest_state', '')).startswith('rejected:'):
             return dict(job, state='WAITING_MANIFEST', retry_after=epoch + 300), False
-        if summary['candidate_queue_remaining'] == 0:
-            job['phase'] = 'final'
+        job['phase'] = 'final'
         return dict(job, state='PENDING'), False
     if policy.get('batch_complete') is True:
+        if job['kind'] == KINDS[0] and (summary.get('candidate_queue_remaining', 0) > 0
+                or not job.get('candidate_manifest_checked')):
+            return dict(job, phase='candidates', state='PENDING'), True
         return dict(job, state='COMPLETE', completed=epoch), True
     return dict(job, state='PENDING'), False
 
@@ -74,30 +74,6 @@ def advance(job, report, epoch):
 def clean_env():
     return {k: v for k, v in os.environ.items()
             if k not in ('LD_LIBRARY_PATH', 'LD_PRELOAD', 'PYTHONHOME', 'PYTHONPATH')}
-
-
-def import_trial_candidates(root, config):
-    source = root / 'pipeline-trial/qualified-backups.json'
-    if not source.exists():
-        return
-    state_path = root / 'state.json'
-    state = json.loads(state_path.read_text()) if state_path.exists() else {}
-    if state.get('trial_candidate_import_sha256'):
-        return
-    raw = source.read_bytes()
-    pool = json.loads(raw)
-    validate_backup_pool(pool, expected_probe_id=config['probe_id'], now_epoch=time.time(),
-                         allow_expired=True, trial=True)
-    queue = {c['candidate_id']: c for c in state.get('candidate_queue', [])}
-    for backup in pool['backups']:
-        candidate = make_candidate(dict(name=backup['name'], url=backup['url'],
-            request_options=backup.get('request_options', ''), sources=['saved-home-trial']))
-        candidate['source_manifest_sha256'] = backup['source_manifest_sha256']
-        queue.setdefault(candidate['candidate_id'], candidate)
-    state['candidate_queue'] = list(queue.values())
-    state['trial_candidate_import_sha256'] = hashlib.sha256(raw).hexdigest()
-    atomic_json(state_path, state)
-    print('SAVED_TRIAL_CANDIDATES_IMPORTED:', len(pool['backups']), flush=True)
 
 
 def work(config_path):
@@ -113,8 +89,6 @@ def work(config_path):
         if fatal.exists():
             return 1
         base = Path(__file__).resolve().parent
-        if config.get('daily_worker_enabled') is True:
-            import_trial_candidates(root, config)
         while True:
             config = json.loads(config_path.read_text())
             if config.get('daily_worker_enabled') is not True:
