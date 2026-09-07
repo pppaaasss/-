@@ -125,8 +125,6 @@ def scan(config, output, budget=1200):
                 else:
                     print('TESTING: %d/%d %s' % (index, len(planned), item['name']), flush=True)
                     floor = probe.minimum_height(item['name'], config)
-                    if re.search(r'4K', item['name'], re.I):
-                        floor = max(2160, floor)
                     raw = probe.probe_route(item['name'], item['url'], floor=floor, config=config,
                         sample_limit=2 * 1024 * 1024, include_metadata=True)
                     row = public_result(raw, item)

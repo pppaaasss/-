@@ -653,7 +653,7 @@ def probe_route(
 
 def minimum_height(name: str, config: dict) -> int:
     overrides = config.get("minimum_height_overrides") if isinstance(config.get("minimum_height_overrides"), dict) else {}
-    return int(overrides.get(name) or (2160 if name == "CCTV-4K" else config.get("minimum_height_default") or 1080))
+    return int(overrides.get(name) or (config.get("minimum_height_default") or 1080))
 
 
 def _runtime_unknown(name: str, url: str, channel_key: str, floor: int) -> dict:
@@ -959,7 +959,8 @@ def _run(
             repairs = eligible_backups(existing_pool, key, now_epoch=now_epoch)
             if not trial and run_kind != 'recheck-1300':
                 known = {row['candidate_id'] for row in repairs}
-                repairs.extend(row for identity, row in sorted(archive.items())
+                repairs.extend(row for identity, row in sorted(archive.items(),
+                    key=lambda item: (-int((item[1].get('verification') or {}).get('height') or 0), item[0]))
                     if identity not in known and row['channel_key'] == key
                     and row['url'] != current_urls.get(key)
                     and not candidate_vetoed(row['url']) and not row.get('request_options'))

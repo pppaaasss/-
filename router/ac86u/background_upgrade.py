@@ -17,7 +17,7 @@ import urllib.request
 BASE = Path('/opt/share/iptv-home-probe')
 ROOT = Path('/opt/var/lib/iptv-home-probe')
 CONFIG = Path('/opt/etc/iptv-home-probe.json')
-FILES = ('candidate_history.py', 'home_probe.py', 'daily_worker.py', 'activate.py', 'run.sh')
+FILES = ('candidate_history.py', 'home_probe.py', 'daily_worker.py', 'activate.py', 'run.sh', 'manual_tv_scan.py')
 ACK_NAME = '20260907T050003Z-recheck-1300-c91897fa4aad3518.json'
 ACK_URL = 'https://raw.githubusercontent.com/pppaaasss/-/home-reports/inbox/home-ac86u-8f8908f0fba9/' + ACK_NAME
 
@@ -107,6 +107,9 @@ def apply(revision, schedule_only=False):
                         if job.get('kind') == 'primary-0200' and job.get('state') != 'COMPLETE':
                             job.update(phase='final', state='PENDING', retry_after=0)
                             atomic_json(path, job)
+                    overrides = dict(config.get('minimum_height_overrides') or {})
+                    overrides['CCTV-4K'] = 1080
+                    config['minimum_height_overrides'] = overrides
                     config['daily_worker_enabled'] = True
                     atomic_json(CONFIG, config)
                     print('History retained:', len(state['tested_candidate_ids']),
