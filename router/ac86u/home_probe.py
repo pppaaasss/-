@@ -777,9 +777,18 @@ def _run(
     if trial:
         config['actionable'] = False
     resource_stop = ''
+    stop_at = float(config.get('stop_at_epoch') or 0)
 
     def budget_available():
         nonlocal resource_stop
+        # Finish the current address, then checkpoint the remaining queue. The
+        # elapsed clock also enforces the cutoff if the wall clock moves back.
+        if stop_at and max(time.time(), now_epoch + time.monotonic() - started) >= stop_at:
+            if not resource_stop:
+                resource_stop = 'primary_window_closed'
+                resources['stop_reason'] = resource_stop
+                print('SCHEDULE_STOP: primary_window_closed', flush=True)
+            return False
         if resource_stop or time.monotonic() - started >= maximum_runtime:
             return False
         if config.get('sample_actual_resources'):
@@ -1341,12 +1350,14 @@ def main() -> int:
     parser.add_argument("--run-kind", choices=tuple(sorted(RUN_KINDS)), default="primary-0200")
     parser.add_argument("--batch-phase", choices=("full", "candidates", "final"), default="full")
     parser.add_argument("--batch-cycle-id", default="")
+    parser.add_argument("--stop-at-epoch", type=float, default=0)
     parser.add_argument("--mode", choices=("light", "deep"), default=None, help=argparse.SUPPRESS)
     parser.add_argument("--now-epoch", type=float, default=None)
     args = parser.parse_args()
     try:
         config = load_json(Path(args.config))
-        config.update(batch_phase=args.batch_phase, batch_cycle_id=args.batch_cycle_id)
+        config.update(batch_phase=args.batch_phase, batch_cycle_id=args.batch_cycle_id,
+                      stop_at_epoch=args.stop_at_epoch)
         report, _ = run(
             config,
             run_kind=args.run_kind,

@@ -71,3 +71,28 @@ class HistoryTests(unittest.TestCase):
             self.assertEqual(old,state['backup_archive'][old['candidate_id']])
             self.assertEqual([],state['candidate_queue'])
             self.assertEqual(0,state['qualified_backup_pool']['backup_count'])
+
+    def test_cutoff_keeps_unstarted_candidate_for_next_night(self):
+        formal=b'#EXTM3U\n#EXTINF:-1,CCTV-1\nhttps://current.test/1\n'
+        candidates=[make_candidate(dict(sources=['window-test'], name='CCTV-1',
+                    url='https://candidate.test/'+str(n))) for n in (1,2)]
+        with tempfile.TemporaryDirectory() as tmp:
+            config=dict(output_dir=tmp, probe_id='home-test', maximum_load1=10000,
+                        minimum_mem_available_kib=1, candidate_manifest_url='https://repo.test/new',
+                        playlist_url='https://repo.test/core', batch_phase='candidates', stop_at_epoch=NOW+10)
+            manifest={'formal_playlist': {'sha256':hashlib.sha256(formal).hexdigest(), 'channel_count':1},
+                      'candidate_count':2, 'generated_utc':home_probe.utc_text(NOW), 'candidates':candidates}
+            clock=[NOW]
+            def observe(name,url,*,floor,**kw):
+                clock[0]=NOW+11
+                return measured(name,url,floor)
+            with mock.patch.object(home_probe,'fetch_playlist',return_value=(formal,config['playlist_url'],.1)), \
+                 mock.patch.object(home_probe,'fetch_candidate_manifest',return_value=(manifest,b'window','https://repo.test/new')), \
+                 mock.patch.object(home_probe.time,'time',side_effect=lambda:clock[0]), \
+                 mock.patch.object(home_probe,'probe_route',side_effect=observe) as calls:
+                report,state=home_probe.run(config,now_epoch=NOW)
+                self.assertEqual(1,calls.call_count)
+                self.assertEqual('primary_window_closed',report['resources']['stop_reason'])
+                self.assertEqual(1,len(state['candidate_queue']))
+                remaining=state['candidate_queue'][0]['candidate_id']
+                self.assertNotIn(remaining,state['tested_candidate_ids'])
