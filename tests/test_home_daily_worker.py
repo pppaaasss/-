@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 
-from router.ac86u.daily_worker import enqueue, next_job, advance, primary_window, defer_primary_jobs
+from router.ac86u.daily_worker import enqueue, next_job, advance, primary_window, defer_primary_jobs, request_start_now
 from router.ac86u.peak_policy import apply_peak_policy
 
 
@@ -13,6 +13,48 @@ def epoch(text):
 
 
 class DailyWorkerTests(unittest.TestCase):
+    def test_manual_window_resumes_existing_queue_then_expires_at_eight(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            path = enqueue(root, 'primary-0200', epoch('2026-09-06T18:00:00'))
+            job = json.loads(path.read_text())
+            job.update(phase='candidates', batches=12)
+            path.write_text(json.dumps(job))
+            now = epoch('2026-09-07T12:30:00')
+            defer_primary_jobs(root, now)
+            self.assertIsNone(next_job(root, now))
+            before = path.read_text()
+            end = request_start_now(root, now)
+            self.assertEqual(epoch('2026-09-08T00:00:00'), end.timestamp())
+            self.assertEqual(before, path.read_text())
+            self.assertEqual(path, next_job(root, now)[0])
+            self.assertEqual((True, end.timestamp()), primary_window(now, root)[:2])
+            request_start_now(root, now + 1)
+            self.assertEqual(1, len(list((root / 'daily-jobs').glob('*.json'))))
+            defer_primary_jobs(root, end.timestamp())
+            self.assertIsNone(next_job(root, end.timestamp()))
+            self.assertEqual(12, json.loads(path.read_text())['batches'])
+            self.assertFalse(primary_window(epoch('2026-09-08T12:00:00'), root)[0])
+            self.assertTrue(primary_window(epoch('2026-09-08T18:00:00'), root)[0])
+
+    def test_manual_request_preserves_completed_jobs_and_retry_backoff(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            now = epoch('2026-09-07T12:30:00')
+            path = enqueue(root, 'primary-0200', now)
+            job = json.loads(path.read_text())
+            job['state'] = 'COMPLETE'
+            path.write_text(json.dumps(job))
+            request_start_now(root, now)
+            selected, pending = next_job(root, now)
+            self.assertNotEqual(path, selected)
+            self.assertEqual('candidates', pending['phase'])
+            self.assertEqual('COMPLETE', json.loads(path.read_text())['state'])
+            pending.update(state='WAITING_NETWORK', retry_after=now+300)
+            selected.write_text(json.dumps(pending))
+            self.assertIsNone(next_job(root, now))
+            self.assertEqual(selected, next_job(root, now+300)[0])
+
     def test_next_day_does_not_discard_unfinished_job_and_rechecks_preempt(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

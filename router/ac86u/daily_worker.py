@@ -21,18 +21,47 @@ KINDS = ('primary-0200', 'recheck-1300', 'peak-2000')
 ZONE = timezone(timedelta(hours=8))
 
 
-def primary_window(epoch):
+def primary_window(epoch, root=None):
     """Beijing 02:00 inclusive to 08:00 exclusive, independent of host timezone."""
     local = datetime.fromtimestamp(epoch, ZONE)
     start = local.replace(hour=2, minute=0, second=0, microsecond=0)
     end = start.replace(hour=8)
     opened = start <= local < end
     next_start = start if local < start else start + timedelta(days=1)
+    if root is not None:
+        try:
+            manual = json.loads((root / 'manual-primary-window.json').read_text())
+            since, until = float(manual['start']), float(manual['until'])
+            if since <= epoch < until and 0 < until - since <= 86400:
+                return True, until, next_start.timestamp()
+        except (OSError, ValueError, TypeError, KeyError):
+            pass
     return opened, end.timestamp(), next_start.timestamp()
 
 
+def request_start_now(root, epoch):
+    """Open one temporary window until the next Beijing 08:00; retain progress."""
+    local = datetime.fromtimestamp(epoch, ZONE)
+    end = local.replace(hour=8, minute=0, second=0, microsecond=0)
+    if end <= local:
+        end += timedelta(days=1)
+    directory = root / 'daily-jobs'
+    directory.mkdir(parents=True, exist_ok=True)
+    with (directory / 'enqueue.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        unfinished = any(
+            job.get('kind') == KINDS[0] and job.get('state') != 'COMPLETE'
+            for job in (json.loads(p.read_text()) for p in directory.glob('*.json')))
+        if not unfinished:
+            ident = local.strftime('%Y%m%d') + '-primary-0200-manual-' + str(int(epoch))
+            atomic_json(directory / (ident + '.json'), dict(id=ident, kind=KINDS[0],
+                phase='candidates', state='PENDING', created=epoch, retry_after=0, batches=0))
+        atomic_json(root / 'manual-primary-window.json', dict(start=epoch, until=end.timestamp()))
+    return end
+
+
 def defer_primary_jobs(root, epoch):
-    opened, _end, resume = primary_window(epoch)
+    opened, _end, resume = primary_window(epoch, root)
     if opened:
         return
     waiting = []
@@ -68,9 +97,11 @@ def next_job(root, epoch):
     jobs = []
     for path in (root / 'daily-jobs').glob('*.json'):
         job = json.loads(path.read_text())
-        if job['state'] == 'COMPLETE' or job.get('retry_after', 0) > epoch:
+        window_open = primary_window(epoch, root)[0]
+        waiting_for_window = job['kind'] == KINDS[0] and job['state'] == 'WAITING_WINDOW' and window_open
+        if job['state'] == 'COMPLETE' or (job.get('retry_after', 0) > epoch and not waiting_for_window):
             continue
-        if job['kind'] == KINDS[0] and not primary_window(epoch)[0]:
+        if job['kind'] == KINDS[0] and not window_open:
             continue
         if job['kind'] == 'peak-2000' and not in_peak(epoch):
             continue
@@ -150,7 +181,7 @@ def work(config_path):
                        '--config', str(config_path), '--run-kind', job['kind'],
                        '--batch-phase', job['phase'], '--batch-cycle-id', job['id']]
             if job['kind'] == KINDS[0]:
-                opened, deadline, _resume = primary_window(time.time())
+                opened, deadline, _resume = primary_window(time.time(), root)
                 if not opened:
                     continue
                 command.extend(['--stop-at-epoch', str(deadline)])
@@ -182,11 +213,30 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='/opt/etc/iptv-home-probe.json')
     parser.add_argument('--enqueue', choices=KINDS)
+    parser.add_argument('--start-now', action='store_true', help='Resume discovery now until the next Beijing 08:00')
+    parser.add_argument('--detach', action='store_true', help='Launch the worker in the background')
     args = parser.parse_args()
     config_path = Path(args.config)
     config = json.loads(config_path.read_text())
+    root = Path(config['output_dir'])
+    if args.start_now:
+        if config.get('daily_worker_enabled') is not True:
+            raise RuntimeError('daily_worker_disabled')
+        if (root / 'background-upgrade.locked').exists() or (root / 'daily-runtime-error.json').exists():
+            raise RuntimeError('worker_update_or_runtime_error_pending')
+        end = request_start_now(root, time.time())
+        print('临时测源窗口已开启，截止北京时间 ' + end.strftime('%m-%d %H:%M') + '；原定时安排保留。', flush=True)
     if args.enqueue:
         enqueue(Path(config['output_dir']), args.enqueue, time.time())
+    if args.detach:
+        log_path = Path('/opt/var/log/iptv-home-probe.log')
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open('a') as log:
+            proc = subprocess.Popen([sys.executable, '-E', '-s', '-u', str(Path(__file__).resolve()),
+                '--config', str(config_path)], stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                env=clean_env(), start_new_session=True)
+        print('后台启动请求已提交，PID=' + str(proc.pid) + '；如已有任务运行，将由同一任务锁串行接续。', flush=True)
+        return 0
     return work(config_path)
 
 
