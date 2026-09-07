@@ -11,11 +11,14 @@ The process never edits a production playlist.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
+import gzip
 import json
 import os
 import re
 import socket
+import signal
 import subprocess
 import sys
 import time
@@ -25,10 +28,13 @@ import urllib.request
 from pathlib import Path
 
 try:
+    from .peak_policy import apply_peak_policy, in_peak
     from .home_contract import (
         ContractError,
         REPORT_SCHEMA,
         ROUTE_CONTEXT,
+        TRIAL_REPORT_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         canonical_name,
         station_key,
         validate_backup_pool,
@@ -48,10 +54,13 @@ try:
         without_backup,
     )
 except ImportError:  # Installed beside this file by the Entware installer.
+    from peak_policy import apply_peak_policy, in_peak
     from home_contract import (  # type: ignore
         ContractError,
         REPORT_SCHEMA,
         ROUTE_CONTEXT,
+        TRIAL_REPORT_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         canonical_name,
         station_key,
         validate_backup_pool,
@@ -83,7 +92,43 @@ PLAYLIST_LIMIT = 1024 * 1024
 CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
-RUN_KINDS = {"primary-0200", "recheck-1300"}
+RUN_KINDS = {"primary-0200", "recheck-1300", "peak-2000"}
+_active_transport = None
+
+
+@contextlib.contextmanager
+def transport_context(config):
+    global _active_transport
+    if config.get("runtime_transport") != "merlinclash-marked":
+        yield None
+        return
+    try:
+        from .home_transport import HomeTransport
+    except ImportError:
+        from home_transport import HomeTransport
+    if _active_transport is not None:
+        raise RuntimeError("nested home transport unsupported")
+    with HomeTransport(config.get("lan_dns_server", "192.168.50.1")) as transport:
+        _active_transport = transport
+        try:
+            yield transport
+        finally:
+            _active_transport = None
+
+
+def open_request(request):
+    try:
+        opener = _active_transport.opener.open if _active_transport else urllib.request.urlopen
+        return opener(request, timeout=HTTP_TIMEOUT)
+    except urllib.error.HTTPError as exc:
+        if _active_transport and exc.headers.get("X-IPTV-Transport-Error"):
+            exc.close()
+            raise RuntimeError("local_transport_failure") from exc
+        raise
+    except urllib.error.URLError as exc:
+        if _active_transport:
+            raise RuntimeError("transport_connect_unknown:" + str(exc.reason)) from exc
+        raise
 
 
 def utc_text(epoch: float | None = None) -> str:
@@ -134,13 +179,24 @@ def system_resources() -> dict:
 
 def resource_guard(resources: dict, config: dict) -> str:
     max_load = float(config.get("maximum_load1") or 1.5)
-    min_memory = int(config.get("minimum_mem_available_kib") or 64 * 1024)
+    min_memory = int(config.get("minimum_mem_available_kib") or 50 * 1024)
     if float(resources.get("load1") or 0) > max_load:
         return f"load1_above_{max_load:g}"
     available = int(resources.get("mem_available_kib") or 0)
     if available and available < min_memory:
         return f"memory_below_{min_memory}_kib"
     return ""
+
+
+def resource_check(config):
+    if config.get("sample_actual_resources"):
+        try:
+            from .home_resources import sample_resources
+        except ImportError:
+            from home_resources import sample_resources
+        return sample_resources(config, system_resources)
+    resources = system_resources()
+    return resource_guard(resources, config), resources
 
 
 def timezone_guard(config: dict, now_epoch: float) -> None:
@@ -158,7 +214,7 @@ def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes,
         headers["Range"] = f"bytes=0-{max(0, limit - 1)}"
     request = urllib.request.Request(url, headers=headers)
     started = time.monotonic()
-    with urllib.request.urlopen(request, timeout=HTTP_TIMEOUT) as response:
+    with open_request(request) as response:
         # read1 returns available bytes instead of waiting for an entire large
         # sample. Stop slow/trickling streams at a wall-clock transfer budget.
         chunks = []
@@ -262,6 +318,52 @@ def parse_playlist(data: bytes) -> list[tuple[str, str]]:
     if not rows:
         raise RuntimeError("playlist_has_no_http_channels")
     return rows
+
+
+
+def recover_metadata_unknown(previous_state: dict) -> list[dict]:
+    """Restore legacy candidates rejected solely because metadata was missing.
+
+    Change the saved classification once, so continuation does not repeatedly
+    resurrect already retried UNKNOWN rows. Explicit headroom failures stay bad.
+    """
+    recovered = []
+    observations = previous_state.get('candidate_observations')
+    if not isinstance(observations, dict):
+        return recovered
+    for observation in observations.values():
+        if not isinstance(observation, dict):
+            continue
+        row = observation.get('result') or {}
+        verification = row.get('verification') or {}
+        if (observation.get('qualification') == 'REJECTED'
+                and str(row.get('error') or '').startswith('quality_unknown:')
+                and verification.get('deep_checked') is not True
+                and isinstance(observation.get('candidate'), dict)):
+            observation.update(qualification='UNKNOWN', unknown_attempts=0)
+            row.update(qualification='UNKNOWN', switch_reverified=False)
+            recovered.append(dict(observation['candidate']))
+    return recovered
+
+
+def recover_lower_h264_threshold(previous_state: dict, minimum: float) -> list[dict]:
+    """Retry saved bitrate rejections that now meet the configured threshold."""
+    recovered = []
+    observations = previous_state.get('candidate_observations') or {}
+    for observation in observations.values():
+        row = observation.get('result') or {}
+        match = re.fullmatch(r'h264_stream_([0-9.]+)_below_([0-9.]+)_mbps',
+                             str(row.get('error') or ''))
+        if (observation.get('qualification') != 'REJECTED' or not match
+                or not isinstance(observation.get('candidate'), dict)):
+            continue
+        marker = float(observation.get('h264_requeued_minimum_mbps', float('inf')))
+        if float(match[1]) >= minimum and float(match[2]) > minimum and marker > minimum:
+            observation.update(qualification='UNKNOWN', unknown_attempts=0,
+                               h264_requeued_minimum_mbps=minimum)
+            row.update(qualification='UNKNOWN', switch_reverified=False)
+            recovered.append(dict(observation['candidate']))
+    return recovered
 
 
 def merge_candidate_queue(
@@ -379,9 +481,13 @@ def ffprobe_meta(url: str, ffprobe: str) -> dict:
         "-of", "json",
         url,
     ]
-    process = subprocess.run(command, capture_output=True, text=True, timeout=FFPROBE_TIMEOUT)
+    options = {}
+    if _active_transport:
+        command[-1:-1] = ["-http_proxy", _active_transport.url]
+        options["env"] = _active_transport.child_env()
+    process = subprocess.run(command, capture_output=True, text=True, timeout=FFPROBE_TIMEOUT, **options)
     if process.returncode != 0:
-        raise RuntimeError((process.stderr or "ffprobe_failed").strip()[-240:])
+        raise RuntimeError("ffprobe_exit_" + str(process.returncode) + ":" + (process.stderr or "no_stderr").strip()[-200:])
     payload = json.loads(process.stdout or "{}")
     streams = payload.get("streams") or []
     if not streams:
@@ -505,7 +611,7 @@ def probe_route(
                 intrinsic = result["stream_mbps"] or result["bitrate_mbps"]
                 codec = result["codec"].casefold()
                 if codec == "h264":
-                    minimum_stream = float(config.get("minimum_h264_stream_mbps") or 5.0)
+                    minimum_stream = float(config.get("minimum_h264_stream_mbps") or 3.0)
                 elif codec in {"h265", "hevc"}:
                     minimum_stream = float(config.get("minimum_hevc_stream_mbps") or 2.5)
                 else:
@@ -569,6 +675,10 @@ def _probe_current(
         include_metadata=bool(profile["current_metadata"]),
     )
     row["channel_key"] = channel_key
+    if (profile['current_metadata'] and not row.get('deep_checked')
+            and row.get('observed_status') in {'GOOD', 'DEGRADED'}):
+        row['observed_status'] = row['status'] = 'UNKNOWN'
+        row['error'] = row.get('error') or 'quality_not_verified'
     if url in feedback_urls(feedback, "bad"):
         row["observed_status"] = row["status"] = "DEGRADED"
         row["error"] = "viewer_confirmed_bad_route"
@@ -606,12 +716,13 @@ def _valid_sha(value: object) -> str:
     return text if re.fullmatch(r"[0-9a-f]{64}", text) else hashlib.sha256(b"").hexdigest()
 
 
-def run(
+def _run(
     config: dict,
     *,
     run_kind: str = "primary-0200",
     now_epoch: float | None = None,
     requested_mode: str | None = None,
+    trial: bool = False,
 ) -> tuple[dict, dict]:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
     started = time.monotonic()
@@ -619,7 +730,16 @@ def run(
     state_path = output_dir / "state.json"
     backup_path = output_dir / "qualified-backups.json"
     previous_state = load_json(state_path)
+    if not trial and config.get('trial_phase', 'full') != 'full':
+        raise RuntimeError('TRIAL_PHASE_INVALID')
+    phase = str(config.get('trial_phase' if trial else 'batch_phase') or 'full')
+    if phase not in {'full', 'candidates', 'final'} or (phase != 'full' and run_kind != 'primary-0200'):
+        raise RuntimeError('TRIAL_PHASE_INVALID')
+    if run_kind == 'peak-2000' and not in_peak(now_epoch):
+        raise RuntimeError('PEAK_WINDOW_CLOSED')
     profile = run_profile(run_kind, config)
+    if phase == 'final':
+        profile['scan_candidates'] = False
     # Compatibility for pre-migration unit tests and explicit manual shadows.
     # Scheduled execution never passes requested_mode and has no 72-hour state.
     if requested_mode in {"light", "deep"}:
@@ -630,13 +750,12 @@ def run(
             else int(config.get("primary_sample_bytes") or config.get("light_sample_bytes") or LIGHT_SAMPLE_BYTES)
         )
         profile["scan_candidates"] = False
-    resources = system_resources()
-    blocked = resource_guard(resources, config)
+    blocked, resources = resource_check(config)
     if blocked:
         raise RuntimeError(f"RESOURCE_GUARD:{blocked}")
     timezone_guard(config, now_epoch)
-    route_context = str(config.get("route_context") or ROUTE_CONTEXT)
-    if route_context != ROUTE_CONTEXT:
+    route_context = TRIAL_ROUTE_CONTEXT if trial else str(config.get("route_context") or ROUTE_CONTEXT)
+    if not trial and route_context != ROUTE_CONTEXT:
         raise RuntimeError("ROUTE_CONTEXT_UNVERIFIED")
 
     playlist_url = str(config.get("playlist_url") or DEFAULT_PLAYLIST)
@@ -644,9 +763,38 @@ def run(
     entries = parse_playlist(playlist_bytes)
     maximum_runtime = min(float(config.get("maximum_runtime_s") or 1200), 1200)
     config = dict(config)
+    if trial:
+        config['actionable'] = False
+    resource_stop = ''
+
+    def budget_available():
+        nonlocal resource_stop
+        if resource_stop or time.monotonic() - started >= maximum_runtime:
+            return False
+        if config.get('sample_actual_resources'):
+            resource_stop, sample = resource_check(config)
+            resources.update(sample)
+            if resource_stop:
+                resources['stop_reason'] = resource_stop
+                print('RESOURCE_STOP: ' + resource_stop, flush=True)
+                return False
+        return time.monotonic() - started < maximum_runtime
+
+    def progress(message):
+        if config.get('progress_log'):
+            print(message, flush=True)
     feedback, feedback_state, feedback_sha = load_home_feedback(config, output_dir)
     config["home_feedback"] = feedback
     veto_urls = feedback_urls(feedback, "bad")
+    bad_host_urls = {}
+    for url in veto_urls:
+        host = (urllib.parse.urlsplit(url).hostname or '').casefold()
+        if host:
+            bad_host_urls.setdefault(host, set()).add(url)
+    veto_hosts = {host for host, urls in bad_host_urls.items() if len(urls) >= 2}
+    def candidate_vetoed(url):
+        return (url in veto_urls or (urllib.parse.urlsplit(url).hostname or '').casefold() in veto_hosts
+                or any(item['url'] == url for item in peak_failures.values()))
     formal_rows: list[tuple[str, str, str]] = []
     formal_keys: set[str] = set()
     for playlist_name, url in entries:
@@ -656,24 +804,55 @@ def run(
         formal_keys.add(key)
         formal_rows.append((key, canonical_name(key), url))
 
-    # Every formal route gets its first attempt before any retry or candidate
-    # work.  This makes the current household picture the run's top priority.
-    attempts_by_key: dict[str, list[dict]] = {}
-    for key, name, url in formal_rows:
-        if time.monotonic() - started >= maximum_runtime:
-            attempts_by_key[key] = [_runtime_unknown(name, url, key, minimum_height(name, config))]
-            continue
-        attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
+    tv_binding = None
+    if trial:
+        tv_bytes, _tv_final, _ = fetch_playlist('https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u')
+        tv_routes = {(station_key(name), url) for name, url in parse_playlist(tv_bytes)}
+        if any((key, url) not in tv_routes for key, _name, url in formal_rows):
+            raise RuntimeError('TV_CORE_ROUTE_BINDING_CHANGED')
+        tv_binding = hashlib.sha256(tv_bytes).hexdigest()
 
-    # A non-GOOD first attempt is never enough to replace a route.  Confirm it
-    # once more in the same home run; no arbitrary channel-count limit applies.
+    # Queue-draining trial batches reserve their entire stream budget for
+    # candidates. Deferred formal rows are explicitly UNKNOWN, never cached GOOD.
+    cycle = str(config.get('batch_cycle_id') or '')
+    checkpoints = dict(previous_state.get('current_checkpoints') or {})
+    checkpoint = checkpoints.get(cycle, {}) if cycle else {}
+    if checkpoint.get('formal_sha') != hashlib.sha256(playlist_bytes).hexdigest():
+        checkpoint = {}
+    cached_attempts = checkpoint.get('attempts', {})
+    cached_times = checkpoint.get('times', {})
+    attempts_by_key: dict[str, list[dict]] = {}
+    measured_times = {}
+    current_pending = set()
+    for key, name, url in formal_rows:
+        cached = cached_attempts.get(key, [])
+        age = now_epoch - float(cached_times.get(key, 0))
+        if cycle and phase != 'candidates' and cached and 0 <= age < 6 * 3600 and cached[0].get('url') == url:
+            attempts_by_key[key] = cached
+            measured_times[key] = cached_times[key]
+            continue
+        if phase == 'candidates' or not budget_available():
+            row = _runtime_unknown(name, url, key, minimum_height(name, config))
+            if phase == 'candidates':
+                row['error'] = 'formal_check_deferred_until_queue_finished'
+            attempts_by_key[key] = [row]
+            current_pending.add(key)
+            continue
+        progress('CURRENT: ' + name)
+        attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
+        measured_times[key] = now_epoch
+
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
-        if probe_is_good(attempts[0]) or time.monotonic() - started >= maximum_runtime:
+        if key in current_pending or probe_is_good(attempts[0]) or len(attempts) >= 2:
             continue
+        if not budget_available():
+            current_pending.add(key)
+            continue
+        progress('RECHECK: ' + name)
         attempts.append(_probe_current(name, url, key, profile=profile, config=config))
 
-    circuit = mass_failure_circuit(
+    circuit = phase != 'candidates' and mass_failure_circuit(
         attempts_by_key,
         minimum_channels=int(config.get("circuit_breaker_min_unknown") or 12),
         failure_ratio=float(config.get("circuit_breaker_unknown_ratio") or 0.35),
@@ -682,9 +861,22 @@ def run(
         current_result(name, url, attempts_by_key[key], circuit_open=circuit)
         for key, name, url in formal_rows
     ]
+    for row in current_results:
+        row['observed_epoch'] = measured_times.get(row['channel_key'])
+    peak_failures = previous_state.get('peak_failures', {})
+    if phase != 'candidates':
+        current_results, peak_failures = apply_peak_policy(current_results, peak_failures,
+            run_kind=run_kind, now_epoch=now_epoch, circuit_open=circuit)
     current_urls = {key: url for key, _name, url in formal_rows}
 
     state = dict(previous_state)
+    state['peak_failures'] = peak_failures
+    if cycle and phase != 'candidates':
+        checkpoints[cycle] = dict(formal_sha=hashlib.sha256(playlist_bytes).hexdigest(),
+            attempts={k: attempts_by_key[k] for k in measured_times}, times=measured_times,
+            updated=now_epoch)
+        state['current_checkpoints'] = dict(sorted(checkpoints.items(),
+            key=lambda item: item[1].get('updated', 0))[-6:])
     state.update({
         "version": 2,
         "last_run_utc": utc_text(now_epoch),
@@ -702,6 +894,7 @@ def run(
                 expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
                 now_epoch=now_epoch,
                 allow_expired=True,
+                trial=trial,
             )
     except Exception:
         existing_pool = None
@@ -723,9 +916,11 @@ def run(
     bad_keys = {str(row["channel_key"]) for row in current_results if row["status"] == "BAD"}
     if existing_pool:
         for backup in list(existing_pool["backups"]):
-            if backup["url"] in veto_urls or backup.get("request_options"):
+            if candidate_vetoed(backup["url"]) or backup.get("request_options"):
                 existing_pool = without_backup(existing_pool, backup["candidate_id"])
 
+    saved_switches = checkpoint.get('switches', {}) if cycle else {}
+    completed_switches = {}
     # Repair evidence comes first. 13:00 only reads existing primary evidence;
     # it never requests a backup URL, even when a replacement is needed.
     if not circuit:
@@ -733,16 +928,23 @@ def run(
             for backup in eligible_backups(existing_pool, key, now_epoch=now_epoch):
                 identity = str(backup["candidate_id"])
                 if run_kind == "recheck-1300":
-                    if backup.get("verified_run_kind") != "primary-0200":
+                    if backup.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
                         continue
                     candidate_report_by_id[identity] = cached_backup_result(backup)
                     choices[key] = identity
                     break
-                if time.monotonic() - started >= maximum_runtime:
+                cached_switch = saved_switches.get(identity)
+                if cached_switch and 0 <= now_epoch - cached_switch['epoch'] < 3600:
+                    candidate_report_by_id[identity] = cached_switch['evidence']
+                    completed_switches[identity] = cached_switch
+                    choices[key] = identity
+                    break
+                if not budget_available():
                     budget_keys.add(key)
                     break
                 attempted_keys.add(key)
                 attempted_ids.add(identity)
+                progress('BACKUP_RECHECK: ' + canonical_name(key))
                 raw = probe_route(
                     canonical_name(key), backup["url"], floor=minimum_height(canonical_name(key), config),
                     config=config, sample_limit=int(profile["candidate_sample_bytes"]), include_metadata=True,
@@ -752,11 +954,15 @@ def run(
                 candidate_report_by_id[identity] = evidence
                 if candidate_is_qualified(raw):
                     choices[key] = identity
+                    completed_switches[identity] = dict(epoch=now_epoch, evidence=evidence)
                     newly_qualified.append((backup, raw))
                     break
                 existing_pool = without_backup(existing_pool, identity)
 
     if profile["scan_candidates"]:
+        recovered = recover_metadata_unknown(previous_state)
+        bitrate_recovered = recover_lower_h264_threshold(
+            previous_state, float(config.get("minimum_h264_stream_mbps") or 3.0))
         incoming = backup_refresh_candidates(
             existing_pool,
             now_epoch=now_epoch,
@@ -767,11 +973,23 @@ def run(
             candidate_manifest_state = "disabled"
         else:
             try:
-                manifest, candidate_bytes, candidate_final = fetch_candidate_manifest(
-                    candidate_url,
-                    now_epoch=now_epoch,
-                    max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48),
-                )
+                if trial and config.get('trial_candidate_file'):
+                    local_path = Path(config['trial_candidate_file'])
+                    reader = gzip.open if local_path.suffix == '.gz' else open
+                    with reader(local_path, 'rb') as handle:
+                        candidate_bytes = handle.read(CANDIDATE_MANIFEST_LIMIT + 1)
+                    if len(candidate_bytes) > CANDIDATE_MANIFEST_LIMIT:
+                        raise RuntimeError('candidate_manifest_too_large')
+                    manifest = json.loads(candidate_bytes)
+                    validate_candidate_manifest(manifest, now_epoch=now_epoch,
+                        max_age_hours=float(config.get('candidate_manifest_max_age_hours') or 48))
+                    candidate_final = candidate_url
+                else:
+                    manifest, candidate_bytes, candidate_final = fetch_candidate_manifest(
+                        candidate_url,
+                        now_epoch=now_epoch,
+                        max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48),
+                    )
                 formal = manifest["formal_playlist"]
                 formal_sha = hashlib.sha256(playlist_bytes).hexdigest()
                 if formal["sha256"] != formal_sha or int(formal["channel_count"]) != len(entries):
@@ -782,7 +1000,8 @@ def run(
                     "channel_count": int(manifest["candidate_count"]),
                 }
                 candidate_manifest_sha = candidate_playlist["sha256"]
-                for value in manifest["candidates"]:
+                values = manifest['candidates'] if candidate_manifest_sha != previous_state.get('last_candidate_manifest_sha256') else []
+                for value in values:
                     candidate = dict(value)
                     candidate["_queue_priority"] = 1
                     candidate["source_manifest_sha256"] = candidate_manifest_sha
@@ -795,9 +1014,34 @@ def run(
                 # the formal home-health pass or local backup refresh fail.
                 candidate_manifest_state = f"rejected:{type(exc).__name__}:{str(exc)[:220]}"
 
+        # Import the legacy pool once as unverified candidates. Keep the main
+        # manifest digest intact so completed historical scans are not replayed.
+        supplemental_file = config.get("trial_supplemental_candidate_file")
+        if trial and supplemental_file:
+            supplemental_bytes = Path(supplemental_file).read_bytes()
+            supplemental_sha = hashlib.sha256(supplemental_bytes).hexdigest()
+            if supplemental_sha != previous_state.get("legacy_candidate_manifest_sha256"):
+                supplemental = json.loads(supplemental_bytes)
+                validate_candidate_manifest(supplemental, now_epoch=now_epoch,
+                    max_age_hours=float(config.get("candidate_manifest_max_age_hours") or 48))
+                binding = supplemental["formal_playlist"]
+                if (binding["sha256"] != hashlib.sha256(playlist_bytes).hexdigest()
+                        or int(binding["channel_count"]) != len(entries)):
+                    raise RuntimeError("legacy_candidate_manifest_formal_playlist_changed")
+                known_ids = set((previous_state.get("candidate_observations") or {}).keys())
+                known_ids.update(row["candidate_id"] for row in (previous_state.get("candidate_queue") or []))
+                additions = []
+                for value in supplemental["candidates"]:
+                    if value["candidate_id"] not in known_ids:
+                        additions.append(dict(value, _queue_priority=1,
+                            source_manifest_sha256=supplemental_sha))
+                incoming.extend(additions)
+                state["legacy_candidate_manifest_sha256"] = supplemental_sha
+                progress("LEGACY_CANDIDATES_ADDED: " + str(len(additions)))
+
         queue = merge_candidate_queue(
             previous_state.get("candidate_queue"),
-            incoming,
+            incoming + recovered + bitrate_recovered,
             current_urls,
         )
         rounds = {}
@@ -814,19 +1058,24 @@ def run(
             str(row.get("_expires_utc", "9999")),
             str(row["channel_key"]), str(row["candidate_id"]),
         ))
+        if recovered:
+            progress("METADATA_UNKNOWN_REQUEUED: " + str(len(recovered)))
+        if bitrate_recovered:
+            progress("H264_THRESHOLD_REQUEUED: " + str(len(bitrate_recovered)))
         remaining: list[dict] = []
         observations = dict(previous_state.get("candidate_observations") or {}) if isinstance(
             previous_state.get("candidate_observations"), dict
         ) else {}
         max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
         for candidate in queue:
-            if candidate["candidate_id"] in attempted_ids or candidate["url"] in veto_urls or candidate.get("request_options"):
+            if candidate["candidate_id"] in attempted_ids or candidate_vetoed(candidate["url"]) or candidate.get("request_options"):
                 continue
-            if circuit or time.monotonic() - started >= maximum_runtime:
+            if circuit or not budget_available():
                 remaining.append(candidate)
                 continue
             key = str(candidate["channel_key"])
             name = canonical_name(key)
+            progress('CANDIDATE: ' + name + ' ' + str(candidate['candidate_id'])[:12])
             row = probe_route(
                 name,
                 str(candidate["url"]),
@@ -875,6 +1124,9 @@ def run(
         state["candidate_queue"] = remaining
         state["candidate_observations"] = observations
 
+    if cycle and phase != 'candidates':
+        state['current_checkpoints'][cycle]['switches'] = completed_switches
+
     pool = update_backup_pool(
         existing_pool,
         newly_qualified,
@@ -884,6 +1136,8 @@ def run(
         candidate_manifest_sha256=candidate_manifest_sha,
         current_urls=current_urls,
         ttl_hours=float(config.get("qualified_backup_ttl_hours") or 36),
+        run_kind=run_kind,
+        trial=trial,
     )
 
     decisions: list[dict] = []
@@ -960,7 +1214,7 @@ def run(
         "circuit_breaker_open": bool(circuit),
     }
     report = {
-        "schema": REPORT_SCHEMA,
+        "schema": TRIAL_REPORT_SCHEMA if trial else REPORT_SCHEMA,
         "probe_id": str(config.get("probe_id") or "home-ac86u"),
         "generated_utc": utc_text(now_epoch),
         "run_status": "COMPLETED",
@@ -974,14 +1228,21 @@ def run(
             "channel_count": len(formal_rows),
         },
         "baseline": {
-            "home_network_ok": not circuit,
+            "home_network_ok": phase != "candidates" and not circuit,
             "github_reachable": True,
-            "route_verified": True,
+            "route_verified": not trial,
             "mass_failure_circuit_breaker": bool(circuit),
         },
         "candidate_playlist": candidate_playlist,
         "home_feedback_sha256": feedback_sha,
         "policy": {
+            "trial_phase": phase,
+            "formal_check_deferred": phase == 'candidates',
+            "final_review_complete": phase == 'final' and not current_pending and not budget_keys,
+            "batch_complete": not current_pending and not budget_keys,
+            "peak_failure_precedence": True,
+            "trial_tv_binding_sha256": tv_binding,
+            "candidate_manifest_origin": "staged-file" if trial and config.get('trial_candidate_file') else "network",
             "auto_replace_formal_routes": False,
             "mass_failure_circuit_breaker": True,
             "single_threaded": True,
@@ -1005,11 +1266,13 @@ def run(
         pool,
         expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
         now_epoch=now_epoch,
+        trial=trial,
     )
     validate_home_report_v2(
         report,
         expected_probe_id=str(config.get("probe_id") or "home-ac86u"),
         now_epoch=now_epoch,
+        trial=trial,
     )
     atomic_json(backup_path, pool)
     atomic_json(output_dir / "latest.json", report)
@@ -1017,15 +1280,35 @@ def run(
     return report, state
 
 
+def run(config, **kwargs):
+    if kwargs.get('trial'):
+        config = dict(config, actionable=False, github_push_enabled=False,
+                      output_dir=str(Path(config.get('output_dir') or '/opt/var/lib/iptv-home-probe') / 'pipeline-trial'))
+    with transport_context(config) as transport:
+        report, state = _run(config, **kwargs)
+    if kwargs.get('trial') and transport is not None:
+        report['transport'] = dict(IPv4=transport.dialer.ipv4, IPv6=transport.dialer.ipv6,
+            dns_queries=transport.dialer.resolver.diagnostics(), temporary_rule_cleaned=not transport.installed)
+        atomic_json(Path(config['output_dir']) / 'latest.json', report)
+    return report, state
+
+
 def main() -> int:
+    def stop(_signum, _frame):
+        raise InterruptedError("home probe interrupted")
+    for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+        signal.signal(signum, stop)
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
     parser.add_argument("--run-kind", choices=tuple(sorted(RUN_KINDS)), default="primary-0200")
+    parser.add_argument("--batch-phase", choices=("full", "candidates", "final"), default="full")
+    parser.add_argument("--batch-cycle-id", default="")
     parser.add_argument("--mode", choices=("light", "deep"), default=None, help=argparse.SUPPRESS)
     parser.add_argument("--now-epoch", type=float, default=None)
     args = parser.parse_args()
     try:
         config = load_json(Path(args.config))
+        config.update(batch_phase=args.batch_phase, batch_cycle_id=args.batch_cycle_id)
         report, _ = run(
             config,
             run_kind=args.run_kind,

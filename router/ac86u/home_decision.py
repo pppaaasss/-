@@ -8,6 +8,8 @@ from datetime import datetime, timedelta, timezone
 try:
     from .home_contract import (
         BACKUP_SCHEMA,
+        TRIAL_BACKUP_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         ROUTE_CONTEXT,
         canonical_name,
         url_sha256,
@@ -17,6 +19,8 @@ try:
 except ImportError:  # Installed beside this file on the router.
     from home_contract import (  # type: ignore
         BACKUP_SCHEMA,
+        TRIAL_BACKUP_SCHEMA,
+        TRIAL_ROUTE_CONTEXT,
         ROUTE_CONTEXT,
         canonical_name,
         url_sha256,
@@ -66,11 +70,19 @@ def mass_failure_circuit(
     minimum_channels: int,
     failure_ratio: float,
 ) -> bool:
-    """Stop all replacement decisions when one run looks globally unhealthy."""
+    """Detect widespread failed/unknown transfers, not per-route quality loss.
+
+    Two completed samples prove this route was reachable even when its speed,
+    resolution or bitrate is inadequate. Those failures still require repair;
+    counting them as an outage prevents the very backup search they need.
+    """
     if not attempts_by_key:
         return True
     failed = sum(
-        not any(probe_is_good(attempt) for attempt in attempts)
+        not any(
+            attempt.get("observed_status") in {"GOOD", "DEGRADED"}
+            and int(attempt.get("sample_count") or 0) == 2
+            for attempt in attempts)
         for attempts in attempts_by_key.values()
     )
     return failed >= max(1, int(minimum_channels)) and failed / len(attempts_by_key) >= float(failure_ratio)
@@ -86,11 +98,11 @@ def current_result(name: str, url: str, attempts: list[dict], *, circuit_open: b
     if not attempts:
         raise RuntimeError("current route has no probe attempts")
     first = attempts[0]
-    if circuit_open:
-        status = "UNKNOWN"
-        chosen = first
-    elif probe_is_good(first):
+    if probe_is_good(first):
         status = "GOOD"
+        chosen = first
+    elif circuit_open:
+        status = "UNKNOWN"
         chosen = first
     elif len(attempts) >= 2 and probe_is_good(attempts[1]):
         status = "UNKNOWN"
@@ -126,7 +138,11 @@ def candidate_result(
 ) -> dict:
     if candidate_is_qualified(result):
         qualification = "QUALIFIED"
-    elif result.get("observed_status") == "UNKNOWN":
+    elif result.get("observed_status") == "UNKNOWN" or (
+        result.get("observed_status") == "GOOD" and (
+            result.get("deep_checked") is not True or int(result.get("sample_count") or 0) != 2
+        )
+    ):
         qualification = "UNKNOWN"
     else:
         qualification = "REJECTED"
@@ -176,12 +192,13 @@ def update_backup_pool(
     current_urls: dict[str, str],
     ttl_hours: float,
     run_kind: str = "primary-0200",
+    trial: bool = False,
 ) -> dict:
     now = datetime.fromtimestamp(float(now_epoch), tz=UTC)
     kept: dict[str, dict] = {}
     if isinstance(existing, dict):
         try:
-            validate_backup_pool(existing, expected_probe_id=probe_id, now_epoch=now_epoch, allow_expired=True)
+            validate_backup_pool(existing, expected_probe_id=probe_id, now_epoch=now_epoch, allow_expired=True, trial=trial)
             for row in existing.get("backups") or []:
                 expires = _parse_utc(str(row["expires_utc"]))
                 key = str(row["channel_key"])
@@ -230,16 +247,16 @@ def update_backup_pool(
         backups.append(row)
         per_channel[key] = per_channel.get(key, 0) + 1
     pool = {
-        "schema": BACKUP_SCHEMA,
+        "schema": TRIAL_BACKUP_SCHEMA if trial else BACKUP_SCHEMA,
         "probe_id": probe_id,
         "generated_utc": now_text,
-        "route_context": ROUTE_CONTEXT,
+        "route_context": TRIAL_ROUTE_CONTEXT if trial else ROUTE_CONTEXT,
         "formal_playlist_sha256": formal_playlist_sha256,
         "candidate_manifest_sha256": candidate_manifest_sha256,
         "backup_count": len(backups),
         "backups": backups,
     }
-    validate_backup_pool(pool, expected_probe_id=probe_id, now_epoch=now_epoch)
+    validate_backup_pool(pool, expected_probe_id=probe_id, now_epoch=now_epoch, trial=trial)
     return pool
 
 

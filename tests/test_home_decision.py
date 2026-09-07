@@ -54,6 +54,26 @@ def candidate(suffix="one", *, channel_key="cctv1"):
 
 
 class HomeDecisionTests(unittest.TestCase):
+    def test_household_53_route_mix_does_not_block_backup_search(self):
+        good = [raw_probe() for _ in range(22)]
+        slow = [raw_probe('DEGRADED', speed=4.8) for _ in range(18)]
+        low_bitrate = [dict(raw_probe('DEGRADED'), stream_mbps=2.0) for _ in range(12)]
+        missing = [dict(raw_probe('UNAVAILABLE'), sample_count=0)]
+        attempts = {str(i): [row, row] for i, row in enumerate(good + slow + low_bitrate + missing)}
+        self.assertFalse(mass_failure_circuit(attempts, minimum_channels=12, failure_ratio=.35))
+        for i in range(22, 53):
+            row = current_result('CCTV-1', 'https://current.test/1', attempts[str(i)], circuit_open=False)
+            self.assertEqual('BAD', row['status'])
+
+    def test_network_circuit_keeps_measured_good_and_blocks_unavailable(self):
+        good = current_result('CCTV-1', 'https://current.test/1', [raw_probe()], circuit_open=True)
+        self.assertEqual('GOOD', good['status'])
+        failed = dict(raw_probe('UNAVAILABLE'), sample_count=0)
+        attempts = {str(i): [failed, failed] for i in range(20)}
+        self.assertTrue(mass_failure_circuit(attempts, minimum_channels=12, failure_ratio=.35))
+        row = current_result('CCTV-1', 'https://current.test/1', [failed, failed], circuit_open=True)
+        self.assertEqual('UNKNOWN', row['status'])
+
     def test_current_route_requires_two_non_good_attempts(self):
         url = "https://current.test/cctv1.m3u8"
         good = current_result("CCTV-1", url, [raw_probe()], circuit_open=False)
@@ -160,6 +180,12 @@ class HomeDecisionTests(unittest.TestCase):
         self.assertFalse(qualified["switch_reverified"])
         self.assertEqual("REJECTED", rejected["qualification"])
         self.assertFalse(rejected["switch_reverified"])
+
+    def test_missing_metadata_is_unknown_but_measured_quality_failure_is_rejected(self):
+        for observed, expected in [('GOOD', 'UNKNOWN'), ('DEGRADED', 'REJECTED'), ('UNAVAILABLE', 'REJECTED')]:
+            row = candidate_result(candidate(), raw_probe(observed, deep=False),
+                purpose='daily-qualification', switch_reverified=False)
+            self.assertEqual(expected, row['qualification'])
 
     def test_pool_is_bounded_per_channel_and_expiring_rows_are_refreshed(self):
         items = [candidate(f"backup-{index}") for index in range(MAX_BACKUPS_PER_CHANNEL + 3)]

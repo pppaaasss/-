@@ -33,7 +33,7 @@ CONFIG_SCHEMA = "iptv-home-publisher-config/v1"
 RECEIPT_SCHEMA = "iptv-home-publication/v1"
 PRODUCTION_FILES = ("tv-easy.m3u", "tv.m3u", "tv-all.m3u", "tv-core.m3u")
 REPORT_NAME_RE = re.compile(
-    r"^(?P<stamp>[0-9]{8}T[0-9]{6}Z)-(?:primary-0200|recheck-1300)-[0-9a-f]{16}\.json$"
+    r"^(?P<stamp>[0-9]{8}T[0-9]{6}Z)-(?:primary-0200|recheck-1300|peak-2000)-[0-9a-f]{16}\.json$"
 )
 UTC = timezone.utc
 

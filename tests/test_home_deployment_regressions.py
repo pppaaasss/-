@@ -169,11 +169,15 @@ class DeploymentRegressions(unittest.TestCase):
             self.assertEqual(0,process.returncode,process.stdout+process.stderr)
             self.assertTrue((opt/'share/iptv-home-probe/activate.sh').is_file())
             cfg=json.loads((opt/'etc/iptv-home-probe.json').read_text())
+            self.assertRegex(cfg['probe_id'], r'^home-ac86u-[0-9a-f]{12}$')
             self.assertFalse(cfg['actionable']); self.assertFalse(cfg['github_push_enabled'])
             self.assertEqual(1200,cfg['maximum_runtime_s'])
             self.assertIn('Existing ShellClash startup remains',(hooks/'services-start').read_text())
             self.assertIn('0 2 * * *',(root/'cron.log').read_text())
             self.assertIn('0 13 * * *',(root/'cron.log').read_text())
+            repeated=subprocess.run(['sh',str(installer)],env=env,capture_output=True,text=True,timeout=30)
+            self.assertEqual(0,repeated.returncode,repeated.stdout+repeated.stderr)
+            self.assertEqual(cfg['probe_id'],json.loads((opt/'etc/iptv-home-probe.json').read_text())['probe_id'])
 
 
 class PublicationRegressions(unittest.TestCase):

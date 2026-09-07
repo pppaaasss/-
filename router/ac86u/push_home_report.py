@@ -66,7 +66,7 @@ def report_filename(report: dict, raw: bytes) -> str:
     stamp = re.sub(r"[^0-9TZ]", "", str(report["generated_utc"]))
     run_kind = str(report["run_kind"])
     digest = hashlib.sha256(raw).hexdigest()
-    if not stamp or run_kind not in {"primary-0200", "recheck-1300"}:
+    if not stamp or run_kind not in {"primary-0200", "recheck-1300", "peak-2000"}:
         raise RuntimeError("report timestamp or run kind is invalid")
     return f"{stamp}-{run_kind}-{digest[:16]}.json"
 
