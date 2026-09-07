@@ -48,8 +48,8 @@ def apply(revision, schedule_only=False):
         try:
             fcntl.flock(upgrade_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            print('An upgrade is already running.', flush=True)
-            return
+            print('Waiting for the preceding upgrade to finish before applying this version.', flush=True)
+            fcntl.flock(upgrade_lock, fcntl.LOCK_EX)
         config = json.loads(CONFIG.read_text())
         with tempfile.TemporaryDirectory(prefix='background-stage-', dir=str(ROOT)) as temp:
             stage = Path(temp)
