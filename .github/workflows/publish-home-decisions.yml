@@ -1,8 +1,13 @@
 name: Publish home-qualified IPTV decisions
 
 on:
+  push:
+    branches: [master]
+    paths: ['config/home-publisher.json', '.github/workflows/publish-home-decisions.yml']
   workflow_dispatch:
   schedule:
+    # Report polling only: this does not start any home stream probes.
+    - cron: '*/15 * * * *'
     # 02:25 and 13:25 Beijing time, after the two AC86U checks.
     - cron: '25 18 * * *'
     - cron: '25 5 * * *'

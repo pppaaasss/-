@@ -28,6 +28,7 @@ import urllib.request
 from pathlib import Path
 
 try:
+    from .candidate_history import prepare_history, unseen_candidates
     from .peak_policy import apply_peak_policy, in_peak
     from .home_contract import (
         ContractError,
@@ -54,6 +55,7 @@ try:
         without_backup,
     )
 except ImportError:  # Installed beside this file by the Entware installer.
+    from candidate_history import prepare_history, unseen_candidates
     from peak_policy import apply_peak_policy, in_peak
     from home_contract import (  # type: ignore
         ContractError,
@@ -736,6 +738,9 @@ def _run(
     state_path = output_dir / "state.json"
     backup_path = output_dir / "qualified-backups.json"
     previous_state = load_json(state_path)
+    if not trial:
+        previous_state = prepare_history(previous_state, output_dir,
+            str(config.get("probe_id") or "home-ac86u"), now_epoch)
     if not trial and config.get('trial_phase', 'full') != 'full':
         raise RuntimeError('TRIAL_PHASE_INVALID')
     phase = str(config.get('trial_phase' if trial else 'batch_phase') or 'full')
@@ -825,6 +830,12 @@ def _run(
     checkpoint = checkpoints.get(cycle, {}) if cycle else {}
     if checkpoint.get('formal_sha') != hashlib.sha256(playlist_bytes).hexdigest():
         checkpoint = {}
+    if cycle and phase == 'final' and not checkpoint:
+        # Reuse the recent household pass (for example 13:00) when background
+        # discovery resumes. Original per-channel timestamps remain unchanged.
+        matching = [value for value in checkpoints.values()
+                    if value.get('formal_sha') == hashlib.sha256(playlist_bytes).hexdigest()]
+        checkpoint = max(matching, key=lambda value: value.get('updated', 0), default={})
     cached_attempts = checkpoint.get('attempts', {})
     cached_times = checkpoint.get('times', {})
     attempts_by_key: dict[str, list[dict]] = {}
@@ -925,13 +936,25 @@ def _run(
             if candidate_vetoed(backup["url"]) or backup.get("request_options"):
                 existing_pool = without_backup(existing_pool, backup["candidate_id"])
 
+    archive = dict(state.get('backup_archive') or {})
+    if not trial:
+        for backup in (existing_pool or {}).get('backups', []):
+            archive[backup['candidate_id']] = dict(backup)
+
     saved_switches = checkpoint.get('switches', {}) if cycle else {}
     completed_switches = {}
     # Repair evidence comes first. 13:00 only reads existing primary evidence;
     # it never requests a backup URL, even when a replacement is needed.
     if not circuit:
         for key in sorted(bad_keys):
-            for backup in eligible_backups(existing_pool, key, now_epoch=now_epoch):
+            repairs = eligible_backups(existing_pool, key, now_epoch=now_epoch)
+            if not trial and run_kind != 'recheck-1300':
+                known = {row['candidate_id'] for row in repairs}
+                repairs.extend(row for identity, row in sorted(archive.items())
+                    if identity not in known and row['channel_key'] == key
+                    and row['url'] != current_urls.get(key)
+                    and not candidate_vetoed(row['url']) and not row.get('request_options'))
+            for backup in repairs:
                 identity = str(backup["candidate_id"])
                 if run_kind == "recheck-1300":
                     if backup.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
@@ -964,16 +987,17 @@ def _run(
                     newly_qualified.append((backup, raw))
                     break
                 existing_pool = without_backup(existing_pool, identity)
+                archive.pop(identity, None)
 
     if profile["scan_candidates"]:
-        recovered = recover_metadata_unknown(previous_state)
+        recovered = recover_metadata_unknown(previous_state) if trial else []
         bitrate_recovered = recover_lower_h264_threshold(
-            previous_state, float(config.get("minimum_h264_stream_mbps") or 3.0))
+            previous_state, float(config.get("minimum_h264_stream_mbps") or 3.0)) if trial else []
         incoming = backup_refresh_candidates(
             existing_pool,
             now_epoch=now_epoch,
             refresh_before_hours=float(config.get("backup_refresh_before_hours") or 18),
-        )
+        ) if trial else []
         candidate_url = str(config.get("candidate_manifest_url", DEFAULT_CANDIDATE_MANIFEST)).strip()
         if not candidate_url:
             candidate_manifest_state = "disabled"
@@ -1050,6 +1074,8 @@ def _run(
             incoming + recovered + bitrate_recovered,
             current_urls,
         )
+        if not trial:
+            queue = unseen_candidates(queue, set(previous_state.get("tested_candidate_ids") or []))
         rounds = {}
         per_channel = {}
         for candidate in queue:
@@ -1125,10 +1151,12 @@ def _run(
                 "last_checked_utc": utc_text(now_epoch),
                 "result": report_row,
             }
-            if qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
+            if trial and qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
                 remaining.append(candidate)
         state["candidate_queue"] = remaining
         state["candidate_observations"] = observations
+        if not trial:
+            state["tested_candidate_ids"] = sorted(set(state.get("tested_candidate_ids") or []) | set(observations))
 
     if cycle and phase != 'candidates':
         state['current_checkpoints'][cycle]['switches'] = completed_switches
@@ -1203,6 +1231,10 @@ def _run(
     state["last_run_kind"] = run_kind
     state["candidate_manifest_state"] = candidate_manifest_state
     state["qualified_backup_pool"] = pool
+    if not trial:
+        for backup in pool["backups"]:
+            archive[backup["candidate_id"]] = dict(backup)
+        state["backup_archive"] = archive
     runtime = round(time.monotonic() - started, 3)
     resources["runtime_s"] = runtime
     candidate_results = sorted(candidate_report_by_id.values(), key=lambda row: str(row["candidate_id"]))
