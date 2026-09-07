@@ -21,6 +21,35 @@ KINDS = ('primary-0200', 'recheck-1300', 'peak-2000')
 ZONE = timezone(timedelta(hours=8))
 
 
+def primary_window(epoch):
+    """Beijing 02:00 inclusive to 08:00 exclusive, independent of host timezone."""
+    local = datetime.fromtimestamp(epoch, ZONE)
+    start = local.replace(hour=2, minute=0, second=0, microsecond=0)
+    end = start.replace(hour=8)
+    opened = start <= local < end
+    next_start = start if local < start else start + timedelta(days=1)
+    return opened, end.timestamp(), next_start.timestamp()
+
+
+def defer_primary_jobs(root, epoch):
+    opened, _end, resume = primary_window(epoch)
+    if opened:
+        return
+    waiting = []
+    for path in (root / 'daily-jobs').glob('*.json'):
+        job = json.loads(path.read_text())
+        if job.get('kind') != KINDS[0] or job.get('state') == 'COMPLETE':
+            continue
+        if job.get('state') != 'WAITING_WINDOW' or job.get('retry_after') != resume:
+            job.update(state='WAITING_WINDOW', retry_after=resume)
+            atomic_json(path, job)
+        waiting.append(job)
+    if waiting:
+        job = min(waiting, key=lambda row: row['created'])
+        atomic_json(root / 'daily-status.json', dict(job,
+            reason='primary_window_0200_0800', resume_at=resume))
+
+
 def enqueue(root, kind, epoch):
     day = datetime.fromtimestamp(epoch, ZONE).strftime('%Y%m%d')
     directory = root / 'daily-jobs'
@@ -40,6 +69,8 @@ def next_job(root, epoch):
     for path in (root / 'daily-jobs').glob('*.json'):
         job = json.loads(path.read_text())
         if job['state'] == 'COMPLETE' or job.get('retry_after', 0) > epoch:
+            continue
+        if job['kind'] == KINDS[0] and not primary_window(epoch)[0]:
             continue
         if job['kind'] == 'peak-2000' and not in_peak(epoch):
             continue
@@ -93,7 +124,9 @@ def work(config_path):
             config = json.loads(config_path.read_text())
             if config.get('daily_worker_enabled') is not True:
                 return 0
-            selected = next_job(root, time.time())
+            now = time.time()
+            defer_primary_jobs(root, now)
+            selected = next_job(root, now)
             if selected is None:
                 # Retry the durable outbox without queuing a partial latest report.
                 pending = sorted((root / 'pending-reports').glob('*.json'))
@@ -116,6 +149,11 @@ def work(config_path):
             command = [sys.executable, '-E', '-s', '-u', str(base / 'home_probe.py'),
                        '--config', str(config_path), '--run-kind', job['kind'],
                        '--batch-phase', job['phase'], '--batch-cycle-id', job['id']]
+            if job['kind'] == KINDS[0]:
+                opened, deadline, _resume = primary_window(time.time())
+                if not opened:
+                    continue
+                command.extend(['--stop-at-epoch', str(deadline)])
             result = subprocess.run(command, env=clean_env())
             now = time.time()
             if result.returncode == 1 or result.returncode < 0:

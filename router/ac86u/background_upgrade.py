@@ -42,14 +42,14 @@ def download(url, target):
     raise RuntimeError('Download failed: ' + str(error))
 
 
-def apply(revision):
+def apply(revision, schedule_only=False):
     ROOT.mkdir(parents=True, exist_ok=True)
     with (ROOT/'background-upgrade.lock').open('a') as upgrade_lock:
         try:
             fcntl.flock(upgrade_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            print('An upgrade is already running.', flush=True)
-            return
+            print('Waiting for the preceding upgrade to finish before applying this version.', flush=True)
+            fcntl.flock(upgrade_lock, fcntl.LOCK_EX)
         config = json.loads(CONFIG.read_text())
         with tempfile.TemporaryDirectory(prefix='background-stage-', dir=str(ROOT)) as temp:
             stage = Path(temp)
@@ -57,15 +57,14 @@ def apply(revision):
                 download('https://raw.githubusercontent.com/pppaaasss/-/' + revision + '/router/ac86u/' + name, stage/name)
                 if name.endswith('.py'):
                     compile((stage/name).read_text(), name, 'exec')
-            download(ACK_URL, stage/'activation-report.json')
-            # Validate activation before pausing anything; use the actual already
-            # acknowledged full report, not a newer partial candidate batch.
             sys.path.insert(0, str(stage))
             sys.path.insert(1, str(BASE))
             from activate import set_actionable
-            preview = stage/'preview-config.json'
-            atomic_json(preview, config)
-            set_actionable(preview, enabled=True, report_path=stage/'activation-report.json')
+            if not schedule_only:
+                download(ACK_URL, stage/'activation-report.json')
+                preview = stage/'preview-config.json'
+                atomic_json(preview, config)
+                set_actionable(preview, enabled=True, report_path=stage/'activation-report.json')
             backup = ROOT/('before-background-' + time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()))
             backup.mkdir()
             shutil.copy2(CONFIG, backup/'config.json')
@@ -90,11 +89,12 @@ def apply(revision):
                         shutil.copy2(stage/name, target)
                         os.chmod(target, 0o755)
                         target.replace(BASE/name)
-                    ack = ROOT/'activation-report.json'
-                    shutil.copy2(stage/'activation-report.json', ack)
-                    # Re-read configuration so a concurrent intentional edit is
-                    # preserved, and validate the acknowledged report again.
-                    config = set_actionable(CONFIG, enabled=True, report_path=ack)
+                    if schedule_only:
+                        config = json.loads(CONFIG.read_text())
+                    else:
+                        ack = ROOT/'activation-report.json'
+                        shutil.copy2(stage/'activation-report.json', ack)
+                        config = set_actionable(CONFIG, enabled=True, report_path=ack)
                     from candidate_history import prepare_history
                     state_path = ROOT/'state.json'
                     state = json.loads(state_path.read_text()) if state_path.exists() else {}
@@ -127,13 +127,14 @@ def apply(revision):
         subprocess.Popen(['/bin/sh', str(BASE/'run.sh'), '--resume'],
                          stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                          start_new_session=True, env=env)
-    print('BACKGROUND_READY: automatic publishing enabled; candidate discovery continues in the background.', flush=True)
+    print('BACKGROUND_READY: primary discovery runs 02:00-08:00 Beijing; remaining work resumes the next day.', flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--launch')
     parser.add_argument('--apply')
+    parser.add_argument('--schedule-only', action='store_true', help='Preserve existing activation; update scheduling without re-pairing')
     args = parser.parse_args()
     revision = args.launch or args.apply or ''
     if not re.fullmatch('[0-9a-f]{40}', revision):
@@ -142,13 +143,13 @@ def main():
         ROOT.mkdir(parents=True, exist_ok=True)
         env = {k:v for k,v in os.environ.items() if k not in ('LD_LIBRARY_PATH','LD_PRELOAD','PYTHONHOME','PYTHONPATH')}
         with (ROOT/'background-upgrade.log').open('ab') as log:
-            subprocess.Popen([sys.executable, '-I', '-X', 'utf8', '-u', str(Path(__file__).resolve()), '--apply', revision],
+            subprocess.Popen([sys.executable, '-I', '-X', 'utf8', '-u', str(Path(__file__).resolve()), '--apply', revision] + (['--schedule-only'] if args.schedule_only else []),
                              stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                              start_new_session=True, env=env)
-        print('后台更新已启动，可以关闭 Termux；当前批次保存后自动接续，不需要重新测整份清单。')
+        print('后台更新已启动，可以关闭 Termux；候选检测改为北京时间 02:00—08:00，剩余任务次日续跑。')
     else:
         try:
-            apply(revision)
+            apply(revision, schedule_only=args.schedule_only)
         except Exception as exc:
             print('BACKGROUND_UPDATE_FAILED:', type(exc).__name__, str(exc), flush=True)
             raise

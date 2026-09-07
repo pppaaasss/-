@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from datetime import datetime, timezone
 
-from router.ac86u.daily_worker import enqueue, next_job, advance
+from router.ac86u.daily_worker import enqueue, next_job, advance, primary_window, defer_primary_jobs
 from router.ac86u.peak_policy import apply_peak_policy
 
 
@@ -55,6 +55,32 @@ class DailyWorkerTests(unittest.TestCase):
         result, publish = advance(job, report, 100)
         self.assertEqual('WAITING_MANIFEST', result['state'])
         self.assertFalse(publish)
+
+    def test_beijing_window_boundaries_and_next_day_resume(self):
+        for stamp, expected in [('2026-09-06T17:59:59', False),
+                                ('2026-09-06T18:00:00', True),
+                                ('2026-09-06T23:59:59', True),
+                                ('2026-09-07T00:00:00', False),
+                                ('2026-09-07T17:59:59', False)]:
+            self.assertEqual(expected, primary_window(epoch(stamp))[0], stamp)
+        with tempfile.TemporaryDirectory() as temp:
+            root=Path(temp)
+            start=epoch('2026-09-06T18:00:00')
+            path=enqueue(root,'primary-0200',start)
+            job=json.loads(path.read_text())
+            job.update(phase='candidates', batches=9)
+            path.write_text(json.dumps(job))
+            cutoff=epoch('2026-09-07T00:00:00')
+            defer_primary_jobs(root,cutoff)
+            saved=json.loads(path.read_text())
+            self.assertEqual('WAITING_WINDOW',saved['state'])
+            self.assertEqual('candidates',saved['phase'])
+            self.assertEqual(9,saved['batches'])
+            self.assertEqual(start+86400,saved['retry_after'])
+            self.assertIsNone(next_job(root,cutoff+3600))
+            self.assertEqual(path,next_job(root,start+86400)[0])
+            afternoon=enqueue(root,'recheck-1300',cutoff+5*3600)
+            self.assertEqual(afternoon,next_job(root,cutoff+5*3600)[0])
 
     def test_peak_bad_survives_offpeak_good_but_is_url_specific(self):
         bad = dict(channel_key='cctv1', url='https://a.test/1', status='BAD', failure_confirmed=True)

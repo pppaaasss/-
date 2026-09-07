@@ -13,7 +13,7 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 class UpgradeTests(unittest.TestCase):
-    def exercise(self, bad_hash=False):
+    def exercise(self, bad_hash=False, schedule_only=False):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)/'state'; root.mkdir()
             base=Path(tmp)/'installed'; base.mkdir()
@@ -46,14 +46,14 @@ class UpgradeTests(unittest.TestCase):
                 path_type.side_effect=lambda p: root/'worker.log' if p=='/opt/var/log/iptv-home-probe.log' else Path(p)
                 if bad_hash:
                     with self.assertRaisesRegex(RuntimeError,'hash'):
-                        upgrade.apply('a'*40)
+                        upgrade.apply('a'*40, schedule_only=schedule_only)
                     self.assertEqual(config,json.loads(cfg.read_text()))
                     start.assert_not_called()
                 else:
-                    upgrade.apply('a'*40)
+                    upgrade.apply('a'*40, schedule_only=schedule_only)
                     final=json.loads(cfg.read_text())
                     self.assertTrue(final['daily_worker_enabled'])
-                    self.assertTrue(final['actionable'])
+                    self.assertEqual(not schedule_only,final['actionable'])
                     self.assertEqual('final',json.loads((jobs/'primary.json').read_text())['phase'])
                     self.assertFalse((root/'background-upgrade.locked').exists())
                     start.assert_called_once()
@@ -63,3 +63,6 @@ class UpgradeTests(unittest.TestCase):
 
     def test_unacknowledged_file_does_not_pause_existing_worker(self):
         self.exercise(bad_hash=True)
+
+    def test_schedule_update_preserves_activation_without_requiring_old_report(self):
+        self.exercise(schedule_only=True)
