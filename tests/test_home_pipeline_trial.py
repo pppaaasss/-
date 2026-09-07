@@ -265,6 +265,33 @@ class PipelineTrialTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'ffprobe_exit_-11:no_stderr'):
                 probe.ffprobe_meta('https://stream.test/live.m3u8', '/opt/bin/ffprobe')
 
+    def test_ffprobe_prefers_valid_average_and_bounds_fallback(self):
+        for avg, raw, expected in [('25/1', '90000/1', 25), ('0/0', '50/1', 50),
+                                   ('30000/1001', '60/1', 29.97)]:
+            with self.subTest(avg=avg, raw=raw):
+                payload = {'streams': [{'avg_frame_rate': avg, 'r_frame_rate': raw}]}
+                completed = mock.Mock(returncode=0, stdout=json.dumps(payload))
+                with mock.patch.object(probe.subprocess, 'run', return_value=completed):
+                    self.assertEqual(expected, probe.ffprobe_meta('https://stream.test/live', 'ffprobe')['fps'])
+
+    def test_invalid_fps_stays_unknown_without_breaking_candidate_contract(self):
+        from router.ac86u.home_decision import candidate_result
+        from router.ac86u.home_contract import _candidate_result
+        payload = {'streams': [{'avg_frame_rate': '90000/1', 'r_frame_rate': '90000/1'}]}
+        completed = mock.Mock(returncode=0, stdout=json.dumps(payload))
+        sample = dict(download_mbps=20, stream_mbps=4, elapsed_s=1, downloaded_bytes=2097152)
+        with mock.patch.object(probe, 'fetch_playlist', return_value=(b'transport stream', 'https://stream.test/live', .1)), \
+             mock.patch.object(probe, 'segment_sample', return_value=sample), \
+             mock.patch.object(probe.subprocess, 'run', return_value=completed):
+            raw = probe.probe_route('CCTV-1', 'https://stream.test/live', floor=1080,
+                                    config={}, include_metadata=True)
+        candidate = make_candidate(dict(name='CCTV-1', url='https://stream.test/live', sources=['test']))
+        evidence = candidate_result(candidate, raw, purpose='daily-qualification', switch_reverified=False)
+        self.assertEqual('UNKNOWN', evidence['qualification'])
+        self.assertEqual(0, evidence['verification']['fps'])
+        self.assertIn('invalid_video_frame_rate', evidence['error'])
+        _candidate_result(evidence, 'candidate')
+
     def test_completed_low_quality_transfers_are_not_a_network_outage(self):
         quality = measured('CCTV-1', 'https://current.test/1', 1080, 'DEGRADED')
         quality['error'] = 'h264_stream_2.000_below_5.000_mbps'

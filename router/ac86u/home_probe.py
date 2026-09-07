@@ -493,6 +493,12 @@ def ffprobe_meta(url: str, ffprobe: str) -> dict:
     if not streams:
         raise RuntimeError("no_video_stream")
     stream = streams[0]
+    # Prefer the measured average; r_frame_rate can be a time-base-like value.
+    # Reject unusable metadata here so one stream cannot invalidate a batch.
+    rates = [parse_rate(stream.get(key)) for key in ("avg_frame_rate", "r_frame_rate")]
+    fps = next((rate for rate in rates if 0 < rate <= 240), None)
+    if fps is None:
+        raise RuntimeError("invalid_video_frame_rate")
     bitrate = 0.0
     for raw in (stream.get("bit_rate"), (payload.get("format") or {}).get("bit_rate")):
         try:
@@ -503,7 +509,7 @@ def ffprobe_meta(url: str, ffprobe: str) -> dict:
         "width": int(stream.get("width") or 0),
         "height": int(stream.get("height") or 0),
         "codec": str(stream.get("codec_name") or ""),
-        "fps": round(max(parse_rate(stream.get("avg_frame_rate")), parse_rate(stream.get("r_frame_rate"))), 3),
+        "fps": round(fps, 3),
         "bitrate_mbps": round(bitrate, 3),
     }
 
