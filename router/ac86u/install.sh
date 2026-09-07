@@ -11,7 +11,19 @@ SERVICES_START="/jffs/scripts/services-start"
 REF="${IPTV_HOME_REF:-master}"
 RAW="https://raw.githubusercontent.com/pppaaasss/-/$REF/router/ac86u"
 
-if [ "$(id -u)" -ne 0 ]; then
+# AsusWRT may omit the id applet. Read the effective UID with shell builtins;
+# missing or malformed evidence must stop installation, not bypass this check.
+router_effective_uid=""
+while read -r router_label router_real_uid router_uid router_other_uids; do
+  if [ "$router_label" = "Uid:" ]; then
+    router_effective_uid="$router_uid"
+    break
+  fi
+done < /proc/self/status
+case "$router_effective_uid" in
+  ''|*[!0-9]*) echo "Could not verify router administrator UID." >&2; exit 1 ;;
+esac
+if [ "$router_effective_uid" -ne 0 ]; then
   echo "Run this installer as the router administrator." >&2
   exit 1
 fi
