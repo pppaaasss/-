@@ -54,6 +54,7 @@ class UpgradeTests(unittest.TestCase):
                     final=json.loads(cfg.read_text())
                     self.assertTrue(final['daily_worker_enabled'])
                     self.assertEqual(not schedule_only,final['actionable'])
+                    self.assertEqual(1080,final['minimum_height_overrides']['CCTV-4K'])
                     self.assertEqual('final',json.loads((jobs/'primary.json').read_text())['phase'])
                     self.assertFalse((root/'background-upgrade.locked').exists())
                     start.assert_called_once()

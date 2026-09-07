@@ -130,7 +130,7 @@ payload = {
     "minimum_sample_bytes": 65536,
     "minimum_headroom_ratio": 1.35,
     "minimum_height_default": 1080,
-    "minimum_height_overrides": {"CCTV-4K": 2160},
+    "minimum_height_overrides": {"CCTV-4K": 1080},
     "minimum_h264_stream_mbps": 3.0,
     "minimum_hevc_stream_mbps": 2.5,
     "minimum_other_stream_mbps": 3.0,

@@ -96,3 +96,23 @@ class HistoryTests(unittest.TestCase):
                 self.assertEqual(1,len(state['candidate_queue']))
                 remaining=state['candidate_queue'][0]['candidate_id']
                 self.assertNotIn(remaining,state['tested_candidate_ids'])
+
+    def test_cctv4k_accepts_1080_and_recovers_only_previous_height_rejections(self):
+        self.assertEqual(1080, home_probe.minimum_height('CCTV-4K', {}))
+        self.assertEqual(1080, home_probe.minimum_height('CCTV-4K',
+            {'minimum_height_overrides': {'CCTV-4K': 1080}}))
+        accepted=make_candidate(dict(sources=['history'],name='CCTV-4K',url='https://4k.test/1080'))
+        low=make_candidate(dict(sources=['history'],name='CCTV-4K',url='https://4k.test/720'))
+        with tempfile.TemporaryDirectory() as tmp:
+            trial=Path(tmp)/'pipeline-trial';trial.mkdir()
+            observations={}
+            for row,height in [(accepted,1080),(low,720)]:
+                observations[row['candidate_id']]={'candidate':row,'qualification':'REJECTED',
+                    'last_checked_utc':home_probe.utc_text(NOW),
+                    'result':{'error':f'decoded_height_{height}_below_2160', 'verification':{'height':height}}}
+            (trial/'state.json').write_text(json.dumps({'candidate_observations':observations}))
+            state=prepare_history({},Path(tmp),'home-test',NOW+60)
+            self.assertEqual([accepted['candidate_id']], list(state['backup_archive']))
+            self.assertEqual([],state['candidate_queue'])
+            self.assertNotIn('qualification',state['backup_archive'][accepted['candidate_id']])
+            self.assertEqual(state,prepare_history(state,Path(tmp),'home-test',NOW+3600))
