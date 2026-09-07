@@ -420,7 +420,7 @@ def validate_home_report_v2(
     if not PROBE_ID_RE.fullmatch(probe_id) or (expected_probe_id and probe_id != expected_probe_id):
         raise ContractError("home report probe_id is invalid")
     _freshness(report.get("generated_utc"), "home report.generated_utc", now_epoch=now_epoch, max_age_hours=max_age_hours)
-    if report.get("run_kind") not in {"primary-0200", "recheck-1300"}:
+    if report.get("run_kind") not in {"primary-0200", "recheck-1300", "peak-2000"}:
         raise ContractError("home report run_kind is invalid")
     if report.get("run_status") != "COMPLETED" or report.get("production_modified") is not False:
         raise ContractError("router report must be complete and must not modify production")
@@ -458,7 +458,7 @@ def validate_home_report_v2(
         if report["run_kind"] == "recheck-1300" and not cached:
             raise ContractError("13:00 report must use cached primary evidence; no backup probes")
         if cached:
-            if report["run_kind"] != "recheck-1300" or row.get("verified_run_kind") != "primary-0200":
+            if report["run_kind"] != "recheck-1300" or row.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
                 raise ContractError("cached backup was not verified by a primary run")
             if row.get("switch_reverified") is not False or row.get("qualification") != "QUALIFIED":
                 raise ContractError("cached backup must not claim a new probe")
@@ -491,7 +491,7 @@ def validate_home_report_v2(
             evidence = candidate_status.get(identity)
             if evidence is None or evidence[0] != key or evidence[1] != "QUALIFIED":
                 raise ContractError("replacement candidate was not qualified at home")
-            if report["run_kind"] == "primary-0200" and evidence[2] is not True:
+            if report["run_kind"] in {"primary-0200", "peak-2000"} and evidence[2] is not True:
                 raise ContractError("replacement candidate was not reverified before switching")
         elif replacement is not None:
             raise ContractError("non-replacement decision contains a replacement candidate")

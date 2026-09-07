@@ -28,6 +28,7 @@ import urllib.request
 from pathlib import Path
 
 try:
+    from .peak_policy import apply_peak_policy, in_peak
     from .home_contract import (
         ContractError,
         REPORT_SCHEMA,
@@ -53,6 +54,7 @@ try:
         without_backup,
     )
 except ImportError:  # Installed beside this file by the Entware installer.
+    from peak_policy import apply_peak_policy, in_peak
     from home_contract import (  # type: ignore
         ContractError,
         REPORT_SCHEMA,
@@ -90,7 +92,7 @@ PLAYLIST_LIMIT = 1024 * 1024
 CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
-RUN_KINDS = {"primary-0200", "recheck-1300"}
+RUN_KINDS = {"primary-0200", "recheck-1300", "peak-2000"}
 _active_transport = None
 
 
@@ -728,9 +730,13 @@ def _run(
     state_path = output_dir / "state.json"
     backup_path = output_dir / "qualified-backups.json"
     previous_state = load_json(state_path)
-    phase = str(config.get('trial_phase') or 'full')
-    if phase not in {'full', 'candidates', 'final'} or (phase != 'full' and (not trial or run_kind != 'primary-0200')):
+    if not trial and config.get('trial_phase', 'full') != 'full':
         raise RuntimeError('TRIAL_PHASE_INVALID')
+    phase = str(config.get('trial_phase' if trial else 'batch_phase') or 'full')
+    if phase not in {'full', 'candidates', 'final'} or (phase != 'full' and run_kind != 'primary-0200'):
+        raise RuntimeError('TRIAL_PHASE_INVALID')
+    if run_kind == 'peak-2000' and not in_peak(now_epoch):
+        raise RuntimeError('PEAK_WINDOW_CLOSED')
     profile = run_profile(run_kind, config)
     if phase == 'final':
         profile['scan_candidates'] = False
@@ -780,6 +786,15 @@ def _run(
     feedback, feedback_state, feedback_sha = load_home_feedback(config, output_dir)
     config["home_feedback"] = feedback
     veto_urls = feedback_urls(feedback, "bad")
+    bad_host_urls = {}
+    for url in veto_urls:
+        host = (urllib.parse.urlsplit(url).hostname or '').casefold()
+        if host:
+            bad_host_urls.setdefault(host, set()).add(url)
+    veto_hosts = {host for host, urls in bad_host_urls.items() if len(urls) >= 2}
+    def candidate_vetoed(url):
+        return (url in veto_urls or (urllib.parse.urlsplit(url).hostname or '').casefold() in veto_hosts
+                or any(item['url'] == url for item in peak_failures.values()))
     formal_rows: list[tuple[str, str, str]] = []
     formal_keys: set[str] = set()
     for playlist_name, url in entries:
@@ -799,9 +814,23 @@ def _run(
 
     # Queue-draining trial batches reserve their entire stream budget for
     # candidates. Deferred formal rows are explicitly UNKNOWN, never cached GOOD.
+    cycle = str(config.get('batch_cycle_id') or '')
+    checkpoints = dict(previous_state.get('current_checkpoints') or {})
+    checkpoint = checkpoints.get(cycle, {}) if cycle else {}
+    if checkpoint.get('formal_sha') != hashlib.sha256(playlist_bytes).hexdigest():
+        checkpoint = {}
+    cached_attempts = checkpoint.get('attempts', {})
+    cached_times = checkpoint.get('times', {})
     attempts_by_key: dict[str, list[dict]] = {}
+    measured_times = {}
     current_pending = set()
     for key, name, url in formal_rows:
+        cached = cached_attempts.get(key, [])
+        age = now_epoch - float(cached_times.get(key, 0))
+        if cycle and phase != 'candidates' and cached and 0 <= age < 6 * 3600 and cached[0].get('url') == url:
+            attempts_by_key[key] = cached
+            measured_times[key] = cached_times[key]
+            continue
         if phase == 'candidates' or not budget_available():
             row = _runtime_unknown(name, url, key, minimum_height(name, config))
             if phase == 'candidates':
@@ -811,10 +840,11 @@ def _run(
             continue
         progress('CURRENT: ' + name)
         attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
+        measured_times[key] = now_epoch
 
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
-        if key in current_pending or probe_is_good(attempts[0]):
+        if key in current_pending or probe_is_good(attempts[0]) or len(attempts) >= 2:
             continue
         if not budget_available():
             current_pending.add(key)
@@ -831,9 +861,22 @@ def _run(
         current_result(name, url, attempts_by_key[key], circuit_open=circuit)
         for key, name, url in formal_rows
     ]
+    for row in current_results:
+        row['observed_epoch'] = measured_times.get(row['channel_key'])
+    peak_failures = previous_state.get('peak_failures', {})
+    if phase != 'candidates':
+        current_results, peak_failures = apply_peak_policy(current_results, peak_failures,
+            run_kind=run_kind, now_epoch=now_epoch, circuit_open=circuit)
     current_urls = {key: url for key, _name, url in formal_rows}
 
     state = dict(previous_state)
+    state['peak_failures'] = peak_failures
+    if cycle and phase != 'candidates':
+        checkpoints[cycle] = dict(formal_sha=hashlib.sha256(playlist_bytes).hexdigest(),
+            attempts={k: attempts_by_key[k] for k in measured_times}, times=measured_times,
+            updated=now_epoch)
+        state['current_checkpoints'] = dict(sorted(checkpoints.items(),
+            key=lambda item: item[1].get('updated', 0))[-6:])
     state.update({
         "version": 2,
         "last_run_utc": utc_text(now_epoch),
@@ -873,9 +916,11 @@ def _run(
     bad_keys = {str(row["channel_key"]) for row in current_results if row["status"] == "BAD"}
     if existing_pool:
         for backup in list(existing_pool["backups"]):
-            if backup["url"] in veto_urls or backup.get("request_options"):
+            if candidate_vetoed(backup["url"]) or backup.get("request_options"):
                 existing_pool = without_backup(existing_pool, backup["candidate_id"])
 
+    saved_switches = checkpoint.get('switches', {}) if cycle else {}
+    completed_switches = {}
     # Repair evidence comes first. 13:00 only reads existing primary evidence;
     # it never requests a backup URL, even when a replacement is needed.
     if not circuit:
@@ -883,9 +928,15 @@ def _run(
             for backup in eligible_backups(existing_pool, key, now_epoch=now_epoch):
                 identity = str(backup["candidate_id"])
                 if run_kind == "recheck-1300":
-                    if backup.get("verified_run_kind") != "primary-0200":
+                    if backup.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
                         continue
                     candidate_report_by_id[identity] = cached_backup_result(backup)
+                    choices[key] = identity
+                    break
+                cached_switch = saved_switches.get(identity)
+                if cached_switch and 0 <= now_epoch - cached_switch['epoch'] < 3600:
+                    candidate_report_by_id[identity] = cached_switch['evidence']
+                    completed_switches[identity] = cached_switch
                     choices[key] = identity
                     break
                 if not budget_available():
@@ -903,6 +954,7 @@ def _run(
                 candidate_report_by_id[identity] = evidence
                 if candidate_is_qualified(raw):
                     choices[key] = identity
+                    completed_switches[identity] = dict(epoch=now_epoch, evidence=evidence)
                     newly_qualified.append((backup, raw))
                     break
                 existing_pool = without_backup(existing_pool, identity)
@@ -1016,7 +1068,7 @@ def _run(
         ) else {}
         max_unknown_retries = max(1, int(config.get("candidate_unknown_retry_runs") or 2))
         for candidate in queue:
-            if candidate["candidate_id"] in attempted_ids or candidate["url"] in veto_urls or candidate.get("request_options"):
+            if candidate["candidate_id"] in attempted_ids or candidate_vetoed(candidate["url"]) or candidate.get("request_options"):
                 continue
             if circuit or not budget_available():
                 remaining.append(candidate)
@@ -1071,6 +1123,9 @@ def _run(
                 remaining.append(candidate)
         state["candidate_queue"] = remaining
         state["candidate_observations"] = observations
+
+    if cycle and phase != 'candidates':
+        state['current_checkpoints'][cycle]['switches'] = completed_switches
 
     pool = update_backup_pool(
         existing_pool,
@@ -1184,6 +1239,8 @@ def _run(
             "trial_phase": phase,
             "formal_check_deferred": phase == 'candidates',
             "final_review_complete": phase == 'final' and not current_pending and not budget_keys,
+            "batch_complete": not current_pending and not budget_keys,
+            "peak_failure_precedence": True,
             "trial_tv_binding_sha256": tv_binding,
             "candidate_manifest_origin": "staged-file" if trial and config.get('trial_candidate_file') else "network",
             "auto_replace_formal_routes": False,
@@ -1244,11 +1301,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
     parser.add_argument("--run-kind", choices=tuple(sorted(RUN_KINDS)), default="primary-0200")
+    parser.add_argument("--batch-phase", choices=("full", "candidates", "final"), default="full")
+    parser.add_argument("--batch-cycle-id", default="")
     parser.add_argument("--mode", choices=("light", "deep"), default=None, help=argparse.SUPPRESS)
     parser.add_argument("--now-epoch", type=float, default=None)
     args = parser.parse_args()
     try:
         config = load_json(Path(args.config))
+        config.update(batch_phase=args.batch_phase, batch_cycle_id=args.batch_cycle_id)
         report, _ = run(
             config,
             run_kind=args.run_kind,

@@ -194,6 +194,24 @@ class PipelineTrialTests(unittest.TestCase):
         self.assertEqual([], state['candidate_queue'])
         self.assertEqual(2, report['summary']['qualified_backups'])
 
+    def test_final_phase_resumes_current_channels_after_resource_pause(self):
+        self.config.update(trial_phase='final', batch_cycle_id='20260907-final', sample_actual_resources=True)
+        ok = ('', {'mem_available_kib': 100000})
+        report, state, calls = self.run_trial(resources=[ok, ok, ('memory_below_51200', {'mem_available_kib': 40000})])
+        self.assertEqual(1, len(calls.call_args_list))
+        self.assertFalse(report['policy']['batch_complete'])
+        report, state, calls = self.run_trial()
+        self.assertEqual(1, len(calls.call_args_list))
+        self.assertEqual('https://current.test/2', calls.call_args_list[0].args[1])
+        self.assertTrue(report['policy']['batch_complete'])
+
+    def test_peak_report_contract_and_no_candidate_scan(self):
+        with mock.patch.object(probe, 'in_peak', return_value=True):
+            report, state, calls = self.run_trial(kind='peak-2000')
+        self.assertEqual('peak-2000', report['run_kind'])
+        self.assertEqual('not_requested', state['candidate_manifest_state'])
+        self.assertEqual(2, len(calls.call_args_list))
+
     def test_phase_optimization_is_rejected_for_production_runs(self):
         with self.assertRaisesRegex(RuntimeError, 'TRIAL_PHASE_INVALID'):
             probe._run(dict(self.config, trial_phase='candidates'), trial=False, now_epoch=NOW)

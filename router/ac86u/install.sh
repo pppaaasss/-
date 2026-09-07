@@ -28,10 +28,14 @@ if [ "$available_kib" -lt 524288 ]; then
   exit 2
 fi
 
-/opt/bin/opkg update
-/opt/bin/opkg install \
-  python3 ffprobe curl git ca-bundle ca-certificates \
-  openssh-client openssh-client-utils openssh-keygen
+missing=0
+for program in python3 ffprobe curl git ssh ssh-keygen; do
+  [ -x "/opt/bin/$program" ] || missing=1
+done
+if [ "$missing" -eq 1 ]; then
+  /opt/bin/opkg update
+  /opt/bin/opkg install python3 ffprobe curl git ca-bundle ca-certificates openssh-client openssh-client-utils openssh-keygen
+fi
 
 stage="/opt/tmp/iptv-home-probe-install.$$"
 mkdir -p "$stage" "$BASE" "$KEY_DIR" "$DATA" "$LOG_DIR" /opt/var/run
@@ -42,10 +46,14 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="home_probe.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh"
+files="home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh"
 for name in $files; do
-  /opt/bin/curl -4 -fL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 15 --max-time 120 \
-    "$RAW/$name" -o "$stage/$name"
+  if [ -n "${IPTV_HOME_STAGEDIR:-}" ]; then
+    cp "$IPTV_HOME_STAGEDIR/$name" "$stage/$name"
+  else
+    /opt/bin/curl -4 -fL --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 15 --max-time 120 \
+      "$RAW/$name" -o "$stage/$name"
+  fi
 done
 /opt/bin/python3 -m py_compile \
   "$stage/home_probe.py" "$stage/home_contract.py" "$stage/home_decision.py" \
@@ -85,6 +93,9 @@ payload = {
     "expected_utc_offset": "+0800",
     "route_context": "router-origin-direct-wan",
     "actionable": False,
+    "daily_worker_enabled": False,
+    "sample_actual_resources": True,
+    "progress_log": True,
     "github_push_enabled": False,
     "protected_publishing_ready": False,
     "github_repository": "pppaaasss/-",
@@ -126,6 +137,12 @@ from pathlib import Path
 
 path = Path(sys.argv[1])
 value = json.loads(path.read_text(encoding="utf-8"))
+value.setdefault("daily_worker_enabled", False)
+value["sample_actual_resources"] = True
+value["progress_log"] = True
+value["minimum_mem_available_kib"] = 51200
+value["minimum_h264_stream_mbps"] = 3.0
+value["minimum_headroom_ratio"] = 1.35
 value.setdefault("github_push_enabled", False)
 value.setdefault("protected_publishing_ready", False)
 value.setdefault("github_repository", "pppaaasss/-")
@@ -165,6 +182,8 @@ cat >> "$services_tmp" <<'EOF'
 # BEGIN IPTV_HOME_PROBE
 cru a IPTVHomePrimary "0 2 * * * /opt/share/iptv-home-probe/run.sh --run-kind primary-0200"
 cru a IPTVHomeRecheck "0 13 * * * /opt/share/iptv-home-probe/run.sh --run-kind recheck-1300"
+cru a IPTVHomePeak "0 20 * * * /opt/share/iptv-home-probe/run.sh --run-kind peak-2000"
+cru a IPTVHomeResume "*/5 * * * * /opt/share/iptv-home-probe/run.sh --resume"
 # END IPTV_HOME_PROBE
 EOF
 mv -f "$services_tmp" "$SERVICES_START"
@@ -174,6 +193,8 @@ cru d IPTVHomePrimary >/dev/null 2>&1 || true
 cru d IPTVHomeRecheck >/dev/null 2>&1 || true
 cru a IPTVHomePrimary "0 2 * * * $BASE/run.sh --run-kind primary-0200"
 cru a IPTVHomeRecheck "0 13 * * * $BASE/run.sh --run-kind recheck-1300"
+cru a IPTVHomePeak "0 20 * * * $BASE/run.sh --run-kind peak-2000"
+cru a IPTVHomeResume "*/5 * * * * $BASE/run.sh --resume"
 
 echo
 echo "Installed in safe local-shadow mode. No playlist or routing rule was changed."
