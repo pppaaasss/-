@@ -1,0 +1,24 @@
+name: Home IPTV regression
+on:
+  pull_request:
+    paths:
+      - 'router/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'config/**'
+      - '.github/workflows/**'
+      - '*.m3u'
+permissions:
+  contents: read
+jobs:
+  home-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m unittest discover -s tests -v
+      - name: Inventory exact subscription coverage
+        run: python scripts/audit_home_coverage.py

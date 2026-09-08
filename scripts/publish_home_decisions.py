@@ -227,6 +227,10 @@ def replacement_plan(report: dict, feedback_path: Path) -> dict[str, dict]:
         host = (urlsplit(new_url).hostname or "").casefold()
         if new_url in veto_urls or (host and host in veto_hosts):
             raise RuntimeError(f"home feedback vetoes replacement for {key}")
+        if any(row['url'] == new_url and other != key for other, row in current.items()):
+            raise RuntimeError(f'channel identity URL conflict for {key}')
+        if any(row['new_url'] == new_url for row in replacements.values()):
+            raise RuntimeError(f'channel identity replacement conflict for {key}')
         old_url = str(current[key]["url"])
         if new_url == old_url:
             raise RuntimeError(f"replacement for {key} does not change the route")
@@ -332,6 +336,9 @@ def publish_latest(
     if path is None:
         return {"status": "no_report", "replacement_count": 0}
     report, _report_raw, report_sha = load_report(path, config, now_epoch=now_epoch)
+    policy = report.get('policy') or {}
+    if policy.get('batch_complete') is False or policy.get('formal_check_deferred') is True:
+        return {'status': 'partial_batch', 'replacement_count': 0}
     receipt_path = root / str(config.get("receipt_path") or "home-publish/latest.json")
     replay = replay_status(receipt_path, report, report_sha)
     if replay != "new":

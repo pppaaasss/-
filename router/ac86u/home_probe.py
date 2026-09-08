@@ -29,6 +29,8 @@ from pathlib import Path
 
 try:
     from .candidate_history import prepare_history, unseen_candidates
+    from .progress_journal import append_progress, replay_progress, clear_progress
+    from .candidate_delivery import save_receipts
     from .peak_policy import apply_peak_policy, in_peak
     from .home_contract import (
         ContractError,
@@ -56,6 +58,8 @@ try:
     )
 except ImportError:  # Installed beside this file by the Entware installer.
     from candidate_history import prepare_history, unseen_candidates
+    from progress_journal import append_progress, replay_progress, clear_progress
+    from candidate_delivery import save_receipts
     from peak_policy import apply_peak_policy, in_peak
     from home_contract import (  # type: ignore
         ContractError,
@@ -147,6 +151,11 @@ def atomic_json(path: Path, payload: dict) -> None:
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(temporary, path)
+    directory = os.open(str(path.parent), os.O_RDONLY)
+    try:
+        os.fsync(directory)
+    finally:
+        os.close(directory)
 
 
 def load_json(path: Path, default: dict | None = None) -> dict:
@@ -737,7 +746,7 @@ def _run(
     output_dir = Path(str(config.get("output_dir") or "/opt/var/lib/iptv-home-probe"))
     state_path = output_dir / "state.json"
     backup_path = output_dir / "qualified-backups.json"
-    previous_state = load_json(state_path)
+    previous_state = replay_progress(load_json(state_path), output_dir)
     if not trial:
         previous_state = prepare_history(previous_state, output_dir,
             str(config.get("probe_id") or "home-ac86u"), now_epoch)
@@ -812,8 +821,9 @@ def _run(
         if host:
             bad_host_urls.setdefault(host, set()).add(url)
     veto_hosts = {host for host, urls in bad_host_urls.items() if len(urls) >= 2}
+    conflicting_urls = set()
     def candidate_vetoed(url):
-        return (url in veto_urls or (urllib.parse.urlsplit(url).hostname or '').casefold() in veto_hosts
+        return (url in conflicting_urls or url in veto_urls or (urllib.parse.urlsplit(url).hostname or '').casefold() in veto_hosts
                 or any(item['url'] == url for item in peak_failures.values()))
     formal_rows: list[tuple[str, str, str]] = []
     formal_keys: set[str] = set()
@@ -847,13 +857,15 @@ def _run(
         checkpoint = max(matching, key=lambda value: value.get('updated', 0), default={})
     cached_attempts = checkpoint.get('attempts', {})
     cached_times = checkpoint.get('times', {})
+    feedback_signature = {url: [url in veto_urls, url in feedback_urls(feedback, 'good')]
+                          for _key, _name, url in formal_rows}
     attempts_by_key: dict[str, list[dict]] = {}
     measured_times = {}
     current_pending = set()
     for key, name, url in formal_rows:
         cached = cached_attempts.get(key, [])
         age = now_epoch - float(cached_times.get(key, 0))
-        if cycle and phase != 'candidates' and cached and 0 <= age < 6 * 3600 and cached[0].get('url') == url:
+        if cycle and phase != 'candidates' and cached and 0 <= age < 6 * 3600 and cached[0].get('url') == url and url not in veto_urls and checkpoint.get('feedback_signature', {}).get(url) == feedback_signature[url]:
             attempts_by_key[key] = cached
             measured_times[key] = cached_times[key]
             continue
@@ -867,6 +879,10 @@ def _run(
         progress('CURRENT: ' + name)
         attempts_by_key[key] = [_probe_current(name, url, key, profile=profile, config=config)]
         measured_times[key] = now_epoch
+        if not trial:
+            append_progress(output_dir, dict(kind='current', cycle=cycle or run_kind,
+                formal_sha=hashlib.sha256(playlist_bytes).hexdigest(), key=key,
+                attempts=attempts_by_key[key], epoch=now_epoch, feedback_signature=feedback_signature))
 
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
@@ -877,6 +893,10 @@ def _run(
             continue
         progress('RECHECK: ' + name)
         attempts.append(_probe_current(name, url, key, profile=profile, config=config))
+        if not trial:
+            append_progress(output_dir, dict(kind='current', cycle=cycle or run_kind,
+                formal_sha=hashlib.sha256(playlist_bytes).hexdigest(), key=key,
+                attempts=attempts, epoch=now_epoch, feedback_signature=feedback_signature))
 
     circuit = phase != 'candidates' and mass_failure_circuit(
         attempts_by_key,
@@ -900,7 +920,7 @@ def _run(
     if cycle and phase != 'candidates':
         checkpoints[cycle] = dict(formal_sha=hashlib.sha256(playlist_bytes).hexdigest(),
             attempts={k: attempts_by_key[k] for k in measured_times}, times=measured_times,
-            updated=now_epoch)
+            updated=now_epoch, feedback_signature=feedback_signature)
         state['current_checkpoints'] = dict(sorted(checkpoints.items(),
             key=lambda item: item[1].get('updated', 0))[-6:])
     state.update({
@@ -940,15 +960,23 @@ def _run(
     attempted_ids: set[str] = set()
     budget_keys: set[str] = set()
     bad_keys = {str(row["channel_key"]) for row in current_results if row["status"] == "BAD"}
+    identities = {}
+    for key, _name, url in formal_rows:
+        identities.setdefault(url, set()).add(key)
+    for backup in list((existing_pool or {}).get('backups', [])) + list((state.get('backup_archive') or {}).values()):
+        identities.setdefault(backup['url'], set()).add(backup['channel_key'])
+    conflicting_urls.update(url for url, keys in identities.items() if len(keys) > 1)
     if existing_pool:
         for backup in list(existing_pool["backups"]):
-            if candidate_vetoed(backup["url"]) or backup.get("request_options"):
+            if (candidate_vetoed(backup["url"]) or backup.get("request_options")
+                    or (state.get('backup_archive') or {}).get(backup['candidate_id'], {}).get('last_recheck_result')):
                 existing_pool = without_backup(existing_pool, backup["candidate_id"])
 
-    archive = dict(state.get('backup_archive') or {})
+    archive = {k: v for k, v in (state.get('backup_archive') or {}).items()
+               if not candidate_vetoed(v['url'])}
     if not trial:
         for backup in (existing_pool or {}).get('backups', []):
-            archive[backup['candidate_id']] = dict(backup)
+            archive.setdefault(backup['candidate_id'], dict(backup))
 
     saved_switches = checkpoint.get('switches', {}) if cycle else {}
     completed_switches = {}
@@ -963,9 +991,15 @@ def _run(
                     key=lambda item: (-int((item[1].get('verification') or {}).get('height') or 0), item[0]))
                     if identity not in known and row['channel_key'] == key
                     and row['url'] != current_urls.get(key)
-                    and not candidate_vetoed(row['url']) and not row.get('request_options'))
+                    and not candidate_vetoed(row['url']) and not row.get('request_options')
+                    and now_epoch >= float(row.get('retry_after_epoch') or 0))
             for backup in repairs:
                 identity = str(backup["candidate_id"])
+                if candidate_vetoed(backup['url']):
+                    continue
+                if now_epoch < float(archive.get(identity, {}).get('retry_after_epoch') or 0):
+                    existing_pool = without_backup(existing_pool, identity)
+                    continue
                 if run_kind == "recheck-1300":
                     if backup.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
                         continue
@@ -995,9 +1029,23 @@ def _run(
                     choices[key] = identity
                     completed_switches[identity] = dict(epoch=now_epoch, evidence=evidence)
                     newly_qualified.append((backup, raw))
+                    if not trial:
+                        recovered = update_backup_pool(None, [(backup, raw)],
+                            probe_id=str(config.get('probe_id') or 'home-ac86u'), now_epoch=now_epoch,
+                            formal_playlist_sha256=hashlib.sha256(playlist_bytes).hexdigest(),
+                            candidate_manifest_sha256=candidate_manifest_sha, current_urls=current_urls,
+                            ttl_hours=float(config.get('qualified_backup_ttl_hours') or 36),
+                            run_kind=run_kind, trial=False)
+                        append_progress(output_dir, dict(kind='backup_success', identity=identity,
+                            backup=next(iter(recovered['backups']), None), cycle=cycle,
+                            switch=completed_switches[identity]))
                     break
                 existing_pool = without_backup(existing_pool, identity)
-                archive.pop(identity, None)
+                archive[identity] = dict(backup, retry_after_epoch=now_epoch + 3600,
+                    last_recheck_utc=utc_text(now_epoch), last_recheck_result=evidence)
+                if not trial:
+                    append_progress(output_dir, dict(kind='backup_failure', identity=identity,
+                        backup=archive[identity]))
 
     if profile["scan_candidates"]:
         recovered = recover_metadata_unknown(previous_state) if trial else []
@@ -1086,6 +1134,15 @@ def _run(
         )
         if not trial:
             queue = unseen_candidates(queue, set(previous_state.get("tested_candidate_ids") or []))
+        for candidate in queue:
+            identities.setdefault(candidate['url'], set()).add(candidate['channel_key'])
+        conflicting_urls.update(url for url, keys in identities.items() if len(keys) > 1)
+        if not trial:
+            # Receipt follows durable queue storage, before any media access.
+            state['candidate_queue'] = queue
+            atomic_json(state_path, state)
+            if candidate_manifest_state == 'accepted':
+                save_receipts(output_dir, state, manifest, config, now_epoch)
         rounds = {}
         per_channel = {}
         for candidate in queue:
@@ -1161,6 +1218,18 @@ def _run(
                 "last_checked_utc": utc_text(now_epoch),
                 "result": report_row,
             }
+            if not trial:
+                recovery_backup = None
+                if candidate_is_qualified(row):
+                    recovered_pool = update_backup_pool(None, [(candidate, row)],
+                        probe_id=str(config.get('probe_id') or 'home-ac86u'), now_epoch=now_epoch,
+                        formal_playlist_sha256=hashlib.sha256(playlist_bytes).hexdigest(),
+                        candidate_manifest_sha256=candidate_manifest_sha, current_urls=current_urls,
+                        ttl_hours=float(config.get('qualified_backup_ttl_hours') or 36),
+                        run_kind=run_kind, trial=False)
+                    recovery_backup = next(iter(recovered_pool['backups']), None)
+                append_progress(output_dir, dict(kind='candidate', identity=identity,
+                    observation=observations[identity], backup=recovery_backup))
             if trial and qualification == "UNKNOWN" and unknown_attempts < max_unknown_retries:
                 remaining.append(candidate)
         state["candidate_queue"] = remaining
@@ -1325,6 +1394,8 @@ def _run(
     atomic_json(backup_path, pool)
     atomic_json(output_dir / "latest.json", report)
     atomic_json(state_path, state)
+    if not trial:
+        clear_progress(output_dir)
     return report, state
 
 

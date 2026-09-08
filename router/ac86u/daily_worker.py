@@ -1,6 +1,7 @@
 #!/opt/bin/python3
 """Durable, serialized home jobs. Batch limits never expire a daily job."""
 import argparse
+import hashlib
 from datetime import datetime, timezone, timedelta
 import fcntl
 import json
@@ -16,6 +17,23 @@ try:
 except ImportError:
     from home_probe import atomic_json, resource_check
     from peak_policy import in_peak
+
+def maintain_runtime(root, epoch):
+    # Only old COMPLETE jobs can be pruned. Outboxes, evidence and diagnostics
+    # deliberately have no generic age-based deletion.
+    for path in (root / 'daily-jobs').glob('*.json'):
+        job = json.loads(path.read_text())
+        if job.get('state') == 'COMPLETE' and epoch - job.get('completed', epoch) > 14 * 86400:
+            path.unlink()
+    log = Path('/opt/var/log/iptv-home-probe.log')
+    if log.exists() and log.stat().st_size > 1048576:
+        # Copy/truncate preserves inherited descriptors of the active worker.
+        with log.open('rb') as source:
+            source.seek(max(0, log.stat().st_size - 1048576))
+            log.with_suffix('.log.1').write_bytes(source.read())
+        with log.open('w'):
+            pass
+
 
 KINDS = ('primary-0200', 'recheck-1300', 'peak-2000')
 ZONE = timezone(timedelta(hours=8))
@@ -133,6 +151,38 @@ def advance(job, report, epoch):
     return dict(job, state='PENDING'), False
 
 
+def poll_delivery(config, root, epoch):
+    """One text check per wake; an empty/received batch starts no probe."""
+    try:
+        from .candidate_delivery import receive
+    except ImportError:
+        from candidate_delivery import receive
+    status_path = root / 'delivery-status.json'
+    if status_path.exists():
+        last = json.loads(status_path.read_text())
+        if epoch - last.get('checked_epoch', 0) < 300:
+            return
+    try:
+        pending = receive(config, root, epoch)
+        atomic_json(status_path, dict(state='RECEIVED', checked_epoch=epoch, pending=pending))
+    except Exception as exc:
+        atomic_json(status_path, dict(state='WAITING_MANIFEST', checked_epoch=epoch,
+            reason=type(exc).__name__ + ':' + str(exc)[:220]))
+        return
+    if not pending:
+        return
+    directory = root / 'daily-jobs'
+    directory.mkdir(parents=True, exist_ok=True)
+    if any(json.loads(p.read_text()).get('kind') == KINDS[0]
+           and json.loads(p.read_text()).get('state') != 'COMPLETE' for p in directory.glob('*.json')):
+        return
+    ident = datetime.fromtimestamp(epoch, ZONE).strftime('%Y%m%d') + '-primary-0200-delivery-' + str(int(epoch))
+    opened, _, resume = primary_window(epoch, root)
+    atomic_json(directory / (ident + '.json'), dict(id=ident, kind=KINDS[0], phase='candidates',
+        state='PENDING' if opened else 'WAITING_WINDOW', created=epoch,
+        retry_after=0 if opened else resume, batches=0))
+
+
 def clean_env():
     return {k: v for k, v in os.environ.items()
             if k not in ('LD_LIBRARY_PATH', 'LD_PRELOAD', 'PYTHONHOME', 'PYTHONPATH')}
@@ -151,11 +201,22 @@ def work(config_path):
         if fatal.exists():
             return 1
         base = Path(__file__).resolve().parent
+        if config.get('daily_worker_enabled') is not True:
+            return 0
+        poll_delivery(config, root, time.time())
+        receipt = root / 'candidate-receipts.json'
+        uploaded = root / 'receipt-upload.json'
+        uploaded_sha = json.loads(uploaded.read_text()).get('receipt_sha256') if uploaded.exists() else None
+        if (config.get('github_push_enabled') and receipt.exists()
+                and hashlib.sha256(receipt.read_bytes()).hexdigest() != uploaded_sha):
+            subprocess.run([sys.executable, '-E', '-s', str(base / 'push_home_report.py'),
+                '--config', str(config_path), '--receipts-only'], env=clean_env())
         while True:
             config = json.loads(config_path.read_text())
             if config.get('daily_worker_enabled') is not True:
                 return 0
             now = time.time()
+            maintain_runtime(root, now)
             defer_primary_jobs(root, now)
             selected = next_job(root, now)
             if selected is None:
@@ -174,8 +235,7 @@ def work(config_path):
             reason, sample = resource_check(resume)
             if reason:
                 atomic_json(root / 'daily-status.json', dict(state='WAITING_RESOURCES', job=job['id'], reason=reason, resources=sample))
-                time.sleep(30)
-                continue
+                return 0
             atomic_json(root / 'daily-status.json', dict(state='RUNNING', job=job['id'], phase=job['phase']))
             command = [sys.executable, '-E', '-s', '-u', str(base / 'home_probe.py'),
                        '--config', str(config_path), '--run-kind', job['kind'],

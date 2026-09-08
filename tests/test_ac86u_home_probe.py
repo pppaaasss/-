@@ -431,7 +431,7 @@ class AC86UHomeProbeTests(unittest.TestCase):
             self.assertEqual("not_requested", recheck["policy"]["candidate_manifest_state"])
             candidate_fetch.assert_not_called()
 
-    def test_0200_refreshes_expiring_home_backups_even_when_github_candidates_are_disabled(self):
+    def test_0200_does_not_refresh_expiring_backup_while_current_is_healthy(self):
         formal = b"#EXTM3U\n#EXTINF:-1,CCTV-1\nhttps://current.test/cctv1.m3u8\n"
 
         def good(name, url, *, floor, **_kwargs):
@@ -454,9 +454,9 @@ class AC86UHomeProbeTests(unittest.TestCase):
                 }, run_kind="primary-0200", now_epoch=refresh_time)
             pool = home_probe.load_json(Path(temporary) / "qualified-backups.json")
         self.assertEqual("disabled", report["policy"]["candidate_manifest_state"])
-        self.assertEqual(1, report["summary"]["candidate_confirmed"])
-        self.assertEqual(home_probe.utc_text(refresh_time), pool["backups"][0]["last_verified_utc"])
-        self.assertEqual(2, probe.call_count)  # One current route plus one expiring backup.
+        self.assertEqual(0, report["summary"]["candidate_confirmed"])
+        self.assertEqual(home_probe.utc_text(NOW), pool["backups"][0]["last_verified_utc"])
+        self.assertEqual(1, probe.call_count)  # Healthy current: no periodic old-pool scan.
         candidate_fetch.assert_not_called()
 
     def test_resource_guard_protects_router(self):

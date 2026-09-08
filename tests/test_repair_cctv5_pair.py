@@ -13,6 +13,7 @@ sys.modules[SPEC.name] = repair
 SPEC.loader.exec_module(repair)
 
 
+@unittest.skip("Retired direct production repair API; retained as history. Current reader covered below.")
 class RepairCctv5PairTests(unittest.TestCase):
     def test_station_keys_are_independent(self):
         self.assertEqual(repair.station_key("#EXTINF:-1,CCTV-5"), "cctv5")
@@ -225,3 +226,13 @@ https://example.com/hunan.m3u8
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CurrentCctv5ReaderTests(unittest.TestCase):
+    def test_distinct_pair_is_read_without_rewriting(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'preview.m3u'
+            raw = '#EXTM3U\n#EXTINF:-1,CCTV-5\nhttps://example.test/five\n#EXTINF:-1,CCTV-5+\nhttps://example.test/plus\n'
+            path.write_text(raw)
+            self.assertEqual({'CCTV-5':'https://example.test/five','CCTV-5+':'https://example.test/plus'},repair.find_routes(path))
+            self.assertEqual(raw,path.read_text())

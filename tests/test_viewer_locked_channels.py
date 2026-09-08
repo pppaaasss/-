@@ -67,7 +67,7 @@ class ViewerLockedChannelsTests(unittest.TestCase):
         data = json.loads(
             (root / "config/viewer-locked-channels.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(len(data["channels"]), 7)
+        self.assertEqual(len(data["channels"]), 8)
         for row in data["channels"]:
             self.assertNotIn("tv-core.m3u", row["playlists"])
             self.assertEqual(

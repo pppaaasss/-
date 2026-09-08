@@ -1,5 +1,5 @@
 #!/bin/sh
-unset LD_LIBRARY_PATH LD_PRELOAD
+unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH
 set -eu
 
 CONFIG="/opt/etc/iptv-home-probe.json"
@@ -41,7 +41,9 @@ for filename in ("latest.json", "state.json", "github-state.json"):
         )
 PY
 
+/opt/bin/python3 -E -s /opt/share/iptv-home-probe/runtime_status.py --config "$CONFIG"
+
 echo "cron:"
-cru l 2>/dev/null | grep -E 'IPTVHome(Primary|Recheck)' || echo "  missing"
+cru l 2>/dev/null | grep -E 'IPTVHome(Primary|Recheck|Peak|Resume)' || echo "  missing"
 echo "last log lines:"
 tail -n 12 "$LOG" 2>/dev/null || true

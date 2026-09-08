@@ -58,7 +58,7 @@ cleanup_stage() {
 }
 trap cleanup_stage EXIT HUP INT TERM
 
-files="candidate_history.py home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh"
+files="candidate_delivery.py progress_journal.py runtime_status.py background_upgrade.py candidate_history.py home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh"
 for name in $files; do
   if [ -n "${IPTV_HOME_STAGEDIR:-}" ]; then
     cp "$IPTV_HOME_STAGEDIR/$name" "$stage/$name"

@@ -11,6 +11,11 @@ LOCK="/opt/var/run/iptv-home-probe.lock"
 [ ! -f "$DATA/background-upgrade.locked" ] || exit 0
 
 mkdir -p "$DATA" "$(dirname "$LOG")" "$(dirname "$LOCK")"
+if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then
+  tail -c 1048576 "$LOG" > "$LOG.1"
+  : > "$LOG"
+fi
+
 # The worker owns a kernel flock released automatically on exit or reboot.
 # Leave legacy manual execution available while the new worker is disabled.
 if ! daily_enabled="$(/opt/bin/python3 -I -c 'import json; print(json.load(open("/opt/etc/iptv-home-probe.json")).get("daily_worker_enabled") is True)' 2>> "$LOG")"; then
@@ -41,9 +46,6 @@ fi
 if ! mkdir "$LOCK" 2>/dev/null; then exit 0; fi
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT HUP INT TERM
 
-if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then
-  mv -f "$LOG" "$LOG.1"
-fi
 
 run_kind="primary-0200"
 if [ "${1:-}" = "--run-kind" ] && [ -n "${2:-}" ]; then

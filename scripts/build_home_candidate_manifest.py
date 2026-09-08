@@ -126,6 +126,15 @@ def build_manifest(
         else:
             previous["sources"] = sorted(set(previous["sources"]) | set(row["sources"]))
 
+    labels = {}
+    for key, url in current.items():
+        labels.setdefault(url, set()).add(key)
+    for row in candidates.values():
+        labels.setdefault(row['url'], set()).add(row['channel_key'])
+    conflicts = {url for url, keys in labels.items() if len(keys) > 1}
+    rejected['identity_conflict'] = sum(row['url'] in conflicts for row in candidates.values())
+    candidates = {k:v for k,v in candidates.items() if v['url'] not in conflicts}
+
     ordered = sorted(candidates.values(), key=lambda item: (str(item["channel_key"]), str(item["candidate_id"])))
     manifest = {
         "schema": CANDIDATE_SCHEMA,
@@ -212,6 +221,31 @@ def build_incremental_manifest(
     return delta, index, summary
 
 
+def retain_delivery(delta, index, previous_index, previous_manifest=None, receipt=None):
+    """Retain unacknowledged batches even when discovery changes or disappears."""
+    pending = dict((previous_index or {}).get('pending_batches') or {})
+    if not pending and previous_manifest and 'pending_batches' not in (previous_index or {}):
+        rows = previous_manifest.get('candidates') or []
+        if rows:
+            pending[object_sha256(rows)] = rows
+    for ident in (receipt or {}).get('received_batches', []):
+        pending.pop(ident, None)
+    if delta['candidates']:
+        pending[object_sha256(delta['candidates'])] = delta['candidates']
+    rows = {}
+    for batch in pending.values():
+        for row in batch:
+            rows[row['candidate_id']] = row
+    ordered = sorted(rows.values(), key=lambda row: (row['channel_key'], row['candidate_id']))
+    output = dict(delta, candidates=ordered, candidate_count=len(ordered),
+                  candidate_set_sha256=object_sha256(ordered),
+                  delivery_batches=[dict(id=k, candidate_ids=[r['candidate_id'] for r in v])
+                                    for k, v in sorted(pending.items())])
+    index = dict(index, pending_batches=pending)
+    validate_candidate_manifest(output)
+    return output, index
+
+
 def atomic_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
@@ -227,6 +261,8 @@ def main() -> int:
     parser.add_argument("--output", default="harvest/home-candidates.json")
     parser.add_argument("--index", default="harvest/home-candidate-index.json")
     parser.add_argument("--feedback", default="config/home-route-feedback.json")
+    parser.add_argument("--receipt", default="")
+    parser.add_argument("--publisher-config", default="config/home-publisher.json")
     parser.add_argument("--no-bootstrap", action="store_true")
     parser.add_argument("--source-revision", default=os.environ.get("GITHUB_SHA") or "working-tree")
     args = parser.parse_args()
@@ -250,6 +286,16 @@ def main() -> int:
         previous_index,
         bootstrap_if_missing=not args.no_bootstrap,
     )
+    receipt = None
+    if args.receipt and Path(args.receipt).exists():
+        receipt = json.loads(Path(args.receipt).read_text())
+        publisher = json.loads(Path(args.publisher_config).read_text())
+        if (receipt.get('schema') != 'iptv-home-delivery-receipt/v1'
+                or receipt.get('probe_id') != publisher['expected_probe_id']
+                or receipt.get('meaning') != 'queue_persisted_not_tested'):
+            raise ContractError('invalid household receipt')
+    previous_manifest = json.loads(output_path.read_text()) if output_path.exists() else None
+    manifest, index = retain_delivery(manifest, index, previous_index, previous_manifest, receipt)
     # Publish the delta before advancing the index.  A crash can therefore
     # repeat safe work, but can never silently skip a new candidate.
     atomic_json(output_path, manifest)
