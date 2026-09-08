@@ -33,6 +33,11 @@ http://example.com/cctv1.m3u8
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "tv.m3u"
             path.write_text(original, encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, 'forbidden'):
+                pay.patch_playlist(path, upstream)
+            self.assertEqual(original, path.read_text(encoding='utf-8'))
+            path = Path(directory) / 'preview.m3u'
+            path.write_text(original, encoding='utf-8')
             count = pay.patch_playlist(path, upstream)
             rendered = path.read_text(encoding="utf-8")
         self.assertEqual(count, 1)

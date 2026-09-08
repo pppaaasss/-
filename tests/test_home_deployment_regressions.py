@@ -162,9 +162,20 @@ class DeploymentRegressions(unittest.TestCase):
             for name,body in stubs.items():
                 path=bin_dir/name;path.write_text('#!/bin/sh\n'+body+'\n');path.chmod(0o755)
             installer=root/'install.sh'
-            installer.write_text((ROOT/'router/ac86u/install.sh').read_text().replace('/opt',str(opt)).replace('/jffs',str(root/'jffs')))
+            # Model the router UID inside this temporary filesystem, independent
+            # of whether the test runner is root (local) or an ordinary CI user.
+            proc_status=root/'proc-status'
+            proc_status.write_text('Uid:\t1000\t1000\t1000\t1000\n')
+            installer.write_text((ROOT/'router/ac86u/install.sh').read_text()
+                .replace('/opt',str(opt)).replace('/jffs',str(root/'jffs'))
+                .replace('/proc/self/status',str(proc_status)))
             env=dict(os.environ,PATH=str(bin_dir)+':'+os.environ['PATH'], TEST_SOURCE=str(ROOT/'router/ac86u'),
                      TEST_CRON_LOG=str(root/'cron.log'),IPTV_HOME_SKIP_INITIAL_RUN='1')
+            denied=subprocess.run(['sh',str(installer)],env=env,capture_output=True,text=True,timeout=30)
+            self.assertNotEqual(0,denied.returncode)
+            self.assertIn('router administrator',denied.stdout+denied.stderr)
+            self.assertFalse((opt/'etc/iptv-home-probe.json').exists())
+            proc_status.write_text('Uid:\t0\t0\t0\t0\n')
             process=subprocess.run(['sh',str(installer)],env=env,capture_output=True,text=True,timeout=30)
             self.assertEqual(0,process.returncode,process.stdout+process.stderr)
             self.assertTrue((opt/'share/iptv-home-probe/activate.sh').is_file())

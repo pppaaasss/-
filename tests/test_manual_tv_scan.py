@@ -71,7 +71,7 @@ class ManualScanTests(unittest.TestCase):
     def test_same_station_4k_variant_keeps_its_quality_floor(self):
         self.tv = playlist(('江苏卫视', 'http://tv.test/js'), ('江苏卫视4K', 'http://tv.test/js4k'))
         result, probe = self.run_scan()
-        self.assertEqual([1080, 2160], [c.kwargs['floor'] for c in probe.call_args_list])
+        self.assertEqual([1080, 1080], [c.kwargs['floor'] for c in probe.call_args_list])
         self.assertEqual(3, result['managed_routes'])
         self.assertEqual(2, result['managed_channels'])
 

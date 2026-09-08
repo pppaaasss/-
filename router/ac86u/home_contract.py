@@ -220,6 +220,8 @@ def make_candidate(row: dict) -> dict:
     key = station_key(name)
     if key is None:
         raise ContractError("candidate is outside the CCTV/provincial-satellite scope")
+    if row.get('channel_key') is not None and row['channel_key'] != key:
+        raise ContractError('candidate name and explicit channel key disagree')
     url = _url(row.get("url"), "candidate.url")
     options = _text(row.get("request_options", row.get("options", "")), "candidate.request_options", 2048, allow_empty=True)
     raw_sources = _list(row.get("sources"), "candidate.sources", 64)

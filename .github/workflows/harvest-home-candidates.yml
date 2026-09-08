@@ -44,7 +44,21 @@ jobs:
             --output-dir harvest \
             --workers 12
 
-      - name: Publish only new or changed home candidates
+      - name: Read durable household receipt
+        run: |
+          git fetch --depth=1 origin home-reports
+          python3 - <<'PYRECEIPT'
+          import json, subprocess
+          from pathlib import Path
+          probe = json.loads(Path('config/home-publisher.json').read_text())['expected_probe_id']
+          path = 'receipts/' + probe + '.json'
+          listed = subprocess.check_output(['git', 'ls-tree', '--name-only', 'FETCH_HEAD', '--', path], text=True).strip()
+          if listed:
+              raw = subprocess.check_output(['git', 'show', 'FETCH_HEAD:' + path])
+              Path('/tmp/home-delivery-receipt.json').write_bytes(raw)
+          PYRECEIPT
+
+      - name: Publish pending and new home candidates
         run: |
           python3 scripts/build_home_candidate_manifest.py \
             --input /tmp/home-discovered.jsonl \
@@ -52,6 +66,7 @@ jobs:
             --output harvest/home-candidates.json \
             --index harvest/home-candidate-index.json \
             --no-bootstrap \
+            --receipt /tmp/home-delivery-receipt.json \
             --feedback config/home-route-feedback.json
 
       - name: Validate home-only contracts

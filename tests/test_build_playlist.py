@@ -285,7 +285,7 @@ https://example.com/notice.m3u8
         )
         self.assertGreater(builder.historical_score(reliable), builder.historical_score(flaky))
 
-    def test_easy_gate_requires_three_checks_and_headroom(self):
+    def test_mainland_candidate_gate_requires_three_checks_not_cloud_speed(self):
         channel = builder.Channel(
             "CCTV-1 综合 1080p",
             '#EXTINF:-1 group-title="大陆",CCTV-1 综合 1080p',
@@ -308,7 +308,7 @@ https://example.com/notice.m3u8
         self.assertFalse(builder.is_easy_ready(channel))
         channel.probe["checks_ok"] = 3
         channel.probe["segment_mbps"] = 2.0
-        self.assertFalse(builder.is_easy_ready(channel))
+        self.assertTrue(builder.is_easy_ready(channel))  # Candidate-only; household speed is authoritative.
 
     def test_merge_probe_uses_worst_observed_network_values(self):
         first = {
@@ -377,6 +377,8 @@ https://example.com/notice.m3u8
         }
         self.assertTrue(builder.is_family_core_usable(channel))
         channel.probe["segment_mbps"] = 0.3
+        self.assertTrue(builder.is_family_core_usable(channel))
+        channel.probe["recheck_failed"] = True
         self.assertFalse(builder.is_family_core_usable(channel))
 
     def test_domestic_frame_audit_candidate_uses_overseas_runner_floor(self):
@@ -496,7 +498,7 @@ segments/live-001.ts
             builder.core_route_score(fast_soft),
         )
 
-    def test_core_route_requires_download_headroom_for_high_bitrate(self):
+    def test_candidate_core_cloud_speed_is_advisory(self):
         overloaded = builder.Channel(
             "北京卫视 1080p",
             '#EXTINF:-1 group-title="大陆",北京卫视 1080p',
@@ -525,7 +527,7 @@ segments/live-001.ts
             "stream_mbps": 4.5,
             "manifest_s": 1.0,
         }
-        self.assertFalse(builder.is_stable(overloaded))
+        self.assertTrue(builder.is_stable(overloaded))  # Not a household qualification.
         self.assertTrue(builder.is_stable(balanced))
         self.assertGreater(builder.measured_score(balanced), builder.measured_score(overloaded))
 
@@ -571,9 +573,9 @@ segments/live-001.ts
             {builder.channel_key(channel) for channel in selected},
             {"cctv15", "北京卫视"},
         )
-        self.assertTrue(all(channel.probe.get("easy_core_fallback") for channel in selected))
+        self.assertTrue(all(builder.is_family_core_usable(channel) for channel in selected))
 
-    def test_existing_easy_core_is_carried_when_no_fast_replacement_exists(self):
+    def test_unverified_existing_core_is_not_carried_blindly(self):
         ordinary = builder.Channel(
             "天津地方频道",
             '#EXTINF:-1 group-title="中文综合",天津地方频道',
@@ -605,9 +607,9 @@ segments/live-001.ts
         restored = builder.restore_existing_family_core([ordinary], existing, target=2)
         self.assertEqual(
             {builder.channel_key(channel) for channel in restored},
-            {"cctv13", "江苏卫视"},
+            {"天津地方频道"},
         )
-        self.assertTrue(all(channel.probe.get("carried_family_fallback") for channel in restored))
+        self.assertFalse(any(channel.probe.get("carried_family_fallback") for channel in restored))
 
 
 if __name__ == "__main__":

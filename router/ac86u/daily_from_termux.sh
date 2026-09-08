@@ -6,13 +6,13 @@ case "$iptv_ref" in *[!0-9a-f]*|'') echo 'Invalid commit SHA'; exit 2;; esac
 [ "${#iptv_ref}" -eq 40 ] || exit 2
 iptv_stage="$(mktemp -d)"
 trap 'rm -rf "$iptv_stage"' EXIT HUP INT TERM
-for iptv_name in install.sh home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh; do
+for iptv_name in install.sh candidate_history.py candidate_delivery.py progress_journal.py runtime_status.py background_upgrade.py home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh; do
   curl -4 -fSL --retry 3 --connect-timeout 15 --max-time 120 \
     "https://raw.githubusercontent.com/pppaaasss/-/$iptv_ref/router/ac86u/$iptv_name" -o "$iptv_stage/$iptv_name"
 done
 # Explicit files keep the output archive out of its own input.
 tar -czf "$iptv_stage/bundle.tar.gz" -C "$iptv_stage" \
-  install.sh home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh
+  install.sh candidate_history.py candidate_delivery.py progress_journal.py runtime_status.py background_upgrade.py home_probe.py peak_policy.py daily_worker.py daily_readiness.py home_resources.py home_transport.py transport_check.py home_contract.py home_decision.py push_home_report.py github_pair.py activate.py activate.sh run.sh runtime_audit.sh status.sh uninstall.sh
 ssh -p 22 -o ConnectTimeout=10 wodeluyouqi@192.168.50.1 "
 set -eu
 unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH

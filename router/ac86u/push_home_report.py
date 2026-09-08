@@ -13,6 +13,8 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.request
+from datetime import datetime
 from pathlib import Path
 
 try:
@@ -80,6 +82,9 @@ def queue_report(config: dict, output_dir: Path, report_path: Path) -> Path:
     except Exception as exc:
         raise RuntimeError("home report is not valid UTF-8 JSON") from exc
     validate_home_report_v2(report, expected_probe_id=str(config.get("probe_id") or ""))
+    policy = report.get('policy') or {}
+    if policy.get('batch_complete') is False or policy.get('formal_check_deferred') is True:
+        raise RuntimeError('partial batch is not publishable')
     queued = output_dir / "pending-reports" / report_filename(report, raw)
     if queued.exists():
         if queued.read_bytes() != raw:
@@ -188,6 +193,49 @@ def _copy_pending(repo_dir: Path, probe_id: str, pending: list[Path]) -> None:
         atomic_bytes(destination, raw)
 
 
+def prune_reports(repo_dir, probe_id, pending_names, publication, epoch):
+    """Prune only aged reports preceding an acknowledged publication watermark."""
+    if not publication or publication.get('probe_id') != probe_id:
+        return []
+    stamp = str(publication.get('report_generated_utc') or '')
+    try:
+        watermark = datetime.fromisoformat(stamp.replace('Z', '+00:00')).timestamp()
+    except ValueError:
+        return []
+    directory = repo_dir / 'inbox' / probe_id
+    rows = []
+    for path in directory.glob('*.json'):
+        if path.is_symlink():
+            raise RuntimeError('unsafe report during retention')
+        value = load_object(path)
+        when = datetime.fromisoformat(value['generated_utc'].replace('Z', '+00:00')).timestamp()
+        rows.append((when, path, value['run_kind']))
+    protected = set(pending_names) | {str(publication.get('report_file') or '')}
+    for kind in ('primary-0200', 'recheck-1300', 'peak-2000'):
+        subset = sorted([row for row in rows if row[2] == kind], key=lambda r:r[0])
+        if subset:
+            protected.update((subset[0][1].name, subset[-1][1].name))
+    removed = []
+    for when, path, _ in rows:
+        if when < min(epoch - 14 * 86400, watermark) and path.name not in protected:
+            path.unlink(); removed.append(path.name)
+    return removed
+
+
+def publication_receipt(config):
+    # Read text only. A missing/stale receipt disables pruning rather than
+    # guessing which old evidence the publisher consumed.
+    url = 'https://raw.githubusercontent.com/pppaaasss/-/master/home-publish/latest.json'
+    try:
+        with urllib.request.urlopen(url, timeout=10) as response:
+            raw = response.read(65537)
+        if len(raw) > 65536: return None
+        value = json.loads(raw)
+        return value if value.get('schema') == 'iptv-home-publication/v1' else None
+    except Exception:
+        return None
+
+
 def _push_once(
     config: dict,
     output_dir: Path,
@@ -210,13 +258,30 @@ def _push_once(
         _git(git, ["config", "user.name", f"IPTV Home Probe {probe_id}"], cwd=repo_dir, env=transport_env)
         _git(git, ["config", "user.email", "iptv-home-probe@users.noreply.github.com"], cwd=repo_dir, env=transport_env)
         _copy_pending(repo_dir, probe_id, pending)
+        prune_reports(repo_dir, probe_id, {p.name for p in pending},
+                      config.get('_publication_receipt'), time.time())
         relative = f"inbox/{probe_id}"
-        _git(git, ["add", "--", relative], cwd=repo_dir, env=transport_env)
+        receipt_path = output_dir / 'candidate-receipts.json'
+        if receipt_path.exists():
+            receipt = load_object(receipt_path)
+            if receipt.get('probe_id') != probe_id or receipt.get('meaning') != 'queue_persisted_not_tested':
+                raise RuntimeError('invalid delivery receipt')
+            directory = repo_dir / 'receipts'
+            if directory.is_symlink():
+                raise RuntimeError('unsafe receipt directory')
+            directory.mkdir(exist_ok=True)
+            destination = directory / (probe_id + '.json')
+            if destination.is_symlink():
+                raise RuntimeError('unsafe receipt file')
+            atomic_json(destination, receipt)
+            _git(git, ['add', '--', 'receipts/' + probe_id + '.json'], cwd=repo_dir, env=transport_env)
+        if (repo_dir / relative).exists():
+            _git(git, ["add", "-A", "--", relative], cwd=repo_dir, env=transport_env)
         changed = _git(git, ["diff", "--cached", "--quiet"], cwd=repo_dir, env=transport_env, check=False)
         if changed.returncode not in {0, 1}:
             raise RuntimeError("could not inspect staged home reports")
         if changed.returncode == 1:
-            latest = pending[-1].name
+            latest = pending[-1].name if pending else 'candidate delivery receipt'
             _git(git, ["commit", "--quiet", "-m", f"Home report {probe_id}: {latest}"], cwd=repo_dir, env=transport_env)
             _git(git, ["push", "--quiet", "origin", f"HEAD:refs/heads/{branch}"], cwd=repo_dir, env=transport_env)
 
@@ -225,6 +290,7 @@ def push(
     config_path: Path,
     report_path: Path | None = None,
     *,
+    receipts_only: bool = False,
     remote_url_override: str | None = None,
     transport_env_override: dict[str, str] | None = None,
 ) -> bool:
@@ -232,15 +298,16 @@ def push(
     output_dir = Path(str(config.get("output_dir") or "/opt/var/lib/iptv-home-probe"))
     output_dir.mkdir(parents=True, exist_ok=True)
     report_path = report_path or output_dir / "latest.json"
-    queue_report(config, output_dir, report_path)
-    pending = sorted((output_dir / "pending-reports").glob("*.json"))
+    if not receipts_only:
+        queue_report(config, output_dir, report_path)
+    pending = [] if receipts_only else sorted((output_dir / "pending-reports").glob("*.json"))
     validated = validate_pending_reports(config, pending)
     state_path = output_dir / "github-state.json"
     try:
         state = load_object(state_path)
     except FileNotFoundError:
         state = {}
-    state["pending_reports"] = len(pending)
+    state["pending_reports"] = len(list((output_dir / "pending-reports").glob("*.json")))
     if config.get("github_push_enabled") is not True:
         atomic_json(state_path, state)
         print(f"HOME_GITHUB_PUSH disabled; queued={len(pending)}")
@@ -250,6 +317,8 @@ def push(
     try:
         if remote_url_override is None:
             remote_url, transport_env = _production_transport(config)
+            if not receipts_only:
+                config['_publication_receipt'] = publication_receipt(config)
         else:
             remote_url = remote_url_override
             transport_env = dict(os.environ) if transport_env_override is None else dict(transport_env_override)
@@ -273,10 +342,14 @@ def push(
     if error:
         state["last_error"] = error[:800]
         state["last_attempt_utc"] = utc_text()
-        state["pending_reports"] = len(pending)
+        state["pending_reports"] = len(list((output_dir / "pending-reports").glob("*.json")))
         atomic_json(state_path, state)
         raise RuntimeError(error)
 
+    if receipts_only:
+        atomic_json(output_dir / 'receipt-upload.json', dict(uploaded_utc=utc_text(),
+            receipt_sha256=hashlib.sha256((output_dir / 'candidate-receipts.json').read_bytes()).hexdigest()))
+        return True
     acknowledged = len(validated)
     evidence = dict(state.get("successful_report_evidence") or {})
     for report, raw in validated:
@@ -309,9 +382,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default="/opt/etc/iptv-home-probe.json")
     parser.add_argument("--report", default="")
+    parser.add_argument("--receipts-only", action="store_true")
     args = parser.parse_args()
     try:
-        push(Path(args.config), Path(args.report) if args.report else None)
+        push(Path(args.config), Path(args.report) if args.report else None, receipts_only=args.receipts_only)
         return 0
     except Exception as exc:
         print(f"HOME_GITHUB_PUSH failed: {exc}", file=sys.stderr)
