@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,7 +11,7 @@ from unittest import mock
 
 from router.ac86u import github_pair
 from router.ac86u.home_contract import REPORT_SCHEMA, ROUTE_CONTEXT, url_sha256
-from router.ac86u.push_home_report import push
+from router.ac86u.push_home_report import _git, push
 
 
 def report(probe_id="home-ac86u-test", generated="2026-09-02T13:00:00Z"):
@@ -216,6 +217,23 @@ class AC86UGitHubPushTests(unittest.TestCase):
                 "ls-tree", "-r", "--name-only", "home-reports", "--", "inbox",
             ]).stdout.splitlines()
         self.assertEqual([], names)
+
+    def test_git_transport_replaces_non_utf8_output_without_aborting(self):
+        process = _git(
+            sys.executable,
+            ["-c", "import os; os.write(1, b'\\xc0transport-output\\n')"],
+            cwd=None,
+            env=dict(os.environ),
+        )
+        self.assertEqual(0, process.returncode)
+        self.assertEqual("\ufffdtransport-output\n", process.stdout)
+        with self.assertRaisesRegex(RuntimeError, "\ufffdtransport-error"):
+            _git(
+                sys.executable,
+                ["-c", "import os; os.write(2, b'\\xc0transport-error\\n'); raise SystemExit(7)"],
+                cwd=None,
+                env=dict(os.environ),
+            )
 
 
 class AC86UGitHubPairTests(unittest.TestCase):
