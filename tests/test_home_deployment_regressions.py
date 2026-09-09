@@ -29,6 +29,12 @@ class DeploymentRegressions(unittest.TestCase):
                     maximum_load1=10000, minimum_mem_available_kib=1,
                     candidate_manifest_url='', actionable=True, **extra)
 
+    def test_termux_upgrade_falls_back_to_raw_github_api_content(self):
+        script = (ROOT / 'router/ac86u/upgrade_from_termux.sh').read_text(encoding='utf-8')
+        self.assertIn('application/vnd.github.raw+json', script)
+        self.assertIn('api.github.com/repos/pppaaasss/-/contents/router/ac86u/', script)
+        self.assertNotIn('curl -4', script)
+
     def test_unknown_observations_never_become_confirmed_failure(self):
         unknown = measured('CCTV-1', 'https://test.invalid/1', 1080, 'UNKNOWN')
         bad = dict(unknown, observed_status='UNAVAILABLE')
