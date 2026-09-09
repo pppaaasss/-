@@ -130,6 +130,8 @@ def _git(
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=timeout,
     )
     if check and process.returncode != 0:
