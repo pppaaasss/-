@@ -82,3 +82,10 @@ def receive(config, root, epoch):
     probe.atomic_json(root / 'state.json', state)
     save_receipts(root, state, manifest, config, epoch)
     return bool(queue)
+
+
+if __name__ == '__main__':
+    import sys
+    request = json.load(sys.stdin)
+    pending = receive(request['config'], Path(request['root']), request['epoch'])
+    print(json.dumps(dict(pending=pending)))
