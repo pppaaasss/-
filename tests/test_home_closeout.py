@@ -40,8 +40,11 @@ class CloseoutTests(unittest.TestCase):
                 root=Path(tmp)
                 path=worker.enqueue(root, worker.KINDS[0], epoch)
                 job=json.loads(path.read_text());job['state']='COMPLETE';probe.atomic_json(path,job)
-                with mock.patch.object(delivery,'receive',return_value=True):
+                with mock.patch.object(worker.subprocess, 'run', return_value=
+                    worker.subprocess.CompletedProcess([], 0, '{"pending": true}', '')) as child:
                     worker.poll_delivery(config(root),root,epoch)
+                self.assertEqual('candidate_delivery.py', Path(child.call_args.args[0][-1]).name)
+                self.assertEqual(str(root), json.loads(child.call_args.kwargs['input'])['root'])
                 jobs=[json.loads(p.read_text()) for p in (root/'daily-jobs').glob('*.json')]
                 self.assertEqual(1,sum(j['state']==expected for j in jobs))
                 self.assertEqual(hour==4,worker.next_job(root,epoch) is not None)
