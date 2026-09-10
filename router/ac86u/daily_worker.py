@@ -216,6 +216,9 @@ def work(config_path):
             if config.get('daily_worker_enabled') is not True:
                 return 0
             now = time.time()
+            # Pick up additional user batches while a long-running job is
+            # active. poll_delivery already limits text checks to 5 minutes.
+            poll_delivery(config, root, now)
             maintain_runtime(root, now)
             defer_primary_jobs(root, now)
             selected = next_job(root, now)
