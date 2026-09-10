@@ -12,11 +12,35 @@ import sys
 import time
 
 try:
-    from .home_probe import atomic_json, resource_check
+    from .home_resources import sample_resources
     from .peak_policy import in_peak
 except ImportError:
-    from home_probe import atomic_json, resource_check
+    from home_resources import sample_resources
     from peak_policy import in_peak
+
+def atomic_json(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temp = path.with_name('.' + path.name + '.' + str(os.getpid()) + '.tmp')
+    with temp.open('w', encoding='utf-8') as stream:
+        json.dump(value, stream, ensure_ascii=False, indent=2)
+        stream.write('\n')
+        stream.flush()
+        os.fsync(stream.fileno())
+    os.replace(temp, path)
+    fd = os.open(str(path.parent), os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def resource_check(config):
+    # Keep the resident supervisor free of the probe's HTTP/media imports.
+    def read_resources():
+        fields = dict(line.split(':', 1) for line in Path('/proc/meminfo').read_text().splitlines())
+        return dict(mem_available_kib=int(fields.get('MemAvailable', '0').split()[0]))
+    return sample_resources(config, read_resources)
+
 
 def maintain_runtime(root, epoch):
     # Only old COMPLETE jobs can be pruned. Outboxes, evidence and diagnostics
@@ -135,6 +159,9 @@ def advance(job, report, epoch):
     job = dict(job, batches=job['batches'] + 1, retry_after=0)
     policy = report.get('policy') or {}
     summary = report['summary']
+    stop = (report.get('resources') or {}).get('stop_reason')
+    if stop and stop != 'primary_window_closed':
+        return dict(job, state='WAITING_RESOURCES', reason=stop, retry_after=epoch + 300), False
     if summary.get('circuit_breaker_open'):
         return dict(job, state='WAITING_NETWORK', retry_after=epoch + 300), False
     if job['phase'] == 'candidates':
@@ -153,17 +180,22 @@ def advance(job, report, epoch):
 
 def poll_delivery(config, root, epoch):
     """One text check per wake; an empty/received batch starts no probe."""
-    try:
-        from .candidate_delivery import receive
-    except ImportError:
-        from candidate_delivery import receive
     status_path = root / 'delivery-status.json'
     if status_path.exists():
         last = json.loads(status_path.read_text())
         if epoch - last.get('checked_epoch', 0) < 300:
             return
     try:
-        pending = receive(config, root, epoch)
+        # Parsing delivery/history in a short-lived process releases its heap
+        # before the media probe starts, including allocator-retained pages.
+        result = subprocess.run([sys.executable, '-E', '-s',
+            str(Path(__file__).resolve().with_name('candidate_delivery.py'))],
+            input=json.dumps(dict(config=config, root=str(root), epoch=epoch)),
+            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=120, env=clean_env())
+        if result.returncode:
+            raise RuntimeError('delivery_process_failed:' + result.stderr[-220:])
+        pending = json.loads(result.stdout)['pending']
         atomic_json(status_path, dict(state='RECEIVED', checked_epoch=epoch, pending=pending))
     except Exception as exc:
         atomic_json(status_path, dict(state='WAITING_MANIFEST', checked_epoch=epoch,
@@ -258,6 +290,8 @@ def work(config_path):
             if result.returncode:
                 job.update(state='WAITING_RESOURCES' if result.returncode == 75 else 'WAITING_RETRY', retry_after=now + 300)
                 atomic_json(path, job)
+                atomic_json(root / 'daily-status.json', job)
+                print('HOME_WORKER: ' + job['state'] + ' retry_after=' + str(job['retry_after']), flush=True)
                 continue
             report = json.loads((root / 'latest.json').read_text())
             job, publish = advance(job, report, now)
@@ -269,6 +303,9 @@ def work(config_path):
                 job['push_exit_code'] = push.returncode
             atomic_json(path, job)
             atomic_json(root / 'daily-status.json', job)
+            if job['state'].startswith('WAITING_'):
+                print('HOME_WORKER: ' + job['state'] + ' reason=' + str(job.get('reason', '')),
+                      flush=True)
             time.sleep(2)
 
 
