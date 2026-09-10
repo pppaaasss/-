@@ -1,0 +1,1708 @@
+{
+  "actionable": true,
+  "baseline": {
+    "github_reachable": true,
+    "home_network_ok": true,
+    "mass_failure_circuit_breaker": false,
+    "route_verified": true
+  },
+  "candidate_playlist": null,
+  "candidate_results": [
+    {
+      "candidate_id": "15425d89a58d10fdc61a8f6d9fa66964882f9ea7264f7f40dc25c84bbbddbe6c",
+      "channel_key": "广西卫视",
+      "error": "quality_unknown:TimeoutExpired:Command '['/opt/bin/ffprobe', '-v', 'error', '-rw_timeout', '8000000', '-probesize', '2000000', '-analyzeduration', '4000000', '-select_streams', 'v:0', '-show_entries', 'stream=wi",
+      "purpose": "switch-reverification",
+      "qualification": "UNKNOWN",
+      "request_options": "",
+      "switch_reverified": false,
+      "url": "https://hlscdn.liangtv.cn/live/de0f97348eb84f62aa6b7d8cf0430770/dd505d87880c478f901f38560ca4d4e6.m3u8",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 15.547,
+        "height": 0,
+        "min_download_mbps": 41.214,
+        "sample_count": 2,
+        "startup_s": 0.562,
+        "stream_mbps": 2.651,
+        "width": 0
+      }
+    },
+    {
+      "candidate_id": "c32e26e569061eaeffb980fc32ef455b494070b2fc9d8afdc1553082703d5dd3",
+      "channel_key": "cctv4k",
+      "error": "HTTPError:HTTP Error 403: Forbidden",
+      "purpose": "switch-reverification",
+      "qualification": "UNKNOWN",
+      "request_options": "",
+      "switch_reverified": false,
+      "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_mbd.m3u8?auth_key=1788804000-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-838db07b76af778ded3299641f16f858&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    }
+  ],
+  "current_results": [
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv1",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-1",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://182.140.125.47:808/hls/1/index.m3u8",
+      "url_sha256": "1830470ced04430941a6c95fdd36ad945324a4dbaf311f1e48dad3afc080125d",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 2.413,
+        "height": 1080,
+        "min_download_mbps": 25.954,
+        "sample_count": 2,
+        "startup_s": 0.503,
+        "stream_mbps": 10.755,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv2",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-2",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://183.94.146.79:9901/tsfile/live/0002_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "409d893517ed015a74a2bd477c0d11abf8c6bd7b541fb37ddd3cb5af10bcb717",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 4.878,
+        "height": 1080,
+        "min_download_mbps": 42.458,
+        "sample_count": 2,
+        "startup_s": 0.265,
+        "stream_mbps": 8.704,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv3",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-3",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://221.226.51.220:50081/newlive/live/hls/3/live.m3u8",
+      "url_sha256": "5f61304e3bf4bf6f86887c01065c8f2040197f015b9276694c4ba5f64f5ebd1a",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 6.113,
+        "height": 1080,
+        "min_download_mbps": 55.119,
+        "sample_count": 2,
+        "startup_s": 0.363,
+        "stream_mbps": 9.016,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv4",
+      "error": "TimeoutError:stream_sample_transfer_timeout",
+      "failure_confirmed": true,
+      "name": "CCTV-4",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://74.91.26.218:82/live/cctv4hd.m3u8",
+      "url_sha256": "03998edf801a34d9db30978b3aa42f057ed5ecdc7a80a3743bd25b36666e1c41",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv5",
+      "error": "headroom_0.402_below_1.350",
+      "failure_confirmed": true,
+      "name": "CCTV-5",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://112.30.73.119:9901/tsfile/live/0005_2.m3u8",
+      "url_sha256": "367d7e7a4880de8519892de9afc9225c2a8d0a7a88b0525662221dc72cbe5a0b",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.402,
+        "height": 1080,
+        "min_download_mbps": 1.699,
+        "sample_count": 2,
+        "startup_s": 8.578,
+        "stream_mbps": 4.227,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv5plus",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-5+",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://183.129.255.66:8480/hls/6/index.m3u8",
+      "url_sha256": "212e42c48477746a63532078034fe7aed7112b46e4054187b561c6d50375a03a",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.529,
+        "height": 1080,
+        "min_download_mbps": 12.214,
+        "sample_count": 2,
+        "startup_s": 0.349,
+        "stream_mbps": 7.986,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv6",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-6",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://182.140.125.47:808/hls/6/index.m3u8",
+      "url_sha256": "a959ed3837fc030a3db6b5af8e2c2648e6d83e2499d729a3cbe359979149a4d3",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 1.479,
+        "height": 1080,
+        "min_download_mbps": 15.813,
+        "sample_count": 2,
+        "startup_s": 1.143,
+        "stream_mbps": 10.692,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv7",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-7",
+      "observed_epoch": 1788868806.060527,
+      "status": "UNKNOWN",
+      "url": "http://107.150.60.122/live/cctv7hd.m3u8",
+      "url_sha256": "34c6fa23bf0c55035b050f7d65b27b079917e420d5f09dd93da16103946826ba",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.379,
+        "height": 1080,
+        "min_download_mbps": 5.745,
+        "sample_count": 2,
+        "startup_s": 4.459,
+        "stream_mbps": 4.166,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv8",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-8",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://58.56.162.102:4466/newlive/live/hls/9/live.m3u8",
+      "url_sha256": "08a1b10ee76e93097dfebcc7b575d85c5bfd1879417b5647652dc99f7ef012d9",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.482,
+        "height": 1080,
+        "min_download_mbps": 13.363,
+        "sample_count": 2,
+        "startup_s": 1.037,
+        "stream_mbps": 9.018,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv9",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-9",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://219.147.245.238:25480/newlive/live/hls/10/live.m3u8",
+      "url_sha256": "dbaa3ba310013f1d3f95244e20bfb7264f61f142e646bd73103628cde68f4ea5",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 7.445,
+        "height": 1080,
+        "min_download_mbps": 33.086,
+        "sample_count": 2,
+        "startup_s": 0.622,
+        "stream_mbps": 4.444,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv10",
+      "error": "TimeoutError:timed out",
+      "failure_confirmed": true,
+      "name": "CCTV-10",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://101.66.195.43:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "18b6c61972f0f17ba8c4974f038b8959a165b48e715692631e04b593598610ae",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv11",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-11",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://74.91.26.218:82/live/cctv11hd.m3u8",
+      "url_sha256": "b8c7e96959f1ec3eafdd8e900d1d73454af6a891cfea19f0972ca9ed1e0ba015",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 3.08,
+        "height": 720,
+        "min_download_mbps": 1.854,
+        "sample_count": 2,
+        "startup_s": 5.999,
+        "stream_mbps": 0.602,
+        "width": 1280
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv12",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-12",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://221.7.175.154:8445/tsfile/live/1010_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "7f4e668c2adc9ca797acfa5e7b1db490429f52c704c2ec81e9b1ebd32fa56fed",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 2.318,
+        "height": 1080,
+        "min_download_mbps": 21.054,
+        "sample_count": 2,
+        "startup_s": 0.873,
+        "stream_mbps": 9.082,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv13",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-13",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "https://event.pull.hebtv.com/jishi/cp1.m3u8",
+      "url_sha256": "1f943068729f21543d5b7576364326caa62eec449c7b5180c29a552c20741f46",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 9.625,
+        "height": 1080,
+        "min_download_mbps": 53.603,
+        "sample_count": 2,
+        "startup_s": 0.554,
+        "stream_mbps": 5.569,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv14",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-14",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://112.123.243.37:50085/tsfile/live/0015_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "ea33be855fded4b026005dae75f0b50bb35d526119be4e9f362f5e68079ddead",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 8.07,
+        "height": 1080,
+        "min_download_mbps": 72.634,
+        "sample_count": 2,
+        "startup_s": 0.297,
+        "stream_mbps": 9.0,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv15",
+      "error": "headroom_1.329_below_1.350",
+      "failure_confirmed": true,
+      "name": "CCTV-15",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://207.56.13.146:81/cdnlive/cctv15.m3u8",
+      "url_sha256": "1a3710799654eeefd40c1f2670c7a30fd6bd09a8a162f63f042a5991811ba9bd",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.329,
+        "height": 1080,
+        "min_download_mbps": 5.631,
+        "sample_count": 2,
+        "startup_s": 4.198,
+        "stream_mbps": 4.238,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "cctv16",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "CCTV-16",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://107.150.60.122/live/cctv16hd.m3u8",
+      "url_sha256": "025ab3aee4a383a7f1de8d36b21716eb97167898120f4d55cd0a830d3cda5871",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.507,
+        "height": 1080,
+        "min_download_mbps": 6.367,
+        "sample_count": 2,
+        "startup_s": 4.159,
+        "stream_mbps": 4.224,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv17",
+      "error": "RemoteDisconnected:Remote end closed connection without response",
+      "failure_confirmed": true,
+      "name": "CCTV-17",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://74.91.26.218:82/live/cctv17hd.m3u8",
+      "url_sha256": "a5f161c724413ef20c35179b9aa69c9b9d2ce2db59db9513c1b0c4f687fdd70c",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "cctv4k",
+      "error": "HTTPError:HTTP Error 404: Not Found",
+      "failure_confirmed": true,
+      "name": "CCTV-4K",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv4k",
+      "url_sha256": "99a3b2040a93de6b76f57376e1bda533f99f211a7597ad465f5f97c884856887",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "湖南卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "湖南卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "UNKNOWN",
+      "url": "http://183.94.146.79:9901/tsfile/live/0128_2.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "cb8845a06bff0ceb63ed75cf7031dcf93e4b61c6736e10e11b8fe92fdd870f53",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 5.839,
+        "height": 1080,
+        "min_download_mbps": 50.211,
+        "sample_count": 2,
+        "startup_s": 0.311,
+        "stream_mbps": 8.599,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "江西卫视",
+      "error": "headroom_0.693_below_1.350",
+      "failure_confirmed": true,
+      "name": "江西卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://221.7.175.154:8445/tsfile/live/0010_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "ab8c30639874797f0a87426e0d6c826a1155dc0d4e6fd910341376d36f403b96",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.693,
+        "height": 1080,
+        "min_download_mbps": 6.361,
+        "sample_count": 2,
+        "startup_s": 0.588,
+        "stream_mbps": 9.174,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "天津卫视",
+      "error": "headroom_0.724_below_1.350",
+      "failure_confirmed": true,
+      "name": "天津卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=tjwshd",
+      "url_sha256": "f447f8af6714c49756baf9b9d9a6e1d56808eaaae990f7610ab75e42e45c10dd",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.724,
+        "height": 1080,
+        "min_download_mbps": 3.027,
+        "sample_count": 2,
+        "startup_s": 9.095,
+        "stream_mbps": 4.182,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "四川卫视",
+      "error": "headroom_0.757_below_1.350;quality_unknown:RuntimeError:ffprobe_exit_1:http://107.150.60.122/live/scwshd.m3u8: End of file",
+      "failure_confirmed": false,
+      "name": "四川卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "UNKNOWN",
+      "url": "http://107.150.60.122/live/scwshd.m3u8",
+      "url_sha256": "27a27b138fc636921b7e7303632203e3ce06aaabb237f8c61a282a81bb076515",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.757,
+        "height": 0,
+        "min_download_mbps": 3.141,
+        "sample_count": 2,
+        "startup_s": 6.899,
+        "stream_mbps": 4.148,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "贵州卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "贵州卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://198.204.228.26/live/gzwshd.m3u8",
+      "url_sha256": "b5fe33bd34a64a4f64ac20312146bdfc8afb2fb0b88161a1d2145f9a203ca59f",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.405,
+        "height": 1080,
+        "min_download_mbps": 5.859,
+        "sample_count": 2,
+        "startup_s": 6.43,
+        "stream_mbps": 4.171,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "辽宁卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "辽宁卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://198.204.228.26/live/lnwshd.m3u8",
+      "url_sha256": "b6b43aff9bc5be26b5ea42124bb992cb0ce9863ed47a00c3a015002778f8ee05",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.354,
+        "height": 1080,
+        "min_download_mbps": 5.625,
+        "sample_count": 2,
+        "startup_s": 4.809,
+        "stream_mbps": 4.153,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "西藏卫视",
+      "error": "HTTPError:HTTP Error 404: Not Found",
+      "failure_confirmed": true,
+      "name": "西藏卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://222.71.55.147:9901/tsfile/live/0111_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "0ca11e24cf7294c2e0849e5cb8b96737e90d8df54d7361ceeb1ffd379df0c382",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "广西卫视",
+      "error": "RemoteDisconnected:Remote end closed connection without response",
+      "failure_confirmed": true,
+      "name": "广西卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://107.150.60.122/live/gxwshd.m3u8",
+      "url_sha256": "bcefc78a171bb08c767174c352fc00953017bb7ede657d67e388f9c2f3106cc4",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "黑龙江卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "黑龙江卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://112.123.243.37:50085/tsfile/live/0142_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "79f3d31a222611df259a978ad2001d058dea7642187e8db28944175250e0413b",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 2.02,
+        "height": 1080,
+        "min_download_mbps": 18.182,
+        "sample_count": 2,
+        "startup_s": 1.016,
+        "stream_mbps": 9.0,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "深圳卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "深圳卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://hmfs.f3322.net:3388/hls/25/index.m3u8",
+      "url_sha256": "06d58b40e5c624a463d14e6baa6616f9dc44d405be1e2696edff03dc8a2c8217",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 2.359,
+        "height": 1080,
+        "min_download_mbps": 19.309,
+        "sample_count": 2,
+        "startup_s": 0.983,
+        "stream_mbps": 8.185,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "河南卫视",
+      "error": "headroom_0.357_below_1.350",
+      "failure_confirmed": true,
+      "name": "河南卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://222.169.85.8:9901/tsfile/live/0139_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "1e74f4a5181313e9de0d26071f35693d9720fb1084984e2532650c4aa46b06b5",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.357,
+        "height": 1080,
+        "min_download_mbps": 2.962,
+        "sample_count": 2,
+        "startup_s": 9.523,
+        "stream_mbps": 8.299,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "广东卫视",
+      "error": "headroom_1.199_below_1.350",
+      "failure_confirmed": true,
+      "name": "广东卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://107.150.60.122/live/gdwshd.m3u8",
+      "url_sha256": "6b0af0d7d21e43ec5759962a8449c3899fe30d17147a144fca522bf21412b6ab",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.199,
+        "height": 1080,
+        "min_download_mbps": 4.995,
+        "sample_count": 2,
+        "startup_s": 6.249,
+        "stream_mbps": 4.165,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "重庆卫视",
+      "error": "headroom_1.150_below_1.350",
+      "failure_confirmed": true,
+      "name": "重庆卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://107.150.60.122/live/cqwshd.m3u8",
+      "url_sha256": "5a86e1a99189baa1310f0e3ce474ef4716c9e031e6cd37e5aebd1cc6bf1a3bdc",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.15,
+        "height": 1080,
+        "min_download_mbps": 4.822,
+        "sample_count": 2,
+        "startup_s": 4.859,
+        "stream_mbps": 4.193,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "浙江卫视",
+      "error": "h264_stream_2.466_below_3.000_mbps",
+      "failure_confirmed": true,
+      "name": "浙江卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://ali-xwl.cztv.com/live/channel011080Plxw.m3u8",
+      "url_sha256": "008dcc95034ee401241c3f4f04a06c6a1111e3d50de6299bf277f09934337105",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 23.862,
+        "height": 1080,
+        "min_download_mbps": 58.844,
+        "sample_count": 2,
+        "startup_s": 0.344,
+        "stream_mbps": 2.466,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "安徽卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "安徽卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://112.123.243.37:50085/tsfile/live/0130_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "96bc205ac72a7aa1d6273f6f0943122e851b34ec1a6771b834dec4af83357d01",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 1.901,
+        "height": 1080,
+        "min_download_mbps": 17.11,
+        "sample_count": 2,
+        "startup_s": 1.048,
+        "stream_mbps": 9.0,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "东方卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "东方卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://hmfs.f3322.net:3388/hls/24/index.m3u8",
+      "url_sha256": "26e865e15b5373fca17c197c6d85d358fa388e96b0e6b0c9b765a0930e7605df",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 2.275,
+        "height": 1080,
+        "min_download_mbps": 18.529,
+        "sample_count": 2,
+        "startup_s": 0.907,
+        "stream_mbps": 8.143,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "河北卫视",
+      "error": "RemoteDisconnected:Remote end closed connection without response",
+      "failure_confirmed": true,
+      "name": "河北卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hewshd",
+      "url_sha256": "0be9dc75b0be041bdfba6cd649b3b385542f59444e4f19ecd29519c608a8e39d",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "东南卫视",
+      "error": "headroom_0.808_below_1.350",
+      "failure_confirmed": true,
+      "name": "东南卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://58.56.162.102:4466/newlive/live/hls/20/live.m3u8",
+      "url_sha256": "2b8226bf85528bf41ea3d0add1410c2063e5b07ad73c7b60daadde5f03f7ea26",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 0.808,
+        "height": 1080,
+        "min_download_mbps": 7.012,
+        "sample_count": 2,
+        "startup_s": 2.474,
+        "stream_mbps": 8.681,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "山东卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "山东卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://183.94.146.79:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "edb84995ff83f5d74b87ca28675d86d4bbcf0bc36869b563cb87c10fad06ea7c",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 1.797,
+        "height": 1080,
+        "min_download_mbps": 15.551,
+        "sample_count": 2,
+        "startup_s": 1.122,
+        "stream_mbps": 8.653,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "海峡卫视",
+      "error": "headroom_0.975_below_1.350",
+      "failure_confirmed": true,
+      "name": "海峡卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://118.122.144.115:8888/newlive/live/hls/27/live.m3u8",
+      "url_sha256": "e36efce7105886b4fa774d54d67f7101176faa8ef7edda5a9721ebdc2609c30d",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 0.975,
+        "height": 1080,
+        "min_download_mbps": 8.79,
+        "sample_count": 2,
+        "startup_s": 1.609,
+        "stream_mbps": 9.02,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "兵团卫视",
+      "error": "headroom_0.605_below_1.350",
+      "failure_confirmed": true,
+      "name": "兵团卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://221.7.175.154:8445/tsfile/live/0115_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "125deae3d8eb08d4bc95834ecf610abbd9056565b9db38db59468164772ed1d9",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.605,
+        "height": 1080,
+        "min_download_mbps": 5.225,
+        "sample_count": 2,
+        "startup_s": 1.823,
+        "stream_mbps": 8.633,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "安多卫视",
+      "error": "h264_stream_2.308_below_3.000_mbps",
+      "failure_confirmed": true,
+      "name": "安多卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "https://liveout.xntv.tv/a65jur/96iln2.m3u8",
+      "url_sha256": "75195251fede266a859dadf62c8d01c4fa25c2656dd5a1bf35f24a1f1bbc407e",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 3.973,
+        "height": 1080,
+        "min_download_mbps": 9.169,
+        "sample_count": 2,
+        "startup_s": 0.65,
+        "stream_mbps": 2.308,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "北京卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "北京卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://112.123.243.37:50085/tsfile/live/0127_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "b940f7eac846243c63bf47d6e9ca0043d5275b5b08d1b7980a47631cba78d2ee",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 2.632,
+        "height": 1080,
+        "min_download_mbps": 23.165,
+        "sample_count": 2,
+        "startup_s": 0.781,
+        "stream_mbps": 8.8,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "吉林卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "吉林卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "UNKNOWN",
+      "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=jlwshd",
+      "url_sha256": "97315b38f872cb89604e45f49b1ca8cac31217037f6d6076c68dd6caeb1f66bc",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.518,
+        "height": 1080,
+        "min_download_mbps": 6.338,
+        "sample_count": 2,
+        "startup_s": 5.169,
+        "stream_mbps": 4.175,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "云南卫视",
+      "error": "headroom_1.343_below_1.350",
+      "failure_confirmed": true,
+      "name": "云南卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://192.151.150.154/live/ynwshd.m3u8",
+      "url_sha256": "23bbe5c82f99e7685a52ee557b5f6b9bc703a5ab4abd692b075d8f89e47f8476",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.343,
+        "height": 1080,
+        "min_download_mbps": 5.612,
+        "sample_count": 2,
+        "startup_s": 4.159,
+        "stream_mbps": 4.179,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "海南卫视",
+      "error": "headroom_1.220_below_1.350",
+      "failure_confirmed": true,
+      "name": "海南卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://107.150.60.122/live/lywshd.m3u8",
+      "url_sha256": "7693f7f5220732f40dba961b65995c8c67f821f57e822d8005c2410f677c283f",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.22,
+        "height": 1080,
+        "min_download_mbps": 5.124,
+        "sample_count": 2,
+        "startup_s": 4.705,
+        "stream_mbps": 4.2,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "陕西卫视",
+      "error": "headroom_1.304_below_1.350",
+      "failure_confirmed": true,
+      "name": "陕西卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://107.150.60.122/live/snwshd.m3u8",
+      "url_sha256": "1d8218c568ff4cca09d9b5ca012aef1aed9f79c8f7c4d13c2d2e5371a1ef739b",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.304,
+        "height": 1080,
+        "min_download_mbps": 5.431,
+        "sample_count": 2,
+        "startup_s": 5.769,
+        "stream_mbps": 4.165,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "宁夏卫视",
+      "error": "HTTPError:HTTP Error 404: Not Found",
+      "failure_confirmed": true,
+      "name": "宁夏卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://222.71.55.147:9901/tsfile/live/0112_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "a0475d03cc033645e84ff2f44d16c1d71c020796ca81c1ae15d5f53ff9a87b19",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "湖北卫视",
+      "error": "headroom_1.284_below_1.350",
+      "failure_confirmed": true,
+      "name": "湖北卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://192.151.150.154/live/hbwshd.m3u8",
+      "url_sha256": "f4bd142800e6f809a3851d57bf9c14c573e810df9a125b49486cd70352e56d4f",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 1.284,
+        "height": 1080,
+        "min_download_mbps": 5.362,
+        "sample_count": 2,
+        "startup_s": 4.059,
+        "stream_mbps": 4.177,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "新疆卫视",
+      "error": "HTTPError:HTTP Error 404: Not Found",
+      "failure_confirmed": true,
+      "name": "新疆卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://222.71.55.147:9901/tsfile/live/0110_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "01cf1838cb5820305602ce04f6b39bba473f4ae91fd8f08c3708c60399d0072f",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "",
+        "deep_checked": false,
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "sample_count": 0,
+        "startup_s": 0.0,
+        "stream_mbps": 0.0,
+        "width": 0
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "内蒙古卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "内蒙古卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://play1-qk.nmtv.cn/live/1769652018126032.m3u8",
+      "url_sha256": "f404c3914c70b08993c402468a115ad051157da9426697359fb05255982de330",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 7.604,
+        "height": 1080,
+        "min_download_mbps": 33.916,
+        "sample_count": 2,
+        "startup_s": 0.586,
+        "stream_mbps": 4.46,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "山西卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "山西卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "https://itv.1920.qzz.io/api/ysp.php?id=shanxiws2",
+      "url_sha256": "267aaf3e10ce7320a35bba3e9c83726d6f8fb13e41247e0622fb9e2d6e90af27",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 3.949,
+        "height": 1080,
+        "min_download_mbps": 14.127,
+        "sample_count": 2,
+        "startup_s": 3.508,
+        "stream_mbps": 3.577,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 1,
+      "channel_key": "江苏卫视",
+      "error": "",
+      "failure_confirmed": false,
+      "name": "江苏卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "GOOD",
+      "url": "http://183.94.146.79:9901/tsfile/live/0127_2.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "4fcaec50afef8d8baab3c73b08dc9613e7d4a2fe9995df09c2b01af1376bd41a",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 3.536,
+        "height": 1080,
+        "min_download_mbps": 30.404,
+        "sample_count": 2,
+        "startup_s": 0.591,
+        "stream_mbps": 8.599,
+        "width": 1920
+      }
+    },
+    {
+      "attempt_count": 2,
+      "channel_key": "青海卫视",
+      "error": "decoded_height_720_below_1080",
+      "failure_confirmed": true,
+      "name": "青海卫视",
+      "observed_epoch": 1788868806.060527,
+      "status": "BAD",
+      "url": "http://198.204.228.26/live/qhws.m3u8",
+      "url_sha256": "00f88db4a5f458f562f9f1bacbd40517cd7ab5da9ecba7be06c6b6d7e47e6050",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.579,
+        "height": 720,
+        "min_download_mbps": 2.397,
+        "sample_count": 2,
+        "startup_s": 8.38,
+        "stream_mbps": 4.142,
+        "width": 1280
+      }
+    }
+  ],
+  "decisions": [
+    {
+      "action": "KEEP",
+      "channel_key": "cctv1",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv2",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv3",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv4",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv5",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv5plus",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv6",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv7",
+      "reason": "insufficient_home_evidence",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv8",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv9",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv10",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv11",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv12",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv13",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv14",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv15",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "cctv16",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv17",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "cctv4k",
+      "reason": "home_backups_failed_reverification",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "湖南卫视",
+      "reason": "insufficient_home_evidence",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "江西卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "天津卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "四川卫视",
+      "reason": "insufficient_home_evidence",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "贵州卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "辽宁卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "西藏卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "广西卫视",
+      "reason": "home_backups_failed_reverification",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "黑龙江卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "深圳卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "河南卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "广东卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "重庆卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "浙江卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "安徽卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "东方卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "河北卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "东南卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "山东卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "海峡卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "兵团卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "安多卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "北京卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "吉林卫视",
+      "reason": "insufficient_home_evidence",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "云南卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "海南卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "陕西卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "宁夏卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "湖北卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "新疆卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "内蒙古卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "山西卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "KEEP",
+      "channel_key": "江苏卫视",
+      "reason": "healthy_home_route",
+      "replacement_candidate_id": null
+    },
+    {
+      "action": "UNRESOLVED",
+      "channel_key": "青海卫视",
+      "reason": "no_home_qualified_backup",
+      "replacement_candidate_id": null
+    }
+  ],
+  "formal_playlist": {
+    "channel_count": 53,
+    "sha256": "5e620e22db2456b114fbb6a8120119e3b0c68139faf4df5bef5e6259a07edbee",
+    "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+  },
+  "generated_utc": "2026-09-08T12:00:06Z",
+  "home_feedback_sha256": "275b2fbf7bad1eea793c5bd8db66696451eac4d9a69c906f29915534746bc5dd",
+  "policy": {
+    "afternoon_backup_probes": false,
+    "auto_replace_formal_routes": false,
+    "batch_complete": true,
+    "candidate_manifest_origin": "network",
+    "candidate_manifest_state": "not_requested",
+    "candidate_requires_two_samples_and_deep_metadata": true,
+    "candidate_sample_bytes": 6291456,
+    "current_failure_requires_two_attempts": true,
+    "final_review_complete": false,
+    "formal_check_deferred": false,
+    "home_feedback_state": "fresh",
+    "mass_failure_circuit_breaker": true,
+    "peak_failure_precedence": true,
+    "qualified_backup_ttl_hours": 36.0,
+    "sample_bytes": 2097152,
+    "samples_per_route": 2,
+    "single_threaded": true,
+    "trial_phase": "full",
+    "trial_tv_binding_sha256": null
+  },
+  "probe_id": "home-ac86u-8f8908f0fba9",
+  "production_modified": false,
+  "resources": {
+    "cpu_busy_percent": 0.5,
+    "iowait_counter_regressed": false,
+    "iowait_percent": 0.0,
+    "load1": 2.38,
+    "mem_available_kib": 51544,
+    "runtime_s": 877.997,
+    "sample_seconds": 1
+  },
+  "route_context": "living-room-path-equivalent",
+  "run_kind": "peak-2000",
+  "run_status": "COMPLETED",
+  "schema": "iptv-home-report/v2",
+  "summary": {
+    "bad": 26,
+    "candidate_channels": 2,
+    "candidate_confirmed": 0,
+    "candidate_queue_remaining": 66,
+    "channels": 53,
+    "circuit_breaker_open": false,
+    "good": 23,
+    "qualified_backups": 25,
+    "replacements": 0,
+    "unknown": 4,
+    "unresolved": 30
+  }
+}
