@@ -96,6 +96,9 @@ SAMPLES_PER_ROUTE = 2
 MIN_SAMPLE_BYTES = 64 * 1024
 PLAYLIST_LIMIT = 1024 * 1024
 CANDIDATE_MANIFEST_LIMIT = 4 * 1024 * 1024
+# Stop before the report contract's 500-result ceiling. The durable queue
+# continues after a formal review/publication between discovery batches.
+CANDIDATE_RESULTS_PER_BATCH = 200
 HTTP_TIMEOUT = 10.0
 FFPROBE_TIMEOUT = 18
 RUN_KINDS = {"primary-0200", "recheck-1300", "peak-2000"}
@@ -1169,7 +1172,7 @@ def _run(
         for candidate in queue:
             if candidate["candidate_id"] in attempted_ids or candidate_vetoed(candidate["url"]) or candidate.get("request_options"):
                 continue
-            if circuit or not budget_available():
+            if circuit or len(candidate_report_by_id) >= CANDIDATE_RESULTS_PER_BATCH or not budget_available():
                 remaining.append(candidate)
                 continue
             key = str(candidate["channel_key"])
