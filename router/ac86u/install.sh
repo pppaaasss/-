@@ -128,7 +128,7 @@ payload = {
     "candidate_manifest_max_age_hours": 48,
     "candidate_unknown_retry_runs": 2,
     "minimum_sample_bytes": 65536,
-    "minimum_headroom_ratio": 1.35,
+    "minimum_headroom_ratio": 1.05,
     "minimum_height_default": 1080,
     "minimum_height_overrides": {"CCTV-4K": 1080},
     "minimum_h264_stream_mbps": 3.0,
@@ -154,7 +154,7 @@ value["sample_actual_resources"] = True
 value["progress_log"] = True
 value["minimum_mem_available_kib"] = 51200
 value["minimum_h264_stream_mbps"] = 3.0
-value["minimum_headroom_ratio"] = 1.35
+value["minimum_headroom_ratio"] = 1.05
 value.setdefault("github_push_enabled", False)
 value.setdefault("protected_publishing_ready", False)
 value.setdefault("github_repository", "pppaaasss/-")

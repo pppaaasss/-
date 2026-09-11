@@ -614,7 +614,7 @@ def probe_route(
             raise RuntimeError("short_segment_sample")
 
         result["observed_status"] = "GOOD"
-        minimum_headroom = float(config.get("minimum_headroom_ratio") or 1.35)
+        minimum_headroom = float(config.get("minimum_headroom_ratio") or 1.05)
         if result["headroom_ratio"] and result["headroom_ratio"] < minimum_headroom:
             result["observed_status"] = "DEGRADED"
             result["error"] = f"headroom_{result['headroom_ratio']:.3f}_below_{minimum_headroom:.3f}"
@@ -752,7 +752,8 @@ def _run(
     previous_state = replay_progress(load_json(state_path), output_dir)
     if not trial:
         previous_state = prepare_history(previous_state, output_dir,
-            str(config.get("probe_id") or "home-ac86u"), now_epoch)
+            str(config.get("probe_id") or "home-ac86u"), now_epoch,
+            minimum_headroom=float(config.get("minimum_headroom_ratio") or 1.05))
     if not trial and config.get('trial_phase', 'full') != 'full':
         raise RuntimeError('TRIAL_PHASE_INVALID')
     phase = str(config.get('trial_phase' if trial else 'batch_phase') or 'full')
@@ -885,7 +886,8 @@ def _run(
         if not trial:
             append_progress(output_dir, dict(kind='current', cycle=cycle or run_kind,
                 formal_sha=hashlib.sha256(playlist_bytes).hexdigest(), key=key,
-                attempts=attempts_by_key[key], epoch=now_epoch, feedback_signature=feedback_signature))
+                attempts=attempts_by_key[key], epoch=now_epoch, feedback_signature=feedback_signature,
+                headroom_policy=float(config.get('minimum_headroom_ratio') or 1.05)))
 
     for key, name, url in formal_rows:
         attempts = attempts_by_key[key]
@@ -899,7 +901,8 @@ def _run(
         if not trial:
             append_progress(output_dir, dict(kind='current', cycle=cycle or run_kind,
                 formal_sha=hashlib.sha256(playlist_bytes).hexdigest(), key=key,
-                attempts=attempts, epoch=now_epoch, feedback_signature=feedback_signature))
+                attempts=attempts, epoch=now_epoch, feedback_signature=feedback_signature,
+                headroom_policy=float(config.get('minimum_headroom_ratio') or 1.05)))
 
     circuit = phase != 'candidates' and mass_failure_circuit(
         attempts_by_key,
@@ -923,7 +926,8 @@ def _run(
     if cycle and phase != 'candidates':
         checkpoints[cycle] = dict(formal_sha=hashlib.sha256(playlist_bytes).hexdigest(),
             attempts={k: attempts_by_key[k] for k in measured_times}, times=measured_times,
-            updated=now_epoch, feedback_signature=feedback_signature)
+            updated=now_epoch, feedback_signature=feedback_signature,
+            headroom_policy=float(config.get('minimum_headroom_ratio') or 1.05))
         state['current_checkpoints'] = dict(sorted(checkpoints.items(),
             key=lambda item: item[1].get('updated', 0))[-6:])
     state.update({
@@ -1356,6 +1360,7 @@ def _run(
         "candidate_playlist": candidate_playlist,
         "home_feedback_sha256": feedback_sha,
         "policy": {
+            "minimum_headroom_ratio": float(config.get("minimum_headroom_ratio") or 1.05),
             "trial_phase": phase,
             "formal_check_deferred": phase == 'candidates',
             "final_review_complete": phase == 'final' and not current_pending and not budget_keys,

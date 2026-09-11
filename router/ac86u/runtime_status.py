@@ -58,9 +58,15 @@ def status(config_path):
     job = read(root / 'daily-status.json')
     delivery = read(root / 'delivery-status.json')
     state = read(root / 'state.json'); report = read(root / 'latest.json')
+    pool = read(root / 'qualified-backups.json')
     upload = read(root / 'github-state.json'); receipt = read(root / 'candidate-receipts.json')
     opened, end, next_start = primary_window(time.time(), root)
     print('version:', version.get('revision', 'unrecorded; inspect installed files'))
+    print('headroom:', config.get('minimum_headroom_ratio', 1.05))
+    archive = state.get('backup_archive') or {}
+    print('historical_backups:', len(archive), 'channels:', len({row['channel_key'] for row in archive.values()}),
+          'recovered_for_headroom:', len(state.get('headroom_history_recovered_ids') or []))
+    print('backup_pool_snapshot:', pool.get('backup_count', 0), 'generated:', pool.get('generated_utc', 'NONE'))
     print('worker:', 'enabled' if config.get('daily_worker_enabled') else 'disabled',
           'state:', fatal.get('state') or job.get('state', 'NO_REPORT'))
     if (root / 'background-upgrade.locked').exists(): print('upgrade: INTERRUPTED_OR_RUNNING; inspect marker')

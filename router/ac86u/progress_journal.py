@@ -46,10 +46,12 @@ def replay_progress(state, root):
                 state.setdefault('backup_archive', {})[row['identity']] = row['backup']
             elif kind == 'current':
                 checkpoint = state.setdefault('current_checkpoints', {}).setdefault(row['cycle'], {})
-                if checkpoint.get('formal_sha') != row['formal_sha']:
+                if (checkpoint.get('formal_sha') != row['formal_sha']
+                        or checkpoint.get('headroom_policy', 1.35) != row.get('headroom_policy', 1.35)):
                     checkpoint.clear()
                 checkpoint.update(formal_sha=row['formal_sha'], updated=row['epoch'],
-                                  feedback_signature=row.get('feedback_signature', {}))
+                                  feedback_signature=row.get('feedback_signature', {}),
+                                  headroom_policy=row.get('headroom_policy', 1.35))
                 checkpoint.setdefault('attempts', {})[row['key']] = row['attempts']
                 checkpoint.setdefault('times', {})[row['key']] = row['epoch']
     return state

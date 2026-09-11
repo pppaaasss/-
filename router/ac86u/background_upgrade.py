@@ -159,7 +159,9 @@ def apply(revision, schedule_only=False, bundle=None):
                         target.replace(BASE / name)
                     atomic_json(ROOT / 'installed-version.json', dict(revision=revision,
                         installed_epoch=time.time(), rollback=backup.name))
-                    atomic_json(CONFIG, config)
+                    # Owner-approved temporary headroom policy, 2026-09-11.
+                    # Original configuration remains available for rollback.
+                    atomic_json(CONFIG, dict(config, minimum_headroom_ratio=1.05))
                     marker.unlink()
                 except Exception:
                     restore(backup)
@@ -168,7 +170,7 @@ def apply(revision, schedule_only=False, bundle=None):
             backups = sorted(ROOT.glob('before-background-*'), key=lambda p:p.stat().st_mtime)
             for old in backups[:-2]:
                 if (old / 'transaction.json').exists(): shutil.rmtree(old)
-    print('BACKGROUND_READY: pinned version installed; activation and schedule preserved.', flush=True)
+    print('BACKGROUND_READY: pinned version installed; headroom=1.05; activation and schedule preserved.', flush=True)
 
 
 def main():
