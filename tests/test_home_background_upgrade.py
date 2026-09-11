@@ -18,7 +18,7 @@ class UpgradeTests(unittest.TestCase):
                 (base/name).write_bytes((REPO/'router/ac86u'/name).read_bytes())
             cfg=Path(tmp)/'config.json'
             config=dict(output_dir=str(root),probe_id='test',daily_worker_enabled=True,actionable=True,
-                        minimum_height_overrides={'CCTV-4K':1080})
+                        minimum_height_overrides={'CCTV-4K':1080}, minimum_headroom_ratio=1.35)
             cfg.write_text(json.dumps(config))
             state=b'{"candidate_queue":[{"candidate_id":"saved"}]}'
             (root/'state.json').write_bytes(state)
@@ -42,7 +42,12 @@ class UpgradeTests(unittest.TestCase):
                     upgrade.apply('a'*40)
                     self.assertEqual('a'*40,json.loads((root/'installed-version.json').read_text())['revision'])
                     self.assertFalse((root/'background-upgrade.locked').exists())
-                self.assertEqual(config,json.loads(cfg.read_text()))
+                expected = config if interrupt else dict(config, minimum_headroom_ratio=1.05)
+                self.assertEqual(expected,json.loads(cfg.read_text()))
+                if not interrupt:
+                    backup=json.loads((root/'installed-version.json').read_text())['rollback']
+                    upgrade.recover(backup)
+                    self.assertEqual(config,json.loads(cfg.read_text()))
                 self.assertEqual(state,(root/'state.json').read_bytes())
 
     def test_upgrade_preserves_activation_without_old_ack(self): self.exercise()
