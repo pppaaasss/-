@@ -173,7 +173,7 @@ def latest_report_path(inbox: Path, probe_id: str) -> Path | None:
     return latest[0]
 
 
-def load_report(path: Path, config: dict, *, now_epoch: float) -> tuple[dict, bytes, str]:
+def load_report(path: Path, config: dict, *, now_epoch: float | None) -> tuple[dict, bytes, str]:
     raw = path.read_bytes()
     if not raw or len(raw) > REPORT_LIMIT:
         raise RuntimeError("home report is empty or too large")
@@ -185,7 +185,7 @@ def load_report(path: Path, config: dict, *, now_epoch: float) -> tuple[dict, by
         report,
         expected_probe_id=str(config["expected_probe_id"]),
         now_epoch=now_epoch,
-        max_age_hours=float(config["maximum_report_age_hours"]),
+        max_age_hours=float(config["maximum_report_age_hours"]) if now_epoch is not None else None,
     )
     if path.name != report_filename(report, raw):
         raise RuntimeError("home report filename and content hash disagree")
@@ -335,14 +335,38 @@ def publish_latest(
     path = latest_report_path(inbox, str(config["expected_probe_id"]))
     if path is None:
         return {"status": "no_report", "replacement_count": 0}
-    report, _report_raw, report_sha = load_report(path, config, now_epoch=now_epoch)
+    # Validate structure, identity and the content hash before checking replay or age.
+    # An already consumed report stays idempotent after its evidence expires.
+    report, _report_raw, report_sha = load_report(path, config, now_epoch=None)
+    receipt_path = root / str(config.get("receipt_path") or "home-publish/latest.json")
+    age_hours = (now_epoch - parse_utc(report["generated_utc"]).timestamp()) / 3600
+    evidence_expired = age_hours > float(config["maximum_report_age_hours"])
+    report_info = {
+        "report_sha256": report_sha,
+        "report_generated_utc": report["generated_utc"],
+        "report_age_hours": round(age_hours, 3),
+        "maximum_report_age_hours": config["maximum_report_age_hours"],
+        "evidence_expired": evidence_expired,
+    }
+    replay = replay_status(receipt_path, report, report_sha)
+    if replay != "new":
+        return {"status": replay, "replacement_count": 0, **report_info}
+
+    if evidence_expired:
+        # Polling an idle inbox is an expected no-op. Do not consume the report,
+        # extend its lifetime, or fall back to an older report with other routes.
+        return {"status": "stale_report", "replacement_count": 0, **report_info}
+    # Fresh, unprocessed reports still need every time-dependent contract gate,
+    # including future timestamps and cached backup expiry, before any write.
+    validate_home_report_v2(
+        report,
+        expected_probe_id=str(config["expected_probe_id"]),
+        now_epoch=now_epoch,
+        max_age_hours=float(config["maximum_report_age_hours"]),
+    )
     policy = report.get('policy') or {}
     if policy.get('batch_complete') is False or policy.get('formal_check_deferred') is True:
         return {'status': 'partial_batch', 'replacement_count': 0}
-    receipt_path = root / str(config.get("receipt_path") or "home-publish/latest.json")
-    replay = replay_status(receipt_path, report, report_sha)
-    if replay != "new":
-        return {"status": replay, "replacement_count": 0, "report_sha256": report_sha}
 
     formal_path = root / str(config["formal_playlist"])
     formal_raw = formal_path.read_bytes()
@@ -423,6 +447,18 @@ def main() -> int:
             inspect_shadow=args.inspect_shadow,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        if result.get("evidence_expired"):
+            message = (
+                "Waiting for a fresh home report: latest evidence is "
+                f"{result['report_age_hours']} hours old "
+                f"(limit {result['maximum_report_age_hours']} hours). "
+                "No routes or publication receipt were changed."
+            )
+            print(message)
+            summary = os.environ.get("GITHUB_STEP_SUMMARY")
+            if summary:
+                with Path(summary).open("a", encoding="utf-8") as handle:
+                    handle.write(message + "\n")
         return 0
     except Exception as exc:
         print(f"HOME_PUBLISH rejected: {exc}", file=sys.stderr)

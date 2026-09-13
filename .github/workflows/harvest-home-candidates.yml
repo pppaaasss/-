@@ -11,8 +11,10 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: home-candidate-harvest
-  cancel-in-progress: true
+  # Both workflows update master and the candidate manifest binding.
+  group: production-publish-lock
+  cancel-in-progress: false
+  queue: max
 
 jobs:
   candidates:
@@ -21,14 +23,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: master
           fetch-depth: 2
 
       - name: Verify the public master ruleset gate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          from router.ac86u.github_pair import MASTER_RULES_API, fetch_json, validate_master_rules
+          import json
+          import subprocess
+          from router.ac86u.github_pair import MASTER_RULES_API, validate_master_rules
 
-          rules, _raw = fetch_json(MASTER_RULES_API)
+          rules = json.loads(subprocess.check_output(['gh', 'api', MASTER_RULES_API], text=True))
           ruleset_id = validate_master_rules(rules)
           print('active home publication ruleset', ruleset_id)
           PY

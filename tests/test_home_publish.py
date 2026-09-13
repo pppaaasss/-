@@ -1,5 +1,8 @@
 import hashlib
 import json
+import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -245,13 +248,73 @@ class HomePublishTests(unittest.TestCase):
             self.publish()
         self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
 
-    def test_stale_report_rejects_without_writing_a_receipt(self):
+    def test_stale_report_waits_without_writing_a_receipt(self):
         self.queue(self.report(generated='2026-09-01T18:00:00Z'))
+        candidate_path, _ = self.candidate_fixture()
+        candidate_before = candidate_path.read_bytes()
         before = {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES}
-        with self.assertRaisesRegex(Exception, 'stale'):
-            self.publish()
+        result = self.publish()
+        self.assertEqual('stale_report', result['status'])
+        self.assertEqual(0, result['replacement_count'])
+        self.assertEqual(18, result['maximum_report_age_hours'])
+        self.assertGreater(result['report_age_hours'], 18)
+        self.assertEqual(result, self.publish())
         self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
+        self.assertEqual(candidate_before, candidate_path.read_bytes())
         self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_published_report_remains_duplicate_after_expiry(self):
+        self.queue(self.report())
+        self.publish()
+        receipt_path = self.root / 'home-publish/latest.json'
+        before = receipt_path.read_bytes()
+        self.now += 48 * 3600
+        result = self.publish()
+        self.assertEqual('duplicate', result['status'])
+        self.assertTrue(result['evidence_expired'])
+        self.assertEqual(before, receipt_path.read_bytes())
+
+    def test_stale_report_still_rejects_invalid_evidence(self):
+        report = self.report(generated='2026-09-01T18:00:00Z')
+        report['current_results'][0]['status'] = 'UNKNOWN'
+        report['current_results'][0]['failure_confirmed'] = False
+        self.queue(report)
+        with self.assertRaisesRegex(Exception, 'confirmed home evidence'):
+            self.publish()
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_cli_expired_report_succeeds_with_waiting_summary(self):
+        self.queue(self.report(generated='2026-09-01T18:00:00Z'))
+        summary = self.root / 'step-summary.md'
+        result = subprocess.run([
+            sys.executable, str(Path(publisher_module.__file__)),
+            '--repo-root', str(self.root), '--inbox', str(self.inbox),
+            '--now-epoch', str(self.now), '--apply',
+        ], env={**os.environ, 'GITHUB_STEP_SUMMARY': str(summary)},
+           capture_output=True, text=True, timeout=10)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('stale_report', json.loads(result.stdout.splitlines()[0])['status'])
+        self.assertIn('Waiting for a fresh home report', summary.read_text())
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_expired_duplicate_still_checks_filename_integrity(self):
+        path = self.queue(self.report())
+        self.publish()
+        before = (self.root / 'home-publish/latest.json').read_bytes()
+        self.now += 48 * 3600
+        path.write_bytes(path.read_bytes() + b' ')
+        with self.assertRaisesRegex(RuntimeError, 'content hash disagree'):
+            self.publish()
+        self.assertEqual(before, (self.root / 'home-publish/latest.json').read_bytes())
+
+    def test_report_at_age_limit_can_publish_but_future_report_cannot(self):
+        self.queue(self.report(generated='2026-09-01T19:10:00Z'))
+        self.assertEqual('applied', self.publish()['status'])
+        self.queue(self.report(generated='2026-09-02T14:00:00Z'))
+        before = (self.root / 'home-publish/latest.json').read_bytes()
+        with self.assertRaisesRegex(Exception, 'future-dated'):
+            self.publish()
+        self.assertEqual(before, (self.root / 'home-publish/latest.json').read_bytes())
 
     def test_transaction_rolls_back_all_playlists_if_receipt_write_fails(self):
         self.queue(self.report())

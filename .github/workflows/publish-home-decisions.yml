@@ -19,6 +19,7 @@ permissions:
 concurrency:
   group: production-publish-lock
   cancel-in-progress: false
+  queue: max
 
 jobs:
   publish:
@@ -27,16 +28,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # Resolve master after obtaining the lock, not the queued event SHA.
+          ref: master
           fetch-depth: 0
 
       - name: Verify the public master ruleset gate
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
           import json
+          import subprocess
           from pathlib import Path
           from router.ac86u.github_pair import (
               MASTER_RULES_API,
-              fetch_json,
               validate_master_rules,
           )
 
@@ -44,7 +49,7 @@ jobs:
           if publisher.get('enabled') is not True:
               print('home publisher is disabled; no production decision can be applied')
           else:
-              rules, _raw = fetch_json(MASTER_RULES_API)
+              rules = json.loads(subprocess.check_output(['gh', 'api', MASTER_RULES_API], text=True))
               ruleset_id = validate_master_rules(rules)
               print('active home publication ruleset', ruleset_id)
           PY
