@@ -9,6 +9,7 @@ LOG="/opt/var/log/iptv-home-probe.log"
 LOCK="/opt/var/run/iptv-home-probe.lock"
 
 [ ! -f "$DATA/background-upgrade.locked" ] || exit 0
+[ ! -f "$DATA/thin-mode.locked" ] || exit 0
 
 mkdir -p "$DATA" "$(dirname "$LOG")" "$(dirname "$LOCK")"
 if [ -f "$LOG" ] && [ "$(wc -c < "$LOG")" -gt 1048576 ]; then

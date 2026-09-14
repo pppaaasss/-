@@ -3,7 +3,9 @@ name: Publish home-qualified IPTV decisions
 on:
   push:
     branches: [master]
-    paths: ['config/home-publisher.json', '.github/workflows/publish-home-decisions.yml']
+    paths: ['config/home-publisher.json', 'config/home-thin.json', '.github/workflows/publish-home-decisions.yml']
+  repository_dispatch:
+    types: [home-observations-ready]
   workflow_dispatch:
   schedule:
     # Report polling only: this does not start any home stream probes.
@@ -64,6 +66,10 @@ jobs:
         run: |
           python3 -m unittest tests.test_home_publish -v
           python3 -m unittest tests.test_home_first_contract tests.test_home_decision -v
+
+      - name: Schedule and aggregate bounded household measurements
+        run: |
+          bash scripts/run_home_thin_control.sh /tmp/home-reports /tmp/home-control
 
       - name: Validate latest report and apply exact routes only
         run: |
