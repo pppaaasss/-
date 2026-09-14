@@ -7,8 +7,10 @@ from pathlib import Path
 import shutil
 import socket
 import subprocess
+import sys
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from unittest import mock
@@ -215,6 +217,32 @@ class NativeCloudTests(NativeFixture, ThinFixture):
 
 
 class NativeInstallTests(unittest.TestCase):
+    def test_background_connection_does_not_hold_install_output_open(self):
+        with tempfile.TemporaryDirectory() as folder:
+            fake = Path(folder)/'ssh'
+            fake.write_text('#!'+sys.executable+'\n'+'''import os, pathlib, signal, sys, time
+args = sys.argv[1:]
+pidfile = pathlib.Path(args[args.index('-S')+1]+'.pid')
+if '-M' in args:
+    child = os.fork()
+    if child == 0:
+        os.setsid()
+        time.sleep(8)
+        os._exit(0)
+    pidfile.write_text(str(child))
+    os._exit(0)
+elif '-O' in args:
+    os.kill(int(pidfile.read_text()), signal.SIGTERM)
+else:
+    print('ok')
+''')
+            fake.chmod(0o755)
+            began = time.monotonic()
+            with mock.patch.dict(os.environ,{'PATH':folder+os.pathsep+os.environ['PATH']}):
+                with installer.ssh_session():
+                    self.assertEqual(b'ok\n',installer.ssh('status'))
+            self.assertLess(time.monotonic()-began,4)
+
     def test_missing_router_hash_installs_only_required_package_once(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

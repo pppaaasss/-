@@ -65,12 +65,17 @@ def ssh_session():
         connection = previous+['-S', socket]
         try:
             print('请输入路由器登录密码，连接将用于本次全部步骤。', flush=True)
-            result = subprocess.run(['ssh', *connection, '-M', '-N', '-f',
-                '-o', 'ControlPersist=60', '-o', 'ServerAliveInterval=15',
-                '-o', 'ServerAliveCountMax=2', HOST], stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if result.returncode:
-                raise remote_error(result)
+            # A background master may keep inherited descriptors open. Pipes
+            # here would make communicate() wait for the master's lifetime.
+            with tempfile.TemporaryFile() as errors:
+                result = subprocess.run(['ssh', *connection, '-M', '-N', '-f',
+                    '-o', 'ControlPersist=60', '-o', 'ServerAliveInterval=15',
+                    '-o', 'ServerAliveCountMax=2', HOST], stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL, stderr=errors)
+                if result.returncode:
+                    errors.seek(0)
+                    result.stderr = errors.read()
+                    raise remote_error(result)
             # A lost master must fail promptly, rather than silently opening
             # another authenticated connection or prompting for passwords.
             SSH_OPTIONS = connection+['-o', 'ControlMaster=no', '-o', 'BatchMode=yes',
