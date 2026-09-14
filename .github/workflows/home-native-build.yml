@@ -1,0 +1,34 @@
+name: Build minimal AC86U sampler
+on:
+  pull_request:
+    paths:
+      - 'router/ac86u/native/**'
+      - 'scripts/build_home_native.sh'
+      - '.github/workflows/home-native-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: ubuntu:20.04
+    timeout-minutes: 8
+    steps:
+      - name: Prepare build container
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends ca-certificates git python3
+      - uses: actions/checkout@v4
+      - name: Cross compile on GitHub
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross libcurl4-openssl-dev
+          sh scripts/build_home_native.sh /tmp/native
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ac86u-native-aarch64
+          path: |
+            /tmp/native/iptv-native
+            /tmp/native/build.json
+            /tmp/native/abi.txt
+          retention-days: 14

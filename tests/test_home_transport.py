@@ -12,6 +12,7 @@ import struct
 import subprocess
 import tempfile
 import threading
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -177,11 +178,14 @@ class TransportNetworkTests(unittest.TestCase):
     def test_real_ffprobe_fetches_hls_playlist_and_segments_via_proxy(self):
         if not shutil.which('ffprobe') or not (self.root/'live.m3u8').exists():
             self.skipTest('FFmpeg tools unavailable')
-        with ht.HomeTransport(firewall=False, resolver=self.resolver) as transport:
+        budget = ht.DownloadBudget(64 * 1024 * 1024, time.monotonic() + 30)
+        with ht.HomeTransport(firewall=False, resolver=self.resolver, download_budget=budget) as transport:
             with mock.patch.object(home_probe, '_active_transport', transport):
                 meta = home_probe.ffprobe_meta(f'http://channel.test:{self.port}/live.m3u8',shutil.which('ffprobe'))
             self.assertEqual(120, meta['height'])
             self.assertGreaterEqual(transport.dialer.ipv4, 2)
+            self.assertGreater(budget.used, 1000)
+            self.assertLessEqual(budget.used, budget.maximum)
         self.assertIn('/live.m3u8', self.server.paths)
         self.assertTrue(any(p.endswith('.ts') for p in self.server.paths))
 

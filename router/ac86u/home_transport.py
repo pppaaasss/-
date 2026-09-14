@@ -314,7 +314,11 @@ class ProxyHandler(http.server.BaseHTTPRequestHandler):
                     if not ready:
                         break
                     for key, _ in ready:
-                        data = key.fileobj.recv(65536)
+                        budget = getattr(self.server, 'download_budget', None)
+                        if budget is not None and key.fileobj is upstream:
+                            data = budget.receive(key.fileobj, 65536)
+                        else:
+                            data = key.fileobj.recv(65536)
                         if not data:
                             return
                         key.data.sendall(data)
@@ -348,13 +352,46 @@ class AlwaysProxy(urllib.request.ProxyHandler):
         return self.parent.open(req, timeout=req.timeout)
 
 
+class DownloadBudget:
+    """Count upstream HTTP/TLS bytes, including FFprobe, before forwarding."""
+    def __init__(self, maximum, deadline, check=lambda: ''):
+        self.maximum, self.deadline, self.check = int(maximum), deadline, check
+        self.used, self.reason = 0, ''
+        self.lock = threading.Lock()
+
+    def receive(self, sock, size):
+        # Reserve before recv: concurrent upstream sockets cannot overspend.
+        with self.lock:
+            reason = self.reason or self.check()
+            if time.monotonic() >= self.deadline:
+                reason = reason or 'batch_time_budget'
+            remaining = self.maximum - self.used
+            if remaining <= 0:
+                reason = reason or 'batch_byte_budget'
+            if reason:
+                self.reason = reason
+                raise RuntimeError(reason)
+            amount = min(size, remaining)
+            self.used += amount
+        try:
+            data = sock.recv(amount)
+        except BaseException:
+            with self.lock:
+                self.used -= amount
+            raise
+        with self.lock:
+            self.used -= amount - len(data)
+        return data
+
+
 class HomeTransport:
-    def __init__(self, dns="192.168.50.1", *, firewall=True, resolver=None):
+    def __init__(self, dns="192.168.50.1", *, firewall=True, resolver=None, download_budget=None):
         self.mark = 0x49600000 | (os.getpid() & 65535)
         self.use_firewall, self.installed = firewall, False
         self.rule = ("-p", "tcp", "-m", "mark", "--mark", f"{self.mark:#x}/0xffffffff", "-j", "merlinclash")
         self.dialer = Dialer(resolver or Landns(dns), self.mark if firewall else None, self.guard)
         self.server = self.thread = None
+        self.download_budget = download_budget
 
     def guard(self):
         if self.use_firewall:
@@ -370,6 +407,7 @@ class HomeTransport:
                 iptables("-I", "OUTPUT", "1", *self.rule)
             self.server = ProxyServer(("127.0.0.1", 0), ProxyHandler)
             self.server.dialer = self.dialer
+            self.server.download_budget = self.download_budget
             self.url = f"http://127.0.0.1:{self.server.server_port}"
             self.opener = urllib.request.build_opener(AlwaysProxy({"http": self.url, "https": self.url}))
             self.thread = threading.Thread(target=self.server.serve_forever, kwargs={"poll_interval": 0.1}, daemon=True)

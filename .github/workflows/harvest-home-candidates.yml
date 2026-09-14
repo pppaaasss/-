@@ -53,12 +53,18 @@ jobs:
 
       - name: Read durable household receipt
         run: |
-          git fetch --depth=1 origin home-reports
           python3 - <<'PYRECEIPT'
           import json, subprocess
           from pathlib import Path
           probe = json.loads(Path('config/home-publisher.json').read_text())['expected_probe_id']
-          path = 'receipts/' + probe + '.json'
+          thin = json.loads(Path('config/home-thin.json').read_text()).get('enabled') is True
+          branch = 'home-control' if thin else 'home-reports'
+          path = 'delivery-receipt.json' if thin else 'receipts/' + probe + '.json'
+          exists = subprocess.run(['git', 'ls-remote', '--exit-code', '--heads', 'origin', branch], stdout=subprocess.DEVNULL)
+          if exists.returncode == 2:
+              raise SystemExit(0)
+          exists.check_returncode()
+          subprocess.run(['git', 'fetch', '--depth=1', 'origin', branch], check=True)
           listed = subprocess.check_output(['git', 'ls-tree', '--name-only', 'FETCH_HEAD', '--', path], text=True).strip()
           if listed:
               raw = subprocess.check_output(['git', 'show', 'FETCH_HEAD:' + path])

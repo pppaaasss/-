@@ -222,7 +222,7 @@ def timezone_guard(config: dict, now_epoch: float) -> None:
         raise RuntimeError(f"TIMEZONE_MISMATCH:expected_{expected}_got_{actual or 'unknown'}")
 
 
-def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes, str, float, int, bool]:
+def request_bytes(url: str, limit: int, *, ranged: bool = False, retain: bool = True) -> tuple[bytes | int, str, float, int, bool]:
     headers = {"User-Agent": USER_AGENT, "Accept": "*/*", "Connection": "close"}
     if ranged:
         headers["Range"] = f"bytes=0-{max(0, limit - 1)}"
@@ -240,9 +240,10 @@ def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes,
             chunk = reader(min(64 * 1024, limit - size))
             if not chunk:
                 break
-            chunks.append(chunk)
+            if retain:
+                chunks.append(chunk)
             size += len(chunk)
-        data = b"".join(chunks)
+        data = b"".join(chunks) if retain else size
         elapsed = max(time.monotonic() - started, 0.001)
         status = int(getattr(response, "status", 0) or response.getcode() or 0)
         total = 0
@@ -255,11 +256,11 @@ def request_bytes(url: str, limit: int, *, ranged: bool = False) -> tuple[bytes,
                 total = int(response.headers.get("Content-Length") or 0)
             except (TypeError, ValueError):
                 total = 0
-        complete = bool(total and total <= limit and len(data) >= total)
-        if not total and len(data) < limit:
-            total = len(data)
+        complete = bool(total and total <= limit and size >= total)
+        if not total and size < limit:
+            total = size
             complete = True
-        if status == 206 and total == len(data):
+        if status == 206 and total == size:
             complete = True
         return data, response.geturl(), elapsed, total, complete
 
@@ -467,12 +468,12 @@ def recent_segments(text: str, base: str, count: int = SAMPLES_PER_ROUTE) -> lis
 
 
 def segment_sample(url: str, duration: float, limit: int) -> dict:
-    data, final, elapsed, total, complete = request_bytes(url, limit, ranged=True)
-    download = len(data) * 8 / elapsed / 1_000_000 if data else 0.0
+    size, final, elapsed, total, complete = request_bytes(url, limit, ranged=True, retain=False)
+    download = size * 8 / elapsed / 1_000_000 if size else 0.0
     stream = total * 8 / duration / 1_000_000 if total > 0 and duration > 0 else 0.0
     return {
         "url": final,
-        "downloaded_bytes": len(data),
+        "downloaded_bytes": size,
         "total_bytes": total,
         "duration_s": round(max(0.0, duration), 3),
         "elapsed_s": round(elapsed, 3),

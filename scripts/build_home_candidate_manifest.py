@@ -290,9 +290,13 @@ def main() -> int:
     if args.receipt and Path(args.receipt).exists():
         receipt = json.loads(Path(args.receipt).read_text())
         publisher = json.loads(Path(args.publisher_config).read_text())
-        if (receipt.get('schema') != 'iptv-home-delivery-receipt/v1'
+        thin_path = Path('config/home-thin.json')
+        cloud_managed = thin_path.exists() and json.loads(thin_path.read_text()).get('enabled') is True
+        receipt_schema = 'iptv-cloud-delivery-receipt/v1' if cloud_managed else 'iptv-home-delivery-receipt/v1'
+        receipt_meaning = 'cloud_queue_persisted_not_tested' if cloud_managed else 'queue_persisted_not_tested'
+        if (receipt.get('schema') != receipt_schema
                 or receipt.get('probe_id') != publisher['expected_probe_id']
-                or receipt.get('meaning') != 'queue_persisted_not_tested'):
+                or receipt.get('meaning') != receipt_meaning):
             raise ContractError('invalid household receipt')
     previous_manifest = json.loads(output_path.read_text()) if output_path.exists() else None
     manifest, index = retain_delivery(manifest, index, previous_index, previous_manifest, receipt)
