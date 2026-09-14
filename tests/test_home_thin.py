@@ -349,6 +349,40 @@ class AdditionalFlowTests(ThinFixture):
             'pipeline-trial/state.json': encode({'backup_archive':{candidate['candidate_id']:candidate}})}, 'sha')
         self.assertTrue(state['archive'][candidate['candidate_id']]['requires_home_reverification'])
 
+    def test_trial_pool_keeps_later_formal_rechecks_and_requires_reverification(self):
+        from router.ac86u.home_contract import TRIAL_BACKUP_SCHEMA, TRIAL_ROUTE_CONTEXT
+        from router.ac86u.home_decision import probe_verification
+        candidate = self.manifest['candidates'][0]
+        identity = candidate['candidate_id']
+        row = dict(candidate, qualification='QUALIFIED',
+                   source_manifest_sha256='a'*64, qualified_utc=timestamp(self.now),
+                   last_verified_utc=timestamp(self.now), expires_utc=timestamp(self.now+3600),
+                   verification=probe_verification(measured(candidate)))
+        pool = {'schema': TRIAL_BACKUP_SCHEMA, 'probe_id': self.probe,
+                'route_context': TRIAL_ROUTE_CONTEXT, 'generated_utc': timestamp(self.now),
+                'formal_playlist_sha256': hashlib.sha256(self.formal).hexdigest(),
+                'candidate_manifest_sha256': 'a'*64, 'backup_count': 1, 'backups': [row]}
+        archived = dict(row, last_recheck_utc=timestamp(self.now+1),
+                        last_recheck_result={'observed_status': 'UNAVAILABLE'},
+                        retry_after_epoch=self.now+61)
+        archived['verification'] = dict(row['verification'], min_download_mbps=1.0)
+        sources = {'state.json': encode({'backup_archive': {identity: archived}}),
+                   'pipeline-trial/qualified-backups.json': encode(pool)}
+        before = copy.deepcopy(sources)
+        state = cloud.import_legacy(self.state, sources, 'sha')
+        self.assertEqual(dict(archived, requires_home_reverification=True), state['archive'][identity])
+        self.assertEqual(before, sources)
+        self.assertFalse(self.state['archive'])
+        self.assertIn(identity, state['tested'])
+
+        # An accepted formal pool still takes precedence and clears trial gating.
+        formal_pool = dict(pool, schema='iptv-home-qualified-backups/v1',
+                           route_context='living-room-path-equivalent')
+        sources['qualified-backups.json'] = encode(formal_pool)
+        state = cloud.import_legacy(self.state, sources, 'sha')
+        self.assertEqual(row, state['archive'][identity])
+        self.assertNotIn('requires_home_reverification', state['archive'][identity])
+
     def test_migration_chunks_roundtrip_and_corruption_stops_acceptance(self):
         from scripts.upload_home_thin_history import prepare
         backup = self.root/'backup'

@@ -78,7 +78,12 @@ def import_legacy(state, files, migration_id):
             validate_backup_pool(pool, expected_probe_id=state['probe_id'], allow_expired=True,
                                  trial=name.startswith('pipeline-trial/'))
             for row in pool['backups']:
-                result['archive'][row['candidate_id']] = dict(row, requires_home_reverification=True) if name.startswith('pipeline-trial/') else row
+                if name.startswith('pipeline-trial/'):
+                    # Formal history may contain later failed rechecks or cooldowns.
+                    # Import trial-only entries without overwriting that evidence.
+                    formal = sources['state.json'].get('backup_archive', {}).get(row['candidate_id'], {})
+                    row = {**row, **formal, 'requires_home_reverification': True}
+                result['archive'][row['candidate_id']] = row
                 result['tested'].setdefault(row['candidate_id'], {'legacy': True})
     for row in sources.get('progress.jsonl', []):
         if row['kind'] == 'candidate':
