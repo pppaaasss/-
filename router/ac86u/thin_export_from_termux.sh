@@ -22,5 +22,5 @@ REMOTE
 # Controlled filenames come from the fixed remote allowlist above.
 tar -xf "$iptv_export/history.tar" -C "$iptv_export"
 ssh -p 22 -o ConnectTimeout=10 wodeluyouqi@192.168.50.1 \
-  'cat /opt/var/lib/iptv-home-thin/migration/quality-policy.json' > "$iptv_export/quality-policy.json"
+  'if [ -f /opt/var/lib/iptv-home-native/migration/quality-policy.json ]; then cat /opt/var/lib/iptv-home-native/migration/quality-policy.json; else cat /opt/var/lib/iptv-home-thin/migration/quality-policy.json; fi' > "$iptv_export/quality-policy.json"
 printf '%s\n' '历史副本已保存到手机。上传脚本仅发送列出的历史文件和画质策略。'

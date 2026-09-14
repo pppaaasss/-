@@ -1,4 +1,6 @@
-# AC86U 家庭测速减负迁移
+# AC86U 家庭测速减负迁移（旧 Python 版本留档）
+
+> 当前部署改用 [AC86U 最小采样版](home-native-minimal.md)，路由器不再运行 Python 或 FFprobe。本文旧安装、修复和启用命令不再适用；仅第 3 节历史导出/上传流程继续复用。新入口需要第二个参数：手机 token 文件。
 
 此版本把任务队列、候选去重、历史备份池、判定和 Git 发布放到现有 GitHub 项目。路由器只领取小任务、经原家庭路径采样、上报小结果。`config/home-thin.json` 默认关闭；提交代码不会自动安装或启用路由器。
 
@@ -100,7 +102,6 @@ read -rsp 'GitHub token: ' iptv_token; printf '\n'
 printf '%s\n' "$iptv_token" > "$HOME/iptv-thin.token"
 unset iptv_token
 chmod 600 "$HOME/iptv-thin.token"
-ssh -p 22 wodeluyouqi@192.168.50.1 'umask 077; cat > /opt/etc/iptv-home-thin.token; chmod 600 /opt/etc/iptv-home-thin.token' < "$HOME/iptv-thin.token"
 python "$HOME/iptv-thin-tools/scripts/upload_home_thin_history.py" --directory "$HOME/iptv-history-before-thin" --token-file "$HOME/iptv-thin.token"
 ```
 

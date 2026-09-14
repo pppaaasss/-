@@ -179,7 +179,7 @@ static curl_socket_t open_socket(void *v,curlsocktype purpose,struct curl_sockad
 }
 static size_t body(void *p,size_t a,size_t b,void *v) {
     struct transfer *t=v; size_t n=a*b;
-    if(t->status>=300&&t->status<400) return n;
+    if(t->status>=300&&t->status<400) return 0;
     size_t take=n; if(take>t->limit-t->count) take=t->limit-t->count;
     size_t keep=take; if(keep>t->keep-t->kept) keep=t->keep-t->kept;
     if(keep && fwrite(p,1,keep,t->file)!=keep) return 0;
@@ -232,6 +232,7 @@ static int get(int argc,char **argv) {
         char range[40];snprintf(range,sizeof range,"0-%ld",limit-1);
         if(keep==PREFIX_MAX)co(c,CURLOPT_RANGE,range);
         code=cp(c);cl(hosts);cc(c);
+        if(code==CURLE_WRITE_ERROR&&t.status>=300&&t.status<400&&t.location[0])code=CURLE_OK;
         if(code || t.status<300 || t.status>=400 || !t.location[0])break;
         char next[URL_MAX];joined(url,t.location,next);snprintf(url,sizeof url,"%s",next);
         if(redirects==4)code=CURLE_TOO_MANY_REDIRECTS;
@@ -287,7 +288,13 @@ static int cpu(unsigned long long *total,unsigned long long *idle) {
 /* /proc/PID/stat works on Merlin kernels without CONFIG_CHECKPOINT_RESTORE.
  * Sum only this guardian and its isolated worker process group. Shared pages
  * are conservatively counted in each process; no system-wide process killing. */
-static long group_rss(pid_t group) {
+static long proc_self_id(void) {
+    FILE *f=fopen("/proc/self/stat","r");long pid=0;
+    if(!f||fscanf(f,"%ld",&pid)!=1)fail("proc_identity");
+    fclose(f);return pid;
+}
+static long proc_guardian=0;
+static long group_rss(long group) {
     DIR *directory=opendir("/proc");if(!directory)return 1L<<30;
     struct dirent *entry;long total=0,page=sysconf(_SC_PAGESIZE)/1024;
     while((entry=readdir(directory))) {
@@ -301,7 +308,7 @@ static long group_rss(pid_t group) {
             if(field==5)pgrp=strtol(word,NULL,10);
             if(field==24)resident=strtol(word,NULL,10);
         }
-        if(pid==getpid()||(group>0&&pgrp==group))total+=resident*page;
+        if(pid==proc_guardian||(group>0&&pgrp==group))total+=resident*page;
     }
     closedir(directory);return total;
 }
@@ -317,18 +324,26 @@ static int guard(int argc,char **argv) {
     const char *root=getenv("IPTV_NATIVE_DATA"),*legacy=getenv("IPTV_NATIVE_LEGACY");
     if(root&&lockfile(root,"worker.lock")<0)return 0;
     if(root&&lockfile(legacy?legacy:"/opt/var/lib/iptv-home-probe","daily-worker.lock")<0)return 0;
+    proc_guardian=proc_self_id();
     long mem=available(),minimum=mem,peak=group_rss(-1);FILE *metrics=fopen(argv[2],"w");if(!metrics)fail("guard_metrics");
     unsigned long long t0,i0,t1,i1;int bad=cpu(&t0,&i0);usleep(250000);bad|=cpu(&t1,&i1);
     if(mem<start||bad||t1<=t0||100.0*(1-(double)(i1-i0)/(t1-t0))>=75){fprintf(metrics,"WAITING_RESOURCES\t%ld\t%ld\t0\n",peak,minimum);fclose(metrics);return 75;}
     signal(SIGTERM,stop);signal(SIGINT,stop);signal(SIGHUP,stop);
+    int identity_pipe[2];if(pipe2(identity_pipe,O_CLOEXEC))fail("identity_pipe");
     double began=mono();pid_t pid=fork();if(pid<0)fail("guard_fork");
-    if(!pid){setpgid(0,0);setpriority(PRIO_PROCESS,0,19);execv(argv[7],argv+7);_exit(127);}
-    setpgid(pid,pid);int status=0;const char *reason="COMPLETED";double last_cpu=mono();int busy=0;
+    if(!pid){
+        close(identity_pipe[0]);if(setpgid(0,0))_exit(2);
+        long actual=proc_self_id();if(write(identity_pipe[1],&actual,sizeof actual)!=sizeof actual)_exit(2);
+        close(identity_pipe[1]);setpriority(PRIO_PROCESS,0,19);execv(argv[7],argv+7);_exit(127);
+    }
+    close(identity_pipe[1]);long proc_group=0;
+    if(read(identity_pipe[0],&proc_group,sizeof proc_group)!=sizeof proc_group){kill(pid,SIGKILL);waitpid(pid,NULL,0);fail("worker_identity");}
+    close(identity_pipe[0]);setpgid(pid,pid);int status=0;const char *reason="COMPLETED";double last_cpu=mono();int busy=0;
     for(;;) {
         pid_t waited=waitpid(pid,&status,WNOHANG);
         if(waited==pid)break;
         if(waited<0&&errno!=EINTR){reason="WAIT_ERROR";break;}
-        long used=group_rss(pid);mem=available();if(used>peak)peak=used;if(mem<minimum)minimum=mem;
+        long used=group_rss(proc_group);mem=available();if(used>peak)peak=used;if(mem<minimum)minimum=mem;
         if(mono()-last_cpu>=1) {
             t0=t1;i0=i1;
             if(cpu(&t1,&i1)||t1<=t0||i1<i0)busy=2;
