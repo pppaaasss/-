@@ -4,6 +4,7 @@ set -eu
 unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH
 iptv_data=/opt/var/lib/iptv-home-thin
 [ ! -f "$iptv_data/PAUSED" ] || exit 0
+[ -f "$iptv_data/ENABLED" ] || exit 0
 [ -f /opt/etc/iptv-home-thin.json ] || exit 0
 # Outside household windows only retry a durable upload. No all-day Python polling.
 case "$(date +%H)" in

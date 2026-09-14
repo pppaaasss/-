@@ -157,6 +157,7 @@ def activate():
         config = json.loads(THIN_CONFIG.read_bytes())
         config['enabled'] = True
         write(THIN_CONFIG, json.dumps(config).encode())
+        write(DATA / 'ENABLED', b'cloud migration acknowledged\n')
         (DATA / 'PAUSED').unlink(missing_ok=True)
         cron('a', 'IPTVHomeThin', '* * * * * /bin/sh /opt/share/iptv-home-thin/thin_run.sh')
         print('THIN_ENABLED; measurements wait for cloud tasks and resource admission')
@@ -167,6 +168,7 @@ def rollback():
         if not (BACKUP / 'config.json').exists():
             raise RuntimeError('no thin rollback snapshot')
         write(DATA / 'PAUSED', b'rollback\n')
+        (DATA / 'ENABLED').unlink(missing_ok=True)
         cron('d', 'IPTVHomeThin')
         if THIN_CONFIG.exists():
             thin = json.loads(THIN_CONFIG.read_bytes())
