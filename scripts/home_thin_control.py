@@ -10,6 +10,7 @@ import copy
 import gzip
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import time
@@ -243,6 +244,16 @@ def ingest(state, reports, now):
         if path.stem != value['batch_id']:
             raise ValueError('observation filename mismatch')
         state['processed'][path.stem] = hashlib.sha256(raw).hexdigest()
+        budget = state.get('native_budget', {})
+        reserved = budget.get('reservations', {}).pop(path.stem, None)
+        if reserved and value.get('stop_reason') != 'interrupted_batch':
+            refund_bytes = max(0, reserved['bytes'] - value['usage']['downloaded_bytes'])
+            refund_seconds = max(0, reserved['seconds'] - value['usage']['runtime_s'])
+            budget['bytes'] -= refund_bytes
+            budget['seconds'] -= refund_seconds
+            if reserved['candidates']:
+                budget['discovery_bytes'] -= refund_bytes
+                budget['discovery_seconds'] -= refund_seconds
         state['last_heartbeat'] = {'received_utc': timestamp(now), 'measured_utc': value['finished_utc'],
             'stop_reason': value.get('stop_reason', ''), 'usage': value['usage'], 'results': len(value['results'])}
         cycle = state.get('cycle')
@@ -438,6 +449,33 @@ def step(state, config, root, reports, now):
         'feedback_sha256': feedback_sha, 'tasks': tasks,
         'limits': {'seconds': min(240, config['batch_seconds']), 'bytes': min(64 * 1024 * 1024, config['batch_bytes'])}})
     validate_task(task, state['probe_id'], now)
+    if config.get('router_runtime') == 'native-v1':
+        # Admission lives in GitHub's durable state, never in router Python.
+        budget = state.setdefault('native_budget', {})
+        if budget.get('day') != day:
+            budget = state['native_budget'] = dict(day=day, bytes=0, seconds=0,
+                candidates=0, discovery_bytes=0, discovery_seconds=0, reservations={})
+        amount, seconds = task['limits']['bytes'], task['limits']['seconds']
+        candidates = sum(t['role'] == 'candidate' for t in tasks)
+        if (budget['bytes'] + amount > config['daily_bytes'] or
+                budget['seconds'] + seconds > config['daily_seconds'] or
+                budget['candidates'] + candidates > config['daily_candidates'] or
+                (candidates and (budget['discovery_bytes'] + amount > config['discovery_bytes'] or
+                    budget['discovery_seconds'] + seconds > config['discovery_seconds']))):
+            if all(t['role'] != 'current' for t in tasks):
+                cycle['optional_closed'] = True
+                report = complete_report(state, cycle, current, feedback, now)
+                state['completed_slots'] = (state['completed_slots'] + [slot_id])[-42:]
+                state['last_report'] = report
+                return state, dict(idle, state='SLOT_COMPLETE'), report
+            return state, dict(idle, state='WAITING_BUDGET'), None
+        budget['bytes'] += amount
+        budget['seconds'] += seconds
+        budget['candidates'] += candidates
+        if candidates:
+            budget['discovery_bytes'] += amount
+            budget['discovery_seconds'] += seconds
+        budget['reservations'][task['batch_id']] = dict(bytes=amount, seconds=seconds, candidates=candidates)
     state['batches'][task['batch_id']] = task
     cycle['outstanding'] = task['batch_id']
     cycle['batch_ids'].append(task['batch_id'])
@@ -453,9 +491,19 @@ def main():
     config = json.loads((args.repo_root / 'config/home-thin.json').read_bytes())
     state_path = args.control / 'state.json'
     state = json.loads(state_path.read_bytes()) if state_path.exists() else new_state(config['probe_id'])
+    native_done = []
+    if config.get('router_runtime') == 'native-v1' and os.environ.get('IPTV_NATIVE_INBOX'):
+        from scripts.home_native_evidence import prepare_assets
+        native_done = prepare_assets(state, os.environ['IPTV_NATIVE_INBOX'], args.reports, time.time())
     state, task, report = step(state, config, args.repo_root, args.reports, time.time())
     atomic_json(state_path, state)
     atomic_json(args.control / 'tasks' / (config['probe_id'] + '.json'), task)
+    if config.get('router_runtime') == 'native-v1':
+        from scripts.home_native_evidence import task_wire
+        (args.control / 'tasks' / (config['probe_id'] + '.native')).write_bytes(
+            task_wire(task, int(os.environ.get('IPTV_NATIVE_RELEASE_ID', '0'))))
+        if os.environ.get('IPTV_NATIVE_INBOX'):
+            (Path(os.environ['IPTV_NATIVE_INBOX'])/'processed.txt').write_text('\n'.join(native_done)+'\n')
     atomic_json(args.control / 'status.json', {'state': task.get('state', 'WAITING_MEASUREMENTS'),
         'history_migrated': state['migration_complete'], 'queue': len(state['queue']),
         'tested': len(state['tested']), 'last_heartbeat': state.get('last_heartbeat')})

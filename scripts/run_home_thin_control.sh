@@ -23,6 +23,9 @@ for iptv_target in "$iptv_reports" "$iptv_control"; do
   git -C "$iptv_target" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 done
 git -C "$iptv_reports" add -- inbox
+if test -d "$iptv_reports/observations"; then
+  git -C "$iptv_reports" add -- observations
+fi
 if ! git -C "$iptv_reports" diff --cached --quiet; then
   git -C "$iptv_reports" commit -m 'Aggregate bounded household observations'
   iptv_pushed=false
