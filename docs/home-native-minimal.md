@@ -1,6 +1,6 @@
 # AC86U 最小采样版
 
-路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个小型原生程序和三个 Shell 脚本，复用现有 Entware curl/libcurl。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
+路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个 26,536 字节原生程序和三个 Shell 脚本，合计约 35 KiB（文件大小，非运行内存），复用现有 Entware curl/libcurl。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
 
 ## 路由端预算
 
@@ -13,11 +13,11 @@
 | 时长 | 每批整个进程组最多约 240 秒，包含控制请求及上传；清理另需约半秒 |
 | 视频缓冲 | libcurl 16 KiB 流式读取；仅保留每条第一段的前 128 KiB；不累积整段视频 |
 | 本地断点 | 一个待上传批次，不保存媒体历史；已完成的每条记录原子落盘 |
-| 云端预算 | 每日最多 1 小时、1.5 GiB；新增最多 10 条，另限 600 秒、256 MiB；重启不会清零 |
+| 云端预算 | 每日采样预算 1 小时、1.5 GiB；新增最多 10 条，另限 600 秒、256 MiB；重启不会清零 |
 
 这些是提前停止门槛，**不是 cgroup 内存硬限制或 AC86U 的实测峰值**。每 250 毫秒检查进程组，短暂峰值和内核/TLS 缓冲仍可能超出采样值。资源优先于完成率，不承诺每天能测完全部频道。带 VPN 的 AC86U 必须先验收一批。
 
-读取预算统计应用层视频数据，不含 DNS、HTTP/TLS 开销、重传和 GitHub 上传。每批最多两次/条、6 MiB/次的采样，加上有界播放列表读取，低于云端预留的 64 MiB。中断批次不退还未记录的资源预留，避免断电让用量清零。
+每日时间预算按采样记录结算，不含批次前后的 GitHub 控制和上传时间；240 秒进程组保护仍覆盖它们。读取预算统计应用层视频数据，不含 DNS、HTTP/TLS 开销、重传和 GitHub 上传。每批最多两次/条、6 MiB/次的采样，加上有界播放列表读取，低于云端预留的 64 MiB。中断批次不退还未记录的资源预留，避免断电让用量清零。
 
 ## 家庭测量仍在家里
 
@@ -44,7 +44,7 @@ sh "$HOME/iptv-native-install.sh" "$iptv_ref" "$HOME/iptv-thin.token"
 
 期望 `NATIVE_STAGED_DISABLED`。只发送约几十 KB 的运行代码；交叉编译、源码和 Python 安装脚本不装进路由器运行目录。若存在活跃旧 worker、错误架构、缺失现有 libcurl、路径合约不符或已有迁移备份，暂存会停止，不修包、不覆盖历史。
 
-3. 按 [历史导出与上传](home-thin-migration.md#3-导出和迁移历史) 的手机流程迁移原历史。导出脚本已支持原生版画质策略位置。完成后通过 PR 将云端 `enabled` 改为 `true`，确认 `home-control/status.json` 显示 `history_migrated: true`。
+3. 先在手机执行 `mkdir -p "$HOME/iptv-thin-tools/router/ac86u" "$HOME/iptv-thin-tools/scripts"`，然后按 [历史导出与上传](home-thin-migration.md#3-导出和迁移历史) 的手机流程迁移原历史。导出脚本已支持原生版画质策略位置。完成后通过 PR 将云端 `enabled` 改为 `true`，确认 `home-control/status.json` 显示 `history_migrated: true`。
 4. 在北京时间 02–08、13–16、20–23 的测量窗口内，手机执行一次：
 
 ```sh

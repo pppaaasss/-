@@ -215,6 +215,14 @@ class NativeCloudTests(NativeFixture, ThinFixture):
 
 
 class NativeInstallTests(unittest.TestCase):
+    def test_prebuilt_binary_is_bound_to_reviewed_sources(self):
+        root=ROOT/'router/ac86u/native';manifest=json.loads((root/'build.json').read_bytes())
+        binary=(root/'iptv-native').read_bytes()
+        self.assertEqual(manifest['binary_sha256'],hashlib.sha256(binary).hexdigest())
+        self.assertEqual(manifest['source_sha256'],hashlib.sha256((root/'iptv_native.c').read_bytes()).hexdigest())
+        self.assertEqual(183,int.from_bytes(binary[18:20],'little'))  # ELF EM_AARCH64
+        self.assertEqual(manifest['bytes'],len(binary));self.assertLess(len(binary),65536)
+
     def test_phone_validation_rejects_ambiguous_startup_and_token_injection(self):
         with self.assertRaises(ValueError): installer.split_services(b'# BEGIN IPTV_HOME_PROBE\n')
         before,block,after=installer.split_services(b'#!/bin/sh\nVPN_START\n# BEGIN IPTV_HOME_PROBE\nold\n# END IPTV_HOME_PROBE\nOTHER_SERVICE\n')

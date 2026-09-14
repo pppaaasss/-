@@ -59,6 +59,7 @@ upload() {
   printf '%s\n' "$batch" > "$work/ack"
   "$native" commit "$work/ack" "$data/last-uploaded"
   rm -f "$data/outbox.native" "$data/checkpoint-time" "$data/outbox-id"
+  rm -f "$work"/*
   status UPLOADED
   notify
 }
