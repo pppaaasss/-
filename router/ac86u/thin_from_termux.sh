@@ -6,6 +6,10 @@ iptv_ref=${1:?Pass the reviewed 40-character commit SHA}
 iptv_token_file=${2:?Pass the phone token file (0600)}
 case "$iptv_ref" in *[!0-9a-f]*|'') exit 2;; esac
 [ "${#iptv_ref}" -eq 40 ] || exit 2
+command -v python >/dev/null 2>&1 || {
+  printf '%s\n' '手机缺少 Python，请先执行：apt-get install --no-install-recommends python' >&2
+  exit 2
+}
 iptv_stage="$HOME/iptv-native-$iptv_ref"
 mkdir -p "$iptv_stage"
 for iptv_name in iptv-native build.json iptv_native.c native_from_termux.py native_run.sh native_worker.sh native_status.sh; do

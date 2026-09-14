@@ -1,6 +1,6 @@
 # AC86U 最小采样版
 
-路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个 26,536 字节原生程序和三个 Shell 脚本，合计约 35 KiB（文件大小，非运行内存），复用现有 Entware curl/libcurl。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
+路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个 30,632 字节原生程序和三个 Shell 脚本，合计 39 KiB（文件大小，非运行内存），复用现有 Entware curl/libcurl。SHA-256 校验已内置到同一个程序，按 4 KiB 缓冲流式读取；安装、回滚和采样均不依赖外部 `sha256sum`、`opkg` 或额外软件包。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
 
 ## 路由端预算
 
@@ -34,7 +34,7 @@
 以下均在手机 Termux 操作。无需修复路由器的 Python，也不卸载旧包。先保留历史，包括 `state.json.corrupt-*` 原件；这些隔离文件可能受旧 Python 故障影响，必须在手机上验证，不能直接删除或创建空历史绕过迁移。
 
 1. 审查合并代码，保持 `config/home-thin.json` 的 `enabled: false`。用有到期日、仅此仓库 `Contents: Read and write` 的 token，存入手机 `0600` 文件；已有此文件可复用。不要将令牌发到聊天或放进命令历史。
-2. 用审查通过的 **40 位提交 SHA** 下载入口。入口校验二进制和源文件摘要，手机准备配置；路由器只执行 Shell 和原生程序。它会备份并冻结旧 IPTV 任务，保留其他启动服务和所有历史，新任务保持关闭。
+2. 手机需先有 Python（`apt-get install --no-install-recommends python`）。用审查通过的 **40 位提交 SHA** 下载入口。入口校验二进制和源文件摘要，手机准备配置；路由器只执行 Shell 和原生程序。原生程序通过内置 SHA-256 自检和现有 libcurl 检查后才进入迁移。它会备份并冻结旧 IPTV 任务，保留其他启动服务和所有历史，新任务保持关闭。
 
 ```sh
 iptv_ref=这里填写审查通过的40位提交SHA
@@ -42,7 +42,9 @@ curl -fSL "https://raw.githubusercontent.com/pppaaasss/-/$iptv_ref/router/ac86u/
 sh "$HOME/iptv-native-install.sh" "$iptv_ref" "$HOME/iptv-thin.token"
 ```
 
-期望 `NATIVE_STAGED_DISABLED`。只发送约几十 KB 的运行代码；交叉编译、源码和 Python 安装脚本不装进路由器运行目录。若存在活跃旧 worker、错误架构、缺失现有 libcurl、路径合约不符或已有迁移备份，暂存会停止，不修包、不覆盖历史。
+期望 `NATIVE_STAGED_DISABLED`。只发送约几十 KB 的运行代码；交叉编译、源码和 Python 安装脚本不装进路由器运行目录。手机为每次操作建立一个临时 SSH 主连接，复用登录，结束时关闭；中途断线会报错，不反复询问密码。失败直接显示最多四行原因，无需截取 Python 异常堆栈。
+
+若存在活跃旧 worker、错误架构、缺失现有 libcurl、路径合约不符或已有迁移备份，暂存会停止。不会调用路由器包管理器。遇到旧入口的 `sha256sum: not found` 或 `sha256sum_and_opkg_missing`，可下载内置校验版本重新暂存：这两个报错均发生在创建迁移备份、冻结旧任务之前。
 
 3. 先在手机执行 `mkdir -p "$HOME/iptv-thin-tools/router/ac86u" "$HOME/iptv-thin-tools/scripts"`，然后按 [历史导出与上传](home-thin-migration.md#3-导出和迁移历史) 的手机流程迁移原历史。导出脚本已支持原生版画质策略位置。完成后通过 PR 将云端 `enabled` 改为 `true`，确认 `home-control/status.json` 显示 `history_migrated: true`。
 4. 在北京时间 02–08、13–16、20–23 的测量窗口内，手机执行一次：
@@ -71,6 +73,6 @@ ssh -p 22 wodeluyouqi@192.168.50.1 'touch /opt/var/lib/iptv-home-native/PAUSED; 
 
 ## 开发验证
 
-GitHub `Build minimal AC86U sampler` 在 Ubuntu 20.04 容器中交叉编译 aarch64 ELF，检查依赖最高不超过 GLIBC 2.27，运行包 SHA-256 绑定源文件。回归测试覆盖实际 HTTP 重定向/忽略 Range 的读取上限、LAN DNS、离线画质解析、完整受保护发布、进程组中断、丢样 UNKNOWN、预算和历史流程。AC86U 的 libc/libcurl 兼容性、SO_MARK 权限及 VPN 实际路径由首次现场验收确认。
+GitHub `Build minimal AC86U sampler` 在 Ubuntu 20.04 容器中交叉编译 aarch64 ELF，检查依赖最高不超过 GLIBC 2.27，运行包 SHA-256 绑定源文件；GitHub 用 QEMU 执行实际 aarch64 二进制，校验空文件、短串、百万字节与读取边界的标准 SHA-256 结果。回归测试覆盖实际 HTTP 重定向/忽略 Range 的读取上限、LAN DNS、离线画质解析、完整受保护发布、进程组中断、丢样 UNKNOWN、预算和历史流程。AC86U 的 libc/libcurl 兼容性、SO_MARK 权限及 VPN 实际路径由首次现场验收确认。
 
 接口依据：[GitHub Release assets](https://docs.github.com/en/rest/releases/assets)、[libcurl socket callback](https://curl.se/libcurl/c/CURLOPT_OPENSOCKETFUNCTION.html)。
