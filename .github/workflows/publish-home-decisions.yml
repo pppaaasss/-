@@ -3,7 +3,7 @@ name: Publish home-qualified IPTV decisions
 on:
   push:
     branches: [master]
-    paths: ['config/home-publisher.json', 'config/home-thin.json', '.github/workflows/publish-home-decisions.yml']
+    paths: ['config/home-publisher.json', 'config/home-thin.json', 'scripts/home_thin_control.py', '.github/workflows/publish-home-decisions.yml']
   repository_dispatch:
     types: [home-observations-ready]
   workflow_dispatch:
