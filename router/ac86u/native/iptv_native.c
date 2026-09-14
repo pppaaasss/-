@@ -284,12 +284,26 @@ static int cpu(unsigned long long *total,unsigned long long *idle) {
     if(n<4)return -1;
     *total=0;for(int i=0;i<8;i++)*total+=a[i];*idle=a[3]+a[4];return 0;
 }
-static long tree_rss(pid_t p,int depth) {
-    if(depth>12)return 0;
-    char path[128],s[256];long total=0;snprintf(path,sizeof path,"/proc/%ld/status",(long)p);
-    FILE *f=fopen(path,"r");if(f){while(fgets(s,sizeof s,f)){long r;if(sscanf(s,"VmRSS: %ld",&r)==1)total=r;}fclose(f);}
-    snprintf(path,sizeof path,"/proc/%ld/task/%ld/children",(long)p,(long)p);f=fopen(path,"r");
-    if(f){long child;int count=0;while(count++<32&&fscanf(f,"%ld",&child)==1)total+=tree_rss((pid_t)child,depth+1);fclose(f);}return total;
+/* /proc/PID/stat works on Merlin kernels without CONFIG_CHECKPOINT_RESTORE.
+ * Sum only this guardian and its isolated worker process group. Shared pages
+ * are conservatively counted in each process; no system-wide process killing. */
+static long group_rss(pid_t group) {
+    DIR *directory=opendir("/proc");if(!directory)return 1L<<30;
+    struct dirent *entry;long total=0,page=sysconf(_SC_PAGESIZE)/1024;
+    while((entry=readdir(directory))) {
+        char *end;long pid=strtol(entry->d_name,&end,10);if(*end||pid<=0)continue;
+        char path[128],line[4096];snprintf(path,sizeof path,"/proc/%ld/stat",pid);
+        FILE *f=fopen(path,"r");if(!f)continue;
+        char *read=fgets(line,sizeof line,f);fclose(f);if(!read)continue;
+        char *tail=strrchr(line,')');if(!tail)continue;
+        char *save=NULL,*word=strtok_r(tail+2," ",&save);long pgrp=-1,resident=0;
+        for(int field=3;word&&field<=24;field++,word=strtok_r(NULL," ",&save)) {
+            if(field==5)pgrp=strtol(word,NULL,10);
+            if(field==24)resident=strtol(word,NULL,10);
+        }
+        if(pid==getpid()||(group>0&&pgrp==group))total+=resident*page;
+    }
+    closedir(directory);return total;
 }
 static volatile sig_atomic_t stopped=0;
 static void stop(int s){stopped=s;}
@@ -303,7 +317,7 @@ static int guard(int argc,char **argv) {
     const char *root=getenv("IPTV_NATIVE_DATA"),*legacy=getenv("IPTV_NATIVE_LEGACY");
     if(root&&lockfile(root,"worker.lock")<0)return 0;
     if(root&&lockfile(legacy?legacy:"/opt/var/lib/iptv-home-probe","daily-worker.lock")<0)return 0;
-    long mem=available(),minimum=mem,peak=tree_rss(getpid(),0);FILE *metrics=fopen(argv[2],"w");if(!metrics)fail("guard_metrics");
+    long mem=available(),minimum=mem,peak=group_rss(-1);FILE *metrics=fopen(argv[2],"w");if(!metrics)fail("guard_metrics");
     unsigned long long t0,i0,t1,i1;int bad=cpu(&t0,&i0);usleep(250000);bad|=cpu(&t1,&i1);
     if(mem<start||bad||t1<=t0||100.0*(1-(double)(i1-i0)/(t1-t0))>=75){fprintf(metrics,"WAITING_RESOURCES\t%ld\t%ld\t0\n",peak,minimum);fclose(metrics);return 75;}
     signal(SIGTERM,stop);signal(SIGINT,stop);signal(SIGHUP,stop);
@@ -314,7 +328,7 @@ static int guard(int argc,char **argv) {
         pid_t waited=waitpid(pid,&status,WNOHANG);
         if(waited==pid)break;
         if(waited<0&&errno!=EINTR){reason="WAIT_ERROR";break;}
-        long used=tree_rss(getpid(),0);mem=available();if(used>peak)peak=used;if(mem<minimum)minimum=mem;
+        long used=group_rss(pid);mem=available();if(used>peak)peak=used;if(mem<minimum)minimum=mem;
         if(mono()-last_cpu>=1) {
             t0=t1;i0=i1;
             if(cpu(&t1,&i1)||t1<=t0||i1<i0)busy=2;
@@ -325,7 +339,7 @@ static int guard(int argc,char **argv) {
             reason=stopped?"INTERRUPTED":mem<reserve?"MEMORY_RESERVE":used>rss?"RSS_LIMIT":busy>=2?"CPU_BUSY":"TIME_LIMIT";
             kill(-pid,SIGTERM);usleep(500000);kill(-pid,SIGKILL);while(waitpid(pid,&status,0)<0&&errno==EINTR){}break;
         }
-        usleep(100000);
+        usleep(250000);
     }
     if(root) {
         uint32_t mark=MARK_BASE|((uint32_t)pid&65535);

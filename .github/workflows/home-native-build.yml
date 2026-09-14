@@ -11,13 +11,18 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    container: ubuntu:20.04
+    timeout-minutes: 8
     steps:
+      - name: Prepare build container
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends ca-certificates git python3
       - uses: actions/checkout@v4
       - name: Cross compile on GitHub
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross libcurl4-openssl-dev
+          apt-get update -qq
+          apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu libc6-dev-arm64-cross libcurl4-openssl-dev
           sh scripts/build_home_native.sh /tmp/native
       - uses: actions/upload-artifact@v4
         with:
