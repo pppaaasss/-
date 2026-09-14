@@ -216,6 +216,55 @@ class NativeCloudTests(NativeFixture, ThinFixture):
         task,report=self.step();self.assertEqual('SLOT_COMPLETE',task['state']);self.assertEqual(2,report['summary']['good'])
 
 
+class NativeHashTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.build = tempfile.TemporaryDirectory()
+        cls.folder = Path(cls.build.name)
+        cls.binary = cls.folder/'iptv-native'
+        subprocess.run(['cc','-Os','-s','-Wall','-Wextra','-Werror','-Wno-deprecated-declarations',
+            '-o',str(cls.binary),str(ROOT/'router/ac86u/native/iptv_native.c'),'-ldl','-lm'],check=True)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.build.cleanup()
+
+    def test_hash_matches_standard_and_block_boundary_vectors_without_commands(self):
+        samples = [b'', b'abc', b'a'*1000000]
+        for size in (1,55,56,57,63,64,65,119,120,127,128,129,4095,4096,4097,131073):
+            samples.append((bytes(range(256))*((size+255)//256))[:size])
+        target = self.folder/'binary sample'
+        for data in samples:
+            with self.subTest(size=len(data)):
+                target.write_bytes(data)
+                result = subprocess.run([str(self.binary),'sha256',str(target)],
+                    env={'PATH':''},capture_output=True,check=True)
+                self.assertEqual(hashlib.sha256(data).hexdigest(),result.stdout.decode().strip())
+
+    def test_hash_refuses_missing_file_and_read_error(self):
+        for target,reason in ((self.folder/'missing',b'sha256_open'),(self.folder,b'sha256_read')):
+            failed = subprocess.run([str(self.binary),'sha256',str(target)],capture_output=True)
+            self.assertEqual(2,failed.returncode)
+            self.assertIn(reason,failed.stderr); self.assertEqual(b'',failed.stdout)
+
+    def test_install_guard_rejects_changed_file_without_external_hash_or_opkg(self):
+        file = self.folder/'config with spaces'
+        marker = self.folder/'mutated'
+        original = b'{"daily_worker_enabled":true}\n'
+        file.write_bytes(original)
+        script = 'set -eu\nnative="'+str(self.binary)+'"\n'+installer.guard_hash(str(file),original)
+        script += 'echo changed > "'+str(marker)+'"\n'
+        subprocess.run(['/bin/sh','-c',script],env={'PATH':''},check=True,capture_output=True)
+        marker.unlink(); file.write_bytes(b'changed concurrently')
+        failed = subprocess.run(['/bin/sh','-c',script],env={'PATH':''},capture_output=True)
+        self.assertEqual(2,failed.returncode); self.assertFalse(marker.exists())
+        self.assertIn(b'NATIVE_ERROR:file_changed:',failed.stderr)
+        file.unlink()
+        failed = subprocess.run(['/bin/sh','-c',script],env={'PATH':''},capture_output=True)
+        self.assertEqual(2,failed.returncode); self.assertFalse(marker.exists())
+        self.assertIn(b'NATIVE_ERROR:sha256_open',failed.stderr)
+
+
 class NativeInstallTests(unittest.TestCase):
     def test_background_connection_does_not_hold_install_output_open(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -242,44 +291,6 @@ else:
                 with installer.ssh_session():
                     self.assertEqual(b'ok\n',installer.ssh('status'))
             self.assertLess(time.monotonic()-began,4)
-
-    def test_missing_router_hash_installs_only_required_package_once(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            digest = hashlib.sha256(b'').hexdigest()
-            (root/'opkg').write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "'+str(root/'calls')+'"\n'
-                'if [ "$1" = install ]; then\n'
-                '  /bin/cp "'+str(root/'hash-template')+'" "'+str(root/'sha256sum')+'"\n'
-                '  /bin/chmod 755 "'+str(root/'sha256sum')+'"\nfi\n')
-            (root/'opkg').chmod(0o755)
-            (root/'hash-template').write_text('#!/bin/sh\nprintf "%s  %s\\n" '+digest+' "$1"\n')
-            script = installer.SHA256_SETUP.replace(
-                'export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin',
-                'export PATH='+str(root))
-            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
-            self.assertEqual(['update','install coreutils-sha256sum'],(root/'calls').read_text().splitlines())
-            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
-            self.assertEqual(2,len((root/'calls').read_text().splitlines()))
-            (root/'sha256sum').write_text('#!/bin/sh\necho incorrect\n')
-            failed = subprocess.run(['/bin/sh','-c',script],capture_output=True)
-            self.assertEqual(2,failed.returncode)
-            self.assertIn(b'sha256sum_self_test_failed',failed.stderr)
-
-    def test_hash_guard_rejects_missing_tool_and_changed_file_before_mutation(self):
-        with tempfile.TemporaryDirectory() as folder:
-            file = Path(folder)/'config with spaces'
-            marker = Path(folder)/'mutated'
-            original = b'{"daily_worker_enabled":true}\n'
-            file.write_bytes(original)
-            script = 'set -eu\n'+installer.guard_hash(str(file),original)+'echo changed > "'+str(marker)+'"\n'
-            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
-            marker.unlink()
-            file.write_bytes(b'changed concurrently')
-            failed = subprocess.run(['/bin/sh','-c',script],capture_output=True)
-            self.assertEqual(2,failed.returncode); self.assertFalse(marker.exists())
-            self.assertIn(b'NATIVE_ERROR:file_changed:',failed.stderr)
-            failed = subprocess.run(['/bin/sh','-c',script],env={'PATH':folder},capture_output=True)
-            self.assertNotEqual(0,failed.returncode); self.assertFalse(marker.exists())
 
     def test_phone_reuses_one_session_and_closes_it_on_remote_error(self):
         previous = installer.SSH_OPTIONS

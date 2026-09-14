@@ -40,7 +40,7 @@ upload() {
   case "$batch" in *[!0-9a-f]*|'') exit 2;; esac
   [ "${#batch}" -eq 64 ] || exit 2
   case "$release" in *[!0-9]*|'') exit 2;; esac
-  sum=$(sha256sum "$data/outbox.native"); sum=${sum%% *}
+  sum=$("$native" sha256 "$data/outbox.native")
   name=$batch-$sum.native
   # Stream the bounded file; --data-binary would read the entire file into RAM.
   http=$(curl --config "$auth" --silent --show-error --proto '=https' \
@@ -79,7 +79,7 @@ now=$(date +%s)
 if [ "$now" -lt "$created" ] || [ "$now" -ge "$expires" ]; then status WAITING_WINDOW; exit 0; fi
 [ "$(cat "$data/last-uploaded" 2>/dev/null || true)" != "$batch" ] || { status WAITING_CLOUD_ACK; exit 0; }
 sed '$d' "$work/task" > "$work/task-body"
-check=$(sha256sum "$work/task-body"); check=${check%% *}
+check=$("$native" sha256 "$work/task-body")
 IFS="$tab" read -r check_tag expected <<EOF
 $(tail -n 1 "$work/task")
 EOF

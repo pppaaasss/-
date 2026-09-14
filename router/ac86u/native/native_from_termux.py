@@ -32,22 +32,6 @@ POLICY = ('minimum_height_default','minimum_height_overrides','minimum_h264_stre
 FILES = ('iptv-native','native_run.sh','native_worker.sh','native_status.sh')
 SSH_OPTIONS = ['-p', '22', '-o', 'ConnectTimeout=10']
 
-# This small Entware package supplies a command needed by BOTH staging and the
-# worker. Check it before creating migration backups or freezing legacy jobs.
-SHA256_SETUP = r'''set -eu
-unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH
-export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin
-if ! command -v sha256sum >/dev/null 2>&1; then
-  command -v opkg >/dev/null 2>&1 || { echo 'NATIVE_ERROR:sha256sum_and_opkg_missing' >&2; exit 2; }
-  opkg update >&2
-  opkg install coreutils-sha256sum >&2
-fi
-digest=$(sha256sum /dev/null)
-[ "${digest%% *}" = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ] || {
-  echo 'NATIVE_ERROR:sha256sum_self_test_failed' >&2; exit 2;
-}
-'''
-
 
 def remote_error(result):
     lines = result.stderr.decode('utf-8', errors='replace').splitlines()
@@ -120,8 +104,8 @@ def sha(raw):
 
 
 def guard_hash(path, raw):
-    return ('digest=$(sha256sum '+shlex.quote(path)+')\n'
-            '[ "${digest%% *}" = '+sha(raw)+' ] || { echo '+
+    return ('digest=$("$native" sha256 '+shlex.quote(path)+')\n'
+            '[ "$digest" = '+sha(raw)+' ] || { echo '+
             shlex.quote('NATIVE_ERROR:file_changed:'+path)+' >&2; exit 2; }\n')
 
 
@@ -154,7 +138,6 @@ def stage(folder, token):
     ssh('set -eu; [ "$(uname -m)" = aarch64 ]; [ "$(date +%z)" = +0800 ]; '
         '[ ! -e '+BACKUP+' ]; [ ! -e /opt/var/lib/iptv-home-thin/ENABLED ]; '
         '[ -f /opt/lib/ld-linux-aarch64.so.1 ]; /opt/bin/curl --version >/dev/null')
-    ssh(SHA256_SETUP)
     original = read(CONFIG)
     config = json.loads(original)
     expected = json.loads((folder/'home-thin.json').read_bytes())
@@ -238,9 +221,8 @@ def rollback():
     if block not in (BLOCK, original_block):
         raise ValueError('IPTV startup block changed; review backup first')
     prior_cron = read(BACKUP+'/crontab').decode()
-    script = 'set -eu\numask 077\n'+guard_hash(SERVICES,current_services)+guard_hash(CONFIG,current_config)+guard_hash(RUN,current_run)
+    script = 'set -eu\numask 077\nnative='+BASE+'/iptv-native\n'+guard_hash(SERVICES,current_services)+guard_hash(CONFIG,current_config)+guard_hash(RUN,current_run)
     script += 'touch '+DATA+'/PAUSED; rm -f '+DATA+'/ENABLED; cru d IPTVHomeNative || true\n'
-    script += 'native='+BASE+'/iptv-native\n'
     for source,target in [('config.json',CONFIG),('run.sh',RUN)]:
         script += 'cp '+BACKUP+'/'+source+' '+target+'.native-restore; chmod '+('755' if source == 'run.sh' else '600')+' '+target+'.native-restore; "$native" commit '+target+'.native-restore '+target+'\n'
     script += 'cp '+DATA+'/restore-services '+SERVICES+'.native-restore; chmod 755 '+SERVICES+'.native-restore; "$native" commit '+SERVICES+'.native-restore '+SERVICES+'\n'
