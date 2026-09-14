@@ -487,6 +487,56 @@ def step(state, config, root, reports, now):
     return state, task, None
 
 
+def status_snapshot(state, task, config, now):
+    """Cloud-only progress: a saved queue or issued task is never a router ACK."""
+    active = slot(now)
+    day_start = (int(now) + 8 * 3600) // 86400 * 86400 - 8 * 3600
+    next_start = min(day_start + day * 86400 + hour * 3600
+                     for day in (0, 1) for hour in (2, 13, 20)
+                     if day_start + day * 86400 + hour * 3600 > now)
+    status = {'generated_utc': timestamp(now),
+        'state': task.get('state', 'WAITING_MEASUREMENTS'),
+        'history_migrated': state['migration_complete'], 'queue': len(state['queue']),
+        'tested': len(state['tested']), 'last_heartbeat': state.get('last_heartbeat'),
+        'window': {'timezone': 'Asia/Shanghai', 'active': active is not None,
+                   'run_kind': active[0] if active else None,
+                   'ends_utc': timestamp(active[2]) if active else None,
+                   'next_starts_utc': timestamp(next_start)},
+        'router_enabled': None,  # Only a fresh household result proves activity.
+        'progress': None, 'issued_task': None,
+        'last_report_generated_utc': (state.get('last_report') or {}).get('generated_utc')}
+    cycle = state.get('cycle')
+    if cycle:
+        first = [task_row(cycle, key, row['url'], 'current')['task_id']
+                 for key, row in cycle['current'].items()]
+        measured = [identity for identity in first if identity in cycle['results']]
+        rechecks = [task_row(cycle, key, row['url'], 'current', 2)['task_id']
+                    for (key, row), identity in zip(cycle['current'].items(), first)
+                    if identity in cycle['results'] and
+                    not probe_is_good(cycle['results'][identity]['result'])]
+        status['progress'] = {'slot': cycle['slot'],
+            'belongs_to_active_window': bool(active and cycle['slot'] == active[1]+'-'+active[0]),
+            'current_total': len(first), 'current_first_pass_completed': len(measured),
+            'current_rechecks_required': len(rechecks),
+            'current_rechecks_completed': sum(identity in cycle['results'] for identity in rechecks),
+            'backup_checks_completed': sum(row['role'] == 'backup' for row in cycle['task_rows'].values()),
+            'candidate_checks_completed': sum(row['role'] == 'candidate' for row in cycle['task_rows'].values()),
+            'report_complete': cycle['slot'] in state['completed_slots']}
+    if task.get('batch_id'):
+        status['issued_task'] = {'batch_id': task['batch_id'], 'created_utc': task['created_utc'],
+            'expires_utc': task['expires_utc'], 'routes': len(task['tasks']),
+            'meaning': 'cloud_issued_not_router_confirmed'}
+    budget = state.get('native_budget')
+    if budget:
+        status['budget'] = {'day': budget['day'],
+            'meaning': 'used_plus_unsettled_reservations',
+            'bytes': budget['bytes'], 'seconds': budget['seconds'],
+            'candidates': budget['candidates'],
+            'daily_bytes_limit': config['daily_bytes'], 'daily_seconds_limit': config['daily_seconds'],
+            'daily_candidates_limit': config['daily_candidates']}
+    return status
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--repo-root', type=Path, default=ROOT)
@@ -500,7 +550,8 @@ def main():
     if config.get('router_runtime') == 'native-v1' and os.environ.get('IPTV_NATIVE_INBOX'):
         from scripts.home_native_evidence import prepare_assets
         native_done = prepare_assets(state, os.environ['IPTV_NATIVE_INBOX'], args.reports, time.time())
-    state, task, report = step(state, config, args.repo_root, args.reports, time.time())
+    now = time.time()
+    state, task, report = step(state, config, args.repo_root, args.reports, now)
     atomic_json(state_path, state)
     atomic_json(args.control / 'tasks' / (config['probe_id'] + '.json'), task)
     if config.get('router_runtime') == 'native-v1':
@@ -509,9 +560,7 @@ def main():
             task_wire(task, int(os.environ.get('IPTV_NATIVE_RELEASE_ID', '0'))))
         if os.environ.get('IPTV_NATIVE_INBOX'):
             (Path(os.environ['IPTV_NATIVE_INBOX'])/'processed.txt').write_text('\n'.join(native_done)+'\n')
-    atomic_json(args.control / 'status.json', {'state': task.get('state', 'WAITING_MEASUREMENTS'),
-        'history_migrated': state['migration_complete'], 'queue': len(state['queue']),
-        'tested': len(state['tested']), 'last_heartbeat': state.get('last_heartbeat')})
+    atomic_json(args.control / 'status.json', status_snapshot(state, task, config, now))
     if state.get('delivery_receipt'):
         atomic_json(args.control / 'delivery-receipt.json', state['delivery_receipt'])
     # Regenerate the last deterministic report if a prior multi-branch push was interrupted.
