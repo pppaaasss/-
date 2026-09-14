@@ -1,6 +1,6 @@
 # AC86U 最小采样版
 
-路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个原生程序和三个 Shell 脚本，合计约几十 KiB（文件大小，非运行内存），复用现有 Entware curl/libcurl。SHA-256 校验已内置到同一个程序，按 4 KiB 缓冲流式读取；安装、回滚和采样均不依赖外部 `sha256sum`、`opkg` 或额外软件包。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
+路由器不再运行 Python、FFprobe、Git、历史数据库或 HTTP 代理服务。运行包只有一个 30,632 字节原生程序和三个 Shell 脚本，合计 39 KiB（文件大小，非运行内存），复用现有 Entware curl/libcurl。SHA-256 校验已内置到同一个程序，按 4 KiB 缓冲流式读取；安装、回滚和采样均不依赖外部 `sha256sum`、`opkg` 或额外软件包。Python 只在手机准备迁移时及 GitHub Actions 中运行。代码默认关闭，提交或合并不会安装到家里的路由器。
 
 ## 路由端预算
 
