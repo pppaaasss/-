@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """PHONE ONLY. The AC86U executes only Shell/curl/the prebuilt native binary."""
 import argparse
+from contextlib import contextmanager
 import hashlib
 import io
 import json
@@ -9,7 +10,9 @@ from pathlib import Path
 import re
 import shlex
 import subprocess
+import sys
 import tarfile
+import tempfile
 import urllib.request
 
 HOST = 'wodeluyouqi@192.168.50.1'
@@ -27,11 +30,69 @@ NAMES = ('IPTVHomeProbe','IPTVHomePrimary','IPTVHomeRecheck','IPTVHomePeak','IPT
 POLICY = ('minimum_height_default','minimum_height_overrides','minimum_h264_stream_mbps',
           'minimum_hevc_stream_mbps','minimum_other_stream_mbps')
 FILES = ('iptv-native','native_run.sh','native_worker.sh','native_status.sh')
+SSH_OPTIONS = ['-p', '22', '-o', 'ConnectTimeout=10']
+
+# This small Entware package supplies a command needed by BOTH staging and the
+# worker. Check it before creating migration backups or freezing legacy jobs.
+SHA256_SETUP = r'''set -eu
+unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH
+export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin
+if ! command -v sha256sum >/dev/null 2>&1; then
+  command -v opkg >/dev/null 2>&1 || { echo 'NATIVE_ERROR:sha256sum_and_opkg_missing' >&2; exit 2; }
+  opkg update >&2
+  opkg install coreutils-sha256sum >&2
+fi
+digest=$(sha256sum /dev/null)
+[ "${digest%% *}" = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ] || {
+  echo 'NATIVE_ERROR:sha256sum_self_test_failed' >&2; exit 2;
+}
+'''
+
+
+def remote_error(result):
+    lines = result.stderr.decode('utf-8', errors='replace').splitlines()
+    useful = [line for line in lines if line.strip() and not line.startswith('**')]
+    return RuntimeError('\n'.join(useful[-4:]) or 'SSH/路由器命令失败，退出码 '+str(result.returncode))
+
+
+@contextmanager
+def ssh_session():
+    """One authenticated phone connection per action; never store a password."""
+    global SSH_OPTIONS
+    previous = SSH_OPTIONS
+    with tempfile.TemporaryDirectory(prefix='iptv-ssh-') as folder:
+        socket = str(Path(folder)/'s')
+        connection = previous+['-S', socket]
+        try:
+            print('请输入路由器登录密码，连接将用于本次全部步骤。', flush=True)
+            result = subprocess.run(['ssh', *connection, '-M', '-N', '-f',
+                '-o', 'ControlPersist=60', '-o', 'ServerAliveInterval=15',
+                '-o', 'ServerAliveCountMax=2', HOST], stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if result.returncode:
+                raise remote_error(result)
+            # A lost master must fail promptly, rather than silently opening
+            # another authenticated connection or prompting for passwords.
+            SSH_OPTIONS = connection+['-o', 'ControlMaster=no', '-o', 'BatchMode=yes',
+                                      '-o', 'ProxyCommand=false']
+            yield
+        finally:
+            SSH_OPTIONS = previous
+            try:
+                subprocess.run(['ssh', *connection, '-o', 'BatchMode=yes', '-O', 'exit', HOST],
+                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL, timeout=10, check=False)
+            except (OSError, subprocess.TimeoutExpired):
+                # ControlPersist expires the private connection if close fails.
+                pass
 
 
 def ssh(command, data=None):
-    return subprocess.run(['ssh','-p','22','-o','ConnectTimeout=10',HOST,command],
-        input=data, stdout=subprocess.PIPE, check=True).stdout
+    result = subprocess.run(['ssh', *SSH_OPTIONS, HOST, command], input=data,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode:
+        raise remote_error(result)
+    return result.stdout
 
 
 def read(path):
@@ -54,7 +115,9 @@ def sha(raw):
 
 
 def guard_hash(path, raw):
-    return '[ "$(sha256sum '+shlex.quote(path)+' | cut -d " " -f1)" = '+sha(raw)+' ] || exit 2\n'
+    return ('digest=$(sha256sum '+shlex.quote(path)+')\n'
+            '[ "${digest%% *}" = '+sha(raw)+' ] || { echo '+
+            shlex.quote('NATIVE_ERROR:file_changed:'+path)+' >&2; exit 2; }\n')
 
 
 def token_config(path):
@@ -86,6 +149,7 @@ def stage(folder, token):
     ssh('set -eu; [ "$(uname -m)" = aarch64 ]; [ "$(date +%z)" = +0800 ]; '
         '[ ! -e '+BACKUP+' ]; [ ! -e /opt/var/lib/iptv-home-thin/ENABLED ]; '
         '[ -f /opt/lib/ld-linux-aarch64.so.1 ]; /opt/bin/curl --version >/dev/null')
+    ssh(SHA256_SETUP)
     original = read(CONFIG)
     config = json.loads(original)
     expected = json.loads((folder/'home-thin.json').read_bytes())
@@ -132,7 +196,10 @@ def stage(folder, token):
         print(ssh(command, package(files)).decode().strip())
     finally:
         # Contains a private curl credential: remove staging even on failure.
-        ssh('rm -rf '+temp)
+        try:
+            ssh('rm -rf '+temp)
+        except RuntimeError as error:
+            print('暂存目录清理失败：'+str(error), file=sys.stderr)
 
 
 def cloud_ready(token):
@@ -183,7 +250,7 @@ def rollback():
     print(ssh(BASE+'/iptv-native lock '+DATA+' '+OLD+' /bin/sh '+DATA+'/rollback.sh').decode().strip())
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Only the PHONE runs Python. Router receives a prebuilt native sampler.')
     parser.add_argument('action', choices=('stage','once','enable','pause','status','rollback'))
     parser.add_argument('--token-file',type=Path)
@@ -191,8 +258,18 @@ if __name__ == '__main__':
     os.umask(0o077)
     if args.action in ('stage','once','enable') and args.token_file is None:
         parser.error('--token-file is required (0600; never paste token into a command)')
-    if args.action == 'stage': stage(Path(__file__).resolve().parent,args.token_file)
-    elif args.action in ('once','enable'): activate(args.token_file,args.action == 'once')
-    elif args.action == 'pause': print(ssh('touch '+DATA+'/PAUSED; cru d IPTVHomeNative || true').decode())
-    elif args.action == 'status': print(ssh('/bin/sh '+BASE+'/native_status.sh').decode())
-    else: rollback()
+    try:
+        with ssh_session():
+            if args.action == 'stage': stage(Path(__file__).resolve().parent,args.token_file)
+            elif args.action in ('once','enable'): activate(args.token_file,args.action == 'once')
+            elif args.action == 'pause': print(ssh('touch '+DATA+'/PAUSED; cru d IPTVHomeNative || true').decode())
+            elif args.action == 'status': print(ssh('/bin/sh '+BASE+'/native_status.sh').decode())
+            else: rollback()
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+        print('NATIVE_INSTALL_FAILED: '+str(error), file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

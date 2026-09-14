@@ -215,6 +215,62 @@ class NativeCloudTests(NativeFixture, ThinFixture):
 
 
 class NativeInstallTests(unittest.TestCase):
+    def test_missing_router_hash_installs_only_required_package_once(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            digest = hashlib.sha256(b'').hexdigest()
+            (root/'opkg').write_text('#!/bin/sh\nprintf "%s\\n" "$*" >> "'+str(root/'calls')+'"\n'
+                'if [ "$1" = install ]; then\n'
+                '  /bin/cp "'+str(root/'hash-template')+'" "'+str(root/'sha256sum')+'"\n'
+                '  /bin/chmod 755 "'+str(root/'sha256sum')+'"\nfi\n')
+            (root/'opkg').chmod(0o755)
+            (root/'hash-template').write_text('#!/bin/sh\nprintf "%s  %s\\n" '+digest+' "$1"\n')
+            script = installer.SHA256_SETUP.replace(
+                'export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin',
+                'export PATH='+str(root))
+            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
+            self.assertEqual(['update','install coreutils-sha256sum'],(root/'calls').read_text().splitlines())
+            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
+            self.assertEqual(2,len((root/'calls').read_text().splitlines()))
+            (root/'sha256sum').write_text('#!/bin/sh\necho incorrect\n')
+            failed = subprocess.run(['/bin/sh','-c',script],capture_output=True)
+            self.assertEqual(2,failed.returncode)
+            self.assertIn(b'sha256sum_self_test_failed',failed.stderr)
+
+    def test_hash_guard_rejects_missing_tool_and_changed_file_before_mutation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            file = Path(folder)/'config with spaces'
+            marker = Path(folder)/'mutated'
+            original = b'{"daily_worker_enabled":true}\n'
+            file.write_bytes(original)
+            script = 'set -eu\n'+installer.guard_hash(str(file),original)+'echo changed > "'+str(marker)+'"\n'
+            subprocess.run(['/bin/sh','-c',script],check=True,capture_output=True)
+            marker.unlink()
+            file.write_bytes(b'changed concurrently')
+            failed = subprocess.run(['/bin/sh','-c',script],capture_output=True)
+            self.assertEqual(2,failed.returncode); self.assertFalse(marker.exists())
+            self.assertIn(b'NATIVE_ERROR:file_changed:',failed.stderr)
+            failed = subprocess.run(['/bin/sh','-c',script],env={'PATH':folder},capture_output=True)
+            self.assertNotEqual(0,failed.returncode); self.assertFalse(marker.exists())
+
+    def test_phone_reuses_one_session_and_closes_it_on_remote_error(self):
+        previous = installer.SSH_OPTIONS
+        ok = subprocess.CompletedProcess([],0,stdout=b'ok',stderr=b'')
+        denied = subprocess.CompletedProcess([],2,stdout=b'',stderr=b'NATIVE_ERROR:worker_active\n')
+        with mock.patch.object(installer.subprocess,'run',side_effect=[ok,ok,denied,ok]) as run:
+            with self.assertRaisesRegex(RuntimeError,'NATIVE_ERROR:worker_active'):
+                with installer.ssh_session():
+                    self.assertEqual(b'ok',installer.ssh('first'))
+                    installer.ssh('second')
+        commands = [call.args[0] for call in run.call_args_list]
+        self.assertEqual(1,sum('-M' in command for command in commands))
+        for command in commands[1:3]:
+            self.assertIn('BatchMode=yes',command)
+            self.assertIn('ProxyCommand=false',command)
+            self.assertEqual(commands[0][commands[0].index('-S')+1],command[command.index('-S')+1])
+        self.assertIn('exit',commands[-1]); self.assertIs(previous,installer.SSH_OPTIONS)
+        self.assertFalse(Path(commands[0][commands[0].index('-S')+1]).parent.exists())
+
     def test_prebuilt_binary_is_bound_to_reviewed_sources(self):
         root=ROOT/'router/ac86u/native';manifest=json.loads((root/'build.json').read_bytes())
         binary=(root/'iptv-native').read_bytes()
