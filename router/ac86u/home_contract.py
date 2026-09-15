@@ -449,6 +449,9 @@ def validate_home_report_v2(
         current_by_key[key] = (url, status, confirmed)
 
     candidates = _list(report.get("candidate_results"), "home report.candidate_results", MAX_CANDIDATES)
+    candidate_mode = report.get('policy', {}).get('candidate_mode', 'daily')
+    if candidate_mode not in ('daily', 'drain_queue'):
+        raise ContractError('invalid report candidate mode')
     candidate_status: dict[str, tuple[str, str, bool]] = {}
     for index, value in enumerate(candidates):
         identity, key, status, switch_reverified = _candidate_result(value, f"candidate_results[{index}]")
@@ -457,7 +460,7 @@ def validate_home_report_v2(
         candidate_status[identity] = (key, status, switch_reverified)
     for row in candidates:
         cached = row.get("purpose") == "primary-cache"
-        if report["run_kind"] == "recheck-1300" and not cached:
+        if report["run_kind"] == "recheck-1300" and not cached and candidate_mode != 'drain_queue':
             raise ContractError("13:00 report must use cached primary evidence; no backup probes")
         if cached:
             if report["run_kind"] != "recheck-1300" or row.get("verified_run_kind") not in {"primary-0200", "peak-2000"}:
@@ -493,7 +496,8 @@ def validate_home_report_v2(
             evidence = candidate_status.get(identity)
             if evidence is None or evidence[0] != key or evidence[1] != "QUALIFIED":
                 raise ContractError("replacement candidate was not qualified at home")
-            if report["run_kind"] in {"primary-0200", "peak-2000"} and evidence[2] is not True:
+            fresh = next(r for r in candidates if r['candidate_id'] == identity).get('purpose') != 'primary-cache'
+            if (report["run_kind"] in {"primary-0200", "peak-2000"} or fresh) and evidence[2] is not True:
                 raise ContractError("replacement candidate was not reverified before switching")
         elif replacement is not None:
             raise ContractError("non-replacement decision contains a replacement candidate")

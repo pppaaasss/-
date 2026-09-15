@@ -86,6 +86,9 @@ def validate_task(value, probe_id, now):
     bounded_number(limits['seconds'], 1, 240)
     bounded_number(limits['bytes'], 1, 64 * 1024 * 1024)
     tasks = value['tasks']
+    mode = value.get('candidate_mode', 'daily')
+    if mode not in ('daily', 'drain_queue'):
+        raise ValueError('invalid candidate mode')
     if not isinstance(tasks, list) or not 1 <= len(tasks) <= MAX_ROUTES:
         raise ValueError('too many tasks')
     seen = set()
@@ -97,9 +100,9 @@ def validate_task(value, probe_id, now):
             raise ValueError('control character in URL')
         if task.get('role') not in ('current', 'candidate', 'backup'):
             raise ValueError('invalid task role')
-        if active[0] == KINDS[1] and task['role'] != 'current':
+        if mode != 'drain_queue' and active[0] == KINDS[1] and task['role'] != 'current':
             raise ValueError('afternoon must only probe current routes')
-        if active[0] != KINDS[0] and task['role'] == 'candidate':
+        if mode != 'drain_queue' and active[0] != KINDS[0] and task['role'] == 'candidate':
             raise ValueError('discovery outside primary window')
         identity = task.get('task_id')
         if not SHA.fullmatch(str(identity)) or identity in seen:

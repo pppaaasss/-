@@ -42,6 +42,8 @@ class ThinFixture(unittest.TestCase):
         self.now = epoch('2026-09-14T18:05:00Z')
         self.config = json.loads((Path(__file__).resolve().parents[1]/'config/home-thin.json').read_bytes())
         self.config['enabled'] = True
+        # Keep coverage of legacy daily mode; queue drain tests opt in.
+        self.config['candidate_mode'] = 'daily'
         self.probe = self.config['probe_id']
         self.state = cloud.new_state(self.probe)
         self.formal = b'#EXTM3U\n#EXTINF:-1,CCTV-1\nhttp://current.test/one.m3u8\n#EXTINF:-1,CCTV-2\nhttp://current.test/two.m3u8\n'
