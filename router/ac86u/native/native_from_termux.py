@@ -24,7 +24,11 @@ RUN = '/opt/share/iptv-home-probe/run.sh'
 SERVICES = '/jffs/scripts/services-start'
 BACKUP = OLD+'/before-native-v1'
 START, END = '# BEGIN IPTV_HOME_PROBE', '# END IPTV_HOME_PROBE'
-SCHEDULE = '*/5 * * * * /bin/sh '+BASE+'/native_run.sh'
+PREVIOUS_SCHEDULE = '*/5 * * * * /bin/sh '+BASE+'/native_run.sh'
+# Cron has minute precision. Two invocations 30 seconds apart reuse the native
+# guardian's existing locks: a busy sampler cannot launch another batch.
+SCHEDULE = '* * * * * /bin/sh '+BASE+'/native_run.sh & sleep 30; /bin/sh '+BASE+'/native_run.sh'
+PREVIOUS_BLOCK = START+'\ncru a IPTVHomeNative "'+PREVIOUS_SCHEDULE+'"\n'+END
 BLOCK = START+'\ncru a IPTVHomeNative "'+SCHEDULE+'"\n'+END
 NAMES = ('IPTVHomeProbe','IPTVHomePrimary','IPTVHomeRecheck','IPTVHomePeak','IPTVHomeResume','IPTVHomeThin','IPTVHomeNative')
 POLICY = ('minimum_height_default','minimum_height_overrides','minimum_h264_stream_mbps',
@@ -214,11 +218,73 @@ def activate(token, once):
     print(ssh(command).decode().strip())
 
 
+def extend_morning_window(raw):
+    old = b'02|03|04|05|06|07|13|14|15|20|21|22'
+    new = b'02|03|04|05|06|07|08|09|10|13|14|15|20|21|22'
+    original = raw.replace(new, old)
+    if sha(original) != 'c413e41d8f6c53e2334b35807d08665789335def3c86a171c2919aebce68f62a':
+        raise ValueError('Native wrapper changed; refusing to overwrite it')
+    return original.replace(old, new)
+
+
+def poll30():
+    """Update polling and extend the installed morning window through 11:00."""
+    services = read(SERVICES)
+    before, block, after = split_services(services)
+    if block not in (PREVIOUS_BLOCK, BLOCK):
+        raise ValueError('IPTV startup block changed; refusing to overwrite it')
+    crontab = ssh('cru l')
+    entries = [line.rsplit('#IPTVHomeNative#', 1)[0].strip()
+               for line in crontab.decode().splitlines() if line.rstrip().endswith('#IPTVHomeNative#')]
+    if len(entries) != 1 or entries[0] not in (PREVIOUS_SCHEDULE, SCHEDULE):
+        raise ValueError('IPTV cron is missing or changed; inspect status first')
+    run_path = BASE+'/native_run.sh'
+    run = read(run_path)
+    updated_run = extend_morning_window(run)
+    updated = (before+BLOCK+after).encode()
+    files = {'services.before': services, 'services.after': updated, 'crontab.before': crontab,
+             'run.before': run, 'run.after': updated_run}
+    script = ('set -eu\numask 077\ncd "$1"\nnative='+BASE+'/iptv-native\n'
+              '[ -f '+DATA+'/ENABLED ]; [ ! -f '+DATA+'/PAUSED ]\n')
+    script += guard_hash(SERVICES, services)+guard_hash(run_path, run)
+    backup = DATA+'/before-poll30'
+    script += 'mkdir -p '+backup+'\n'
+    for name in ('services.before', 'crontab.before', 'run.before'):
+        script += '[ -f '+backup+'/'+name+' ] || cp '+name+' '+backup+'/'+name+'\n'
+    script += 'restore() {\n  trap - EXIT HUP INT TERM\n  chmod 755 services.before run.before\n'
+    script += '  "$native" commit services.before '+SERVICES+'\n'
+    script += '  "$native" commit run.before '+run_path+'\n'
+    script += '  cru a IPTVHomeNative '+shlex.quote(entries[0])+'\n  exit 2\n}\n'
+    script += 'trap restore EXIT HUP INT TERM\nchmod 755 services.after run.after\n'
+    script += '"$native" commit run.after '+run_path+'\n'
+    script += '"$native" commit services.after '+SERVICES+'\n'
+    script += 'cru a IPTVHomeNative '+shlex.quote(SCHEDULE)+'\ntrap - EXIT HUP INT TERM\n'
+    files['poll30.sh'] = script.encode()
+    folder = '/opt/tmp/iptv-poll30-'+sha(services)[:16]
+    command = ('set -eu; unset LD_LIBRARY_PATH LD_PRELOAD; '
+               'export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin; '
+               'umask 077; mkdir -p '+folder+'; tar -xzf - -C '+folder+'; '
+               '/bin/sh '+folder+'/poll30.sh '+folder)
+    try:
+        ssh(command, package(files))
+        if read(SERVICES) != updated:
+            raise RuntimeError('Polling startup verification failed')
+        if read(run_path) != updated_run:
+            raise RuntimeError('Morning window verification failed')
+        verified = ssh('cru l').decode().splitlines()
+        if sum(line.rsplit('#IPTVHomeNative#',1)[0].strip() == SCHEDULE
+               for line in verified if line.rstrip().endswith('#IPTVHomeNative#')) != 1:
+            raise RuntimeError('Polling cron verification failed')
+        print('POLL30_OK: polling every 30 seconds; morning window 02:00-11:00 Beijing; current worker locks retained')
+    finally:
+        ssh('rm -rf '+shlex.quote(folder))
+
+
 def rollback():
     current_services, current_config, current_run = read(SERVICES), read(CONFIG), read(RUN)
     before, block, after = split_services(current_services)
     original_block = read(BACKUP+'/startup-block').decode()
-    if block not in (BLOCK, original_block):
+    if block not in (BLOCK, PREVIOUS_BLOCK, original_block):
         raise ValueError('IPTV startup block changed; review backup first')
     prior_cron = read(BACKUP+'/crontab').decode()
     script = 'set -eu\numask 077\nnative='+BASE+'/iptv-native\n'+guard_hash(SERVICES,current_services)+guard_hash(CONFIG,current_config)+guard_hash(RUN,current_run)
@@ -239,7 +305,7 @@ def rollback():
 
 def main():
     parser = argparse.ArgumentParser(description='Only the PHONE runs Python. Router receives a prebuilt native sampler.')
-    parser.add_argument('action', choices=('stage','once','enable','pause','status','rollback'))
+    parser.add_argument('action', choices=('stage','once','enable','pause','status','poll30','rollback'))
     parser.add_argument('--token-file',type=Path)
     args = parser.parse_args()
     os.umask(0o077)
@@ -251,6 +317,7 @@ def main():
             elif args.action in ('once','enable'): activate(args.token_file,args.action == 'once')
             elif args.action == 'pause': print(ssh('touch '+DATA+'/PAUSED; cru d IPTVHomeNative || true').decode())
             elif args.action == 'status': print(ssh('/bin/sh '+BASE+'/native_status.sh').decode())
+            elif args.action == 'poll30': poll30()
             else: rollback()
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print('NATIVE_INSTALL_FAILED: '+str(error), file=sys.stderr)
