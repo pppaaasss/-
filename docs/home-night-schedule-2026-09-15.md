@@ -30,6 +30,13 @@
 
 用户截图显示下载及 SSH 登录成功，随后两次 `NATIVE_ERROR:checkpoint_rename`。旧 poll30 从 `/opt/tmp` 直接调用原生 `rename(2)` 写入 `/jffs/scripts/services-start`，跨文件系统会失败；恢复也用了同样的路径，可能导致原生入口已延长、cron 仍保持旧值。
 
-修复：所有更新和恢复先用 `mktemp` 在目标文件同目录创建临时文件，复制、设权后才执行原生 fsync/rename；每个恢复动作独立执行，单项失败不阻断其他配置恢复。成功恢复输出 `POLL30_RESTORED`，恢复异常输出 `POLL30_RESTORE_FAILED`。再次执行 poll30 会识别旧版或已延长的原生入口，不需要重新安装或输入 Token。
+最终修复：所有更新和恢复先用 Shell 的 PID 后缀及 noclobber 独占重定向，在目标文件同目录创建临时文件，复制、设权后才执行原生 fsync/rename；每个恢复动作独立执行，单项失败不阻断其他配置恢复。成功恢复输出 `POLL30_RESTORED`，恢复异常输出 `POLL30_RESTORE_FAILED`。再次执行 poll30 会识别旧版或已延长的原生入口，不需要重新安装或输入 Token。
 
 验证使用实际编译的原生二进制，在 `/dev/shm` 与 `/tmp` 两个文件系统间复现 `checkpoint_rename`，随后运行生成的 shell 验证更新成功、部分更新后的重试、写入失败恢复、cron 失败恢复和临时文件清理。
+
+
+## 18:59 缺少 mktemp 的后续修复
+
+上一版虽解决跨文件系统 rename，但用户路由器没有 `mktemp`，更新及恢复均在创建临时文件时失败。删除该命令依赖，改用 Shell 内建的 `set -C` 和重定向独占创建 PID 后缀文件；若已有同名文件则拒绝覆盖。无需在路由器安装包。
+
+跨文件系统测试现在将 PATH 限制为 cp、chmod、rm、mkdir 及测试注入使用的 touch/cru，确保不存在 mktemp；使用真实原生二进制验证正常更新、部分更新后重试、写入失败恢复和 cron 失败恢复。10 项安装及更新测试通过。

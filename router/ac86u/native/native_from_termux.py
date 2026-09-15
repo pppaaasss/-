@@ -254,7 +254,9 @@ def poll30():
     # /opt/tmp and /jffs can be different filesystems. Native commit uses
     # rename(2), so both forward writes and restores need destination siblings.
     script += ('install_file() {\n'
-               '  staged=$(mktemp "$2.poll30.XXXXXX") || return 1\n'
+               '  staged="$2.poll30.$$"\n'
+               # POSIX noclobber creates exclusively without a mktemp utility.
+               '  (set -C; : > "$staged") || return 1\n'
                '  if cp "$1" "$staged" && chmod 755 "$staged" && '
                '"$native" commit "$staged" "$2"; then\n'
                '    return 0\n'
