@@ -75,6 +75,7 @@ class NativePollingFilesystemTests(TestCase):
 
     def test_cross_filesystem_install_partial_retry_and_rollback(self):
         import os
+        import shutil
         if not Path('/dev/shm').is_dir() or os.stat('/dev/shm').st_dev == os.stat(tempfile.gettempdir()).st_dev:
             self.skipTest('requires a second filesystem for actual EXDEV reproduction')
         run = (Path(installer.__file__).parent/'native_run.sh').read_bytes()
@@ -97,6 +98,11 @@ class NativePollingFilesystemTests(TestCase):
                 base, data, services = root/'opt/runtime', root/'opt/data', root/'jffs/services-start'
                 for folder in (base, data, services.parent, root/'bin'):
                     folder.mkdir(parents=True, exist_ok=True)
+                # Match the router's minimal command set: mktemp is absent.
+                # touch is used only by the failure-injection stubs below.
+                for name in ('cp', 'chmod', 'rm', 'mkdir', 'touch'):
+                    (root/'bin'/name).symlink_to(shutil.which(name))
+                self.assertIsNone(shutil.which('mktemp', path=str(root/'bin')))
                 services.write_bytes(original)
                 (base/'native_run.sh').write_bytes(initial_run)
                 (data/'ENABLED').touch()
@@ -123,8 +129,8 @@ class NativePollingFilesystemTests(TestCase):
                     'printf "%s\\n" "$3" > "$CRON_CAPTURE"\n')
                 cru.chmod(0o755)
                 capture = root/'cron'
-                result = subprocess.run(['sh', str(Path(stage)/'poll30.sh'), stage], capture_output=True,
-                    env=dict(os.environ, PATH=str(root/'bin')+':'+os.environ['PATH'],
+                result = subprocess.run(['/bin/sh', str(Path(stage)/'poll30.sh'), stage], capture_output=True,
+                    env=dict(os.environ, PATH=str(root/'bin'),
                         REAL_NATIVE=str(self.binary), SERVICES_TARGET=str(services),
                         FAIL_WRITE=str(int(mode == 'write_failure')), FAIL_CRON=str(int(mode == 'cron_failure')),
                         FAIL_MARK=str(root/'failed'), CRON_CAPTURE=str(capture)))
