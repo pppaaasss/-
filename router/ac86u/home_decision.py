@@ -80,7 +80,10 @@ def mass_failure_circuit(
         return True
     failed = sum(
         not any(
-            attempt.get("observed_status") in {"GOOD", "DEGRADED"}
+            (attempt.get("observed_status") in {"GOOD", "DEGRADED"}
+             or (attempt.get("observed_status") == "UNKNOWN"
+                 and attempt.get("error") in {
+                     "quality_metadata_unavailable", "intrinsic_stream_bitrate_unknown"}))
             and int(attempt.get("sample_count") or 0) == 2
             for attempt in attempts)
         for attempts in attempts_by_key.values()

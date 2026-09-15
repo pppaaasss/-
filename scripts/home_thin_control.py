@@ -285,6 +285,7 @@ def ingest(state, reports, now):
 
 
 def next_tasks(state, cycle, config, current, feedback, now):
+    draining = cycle.get('candidate_mode') == 'drain_queue'
     pending = []
     for key, route in cycle['current'].items():
         first = task_row(cycle, key, route['url'], 'current')
@@ -301,9 +302,19 @@ def next_tasks(state, cycle, config, current, feedback, now):
         return pending[:config['routes_per_batch']]
     rows, circuit, _ = current_view(state, cycle)
     bad = {row['channel_key'] for row in rows if row['status'] == 'BAD'}
-    if circuit or cycle['kind'] == KINDS[1] or cycle.get('optional_closed'):
+    if circuit or (cycle['kind'] == KINDS[1] and not draining) or cycle.get('optional_closed'):
         return []
     check = allowed(state, current, feedback)
+    # Unseen candidates take priority over archived backup rechecks in a sweep.
+    # Accepted results leave the durable queue, including failures and UNKNOWN.
+    if draining and not cycle.get('discovery_closed'):
+        for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
+            if candidate['candidate_id'] not in state['tested'] and check(candidate):
+                pending.append(task_row(cycle, candidate['channel_key'], candidate['url'], 'candidate'))
+                if len(pending) >= config['routes_per_batch']:
+                    return pending
+        if pending:
+            return pending
     for key in sorted(bad):
         measured_good = any(row['role'] != 'current' and row['channel_key'] == key
             and candidate_is_qualified(cycle['results'][identity]['result']) for identity, row in cycle['task_rows'].items())
@@ -311,6 +322,9 @@ def next_tasks(state, cycle, config, current, feedback, now):
             continue
         backups = sorted((r for r in state['archive'].values() if r['channel_key'] == key and check(r)), key=lambda r:-backup_score(r))
         for backup in backups:
+            if any(row['candidate_id'] == backup['candidate_id'] and row['role'] != 'current'
+                   for row in cycle['task_rows'].values()):
+                continue
             task = task_row(cycle, key, backup['url'], 'backup')
             if task['task_id'] not in cycle['results'] and now >= backup.get('retry_after_epoch', 0):
                 pending.append(task)
@@ -319,7 +333,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
         return pending[:min(2, config['routes_per_batch'])]
     if cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed'):
         count = sum(row['role'] == 'candidate' for row in cycle['task_rows'].values())
-        remaining = max(0, min(10, config['daily_candidates']) - count)
+        remaining = max(0, config['daily_candidates'] - count)
         for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
             if remaining <= len(pending):
                 break
@@ -349,6 +363,8 @@ def complete_report(state, cycle, current, feedback, now):
     generated = min(epoch(row['started_utc']) for row in cycle['results'].values())
     if cycle['kind'] == KINDS[1] and not circuit:
         for key in sorted(bad):
+            if key in choices:
+                continue  # Prefer fresh evidence; never duplicate a candidate.
             for backup in sorted(state['archive'].values(), key=lambda r:-backup_score(r)):
                 if (backup['channel_key'] == key and check(backup) and not backup.get('last_recheck_result')
                         and not backup.get('requires_home_reverification')
@@ -373,7 +389,8 @@ def complete_report(state, cycle, current, feedback, now):
                      'mass_failure_circuit_breaker': circuit},
         'current_results': rows, 'candidate_results': candidates, 'decisions': decisions,
         'policy': {'batch_complete': True, 'formal_check_deferred': False, 'minimum_headroom_ratio': 1.05,
-                   'decision_origin': 'cloud_from_household_measurements', 'cloud_stream_probe_performed': False},
+                   'decision_origin': 'cloud_from_household_measurements', 'cloud_stream_probe_performed': False,
+                   'candidate_mode': cycle.get('candidate_mode', 'daily')},
         'aggregation': {'cycle_id': cycle['id'], 'oldest_measurement_utc': timestamp(generated),
                         'newest_measurement_utc': max(row['finished_utc'] for row in cycle['results'].values()),
                         'batch_ids': sorted(cycle['batch_ids'])},
@@ -429,6 +446,7 @@ def step(state, config, root, reports, now):
             'feedback_sha': feedback_sha, 'manifest_sha': sha256_bytes(manifest_raw),
             'current': {key: {'url': value.url} for key,value in current.items()},
             'results': {}, 'task_rows': {}, 'batch_ids': [],
+            'candidate_mode': config.get('candidate_mode', 'daily'),
             'quality_policy': state.get('quality_policy', {}),
             'viewer_good_urls': [r.get('url') if isinstance(r, dict) else r
                 for entries in json.loads(feedback.read_bytes()).get('good', {}).values() for r in entries]}
@@ -449,6 +467,7 @@ def step(state, config, root, reports, now):
     if deadline - now < 60:
         return state, dict(idle, state='WINDOW_ENDING'), None
     task = seal_task({'schema': TASK_SCHEMA, 'probe_id': state['probe_id'], 'cycle_id': cycle_id,
+        'candidate_mode': cycle.get('candidate_mode', 'daily'),
         'route_context': ROUTE_CONTEXT, 'run_kind': kind, 'created_utc': timestamp(now),
         'expires_utc': timestamp(min(deadline, now + 30 * 60)), 'formal_playlist': cycle['binding'],
         'feedback_sha256': feedback_sha, 'tasks': tasks,
@@ -495,6 +514,7 @@ def status_snapshot(state, task, config, now):
                      for day in (0, 1) for hour in (2, 13, 20)
                      if day_start + day * 86400 + hour * 3600 > now)
     status = {'generated_utc': timestamp(now),
+        'candidate_mode': config.get('candidate_mode', 'daily'),
         'state': task.get('state', 'WAITING_MEASUREMENTS'),
         'history_migrated': state['migration_complete'], 'queue': len(state['queue']),
         'tested': len(state['tested']), 'last_heartbeat': state.get('last_heartbeat'),
