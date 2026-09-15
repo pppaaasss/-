@@ -251,13 +251,26 @@ def poll30():
     script += 'mkdir -p '+backup+'\n'
     for name in ('services.before', 'crontab.before', 'run.before'):
         script += '[ -f '+backup+'/'+name+' ] || cp '+name+' '+backup+'/'+name+'\n'
-    script += 'restore() {\n  trap - EXIT HUP INT TERM\n  chmod 755 services.before run.before\n'
-    script += '  "$native" commit services.before '+SERVICES+'\n'
-    script += '  "$native" commit run.before '+run_path+'\n'
-    script += '  cru a IPTVHomeNative '+shlex.quote(entries[0])+'\n  exit 2\n}\n'
-    script += 'trap restore EXIT HUP INT TERM\nchmod 755 services.after run.after\n'
-    script += '"$native" commit run.after '+run_path+'\n'
-    script += '"$native" commit services.after '+SERVICES+'\n'
+    # /opt/tmp and /jffs can be different filesystems. Native commit uses
+    # rename(2), so both forward writes and restores need destination siblings.
+    script += ('install_file() {\n'
+               '  staged=$(mktemp "$2.poll30.XXXXXX") || return 1\n'
+               '  if cp "$1" "$staged" && chmod 755 "$staged" && '
+               '"$native" commit "$staged" "$2"; then\n'
+               '    return 0\n'
+               '  fi\n'
+               '  rm -f "$staged"\n'
+               '  echo "POLL30_WRITE_FAILED:$2" >&2\n'
+               '  return 1\n}\n')
+    script += 'restore() {\n  trap - EXIT HUP INT TERM\n  restore_failed=0\n'
+    script += '  install_file services.before '+SERVICES+' || restore_failed=1\n'
+    script += '  install_file run.before '+run_path+' || restore_failed=1\n'
+    script += '  cru a IPTVHomeNative '+shlex.quote(entries[0])+' || restore_failed=1\n'
+    script += ('  if [ "$restore_failed" = 0 ]; then echo POLL30_RESTORED >&2; '
+               'else echo POLL30_RESTORE_FAILED >&2; fi\n  exit 2\n}\n')
+    script += 'trap restore EXIT HUP INT TERM\n'
+    script += 'install_file run.after '+run_path+'\n'
+    script += 'install_file services.after '+SERVICES+'\n'
     script += 'cru a IPTVHomeNative '+shlex.quote(SCHEDULE)+'\ntrap - EXIT HUP INT TERM\n'
     files['poll30.sh'] = script.encode()
     folder = '/opt/tmp/iptv-poll30-'+sha(services)[:16]
