@@ -318,9 +318,153 @@ def rollback():
     print(ssh(BASE+'/iptv-native lock '+DATA+' '+OLD+' /bin/sh '+DATA+'/rollback.sh').decode().strip())
 
 
+CHECK_CCTV10_ROUTES = [('原现用 183.129.255.66', 'http://183.129.255.66:8480/hls/11/index.m3u8'), ('历史源 101.66.195.43', 'http://101.66.195.43:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=0&authid=0'), ('候选 115.48.161.223', 'http://115.48.161.223:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=1&authid=0'), ('候选 101.66.194.200', 'http://101.66.194.200:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=0&authid=0'), ('候选 101.66.195.190', 'http://101.66.195.190:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=0&authid=0'), ('咪咕 09-13 链接', 'http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=2026091322013939ba923b48fe4266a572b77627fff9d5&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260913220139&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260913220139&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5837149a266e69143e0e0a20b767b376'), ('咪咕 09-15 链接', 'http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=20260915020138934930018d2f44b7aea1889124725733&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260915020138&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260915020138&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4de5cf556d20d1ddc199f4a275053fe2'), ('咪咕 09-14 链接', 'http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=2026091402014016e7c0e0baa248da8d9512d239effe8c&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260914020140&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260914020140&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=9871ed932e1fd940b593848afee8fdde'), ('咪咕 09-12 链接', 'http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=202609122201397a0e2301b97c49589f84d93187eddf39&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260912220139&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260912220139&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b0765e98d93c04a5ed6a0cd7720d6414')]
+
+CHECK_CCTV10_SHELL = r'''#!/bin/sh
+set -eu
+umask 077
+work=$1
+native=$IPTV_NATIVE_BASE/iptv-native
+tab=$(printf '\t')
+read -r probe dns < "$IPTV_NATIVE_DATA/identity"
+[ "$dns" = 192.168.50.1 ] || exit 2
+[ ! -f "$IPTV_NATIVE_DATA/PAUSED" ] || exit 2
+mark=$((0x49600000 + ($$ % 65536)))
+cleanup() { iptables -t nat -D OUTPUT -p tcp -m mark --mark "$mark/0xffffffff" -j merlinclash 2>/dev/null || true; }
+trap cleanup EXIT
+trap 'exit 75' HUP INT TERM
+iptables -t nat -S merlinclash >/dev/null
+iptables -t nat -I OUTPUT 1 -p tcp -m mark --mark "$mark/0xffffffff" -j merlinclash
+while IFS="$tab" read -r index encoded; do
+  current=$(printf '%s' "$encoded" | base64 -d)
+  outcome=unsupported
+  : > "$work/selection"
+  for depth in 1 2 3; do
+    "$native" get "$current" 98304 98304 "$work/playlist" "$work/metric" "$mark" "$dns" 53
+    { printf 'M\t%s\t' "$index"; cat "$work/metric"; } >> "$work/results"
+    IFS="$tab" read -r rc http size elapsed total complete final < "$work/metric"
+    if [ "$rc" -ne 0 ] || [ "$http" -lt 200 ] || [ "$http" -ge 300 ]; then outcome=transfer_error; break; fi
+    "$native" hls "$work/playlist" "$final" > "$work/selection" || break
+    IFS="$tab" read -r kind next < "$work/selection"
+    case "$kind" in
+      MASTER) current=$next ;;
+      SEGMENT) outcome=sampling; break ;;
+      *) break ;;
+    esac
+  done
+  if [ "$outcome" = sampling ]; then
+    sample=0
+    while IFS="$tab" read -r kind duration segment; do
+      [ "$kind" = SEGMENT ] || break
+      sample=$((sample+1)); [ "$sample" -le 2 ] || break
+      "$native" get "$segment" 6291456 0 "$work/sample" "$work/metric" "$mark" "$dns" 53
+      { printf 'S\t%s\t%s\t' "$index" "$duration"; cat "$work/metric"; } >> "$work/results"
+      IFS="$tab" read -r rc http size rest < "$work/metric"
+      if [ "$rc" -ne 0 ] || [ "$http" -lt 200 ] || [ "$http" -ge 300 ]; then outcome=transfer_error; break; fi
+      if [ "$size" -lt 65536 ]; then outcome=short_sample; break; fi
+      [ "$sample" -ne 2 ] || outcome=measured
+    done < "$work/selection"
+  fi
+  printf 'E\t%s\t%s\n' "$index" "$outcome" >> "$work/results"
+  sleep 2
+done < "$work/routes"
+'''
+
+
+def parse_check_rows(raw, routes):
+    results = {index: dict(index=index, label=label, url=url, samples=[], manifest=[],
+                           outcome='not_completed', quality_verified=False)
+               for index, label, url in routes}
+    for line in raw.decode().splitlines():
+        parts = line.split('\t')
+        if len(parts) < 3 or int(parts[1]) not in results:
+            raise ValueError('Unexpected diagnostic row')
+        row = results[int(parts[1])]
+        if parts[0] == 'E':
+            row['outcome'] = parts[2]
+            continue
+        if parts[0] not in ('M', 'S'):
+            raise ValueError('Unexpected diagnostic metric')
+        start = 3 if parts[0] == 'S' else 2
+        fields = parts[start:]
+        if len(fields) != 7:
+            raise ValueError('Incomplete diagnostic metric')
+        metric = dict(curl_code=int(fields[0]), http_status=int(fields[1]), bytes=int(fields[2]),
+                      seconds=float(fields[3]), total_bytes=int(fields[4]), final_url=fields[6])
+        if parts[0] == 'S':
+            metric['duration_s'] = float(parts[2])
+            row['samples'].append(metric)
+        else:
+            row['manifest'].append(metric)
+    for row in results.values():
+        samples = row['samples']
+        if row['outcome'] == 'measured' and len(samples) == 2:
+            row['min_download_mbps'] = min(x['bytes']*8/max(x['seconds'], .001)/1e6 for x in samples)
+            if all(x['duration_s'] > 0 and x['total_bytes'] > 0 for x in samples):
+                row['stream_mbps'] = sum(x['total_bytes']*8 for x in samples)/sum(x['duration_s'] for x in samples)/1e6
+                row['headroom_ratio'] = row['min_download_mbps']/row['stream_mbps']
+    return list(results.values())
+
+
+def check_cctv10():
+    """Explicit one-off home transport check; no automatic qualification/publication."""
+    import base64
+    from datetime import datetime, timezone
+    report = dict(schema='iptv-manual-cctv10-check/v1', home_probe=True,
+                  production_use=False, quality_verified=False, rows=[],
+                  started_utc=datetime.now(timezone.utc).isoformat())
+    output = Path.home()/'cctv10-check.json'
+    print('只检查 CCTV-10 的 9 个地址，每条最多两段、每段 6 MiB；不会自动换源。', flush=True)
+    for offset in range(0, len(CHECK_CCTV10_ROUTES), 3):
+        routes = [(i+1, *CHECK_CCTV10_ROUTES[i]) for i in range(offset, min(offset+3, len(CHECK_CCTV10_ROUTES)))]
+        folder = '/opt/tmp/iptv-cctv10-check-'+os.urandom(8).hex()
+        route_data = ''.join(str(i)+'\t'+base64.b64encode(url.encode()).decode()+'\n' for i, _label, url in routes)
+        files = {'check.sh': CHECK_CCTV10_SHELL.encode(), 'routes': route_data.encode(), 'results': b''}
+        prefix = ('set -eu; unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH; '
+                  'export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin; umask 077; ')
+        error = ''
+        try:
+            ssh(prefix+'mkdir '+folder+'; tar -xzf - -C '+folder, package(files))
+            command = (prefix+'export IPTV_NATIVE_BASE='+BASE+' IPTV_NATIVE_DATA='+DATA+'; '
+                       '[ -f '+DATA+'/ENABLED ]; [ ! -f '+DATA+'/PAUSED ]; '
+                       +BASE+'/iptv-native guard '+folder+'/resources 59392 51200 16384 240 '
+                       '/bin/sh '+folder+'/check.sh '+folder)
+            print('正在检查第 '+str(routes[0][0])+'–'+str(routes[-1][0])+' 条……', flush=True)
+            try:
+                ssh(command)
+            except RuntimeError as exc:
+                error = str(exc)
+            rows = parse_check_rows(read(folder+'/results'), routes)
+            report['rows'].extend(rows)
+            for row in rows:
+                message = row['outcome']
+                if 'min_download_mbps' in row:
+                    message = '两段下载完成，最低 %.2f Mbps' % row['min_download_mbps']
+                    if 'headroom_ratio' in row:
+                        message += '，节目约 %.2f Mbps，余量 %.2f 倍' % (row['stream_mbps'], row['headroom_ratio'])
+                elif row['outcome'] == 'transfer_error':
+                    metric = (row['samples'] or row['manifest'])[-1]
+                    message = '传输异常 HTTP=%s curl=%s' % (metric['http_status'], metric['curl_code'])
+                print('%d. %s：%s' % (row['index'], row['label'], message), flush=True)
+            report['stop_reason'] = error
+            report['finished_utc'] = datetime.now(timezone.utc).isoformat()
+            output.write_text(json.dumps(report, ensure_ascii=False, indent=2))
+            if error or any(row['outcome'] == 'not_completed' for row in rows):
+                print('检查暂停：'+(error or '路由器正在执行其他任务，请稍后重试。'), flush=True)
+                break
+        finally:
+            try:
+                ssh('rm -rf '+folder)
+            except RuntimeError:
+                print('临时文件未能清理：'+folder, file=sys.stderr)
+    completed = sum(row['outcome'] != 'not_completed' for row in report['rows'])
+    print('CHECK_DONE %d/9；结果保存在 %s' % (completed, output), flush=True)
+    print('这是家庭连接和下载检查，尚未验证分辨率、帧率或频道画面；请把结果截图发回来。', flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description='Only the PHONE runs Python. Router receives a prebuilt native sampler.')
-    parser.add_argument('action', choices=('stage','once','enable','pause','status','poll30','rollback'))
+    parser.add_argument('action', choices=('stage','once','enable','pause','status','poll30','check-cctv10','rollback'))
     parser.add_argument('--token-file',type=Path)
     args = parser.parse_args()
     os.umask(0o077)
@@ -333,6 +477,7 @@ def main():
             elif args.action == 'pause': print(ssh('touch '+DATA+'/PAUSED; cru d IPTVHomeNative || true').decode())
             elif args.action == 'status': print(ssh('/bin/sh '+BASE+'/native_status.sh').decode())
             elif args.action == 'poll30': poll30()
+            elif args.action == 'check-cctv10': check_cctv10()
             else: rollback()
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print('NATIVE_INSTALL_FAILED: '+str(error), file=sys.stderr)
