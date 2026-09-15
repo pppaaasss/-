@@ -12,6 +12,7 @@ class QueueDrainTests(ThinFixture):
     def setUp(self):
         super().setUp()
         self.config['candidate_mode'] = 'drain_queue'
+        self.config['candidate_run_kinds'] = list(cloud.KINDS)
         self.migrated()
 
     def add_queue(self, count):

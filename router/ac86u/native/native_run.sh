@@ -11,7 +11,7 @@ export IPTV_NATIVE_BASE IPTV_NATIVE_DATA
 [ ! -f "$IPTV_NATIVE_DATA/PAUSED" ] || exit 0
 [ "$(date +%z)" = '+0800' ] || exit 2
 case "$(date +%H)" in
-  02|03|04|05|06|07|13|14|15|20|21|22) ;;
+  02|03|04|05|06|07|08|09|10|13|14|15|20|21|22) ;;
   *) [ -f "$IPTV_NATIVE_DATA/outbox.native" ] || exit 0;;
 esac
 # The native guardian holds both worker locks before creating a child.

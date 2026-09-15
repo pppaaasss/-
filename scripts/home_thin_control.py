@@ -284,6 +284,13 @@ def ingest(state, reports, now):
             cycle['retry_after'] = now + 15 * 60
 
 
+def optional_window(config, kind):
+    kinds = config.get('candidate_run_kinds', list(KINDS))
+    if not isinstance(kinds, list) or any(k not in KINDS for k in kinds):
+        raise ValueError('invalid candidate run kinds')
+    return kind in kinds
+
+
 def next_tasks(state, cycle, config, current, feedback, now):
     draining = cycle.get('candidate_mode') == 'drain_queue'
     pending = []
@@ -302,7 +309,8 @@ def next_tasks(state, cycle, config, current, feedback, now):
         return pending[:config['routes_per_batch']]
     rows, circuit, _ = current_view(state, cycle)
     bad = {row['channel_key'] for row in rows if row['status'] == 'BAD'}
-    if circuit or (cycle['kind'] == KINDS[1] and not draining) or cycle.get('optional_closed'):
+    if (circuit or not optional_window(config, cycle['kind'])
+            or (cycle['kind'] == KINDS[1] and not draining) or cycle.get('optional_closed')):
         return []
     check = allowed(state, current, feedback)
     # Unseen candidates take priority over archived backup rechecks in a sweep.
@@ -453,8 +461,11 @@ def step(state, config, root, reports, now):
     cycle = state['cycle']
     if cycle.get('outstanding'):
         task = state['batches'][cycle['outstanding']]
-        if now < epoch(task['expires_utc']):
+        permitted = optional_window(config, kind) or all(t['role'] == 'current' for t in task['tasks'])
+        if now < epoch(task['expires_utc']) and permitted:
             return state, task, None
+        # Apply a narrower schedule immediately. Preserve the batch history so
+        # already captured, valid household results can still be ingested.
         cycle.pop('outstanding')
     if now < cycle.get('retry_after', 0):
         return state, dict(idle, state='WAITING_HOME_RESOURCES', last_heartbeat=state.get('last_heartbeat')), None
@@ -515,6 +526,7 @@ def status_snapshot(state, task, config, now):
                      if day_start + day * 86400 + hour * 3600 > now)
     status = {'generated_utc': timestamp(now),
         'candidate_mode': config.get('candidate_mode', 'daily'),
+        'candidate_run_kinds': config.get('candidate_run_kinds', list(KINDS)),
         'state': task.get('state', 'WAITING_MEASUREMENTS'),
         'history_migrated': state['migration_complete'], 'queue': len(state['queue']),
         'tested': len(state['tested']), 'last_heartbeat': state.get('last_heartbeat'),

@@ -49,7 +49,7 @@ def bounded_number(value, minimum, maximum):
 
 def slot(now):
     local = datetime.fromtimestamp(now, ZONE)
-    for kind, start, end in ((KINDS[0], 2, 8), (KINDS[1], 13, 16), (KINDS[2], 20, 23)):
+    for kind, start, end in ((KINDS[0], 2, 11), (KINDS[1], 13, 16), (KINDS[2], 20, 23)):
         if start <= local.hour < end:
             return kind, local.strftime('%Y%m%d'), local.replace(hour=end, minute=0, second=0, microsecond=0).timestamp()
     return None
