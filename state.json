@@ -6355,6 +6355,93 @@
         }
       ]
     },
+    "562f07551e24432a31ada32b6f32f363f824089e9b7c803ac51dbc9fdc7eb1f5": {
+      "batch_id": "562f07551e24432a31ada32b6f32f363f824089e9b7c803ac51dbc9fdc7eb1f5",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-09-17T21:30:39Z",
+      "cycle_id": "b7c196799174b11a93dec35d7e55ea82cca8fc92d611bebf90bed5fb0740a2d1",
+      "expires_utc": "2026-09-17T22:00:39Z",
+      "feedback_sha256": "275b2fbf7bad1eea793c5bd8db66696451eac4d9a69c906f29915534746bc5dd",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "6710f66ce238886284d5a4817ca1770108b14b49560d3e5eca72c5f36d4bc513",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "3b84d233ef076ab930293570cc134bcd7a54da0784d04c6dce6337d55b005101",
+          "channel_key": "cctv1",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-1",
+          "role": "current",
+          "sample_bytes": 2097152,
+          "task_id": "99b29da2a675df244bf9b3a3937ae2f689f67e9519ab5657f5fb55e57ef2d7ca",
+          "url": "http://183.129.255.66:8480/hls/1/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "2c6e282d8f1154459118f0aa77de8b071fdbb1aa5847daaab4f9fc4f3954999f",
+          "channel_key": "cctv10",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-10",
+          "role": "current",
+          "sample_bytes": 2097152,
+          "task_id": "eefee9ca1523695e8f91601580889b2a14e979b0ab45458d8140df5c9913d35b",
+          "url": "http://183.129.255.66:8480/hls/11/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "26501347ccf01f5c5c203f83351ac0c7ae948053ca2915a3ccaa0c25e69c8aa8",
+          "channel_key": "cctv11",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-11",
+          "role": "current",
+          "sample_bytes": 2097152,
+          "task_id": "c8fcdea75a75e18c2bba227741bb6023904dcf2151855feaea3dd627225ca7f3",
+          "url": "http://183.129.255.66:8480/hls/12/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "581c697c90b1c23e8852ef7725fa2f7fa8a41b290c11104798f562ed45e591fd",
+          "channel_key": "cctv12",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-12",
+          "role": "current",
+          "sample_bytes": 2097152,
+          "task_id": "d6f949582d95cc241dfd9466f1ef2e804dca336c135ae507a2e602f722c271b5",
+          "url": "http://183.129.255.66:8480/hls/13/index.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "5e1cc60582df0ae4d06777bed10ae7dbe18f779c00dfc2e50ccf01d6dba8aa7f": {
       "batch_id": "5e1cc60582df0ae4d06777bed10ae7dbe18f779c00dfc2e50ccf01d6dba8aa7f",
       "created_utc": "2026-09-14T19:35:43Z",
@@ -9749,7 +9836,8 @@
   ],
   "cycle": {
     "batch_ids": [
-      "de23165cef707b04ee05436703848a77805d4cac1534a79061e89e2ae329791d"
+      "de23165cef707b04ee05436703848a77805d4cac1534a79061e89e2ae329791d",
+      "562f07551e24432a31ada32b6f32f363f824089e9b7c803ac51dbc9fdc7eb1f5"
     ],
     "binding": {
       "channel_count": 53,
@@ -9922,7 +10010,7 @@
     "id": "b7c196799174b11a93dec35d7e55ea82cca8fc92d611bebf90bed5fb0740a2d1",
     "kind": "primary-0200",
     "manifest_sha": "b5fca7ddc88aea70f44041c183ef12b16f56127c6878fcff6bb6913af4e8e1fa",
-    "outstanding": "de23165cef707b04ee05436703848a77805d4cac1534a79061e89e2ae329791d",
+    "outstanding": "562f07551e24432a31ada32b6f32f363f824089e9b7c803ac51dbc9fdc7eb1f5",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -9945,7 +10033,7 @@
     "meaning": "cloud_queue_persisted_not_tested",
     "probe_id": "home-ac86u-8f8908f0fba9",
     "received_batches": [
-      "75a22334556f1a034bba6ff00a42602913d263d5c4596f813fd0f7324188e2d7"
+      "ffb7fde20b139d824364cb756d22b1779c1829dd936d1fdf8c95f0daf00df839"
     ],
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
@@ -11634,19 +11722,24 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 67108864,
+    "bytes": 134217728,
     "candidates": 0,
     "day": "20260918",
     "discovery_bytes": 0,
     "discovery_seconds": 0,
     "reservations": {
+      "562f07551e24432a31ada32b6f32f363f824089e9b7c803ac51dbc9fdc7eb1f5": {
+        "bytes": 67108864,
+        "candidates": 0,
+        "seconds": 240
+      },
       "de23165cef707b04ee05436703848a77805d4cac1534a79061e89e2ae329791d": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 240
+    "seconds": 480
   },
   "peak_failures": {
     "cctv1": {
@@ -12532,6 +12625,21 @@
     "minimum_other_stream_mbps": 3.0
   },
   "queue": {
+    "00145812ad5d5cce09431dca147f3f9a8c618ae468c93e41679d8b9a174b1a36": {
+      "candidate_id": "00145812ad5d5cce09431dca147f3f9a8c618ae468c93e41679d8b9a174b1a36",
+      "channel_key": "cctv1",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-1",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv1hd/600/index.m3u8?msisdn=20260918000302a11771ca215c418183fdb564c3584384&mdspid=&spid=699004&netType=0&sid=2201057821&pid=2028597139&timestamp=20260918000302&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807420&ParentNodeID=-99&assertID=2201057821&client_ip=171.8.79.254&SecurityKey=20260918000302&promotionId=&mvid=2201057821&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=d0dff5fbb8237a0cd2923f7faae21409",
+      "url_sha256": "987e0f5231e5f5eee913535399bf05148af88dc3253d7c2b14cb388f49a0b0d8"
+    },
     "0039c84a7da654692d6db55fe5d9bb88feb637485f2fa8caf928befaa58a75b9": {
       "candidate_id": "0039c84a7da654692d6db55fe5d9bb88feb637485f2fa8caf928befaa58a75b9",
       "channel_key": "广东卫视",
@@ -12619,7 +12727,6 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0002_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -12636,6 +12743,7 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://123.163.114.241:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0",
@@ -12701,6 +12809,21 @@
       "url": "http://101.66.195.190:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "880c9481a504b58a539e118f0a49b38e965e6c8ce2f548e02eed80b295a775b2"
     },
+    "0320c4bff6965a37f5f43a792afe0b8548e2378d8431de26199320c4a8521cb4": {
+      "candidate_id": "0320c4bff6965a37f5f43a792afe0b8548e2378d8431de26199320c4a8521cb4",
+      "channel_key": "cctv6",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-6",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=202609180003036e5d4da2b3f44224a6f67617aa84aa78&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=1d32dbc1b9af69c9553c1007cd0e6e43",
+      "url_sha256": "cd24b4b9ca86a6798d0cb905c9e04b27a7bb58ec4e93e3007107f1277d37c220"
+    },
     "04722311111549a7c70b8353e722b46af8fa713e260455415ba3a82eaf42ffc4": {
       "candidate_id": "04722311111549a7c70b8353e722b46af8fa713e260455415ba3a82eaf42ffc4",
       "channel_key": "cctv13",
@@ -12727,6 +12850,7 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0120_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -12762,6 +12886,22 @@
       "url": "http://101.66.198.129:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "7524447d42c152a24d1187b04bd6f5f3cc9809b09d09d2c11dcb1d20a13b703b"
     },
+    "05d6e58f4a666a0584a0725e637184c6452f28822ffe61c560591965dd2504bb": {
+      "candidate_id": "05d6e58f4a666a0584a0725e637184c6452f28822ffe61c560591965dd2504bb",
+      "channel_key": "河南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "河南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0139_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "a67e12fa5a58c7a21467b6755f40f8a01a8138ac4794ddaecee481501891ca09"
+    },
     "0614d4a26b4c534235fea8b379774d5d2a13e0324d474725ca2b9aad59679de8": {
       "candidate_id": "0614d4a26b4c534235fea8b379774d5d2a13e0324d474725ca2b9aad59679de8",
       "channel_key": "cctv4",
@@ -12791,6 +12931,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5plusnew/600/index.m3u8?msisdn=202609122203041345009cd3774d7fa72ab9f38c1f448c&mdspid=&spid=699004&netType=0&sid=5500516288&pid=2028597139&timestamp=20260912220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886773&ParentNodeID=-99&assertID=5500516288&client_ip=171.8.79.254&SecurityKey=20260912220304&promotionId=&mvid=5102048803&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=05d6725a4f1f435b37fe9ad846252b10",
       "url_sha256": "ac2432c3e36c3cf7fb22bd592aca04dde7b5ba0171a9431426363dbd64055963"
+    },
+    "07211f4c7315ef07efb47eee5f21b5c57591a9f781227f15baa5443c77635a1e": {
+      "candidate_id": "07211f4c7315ef07efb47eee5f21b5c57591a9f781227f15baa5443c77635a1e",
+      "channel_key": "cctv5plus",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-5+",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5plusnew/600/index.m3u8?msisdn=20260918020303342b3e064a01489a9dd062bfd8391c33&mdspid=&spid=699004&netType=0&sid=5500516288&pid=2028597139&timestamp=20260918020303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886773&ParentNodeID=-99&assertID=5500516288&client_ip=171.8.79.254&SecurityKey=20260918020303&promotionId=&mvid=5102048803&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=308fae85fef80c6340fb73464f2a8c4d",
+      "url_sha256": "1e288705a11f218d99fa0354f7a489121ab3763549c058bd050e0ac2abfee2ef"
     },
     "07479a3fec55a7ecdbbf3146337e4403ea20bc56d126c80846cbc4c20afbb223": {
       "candidate_id": "07479a3fec55a7ecdbbf3146337e4403ea20bc56d126c80846cbc4c20afbb223",
@@ -12824,6 +12979,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv17hd/50/index.m3u8?msisdn=20260914220305ba0fecc174a84efa9017af361d6c0b6f&mdspid=&spid=699004&netType=0&sid=5501083631&pid=2028597139&timestamp=20260914220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168256&ParentNodeID=-99&assertID=5501083631&client_ip=171.8.79.254&SecurityKey=20260914220305&promotionId=&mvid=5102910396&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=ae6b0ec96cf3aa80186996c89c23cb06",
       "url_sha256": "bdc3f5afb44c159b18de34f015e6115a0de63aa4c84c94de3a47eb8ae228a7e9"
     },
+    "087c36fbf5c48de535212d0cbd89f9231385707ed1af4e11185e70f1a6142d7d": {
+      "candidate_id": "087c36fbf5c48de535212d0cbd89f9231385707ed1af4e11185e70f1a6142d7d",
+      "channel_key": "cctv14",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-14",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
+      ],
+      "url": "http://101.66.199.225:9901/tsfile/live/0014_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "5b0c3c7e051c1634c9b4e71024a2387ac1f5240d7adb37ff4f827b0182655a3b"
+    },
     "08912d0d4fa46735115795f10798da361ddf4bf20abed46dff51b294d1bdea57": {
       "candidate_id": "08912d0d4fa46735115795f10798da361ddf4bf20abed46dff51b294d1bdea57",
       "channel_key": "四川卫视",
@@ -12840,6 +13010,21 @@
       ],
       "url": "http://115.48.161.223:9901/tsfile/live/0123_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "f474212af9254562e15bd1e81847aeaaf5d76afb016a95730cb4926fd22d440f"
+    },
+    "08a73e11fc4b2183870cea2e9328417c5db041dfa017039421147089f9fd74c3": {
+      "candidate_id": "08a73e11fc4b2183870cea2e9328417c5db041dfa017039421147089f9fd74c3",
+      "channel_key": "东南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "东南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongnanws/50/20230724/index.m3u8?msisdn=20260918020305453483848758499f92945d48a8ad4ff7&mdspid=&spid=600717&netType=0&sid=5910022182&pid=2028597139&timestamp=20260918020305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=849116810&ParentNodeID=-99&assertID=5910022182&client_ip=171.8.79.254&SecurityKey=20260918020305&promotionId=&mvid=5900006229&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=0867d708818ab2c95f76d552cabf5af0",
+      "url_sha256": "c3c1be1d3cbb860d06ef1d5b56a38a1c9a649160f2269bf7e9d73592c3450b18"
     },
     "08ad0a03d650570c3a72c5b1e51590e47c6a1b7d1dbcc8def25ab01c785a0ee6": {
       "candidate_id": "08ad0a03d650570c3a72c5b1e51590e47c6a1b7d1dbcc8def25ab01c785a0ee6",
@@ -12958,10 +13143,26 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://123.163.114.241:9901/tsfile/live/0007_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "5928c290cd5949f0ee7dd545a4f724f09ee7c716790710eb6043d10543c521ab"
+    },
+    "0cd8954d40fa693b25ce2f45080453bd9cd211a8d96479701ebe6e280ea4b8cf": {
+      "candidate_id": "0cd8954d40fa693b25ce2f45080453bd9cd211a8d96479701ebe6e280ea4b8cf",
+      "channel_key": "广东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "广东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=20260916220304a8b1645ae6124b5693d91223328c4e2c&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260916220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260916220304&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=8f1ea6b8b65be88f64ce543bd8f411e6",
+      "url_sha256": "6493bc2f08ef817f9f840bb54914d305d9a661d36daa4324950fc2c7fb46f812"
     },
     "0d6dd9f26e9e3d1858200ec435cac4d05da13a4233f7ac5eb30db163d274e009": {
       "candidate_id": "0d6dd9f26e9e3d1858200ec435cac4d05da13a4233f7ac5eb30db163d274e009",
@@ -13053,6 +13254,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/jiangsuhd/600/index.m3u8?msisdn=20260915220310e87731d05c05400aa8e0308004d229e1&mdspid=&spid=699067&netType=0&sid=5500199408&pid=2028597139&timestamp=20260915220310&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=623899368&ParentNodeID=-99&assertID=5500199408&client_ip=171.8.79.254&SecurityKey=20260915220310&promotionId=&mvid=5100156802&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=aa411e6da7bf136f50c901e22d60bf06",
       "url_sha256": "2ec9362389b33243589b791df436b61cdebc58fce92a708d4659d310235e833a"
     },
+    "10156f8b4fb7dcea46bc592c32687504f196f744fe51c8c13e214697f74bcd66": {
+      "candidate_id": "10156f8b4fb7dcea46bc592c32687504f196f744fe51c8c13e214697f74bcd66",
+      "channel_key": "cctv11",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-11",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0011_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "34931f32765fe51130f594ce2d12d95720f4864dcfcf5bb6cc3559f8ca31b605"
+    },
     "10b47c6a1ef0c8688533f733f81cbe56f3f1b41cca11e69747ec8c1c24295edf": {
       "candidate_id": "10b47c6a1ef0c8688533f733f81cbe56f3f1b41cca11e69747ec8c1c24295edf",
       "channel_key": "重庆卫视",
@@ -13083,6 +13299,21 @@
       "url": "http://101.66.194.194:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "30d69f117db4877fb834772f70ccf0da7c71fb54d2fedd167f1c896371012b3c"
     },
+    "10fbe0bb23be94b4ce5b39be69ab0ef7d1b5a224f73566deae84b569fff84ffa": {
+      "candidate_id": "10fbe0bb23be94b4ce5b39be69ab0ef7d1b5a224f73566deae84b569fff84ffa",
+      "channel_key": "cctv8",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-8",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv8hd/1000/index.m3u8?msisdn=20260918000303e1da88063233415ca9444afe9326a83f&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=90f1e03209c550088c4249267ffd3342",
+      "url_sha256": "42e0142d3acc6e9f7604ad79f19951ae5d53436d47228c94d47b9d7ba3bcdf16"
+    },
     "118592b2c8fdcb6bac42e06daf325bb4c006ef4e84a2405ba2594ec4eefdd806": {
       "candidate_id": "118592b2c8fdcb6bac42e06daf325bb4c006ef4e84a2405ba2594ec4eefdd806",
       "channel_key": "cctv8",
@@ -13098,6 +13329,21 @@
       ],
       "url": "http://115.48.161.223:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "7e748442085b57616fa2f0f97438f45b552ca4719d8bbb75b1ae0f4fa63fb486"
+    },
+    "1189c7538baaf86328aab413de521d6c40a208dc710a084ec9ddfa58e90c216f": {
+      "candidate_id": "1189c7538baaf86328aab413de521d6c40a208dc710a084ec9ddfa58e90c216f",
+      "channel_key": "黑龙江卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "黑龙江卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/nxjj/50/20251225/index.m3u8?msisdn=2026091800030839068937be7f43e9a99535c56f06db5f&mdspid=&spid=600697&netType=0&sid=5910022409&pid=2028597139&timestamp=20260918000308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738906901&ParentNodeID=-99&assertID=5910022409&client_ip=171.8.79.254&SecurityKey=20260918000308&promotionId=&mvid=5900004349&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=6a04fb70b124fc55c5cf66eb6f408f79",
+      "url_sha256": "3c6720a608d2452293c3ac542247be8f2efbdfb27422243a6db83a8ae3576222"
     },
     "11b1ad0a3fbf5d0f04206a20a813e63574ceb37b0aa99055311e344750df8cfa": {
       "candidate_id": "11b1ad0a3fbf5d0f04206a20a813e63574ceb37b0aa99055311e344750df8cfa",
@@ -13177,6 +13423,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv9hd/50/index.m3u8?msisdn=202609122201364e734e01bc22481f811096bdd96b0fc6&mdspid=&spid=699004&netType=0&sid=5501083624&pid=2028597139&timestamp=20260912220136&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168140&ParentNodeID=-99&assertID=5501083624&client_ip=171.8.79.254&SecurityKey=20260912220136&promotionId=&mvid=5102910384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=0deed6eda82ae8509cce449fe50d1791",
       "url_sha256": "cb76cd0a11fbd22ad9fcc9574e92eed8d567f38bf08856c34845a6649934720a"
     },
+    "1337d1ddb94e7a947662b310cc9732d0653a3d0d28623dea255a8b6742a6396e": {
+      "candidate_id": "1337d1ddb94e7a947662b310cc9732d0653a3d0d28623dea255a8b6742a6396e",
+      "channel_key": "广东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "广东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0125_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "fbbc4b570f262d4248590a66ac8529f70b078e7c40beba93170b4693acc7cd89"
+    },
     "13717df5e67f948a7cc799a8a9caa498b0eb3e13b0550e6463d5bb7ef4a58942": {
       "candidate_id": "13717df5e67f948a7cc799a8a9caa498b0eb3e13b0550e6463d5bb7ef4a58942",
       "channel_key": "cctv8",
@@ -13207,6 +13468,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv14hd/1000/index.m3u8?msisdn=2026091602030459a53ff3723144bdafaf6a762b59209b&mdspid=&spid=699004&netType=0&sid=5500212875&pid=2028597139&timestamp=20260916020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878440&ParentNodeID=-99&assertID=5500212875&client_ip=171.8.79.254&SecurityKey=20260916020304&promotionId=&mvid=5100001697&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4fcb1af3cda043c92bdf13db06e47b65",
       "url_sha256": "f988ec00536482514621470b5ba2966bbff596ece03f7321bcf565001a89ba09"
+    },
+    "14df790966f4c8cd19a46bf78fbfbaa761c5bbe8fc1ba3057b6dec7b372f7790": {
+      "candidate_id": "14df790966f4c8cd19a46bf78fbfbaa761c5bbe8fc1ba3057b6dec7b372f7790",
+      "channel_key": "cctv4k",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4K",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8"
+      ],
+      "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_mbd.m3u8?auth_key=1789725600-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-8cb92c2ee13f70ef55c51c6268432242&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+      "url_sha256": "69732a6b1b0538cc2f2ba69232185833f8748d64a444b625a746e9b230431ca7"
     },
     "150d75ae255ca1bac247d4a70b82c3948b56336faec50157f60aed4c4a90c700": {
       "candidate_id": "150d75ae255ca1bac247d4a70b82c3948b56336faec50157f60aed4c4a90c700",
@@ -13328,6 +13604,22 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv17hd/50/index.m3u8?msisdn=20260915020305c36a1edc491742ff9dfa2e11cb9a9fcc&mdspid=&spid=699004&netType=0&sid=5501083631&pid=2028597139&timestamp=20260915020305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168256&ParentNodeID=-99&assertID=5501083631&client_ip=171.8.79.254&SecurityKey=20260915020305&promotionId=&mvid=5102910396&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4511ee2afc0dce9d0af2024d3affa002",
       "url_sha256": "1bb57e6e61a95ade204060de6ed1e639f8a86a28bbcac3e7d31d3fceedcb8d22"
+    },
+    "198f5c37b1686f09b4ef54520f7276da19d98d530660924fbeca6e062a65531b": {
+      "candidate_id": "198f5c37b1686f09b4ef54520f7276da19d98d530660924fbeca6e062a65531b",
+      "channel_key": "江西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "江西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0138_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "632ff88dc1c446884adb17dc70cdfd242590ab5e34c73d3de25637db2b30dc48"
     },
     "19a24c0263acc69eea16442315d86c0f766384ed754a77debaa736ed8e4afe0a": {
       "candidate_id": "19a24c0263acc69eea16442315d86c0f766384ed754a77debaa736ed8e4afe0a",
@@ -13451,6 +13743,37 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv3hd/1000/index.m3u8?msisdn=20260914220113516affeb415d49dca6070d66e72c3204&mdspid=&spid=699004&netType=0&sid=5500212864&pid=2028597139&timestamp=20260914220113&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878271&ParentNodeID=-99&assertID=5500212864&client_ip=171.8.79.254&SecurityKey=20260914220113&promotionId=&mvid=5100001683&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5fd7188c38d3b33056940544253ba326",
       "url_sha256": "7ab2da3e115300601ebe945de66e3f1867142043f589bd5341cd9e60fecc61f8"
     },
+    "1ffa81932a84f4f3b2cda33a68987250df237f43a81c7bcbb6881beaea7936d8": {
+      "candidate_id": "1ffa81932a84f4f3b2cda33a68987250df237f43a81c7bcbb6881beaea7936d8",
+      "channel_key": "cctv4",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
+      ],
+      "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4_mbd.m3u8?auth_key=1789628400-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-2f8450f189134ceaf3d1307c748d9bd3&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+      "url_sha256": "adea7b8ac75fb6383393111fd87cd9159931cc1b9a843ab46261eec8a11c8b10"
+    },
+    "207117434649e94ae9658eb47a7dcf57f704838bfb63cd74cda029a772fe6518": {
+      "candidate_id": "207117434649e94ae9658eb47a7dcf57f704838bfb63cd74cda029a772fe6518",
+      "channel_key": "云南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "云南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://101.66.198.207:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "34fcd6baa3e313d08586dc6b8c7cbb8638b2413c40083f05359657da03d0bae6"
+    },
     "2077c6e90fe732cd5d117cebd7a414f419952b73e0c07433baf72a9ebd504d76": {
       "candidate_id": "2077c6e90fe732cd5d117cebd7a414f419952b73e0c07433baf72a9ebd504d76",
       "channel_key": "cctv8",
@@ -13573,6 +13896,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/jiangsuhd/600/index.m3u8?msisdn=20260914020308e8d8862bd03046548a13f981245d56bf&mdspid=&spid=699067&netType=0&sid=5500199408&pid=2028597139&timestamp=20260914020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=623899368&ParentNodeID=-99&assertID=5500199408&client_ip=171.8.79.254&SecurityKey=20260914020308&promotionId=&mvid=5100156802&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=e06920bcde6d6d75f519d787ed55ad59",
       "url_sha256": "5c142734fbeec383b615082e3f9fc21501b4e3098eee03a9c8d51214cb977157"
     },
+    "24246609ab7e2d5aa6f40deba22020ed63c05e24e1360a9283dccb9a7eec1fe2": {
+      "candidate_id": "24246609ab7e2d5aa6f40deba22020ed63c05e24e1360a9283dccb9a7eec1fe2",
+      "channel_key": "云南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "云南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.198.66:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "e4d69fe27aff70f3b923f20edeccf24f2f7cd3c778deb92c30abd5f478c60be0"
+    },
     "246d72c98b0fb33373a5a8e873da6ea40362909b95fe8dddf266c839a5b92ba1": {
       "candidate_id": "246d72c98b0fb33373a5a8e873da6ea40362909b95fe8dddf266c839a5b92ba1",
       "channel_key": "云南卫视",
@@ -13588,6 +13926,21 @@
       "url": "http://101.66.198.2:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "b55287fd8129159e028866d9c7099422867583af7337a167d8a98a7ec219bea0"
     },
+    "24826eb4e478a0735ed58f607c264cabd3f0699454be33bcbd110db0fd8a3535": {
+      "candidate_id": "24826eb4e478a0735ed58f607c264cabd3f0699454be33bcbd110db0fd8a3535",
+      "channel_key": "cctv9",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-9",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8"
+      ],
+      "url": "https://v4-e6b1c5baf4e240fe63adbf68dda23435.livehwc4.com/play.kankanlive.com/live/1698423397390920.m3u8?sub_m3u8=true&edge_slice=true&user_session_id=5e26234fee9106b477bcc6e03761deb7",
+      "url_sha256": "ede6d5c7568afa0228fb40958901814dd7d80a0e00b07798e057841a9b993964"
+    },
     "24c0e07d309f9cb2044c8db227dd87f3050cd3f9a63e81a53176d01cb6502e76": {
       "candidate_id": "24c0e07d309f9cb2044c8db227dd87f3050cd3f9a63e81a53176d01cb6502e76",
       "channel_key": "海南卫视",
@@ -13602,6 +13955,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/SD/lvyou/711/index.m3u8?msisdn=202609170001195d9409cb085449d197e2baaccfebdb83&mdspid=&spid=600633&netType=0&sid=5910022165&pid=2028597139&timestamp=20260917000119&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472502&ParentNodeID=-99&assertID=5910022165&client_ip=171.8.79.254&SecurityKey=20260917000119&promotionId=&mvid=5900004359&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=7309b6a49bf961dfe22765ac0ef4f151",
       "url_sha256": "def5280f8a8c005991c51c8a3bd77361cae18576e6ff0f7f98d27299989121a0"
+    },
+    "251833c34043573c6b7ced2c9c199517aacdbcf7cc9a7e8ef21622f2008dc81c": {
+      "candidate_id": "251833c34043573c6b7ced2c9c199517aacdbcf7cc9a7e8ef21622f2008dc81c",
+      "channel_key": "湖北卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "湖北卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/hubeiwshd/1000/index.m3u8?msisdn=20260918000307650523b2663c48298bde61056b9b1cd0&mdspid=&spid=600633&netType=0&sid=5910022163&pid=2028597139&timestamp=20260918000307&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472496&ParentNodeID=-99&assertID=5910022163&client_ip=171.8.79.254&SecurityKey=20260918000307&promotionId=&mvid=5900004355&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a51708479256922a95c583c98061a5be",
+      "url_sha256": "7bc0ca7ddf8ba3574d6f4f01ca10ca49fdf0c437bd227f23394d83fbfa6685ef"
     },
     "266cda9846809d65b7ca7eb4beebf9607217a10ef1abab87ffd61f6d1318b4c4": {
       "candidate_id": "266cda9846809d65b7ca7eb4beebf9607217a10ef1abab87ffd61f6d1318b4c4",
@@ -13647,6 +14015,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_v/2018/SD/jilin/1000/index.m3u8?msisdn=202609140203095461c6efbd9c42948830f22984bbb77c&mdspid=&spid=600633&netType=0&sid=5910022164&pid=2028597139&timestamp=20260914020309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472500&ParentNodeID=-99&assertID=5910022164&client_ip=171.8.79.254&SecurityKey=20260914020309&promotionId=&mvid=5900004357&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=03f81cf926cdcd874a832e361ecbc867",
       "url_sha256": "0fee8cc1bb17e254d1f16e18cd220c93e31d31a53c7672d34116b5091db24b12"
+    },
+    "279d1a5f65ae2264ebca51c7f3904124b96eeeaf53888254ebcf949358656ed9": {
+      "candidate_id": "279d1a5f65ae2264ebca51c7f3904124b96eeeaf53888254ebcf949358656ed9",
+      "channel_key": "江苏卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "江苏卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/jiangsuhd/600/index.m3u8?msisdn=20260918020304316ad670066846759bfff010a6719ab5&mdspid=&spid=699067&netType=0&sid=5500199408&pid=2028597139&timestamp=20260918020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=623899368&ParentNodeID=-99&assertID=5500199408&client_ip=171.8.79.254&SecurityKey=20260918020304&promotionId=&mvid=5100156802&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=1c8d24433f07ccc3610af518783c6ab2",
+      "url_sha256": "0588be018074dd79c091ad25ea551c8371ea30e3e5086d73cdca3210dcc063e9"
     },
     "27b28a219d5d53056bfbd57c3e4ab1321f45bdddec1745b16b318277371014ca": {
       "candidate_id": "27b28a219d5d53056bfbd57c3e4ab1321f45bdddec1745b16b318277371014ca",
@@ -13741,6 +14124,21 @@
       "url": "http://115.48.161.223:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "c3a56b1985d70239e1575eb80501b47ef27bdb402f19f51c9cb22c6b162b0c48"
     },
+    "29f520cd67ee52ad92e8172ea83edadc19a0323da7c03da152354e1e4eaed44a": {
+      "candidate_id": "29f520cd67ee52ad92e8172ea83edadc19a0323da7c03da152354e1e4eaed44a",
+      "channel_key": "cctv5",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-5",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5hdnew/600/index.m3u8?msisdn=20260918020302bc81399e7b0a41779aa2e8a3858db25a&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20260918020302&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=171.8.79.254&SecurityKey=20260918020302&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=79368b6c9bde76099aed75bb9f029fa9",
+      "url_sha256": "889154b6965d9e260f6767a543e2657f0eb16182f6577a261189a99f8f3217db"
+    },
     "2b1129c4271332c3b82ee23bdadfb259741ede3f0357f85302281b1d57be13ca": {
       "candidate_id": "2b1129c4271332c3b82ee23bdadfb259741ede3f0357f85302281b1d57be13ca",
       "channel_key": "cctv8",
@@ -13817,6 +14215,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/index.m3u8?msisdn=20260915020310cd4bf7490d8648749656412dbf65a369&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20260915020310&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=171.8.79.254&SecurityKey=20260915020310&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a3d003577ca4c47ba6228421d6110b62",
       "url_sha256": "c42660a94c085d76291b483a3ea635ffa59a77c99977bc63c69ff07350d4c0aa"
+    },
+    "2cebd32cae91becb42b344ee886d5f9f36ef00efa064548c726a04c4ef277eae": {
+      "candidate_id": "2cebd32cae91becb42b344ee886d5f9f36ef00efa064548c726a04c4ef277eae",
+      "channel_key": "东方卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "东方卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r4/dfl/dongfangwshd/600/index.m3u8?msisdn=202609180203033c53d5cac35944a49499fc5308854d94&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20260918020303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=171.8.79.254&SecurityKey=20260918020303&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=369f5098fa7f1141456f7931a582850e",
+      "url_sha256": "7e2ff358f772116d39cc1ecbdafbbd744dcb1c982bc334d93fa727e26748a4dc"
     },
     "2d29bcf923a8eb612649e2749786f6a1aaf9548c8347fdd93cda99fbda836aab": {
       "candidate_id": "2d29bcf923a8eb612649e2749786f6a1aaf9548c8347fdd93cda99fbda836aab",
@@ -13940,6 +14353,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/haixiaws/50/20230724/index.m3u8?msisdn=202609142203094fe9f81443d541fba9f4a572935fcea0&mdspid=&spid=600717&netType=0&sid=5910022183&pid=2028597139&timestamp=20260914220309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=849119120&ParentNodeID=-99&assertID=5910022183&client_ip=171.8.79.254&SecurityKey=20260914220309&promotionId=&mvid=5900006231&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c7e1d6cf1a65b3626401e5acd8ebe999",
       "url_sha256": "93dfe7b03f9f87dfa30bc3482a6b30f65672e3eb996a544b9a4ab2fda33b0aef"
     },
+    "30bf7f3170217bebfc1e0ae0d8e4a9ceff6e7578166008fe7fc6a755378bf8c7": {
+      "candidate_id": "30bf7f3170217bebfc1e0ae0d8e4a9ceff6e7578166008fe7fc6a755378bf8c7",
+      "channel_key": "cctv10",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-10",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=20260918020139e528014fa3e34ccea375a82c27fdd98d&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260918020139&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260918020139&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=2cb351411ef97a27f99b903fbdffe281",
+      "url_sha256": "5651577eb8ec9ed74d51586a38edd4cf65d5257468c4927cd4a15c760ed7a348"
+    },
     "30d2e03081bed53dfeebdd662d0cd56f9e7a3d249029e65a46d194b2f5b7821e": {
       "candidate_id": "30d2e03081bed53dfeebdd662d0cd56f9e7a3d249029e65a46d194b2f5b7821e",
       "channel_key": "cctv5",
@@ -13987,6 +14415,23 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/SD/lvyou/711/index.m3u8?msisdn=202609142201204fc583e6c9be4743af44714c2ae3c5c5&mdspid=&spid=600633&netType=0&sid=5910022165&pid=2028597139&timestamp=20260914220120&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472502&ParentNodeID=-99&assertID=5910022165&client_ip=171.8.79.254&SecurityKey=20260914220120&promotionId=&mvid=5900004359&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5c6271509904616351ad73e9ec0e0e19",
       "url_sha256": "884f50c4fe1d151a1483978700b56644a69ae4459da59d331d67ae01a08a13f8"
+    },
+    "32083ad5c5c007f806fe9a42c44c4f7590622ba2d3024c6233c31eb288640420": {
+      "candidate_id": "32083ad5c5c007f806fe9a42c44c4f7590622ba2d3024c6233c31eb288640420",
+      "channel_key": "cctv14",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-14",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0014_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "a376ddb2a72d8c6b479f5bd38bb1541aa095b41ab2df3ba2af58abf70d30284b"
     },
     "3259c3d56711e6e0f5a99ec40b9afe876b2e82348270c591a31ef0b8ef5c9b00": {
       "candidate_id": "3259c3d56711e6e0f5a99ec40b9afe876b2e82348270c591a31ef0b8ef5c9b00",
@@ -14121,11 +14566,25 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0121_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "aeff7ce98750b356900bca5580c506ffd69e99220d92bb6c37992f4aa306dbe3"
+    },
+    "39577cb8cc1c9167207cb5e2bcae01895468ffde2be448157a144df0a7292558": {
+      "candidate_id": "39577cb8cc1c9167207cb5e2bcae01895468ffde2be448157a144df0a7292558",
+      "channel_key": "cctv4",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8"
+      ],
+      "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4_mbd.m3u8?auth_key=1789725600-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-4c8873f702b8a81de83efedb0b0e4765&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+      "url_sha256": "c3bb8c096f1a97fb7753e6c4a6ba1841a9f73a7d536e51cf886bf74b67207288"
     },
     "39abe791f77f00bcf10057815e3fd373ca91ecc57bc0a758f27deb729624930b": {
       "candidate_id": "39abe791f77f00bcf10057815e3fd373ca91ecc57bc0a758f27deb729624930b",
@@ -14153,11 +14612,25 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0011_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "295356b10e8cff2acbfe72dbb50ea7585150fbc5029bf18cfb54ff1086a00810"
+    },
+    "3b33d5c9bd09b72b6a472fea7570e22c0c9e1e21ad87c14ab5691ad4b887c42f": {
+      "candidate_id": "3b33d5c9bd09b72b6a472fea7570e22c0c9e1e21ad87c14ab5691ad4b887c42f",
+      "channel_key": "吉林卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "吉林卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0116_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "d6be3b15a409940b08d1e866b7cd300eb09638c44f8e6cded19aacc7762c960b"
     },
     "3bada4fa7fd14c23d00bb4ef4bc234c676b8fd36dc4baed6cf3f16b1ed4732a0": {
       "candidate_id": "3bada4fa7fd14c23d00bb4ef4bc234c676b8fd36dc4baed6cf3f16b1ed4732a0",
@@ -14189,6 +14662,21 @@
       "url": "http://101.66.198.129:9901/tsfile/live/0007_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "88883e63ae77df226abdd6f2bebb2ac5b1959db2e1db7142490d98ef0a9cd2d0"
     },
+    "3c6cfdbfc289f10742cbdccbf025a8f9616ebd913d5a6ec0a71cf1504230b1c0": {
+      "candidate_id": "3c6cfdbfc289f10742cbdccbf025a8f9616ebd913d5a6ec0a71cf1504230b1c0",
+      "channel_key": "江西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "江西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/jxwshd/50/20190820/index.m3u8?msisdn=2026091802030413b32a960a6847fb96c7e4b1cbf5e47b&mdspid=&spid=600633&netType=0&sid=5910021492&pid=2028597139&timestamp=20260918020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=783847495&ParentNodeID=-99&assertID=5910021492&client_ip=171.8.79.254&SecurityKey=20260918020304&promotionId=&mvid=5900004351&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=fcff62e8b59ce9e7578a2e58286c0f57",
+      "url_sha256": "9b638940deb61b690f2906e3ab9aaa3ac6625792f1fcc749c898b6e713184328"
+    },
     "3cd9fd34cb41a62464cb799af0929f22d59fb2b7d4d81a1be0f0cbfa68bb2ed3": {
       "candidate_id": "3cd9fd34cb41a62464cb799af0929f22d59fb2b7d4d81a1be0f0cbfa68bb2ed3",
       "channel_key": "cctv2",
@@ -14218,6 +14706,22 @@
       ],
       "url": "http://119.129.172.74:9901/tsfile/live/0013_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "9410d07a81b6b7f757d9d1f42797959da7c2eed11d4da865c0c60f21733501a3"
+    },
+    "3d7bf7d4ebdb94bd43c2e9f494c9579eea5f223274b537628fdec9690433a5e4": {
+      "candidate_id": "3d7bf7d4ebdb94bd43c2e9f494c9579eea5f223274b537628fdec9690433a5e4",
+      "channel_key": "山东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://101.66.198.207:9901/tsfile/live/0131_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "98362eaff5d7ecf0be7215a76ab73e2b4c70c0d26f8d5233d548ea326a110ad9"
     },
     "3e8c8c621d518e3c3b95535deef350a1dde1c2af6550c92d82bb09ea035a9240": {
       "candidate_id": "3e8c8c621d518e3c3b95535deef350a1dde1c2af6550c92d82bb09ea035a9240",
@@ -14340,6 +14844,21 @@
       "url": "https://stream1.freetv.fun/1ec29ebf47596470540c477987b57f85c73cc2961e0cd694f64c8471c41bb12a.m3u8",
       "url_sha256": "a91a3079d2c79388f67baecbcc4316bb9dca854c68419882d9670f10ae21a7df"
     },
+    "413ed45ad620189469e84c4d2d8cc370e47a841bd98731e7971f20da19f7cd82": {
+      "candidate_id": "413ed45ad620189469e84c4d2d8cc370e47a841bd98731e7971f20da19f7cd82",
+      "channel_key": "贵州卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "贵州卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.198.201:9901/tsfile/live/0120_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "b813bd7293fec9779d828dd29a519ef9d993df3e6fc7faea4dfe2a3e2c7fcbe2"
+    },
     "417dd1bd96c06b0101b3319ce401258f12b6364231d79e661b5c15d7b3ab7a3c": {
       "candidate_id": "417dd1bd96c06b0101b3319ce401258f12b6364231d79e661b5c15d7b3ab7a3c",
       "channel_key": "东南卫视",
@@ -14459,6 +14978,23 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv8hd/1000/index.m3u8?msisdn=20260914020304f56d0ad2caca4e60bce301b5f16301e4&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20260914020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=171.8.79.254&SecurityKey=20260914020304&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=19e8671d6a35e4785b4110888ff52031",
       "url_sha256": "f31e714f91934ffbf8fa9bbe23ef48eb1056914de1891341a74a77e7427dd331"
+    },
+    "4534787eae9b55fb71a54d25210f81806abe10a3e74c136b87ad241cddb2faaa": {
+      "candidate_id": "4534787eae9b55fb71a54d25210f81806abe10a3e74c136b87ad241cddb2faaa",
+      "channel_key": "cctv11",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-11",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0011_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "020b7feb4bc16c43776bf52e29431d7ea96d97ded9bc245df89d27de029e6d7d"
     },
     "455571ce7b6dd600e175f97febe13f6f44c4fe7b971b8ae6b5e48e9f4d88d63e": {
       "candidate_id": "455571ce7b6dd600e175f97febe13f6f44c4fe7b971b8ae6b5e48e9f4d88d63e",
@@ -14705,6 +15241,21 @@
       "url": "http://115.48.161.223:9901/tsfile/live/0009_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "6927a25ac5b756fc3847fe96b164ed1751bdd84c70d8bc850c6936e508c00475"
     },
+    "4a4ad2a13dacdf6364517098e9bd7d6dcbb89224bdc3f047081c71d3ce15a291": {
+      "candidate_id": "4a4ad2a13dacdf6364517098e9bd7d6dcbb89224bdc3f047081c71d3ce15a291",
+      "channel_key": "广东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "广东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=202609180203042a68488eae99429093b3f656171b90ae&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260918020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260918020304&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5ef51761ffa8b6d7f54668167d64f352",
+      "url_sha256": "6f722c459cd75d25b919270dc7ae34eefa44a6eb87d05264f9a9bec4d16cd52a"
+    },
     "4a88058732417f60738bbf95230d5958a75a696b7f14468e176af0c23ec4889e": {
       "candidate_id": "4a88058732417f60738bbf95230d5958a75a696b7f14468e176af0c23ec4889e",
       "channel_key": "cctv4",
@@ -14731,7 +15282,6 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0014_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -14949,6 +15499,22 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5plusnew/600/index.m3u8?msisdn=20260915220303357a0b873fe74a798a15f7cf9472a509&mdspid=&spid=699004&netType=0&sid=5500516288&pid=2028597139&timestamp=20260915220303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886773&ParentNodeID=-99&assertID=5500516288&client_ip=171.8.79.254&SecurityKey=20260915220303&promotionId=&mvid=5102048803&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b070b247a25602f72b74b5371b772ce1",
       "url_sha256": "4f3733fe611c25cc9c00c9e48571ea094aafab3a6114be2ed33b4be32023a35a"
     },
+    "52c5f4994dc840ec77228556ec6a112242771d8c4d84338097d26d9ff564acdf": {
+      "candidate_id": "52c5f4994dc840ec77228556ec6a112242771d8c4d84338097d26d9ff564acdf",
+      "channel_key": "东南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "东南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "7fc061da544099fb47b5a9dafba36ebdfb9a3a73ce468deac04922ff777196a2"
+    },
     "542d4a2acb7f40a094b4a4e625ecc18e1c9244d16c970ebd3bba6e66caeaa1c8": {
       "candidate_id": "542d4a2acb7f40a094b4a4e625ecc18e1c9244d16c970ebd3bba6e66caeaa1c8",
       "channel_key": "cctv10",
@@ -14994,6 +15560,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=20260912220304b9918a538d504e98a60ccdc71e6cfbdf&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260912220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260912220304&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a98320052c6908a3cc314466aae1f3eb",
       "url_sha256": "c7d6af1da18cd6d247a3bbc34383d94cb6dd523178476a5e8699e741c9d013a1"
     },
+    "5531ea0136f7982ae567ea6fd6921ea50c1385f783576c1043cbe95739513207": {
+      "candidate_id": "5531ea0136f7982ae567ea6fd6921ea50c1385f783576c1043cbe95739513207",
+      "channel_key": "cctv11",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-11",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv11hd/50/20200103/index.m3u8?msisdn=202609180001411bbfa1810ae249c4900c8fb91bfb8ac5&mdspid=&spid=699004&netType=0&sid=5500988610&pid=2028597139&timestamp=20260918000141&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=667987558&ParentNodeID=-99&assertID=5500988610&client_ip=171.8.79.254&SecurityKey=20260918000141&promotionId=&mvid=5102751362&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=d8bf683cd34f2b031e12ec3201a8fdd7",
+      "url_sha256": "c93eb2267a77ccdd040fc174dbf0451b3c74f176a8aff249be65d34a734b82b8"
+    },
     "55a96d11a3cfd574c7891a22b6260b6ddaf611f8ed83468761a7513a9329a71a": {
       "candidate_id": "55a96d11a3cfd574c7891a22b6260b6ddaf611f8ed83468761a7513a9329a71a",
       "channel_key": "cctv8",
@@ -15005,10 +15586,26 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://123.163.114.241:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "134eafe3a7fc1f285df1df8134392a1fde563a1da6709de1f5b02524eccbb4b1"
+    },
+    "56002047be1966040617e02b532e1cc73540d65091abe945ff26a43d89c5d0d6": {
+      "candidate_id": "56002047be1966040617e02b532e1cc73540d65091abe945ff26a43d89c5d0d6",
+      "channel_key": "cctv13",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-13",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/2018/SD/cctv13/1000/index.m3u8?msisdn=20260918000131aa694df6659e4b6faddbbf2747cba683&mdspid=&spid=699004&netType=0&sid=2202208864&pid=2028597139&timestamp=20260918000131&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807423&ParentNodeID=-99&assertID=2202208864&client_ip=171.8.79.254&SecurityKey=20260918000131&promotionId=&mvid=2202208864&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5f9d4e52a6952cdd7f520b51ffe41131",
+      "url_sha256": "c680fc84fe03c3477c2a68c0e5e0e438de7818387f5c168d246b5bb12d189855"
     },
     "563ce408867549c52e72e2a3a9ae218835fbe57546662c4c923697703220d60e": {
       "candidate_id": "563ce408867549c52e72e2a3a9ae218835fbe57546662c4c923697703220d60e",
@@ -15024,6 +15621,21 @@
       ],
       "url": "http://101.66.198.81:9901/tsfile/live/0015_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "635c3a83be13648554125a55760e7b74f60bab2ad41b7b9261d2f94649bd8e92"
+    },
+    "570f6ff9fc0a6168c9a4a6764ae7965a5af207573c327c59055602017411c617": {
+      "candidate_id": "570f6ff9fc0a6168c9a4a6764ae7965a5af207573c327c59055602017411c617",
+      "channel_key": "山东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.198.66:9901/tsfile/live/0131_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "13bca11983a52e242f41e57398082ca2ea51ac64b225e9c7023d4dac02a9664a"
     },
     "580e474d925c8fa4a26bc4637fb8a5a6f2e54454a0bf7b467ba076589e9a47e8": {
       "candidate_id": "580e474d925c8fa4a26bc4637fb8a5a6f2e54454a0bf7b467ba076589e9a47e8",
@@ -15100,6 +15712,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv8hd/1000/index.m3u8?msisdn=20260913220305ecebe212c42548feb22701385b8a8d63&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20260913220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=171.8.79.254&SecurityKey=20260913220305&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=851e68a06703b4ecde532878955be743",
       "url_sha256": "3a64c1de13590055c26c18f7fcd30ac0f082d3940c1e785c3ca28d3830e4f838"
     },
+    "598cfe315b86ef1ddf9e73bc92d6e62d323158c72550a230bae45ec1a9b8602b": {
+      "candidate_id": "598cfe315b86ef1ddf9e73bc92d6e62d323158c72550a230bae45ec1a9b8602b",
+      "channel_key": "cctv4",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/50/index.m3u8?msisdn=20260918000304b41f289970c54269a4cbeff7214012f8&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20260918000304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=171.8.79.254&SecurityKey=20260918000304&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5d40e713334d3600e0d1157135c88463",
+      "url_sha256": "f3c623a2ff33e03ec5782a4b84f0bb6a1020f0f3ee006e14b2be36adde629f94"
+    },
     "5999de7b12abe813a326f62c2f1c8c01487d2204780cdb550a60c46fda96eb83": {
       "candidate_id": "5999de7b12abe813a326f62c2f1c8c01487d2204780cdb550a60c46fda96eb83",
       "channel_key": "河南卫视",
@@ -15146,6 +15773,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5plusnew/600/index.m3u8?msisdn=202609170203034ca6edfe880741cfabdd733479e7d9a1&mdspid=&spid=699004&netType=0&sid=5500516288&pid=2028597139&timestamp=20260917020303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886773&ParentNodeID=-99&assertID=5500516288&client_ip=171.8.79.254&SecurityKey=20260917020303&promotionId=&mvid=5102048803&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=1c8631d860908401de967da6ea1b8953",
       "url_sha256": "69368db1aa57e9c61ee680553028a94f1d493bf9fa2ca6793a7cf95c770237e7"
+    },
+    "5a74cd5a89176a4018334e9ec9b02f50252cccda2e98a08dd8d5c7dcbf554239": {
+      "candidate_id": "5a74cd5a89176a4018334e9ec9b02f50252cccda2e98a08dd8d5c7dcbf554239",
+      "channel_key": "黑龙江卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "黑龙江卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.205:9901/tsfile/live/0143_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "8bb7e6d28ba7a6d3e54b4e62e337eb3dd7ea4a07692421944c1b34312256b541"
     },
     "5c2905c3712489293f7197063ee28671a3d6aaf418586f66b9cd880fae6da8ed": {
       "candidate_id": "5c2905c3712489293f7197063ee28671a3d6aaf418586f66b9cd880fae6da8ed",
@@ -15237,6 +15879,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/index.m3u8?msisdn=20260914220308cd2e7eb4b6cd4fdd93a22e0f50092e5b&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20260914220308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=171.8.79.254&SecurityKey=20260914220308&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=43c6b8fb5bb67607ca0239e2b5225b81",
       "url_sha256": "61d4c7092202db125eeb72fc1ed58e919a917fd09126bb71ac2940a047aa1e48"
     },
+    "6255ade2349bf8fd4d265e62d385d9e468fb06cc1541f3fa4977d1f71aa37825": {
+      "candidate_id": "6255ade2349bf8fd4d265e62d385d9e468fb06cc1541f3fa4977d1f71aa37825",
+      "channel_key": "cctv7",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-7",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv7hd/50/index.m3u8?msisdn=202609180001276107563329884518a69e6aecbdbad426&mdspid=&spid=699004&netType=0&sid=5501083622&pid=2028597139&timestamp=20260918000127&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168121&ParentNodeID=-99&assertID=5501083622&client_ip=171.8.79.254&SecurityKey=20260918000127&promotionId=&mvid=5102910278&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=112606e96fc4524071182270c3376779",
+      "url_sha256": "8ec5a8a20963c7c6fed0fd05da222014db9ec545ae12242159a516e7ff258170"
+    },
     "62cb448be28ee4ea91065fca2db28161ec03399caec8dcb87ca3fce8462edaaf": {
       "candidate_id": "62cb448be28ee4ea91065fca2db28161ec03399caec8dcb87ca3fce8462edaaf",
       "channel_key": "cctv10",
@@ -15281,6 +15938,23 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv9hd/50/index.m3u8?msisdn=20260913220136325a2d3a779e4b5992c2d34dad457d11&mdspid=&spid=699004&netType=0&sid=5501083624&pid=2028597139&timestamp=20260913220136&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168140&ParentNodeID=-99&assertID=5501083624&client_ip=171.8.79.254&SecurityKey=20260913220136&promotionId=&mvid=5102910384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=ab49a484ebe0179928be2983c4e7e647",
       "url_sha256": "e8ee26acf1a5431da916ba8d1e9ae2dd9170064eac3f87361327b99b071e3e27"
+    },
+    "63cea8b0307dab9e4f3366a95cf17d07517a1748d92488f0acffdeebddcbdb75": {
+      "candidate_id": "63cea8b0307dab9e4f3366a95cf17d07517a1748d92488f0acffdeebddcbdb75",
+      "channel_key": "cctv10",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-10",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "46142de9d3a0efbef20dd14be960d1ea0d1671144991f9bd1124fd1517ea01f6"
     },
     "63d585f69ab7b9c1ed0f04aecfe7e91b90e48b87b2050ece08ff2d4000dbf3d8": {
       "candidate_id": "63d585f69ab7b9c1ed0f04aecfe7e91b90e48b87b2050ece08ff2d4000dbf3d8",
@@ -15357,6 +16031,51 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r4/dfl/dongfangwshd/600/index.m3u8?msisdn=20260916020307bbff7c11b980409085c893c4e099a006&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20260916020307&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=171.8.79.254&SecurityKey=20260916020307&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=63603f29d9c2318f2102794f3efd4b42",
       "url_sha256": "7cf8f191306ea758867501da414458f9bb34f3cef3e9325f1d0dce27e3e2d0b6"
     },
+    "6566779c09fba151155bf037c4f572d6cf5ab03d17cf66337f744fc5054efeac": {
+      "candidate_id": "6566779c09fba151155bf037c4f572d6cf5ab03d17cf66337f744fc5054efeac",
+      "channel_key": "cctv9",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-9",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
+      ],
+      "url": "https://v4-e6b1c5baf4e240fe63adbf68dda23435.livehwc4.com/play.kankanlive.com/live/1698423397390920.m3u8?sub_m3u8=true&edge_slice=true&user_session_id=51acb1a64381e22a3bdf01bb588b43cd",
+      "url_sha256": "7ba079481f72b20b41e8cadf8bf8e7dbc7ab55953fb859ed3aae31a26004a2ed"
+    },
+    "65dfe04cb85e39692847ec8954790c36b71b49a786bee3498e5ff8ea3f12e77c": {
+      "candidate_id": "65dfe04cb85e39692847ec8954790c36b71b49a786bee3498e5ff8ea3f12e77c",
+      "channel_key": "海南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "海南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/SD/lvyou/711/index.m3u8?msisdn=202609180001201fc6f043bc9149d482d5fd8cc3cd0edf&mdspid=&spid=600633&netType=0&sid=5910022165&pid=2028597139&timestamp=20260918000120&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472502&ParentNodeID=-99&assertID=5910022165&client_ip=171.8.79.254&SecurityKey=20260918000120&promotionId=&mvid=5900004359&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4c8d708a7d3f4a30588a0dfcad2d2ca3",
+      "url_sha256": "b00661074206d7e8043169f884147694416a638600cec933bed0a15956bd3c42"
+    },
+    "6641c6f3d0c0145c6450f2c3350ced416a15fb6ae4cbb7f40caed0683c0d3d41": {
+      "candidate_id": "6641c6f3d0c0145c6450f2c3350ced416a15fb6ae4cbb7f40caed0683c0d3d41",
+      "channel_key": "四川卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "四川卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0123_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "b4d81f5aba8e4e016d3e6bb7da1113719d65b283014837734315c40b848eaa5e"
+    },
     "669db491289a5d3da2512a864a109bd1396999c841198c90d67a1a3c32ae3013": {
       "candidate_id": "669db491289a5d3da2512a864a109bd1396999c841198c90d67a1a3c32ae3013",
       "channel_key": "cctv4",
@@ -15372,7 +16091,7 @@
         "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt",
         "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u",
         "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8",
-        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
       ],
       "url": "http://74.91.26.218:82/live/cctv4hd.m3u8",
       "url_sha256": "03998edf801a34d9db30978b3aa42f057ed5ecdc7a80a3743bd25b36666e1c41"
@@ -15406,6 +16125,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv6hd/1000/index.m3u8?msisdn=202609132203048e557d1f4f3c4178a57ba7b1ced68011&mdspid=&spid=699004&netType=0&sid=5500212872&pid=2028597139&timestamp=20260913220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878396&ParentNodeID=-99&assertID=5500212872&client_ip=171.8.79.254&SecurityKey=20260913220304&promotionId=&mvid=5100001694&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f331ab3437b7230e0aa7101ef4e13083",
       "url_sha256": "367859805662718c61662549b5c94e26de3b49270b776ebd9e5b1d5fd0131c73"
+    },
+    "678c8edd8cd158dfdfdcd07b5819266a843ac9fdbd2c25b63a175cc95f3d58e4": {
+      "candidate_id": "678c8edd8cd158dfdfdcd07b5819266a843ac9fdbd2c25b63a175cc95f3d58e4",
+      "channel_key": "山东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0131_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "0bce7dad4d9c5781a9e851c19004f6360129ee502880927005f768a19e0963c9"
     },
     "67af40184d4fb158dcb66159e3d6fe368abbce33ee78db446ac3f3c358124e7c": {
       "candidate_id": "67af40184d4fb158dcb66159e3d6fe368abbce33ee78db446ac3f3c358124e7c",
@@ -15559,6 +16293,22 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/hubeiwshd/1000/index.m3u8?msisdn=20260916020309f315da17e11c46e4ba5f08302620ed24&mdspid=&spid=600633&netType=0&sid=5910022163&pid=2028597139&timestamp=20260916020309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472496&ParentNodeID=-99&assertID=5910022163&client_ip=171.8.79.254&SecurityKey=20260916020309&promotionId=&mvid=5900004355&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c4cfba4c3bf91eff5bdd403838267444",
       "url_sha256": "8a9249bbaa1beed370335ef386073caaa813ba0875f6158e5b35ed98b1a5324a"
     },
+    "6ab55dc5eef64529944b10fd26a8de99f3c473c1f74c7421add3fbc73c526b4a": {
+      "candidate_id": "6ab55dc5eef64529944b10fd26a8de99f3c473c1f74c7421add3fbc73c526b4a",
+      "channel_key": "青海卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "青海卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0140_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "2f9b6a8ff1ab4b699865453998a28899c906f49b2456d77303ff1bbcd6af6ee0"
+    },
     "6aee82d3f6fc8f60a67dc8a4f54eea8c5b595f98631326ca5329c054136808be": {
       "candidate_id": "6aee82d3f6fc8f60a67dc8a4f54eea8c5b595f98631326ca5329c054136808be",
       "channel_key": "河北卫视",
@@ -15709,6 +16459,22 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/50/index.m3u8?msisdn=202609142203059cded44e5003483eb6c4cb622c3c36bf&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20260914220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=171.8.79.254&SecurityKey=20260914220305&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=0c1a9fda43a3a1d190a98c508bc9f966",
       "url_sha256": "adafa09ce983c120bef43340fe231c3db9aa630c53ce4844074b034bbf7eaa76"
     },
+    "712be64ce3e9ed4547957eef5325a86485fc0a81d01c1f6d9cc9a0bac1807bcf": {
+      "candidate_id": "712be64ce3e9ed4547957eef5325a86485fc0a81d01c1f6d9cc9a0bac1807bcf",
+      "channel_key": "新疆卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "新疆卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0110_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "77b89dd68f3965a2de89ff0405e229515539adebff8e50f62535eddf6184994b"
+    },
     "713346b490d0129db7514d6733473cafde3d3c30c2fb16e0de276e7166a240c6": {
       "candidate_id": "713346b490d0129db7514d6733473cafde3d3c30c2fb16e0de276e7166a240c6",
       "channel_key": "cctv11",
@@ -15753,6 +16519,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/hbws/50/20251225/index.m3u8?msisdn=2026091502012468885a97f48e414ba02b35a9236ba6c9&mdspid=&spid=600725&netType=0&sid=5910022316&pid=2028597139&timestamp=20260915020124&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=962042070&ParentNodeID=-99&assertID=5910022316&client_ip=171.8.79.254&SecurityKey=20260915020124&promotionId=&mvid=5900006782&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f06f8f3dd3736631255e0dbb61c5b8c9",
       "url_sha256": "9ca6d9f99b000a720ff2adf947d481edff5f181178ec9b217548eae0e8411eb6"
+    },
+    "728ba3290949eaea594a92d466f7ba599a241daaa3fd5c51f6b53937838495bf": {
+      "candidate_id": "728ba3290949eaea594a92d466f7ba599a241daaa3fd5c51f6b53937838495bf",
+      "channel_key": "湖南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "湖南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://173.208.212.130:8181/720p/hnws.m3u8",
+      "url_sha256": "885b5d1883135af6e3db2963285082e7d948d48ea724b2d9c4186e00d9cd91c9"
     },
     "74ee50d3a7a76e893ba47258b718382df55522247aa83b3c6a83ceaf72e56431": {
       "candidate_id": "74ee50d3a7a76e893ba47258b718382df55522247aa83b3c6a83ceaf72e56431",
@@ -15829,6 +16610,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=2026091322013939ba923b48fe4266a572b77627fff9d5&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260913220139&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260913220139&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5837149a266e69143e0e0a20b767b376",
       "url_sha256": "b791aa745776c2867e218d0badde61000ceda9e0b7ea376f424b737eec4930fd"
     },
+    "78298405010914266b7bd2f98d12eb414e013d5dc05bdd45e87e31c6d6edb5e1": {
+      "candidate_id": "78298405010914266b7bd2f98d12eb414e013d5dc05bdd45e87e31c6d6edb5e1",
+      "channel_key": "重庆卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "重庆卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/2018/SD/chongqing/1000/index.m3u8?msisdn=20260918000308d37985de1a5344a0897ccc8f8d8e4394&mdspid=&spid=600697&netType=0&sid=5910022305&pid=2028597139&timestamp=20260918000308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738910914&ParentNodeID=-99&assertID=5910022305&client_ip=171.8.79.254&SecurityKey=20260918000308&promotionId=&mvid=5900004329&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f7754cfe4655bd7c7394badbf59d9977",
+      "url_sha256": "0d6779e7756ca2d5ea9a87fdefe6410314a4724970b93c46b5163209365d1bc2"
+    },
     "78d4f4510372e1d4075a0a1fb1433f44ffdc43b83eaa4f5e8d1be9011744f421": {
       "candidate_id": "78d4f4510372e1d4075a0a1fb1433f44ffdc43b83eaa4f5e8d1be9011744f421",
       "channel_key": "cctv4",
@@ -15843,6 +16639,23 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/50/index.m3u8?msisdn=20260914020305e4096f9e4d3e4f0bb836a94f9d947316&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20260914020305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=171.8.79.254&SecurityKey=20260914020305&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=d3d86acab7a72784b01d54980d032cd0",
       "url_sha256": "b0eb143ea29dd48fa10fb86a1f8b5f47be1aaefbe1fd3152eb8176d43ea69b1b"
+    },
+    "798fdbd3e85a0d2e988b19d923145c78b549c8b5ba132ed5f88877c0da946c85": {
+      "candidate_id": "798fdbd3e85a0d2e988b19d923145c78b549c8b5ba132ed5f88877c0da946c85",
+      "channel_key": "兵团卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "兵团卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u"
+      ],
+      "url": "http://115.153.254.81/PLTV/88888888/224/3221225753/iptv101723.smil/index.m3u8?fmt=ts2hls",
+      "url_sha256": "d8cb90334cdb7116e41dc52d171c5d2268f37d69c6b2304bf38bd0d5c83d8f9f"
     },
     "79d68198cad50d471e6afba26156a155f7cb0b582a69f0ed67060db6a1ea73d2": {
       "candidate_id": "79d68198cad50d471e6afba26156a155f7cb0b582a69f0ed67060db6a1ea73d2",
@@ -15954,6 +16767,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/jiangsuhd/600/index.m3u8?msisdn=2026091700030728b92f3e2b1e4e1dbbbda4e705d8407a&mdspid=&spid=699067&netType=0&sid=5500199408&pid=2028597139&timestamp=20260917000307&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=623899368&ParentNodeID=-99&assertID=5500199408&client_ip=171.8.79.254&SecurityKey=20260917000307&promotionId=&mvid=5100156802&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=547860ffeff9e8f90ae0cc7209d4455a",
       "url_sha256": "ff1588869bfa729877f58ad2c16389c8843dfac953ea70572b00780d60bfb766"
     },
+    "7e441fafdefb13d7398e7a3ff4781abd2e410dc11564485935a0029c9962e8b0": {
+      "candidate_id": "7e441fafdefb13d7398e7a3ff4781abd2e410dc11564485935a0029c9962e8b0",
+      "channel_key": "cctv5plus",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-5+",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5plusnew/600/index.m3u8?msisdn=202609162203035408eababf7a426d8bd9a1773b773d23&mdspid=&spid=699004&netType=0&sid=5500516288&pid=2028597139&timestamp=20260916220303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886773&ParentNodeID=-99&assertID=5500516288&client_ip=171.8.79.254&SecurityKey=20260916220303&promotionId=&mvid=5102048803&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=fdf98d372137c8a7d399b459f123a68e",
+      "url_sha256": "e575ed1c5741871bc0dda5f068bbf2c82ce9cf126c8badb86e0afd54cd0e2ec4"
+    },
     "7e94d0d8803f95058dde615ba62aacad5daf71c139e82b9cd714b32ec08ffb7a": {
       "candidate_id": "7e94d0d8803f95058dde615ba62aacad5daf71c139e82b9cd714b32ec08ffb7a",
       "channel_key": "cctv7",
@@ -16012,11 +16840,25 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "3f04d5099fc1fc4eba1f9ed6c099e72bb143eea48a1b044b4c54ff744fd4a0f1"
+    },
+    "80bf1d07f3c5e104857cab759dda6c26eebf192f1ff2441d7e18c92d860b8346": {
+      "candidate_id": "80bf1d07f3c5e104857cab759dda6c26eebf192f1ff2441d7e18c92d860b8346",
+      "channel_key": "北京卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "北京卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/bjws/50/20251127/index.m3u8?msisdn=202609180001058a9d5b184ce9418cbf20761a48d3ab9e&mdspid=&spid=600697&netType=0&sid=5910022306&pid=2028597139&timestamp=20260918000105&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=630287636&ParentNodeID=-99&assertID=5910022306&client_ip=171.8.79.254&SecurityKey=20260918000105&promotionId=&mvid=5101042960&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=32061186951bdcea91c5c91ee4ea8e5c",
+      "url_sha256": "b13506a6c10f6a50aedcccc43730bfe1b3dc0e51df0767585ac82d58f606574e"
     },
     "80bfc4140a15fa10cb143ced8012acabbf8bc6eec8ffd5913575352d6c74e3eb": {
       "candidate_id": "80bfc4140a15fa10cb143ced8012acabbf8bc6eec8ffd5913575352d6c74e3eb",
@@ -16063,6 +16905,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv9hd/50/index.m3u8?msisdn=2026091422013413b112105b34422f84e97d037ab9e677&mdspid=&spid=699004&netType=0&sid=5501083624&pid=2028597139&timestamp=20260914220134&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168140&ParentNodeID=-99&assertID=5501083624&client_ip=171.8.79.254&SecurityKey=20260914220134&promotionId=&mvid=5102910384&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=ea44a5b03477421d5da222d237b772d8",
       "url_sha256": "47d424aad3bc789faa8f93e3c1ee0029606ce41c52a9d648ecefee9da61919ad"
     },
+    "81edefd9f686b53bebbce0db8caf252a36956df51543db317f6a7db40e3d209d": {
+      "candidate_id": "81edefd9f686b53bebbce0db8caf252a36956df51543db317f6a7db40e3d209d",
+      "channel_key": "cctv3",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-3",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv3hd/1000/index.m3u8?msisdn=202609180001136d2918b782ee4525a37bc07dfdde2adc&mdspid=&spid=699004&netType=0&sid=5500212864&pid=2028597139&timestamp=20260918000113&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878271&ParentNodeID=-99&assertID=5500212864&client_ip=171.8.79.254&SecurityKey=20260918000113&promotionId=&mvid=5100001683&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=8adf7cde3af63f6e139f5b87f76c3062",
+      "url_sha256": "2ceea3c3049256523ef4afab75e70571bf1eb42712ba0d474bdb86e978d4cbec"
+    },
     "8255ad158514b71df5135f21153c10ecfb1037cd7302dcdaad9233805ce7aaea": {
       "candidate_id": "8255ad158514b71df5135f21153c10ecfb1037cd7302dcdaad9233805ce7aaea",
       "channel_key": "安徽卫视",
@@ -16106,10 +16963,28 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0015_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "df33f4781c110494c7d20eb8e1f9395fc0e643cf7a12cbc18d028eb9172c9598"
+    },
+    "839ee894023ed26e0a8cfec488d05e5a7ebc77e5ac35d057b322cec5ce30fabe": {
+      "candidate_id": "839ee894023ed26e0a8cfec488d05e5a7ebc77e5ac35d057b322cec5ce30fabe",
+      "channel_key": "cctv12",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-12",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0012_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "3764f7bec8c128dc128101ca3516dbaf41e60f4fd257e73e6d81ba0452c70794"
     },
     "84622ce3d022df6bb38450015bae1e2105ea72032125b02346a8b76795fda11c": {
       "candidate_id": "84622ce3d022df6bb38450015bae1e2105ea72032125b02346a8b76795fda11c",
@@ -16157,6 +17032,22 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/50/index.m3u8?msisdn=2026091402030573dd19f3a2f744b8af0024fea3b74990&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20260914020305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=171.8.79.254&SecurityKey=20260914020305&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=93b6f1d353a9f07d0b8bc31df6562699",
       "url_sha256": "b38a6962bbe4cd1c5c11450aa5a98d73a2c40a177b8bd904c7502127a723a296"
     },
+    "86c57b34557a96c983f10fe0d257fbfb2a03d0ed3e7ace80c68c23bb78de55c5": {
+      "candidate_id": "86c57b34557a96c983f10fe0d257fbfb2a03d0ed3e7ace80c68c23bb78de55c5",
+      "channel_key": "广东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "广东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0125_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "b7d3abfbb1efdac8018a782f25e6d3e6b0e2c35c1a17ee9a0e136138d7617283"
+    },
     "86d4d831103d1079466d121e3de3e06370f5997d2c7ab680cafec6ced1bb3aee": {
       "candidate_id": "86d4d831103d1079466d121e3de3e06370f5997d2c7ab680cafec6ced1bb3aee",
       "channel_key": "cctv9",
@@ -16171,6 +17062,21 @@
       ],
       "url": "https://v4-e6b1c5baf4e240fe63adbf68dda23435.livehwc4.com/play.kankanlive.com/live/1698423397390920.m3u8?sub_m3u8=true&edge_slice=true&user_session_id=413bdfae50381dee1b0fe07802da2c76",
       "url_sha256": "ab1f314fab1f34e5d62b88ae64f4d16aa7ba3f1dcc7ed3829019a3f2fa8f0998"
+    },
+    "8768c2e6fe1d7eeffa8748ac953d71773341b7d7d2bf6d03531a0d80cded2427": {
+      "candidate_id": "8768c2e6fe1d7eeffa8748ac953d71773341b7d7d2bf6d03531a0d80cded2427",
+      "channel_key": "cctv7",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-7",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
+      ],
+      "url": "http://101.66.198.201:9901/tsfile/live/0007_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "0db32dfc61a4d55a402b18bd8dffe76cc658a9a8bcc6b3c78441133ca1fbb786"
     },
     "878133bca3980046e9b6473ed08c89ffde8dcc2bafde06029d3299c4764a320e": {
       "candidate_id": "878133bca3980046e9b6473ed08c89ffde8dcc2bafde06029d3299c4764a320e",
@@ -16261,6 +17167,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv4hd/600/index.m3u8?msisdn=20260914220117c8bf2ef64d7848588a50e58650906475&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20260914220117&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=171.8.79.254&SecurityKey=20260914220117&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=e4b3728a38caeeb4a80d3fdbe3eab206",
       "url_sha256": "b99d34b4ed1bbf63fa502f529d34961ed009f35694ba045cbf19d2df05d7e63f"
+    },
+    "8a0e84edb832262287408d50105838a03b312143dfaa2d1738eebbbc088584a6": {
+      "candidate_id": "8a0e84edb832262287408d50105838a03b312143dfaa2d1738eebbbc088584a6",
+      "channel_key": "cctv4",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/50/index.m3u8?msisdn=20260918000304d9c0ead9e82f423db73f6f790b167008&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20260918000304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=171.8.79.254&SecurityKey=20260918000304&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5dd4a9ce116666fb63f99e449a4a561f",
+      "url_sha256": "3bd4b5b63a31082cb851d6338183928517e17a69b7ce0158af2f488eccbf708d"
     },
     "8a98bd565beeb41cf391ecc54610695c82322ded7911072ab9b8c01dda7bf8ea": {
       "candidate_id": "8a98bd565beeb41cf391ecc54610695c82322ded7911072ab9b8c01dda7bf8ea",
@@ -16583,6 +17504,36 @@
       "url": "http://genglei.8866.org:9901/tsfile/live/1017_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "c290c6691e2c143475d280f191b4c8822ef9f370783567c1d00f7c9d92659fbb"
     },
+    "9366756f3bc766906c25cae78494ac5b4cb8b042e9230ff1c140e996d8115d90": {
+      "candidate_id": "9366756f3bc766906c25cae78494ac5b4cb8b042e9230ff1c140e996d8115d90",
+      "channel_key": "海峡卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "海峡卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/haixiaws/50/20230724/index.m3u8?msisdn=2026091622030519964ce602c64edd90f6b76172a36028&mdspid=&spid=600717&netType=0&sid=5910022183&pid=2028597139&timestamp=20260916220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=849119120&ParentNodeID=-99&assertID=5910022183&client_ip=171.8.79.254&SecurityKey=20260916220305&promotionId=&mvid=5900006231&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=e7091a9e73dcf065f7701cfef6cb1229",
+      "url_sha256": "3b9bcc24ba0ed66c6398ed35680fc91272681de0266b28dc5f19ad9f38fdc1e3"
+    },
+    "93de0210cf0a82b4f695825b1f4f9e8aaa6f1bdf93c178437b0e8e02e8be4855": {
+      "candidate_id": "93de0210cf0a82b4f695825b1f4f9e8aaa6f1bdf93c178437b0e8e02e8be4855",
+      "channel_key": "青海卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "青海卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/index.m3u8?msisdn=20260916220305c21ecd8baaa7492e9c1f782be7e6470c&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20260916220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=171.8.79.254&SecurityKey=20260916220305&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b3df3c567d5659a2c34523609c0bac13",
+      "url_sha256": "581b69539a3ea822e406b097f7de13486ee813f964e877ac375ae018304aec03"
+    },
     "93ee03f001379710d9aaa1e92b80d5432ce101d4107fb61f974ef9996443b223": {
       "candidate_id": "93ee03f001379710d9aaa1e92b80d5432ce101d4107fb61f974ef9996443b223",
       "channel_key": "河南卫视",
@@ -16612,6 +17563,23 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r4/dfl/dongfangwshd/600/index.m3u8?msisdn=2026091502030884bc54e88de64f149d464e01aefde2ec&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20260915020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=171.8.79.254&SecurityKey=20260915020308&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=3e2b8e451563ca8ab6d6d3c77f5863f7",
       "url_sha256": "399f536124768158a1b86e3c6bb1dcaca4cff37a631dbbbbde5178cdd71c678d"
+    },
+    "94c83180ed55907afe9dfa6d91a64a397bc94bcb46336d57f30b383dd594296d": {
+      "candidate_id": "94c83180ed55907afe9dfa6d91a64a397bc94bcb46336d57f30b383dd594296d",
+      "channel_key": "兵团卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "兵团卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/btws/50/20250804/index.m3u8?msisdn=202609170403082f3f5e738c5f4c7884453e0a8821f2e2&mdspid=&spid=600697&netType=0&sid=5910022192&pid=2028597139&timestamp=20260917040308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=956923145&ParentNodeID=-99&assertID=5910022192&client_ip=171.8.79.254&SecurityKey=20260917040308&promotionId=&mvid=5900006716&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=bcd8aa497cee458a2b86c0c069b49334",
+      "url_sha256": "79b12025b12ea712105deacb490c004a6ab9f8062b5a3bac186111e88e1e2413"
     },
     "95685cbc3b965ae63c8760b2026ed04390bc97371bd37b1f8caeb8907a6fcc66": {
       "candidate_id": "95685cbc3b965ae63c8760b2026ed04390bc97371bd37b1f8caeb8907a6fcc66",
@@ -16655,7 +17623,6 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0113_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -16723,6 +17690,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongnanws/50/20230724/index.m3u8?msisdn=20260915020310f83e8c123761476aa6e284cdbba3cfc3&mdspid=&spid=600717&netType=0&sid=5910022182&pid=2028597139&timestamp=20260915020310&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=849116810&ParentNodeID=-99&assertID=5910022182&client_ip=171.8.79.254&SecurityKey=20260915020310&promotionId=&mvid=5900006229&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=233c21cbc19fb388f74c99051343fd65",
       "url_sha256": "06ff4c26656a571562f51d1ab6e67c1c1ab2435ba271e725a74da2b15d38affd"
     },
+    "966d96f66b33d0f22d76e38f4a8a433833458fbbad45db4312fed1e9920167f1": {
+      "candidate_id": "966d96f66b33d0f22d76e38f4a8a433833458fbbad45db4312fed1e9920167f1",
+      "channel_key": "cctv9",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-9",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "https://v4-702cae17a28d6e4f0c0002bba021d934.livehwc4.com/play.kankanlive.com/live/1698423397390920.m3u8?sub_m3u8=true&edge_slice=true&user_session_id=d9314dab837a29292bdb6342ab71d219",
+      "url_sha256": "283f4bdbca2d60a081bb44bed6bbe86a224e198b2056f0b89a2c3acb235ee9d2"
+    },
     "967e3eadeda3a40ed18e28e9039eb0f37c30a53c1b3e2361f55a9993b4c1c96d": {
       "candidate_id": "967e3eadeda3a40ed18e28e9039eb0f37c30a53c1b3e2361f55a9993b4c1c96d",
       "channel_key": "广东卫视",
@@ -16764,6 +17746,7 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://123.163.114.241:9901/tsfile/live/0005_1.m3u8?key=txiptv&playlive=1&authid=0",
@@ -16874,6 +17857,23 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv1hd/600/index.m3u8?msisdn=202609152141173adde08c193b4598a95d067f4a8468a5&mdspid=&spid=699004&netType=0&sid=2201057821&pid=2028597139&timestamp=20260915214117&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807420&ParentNodeID=-99&assertID=2201057821&client_ip=171.8.79.254&SecurityKey=20260915214117&promotionId=&mvid=2201057821&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=5ccfcc6551555b0c3c62baa1af8f4014",
       "url_sha256": "a1c35c33c5149d18548c6e0f45569fbb540a508e4ed1a35bf72e9d34e59fc2e4"
     },
+    "9c2b98e1ccdd38a1eab9b3dfc3bcbf74fbc10eac1d272f2c8f9579e1521754f6": {
+      "candidate_id": "9c2b98e1ccdd38a1eab9b3dfc3bcbf74fbc10eac1d272f2c8f9579e1521754f6",
+      "channel_key": "cctv2",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-2",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0002_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "d5d8fe50e5c33716e9eb81daa858695685fd0b2680fb36894389f9b8a17b077b"
+    },
     "9c8c2600c63c3005e6fc64e791ca2dea2009474d8fd42bc2008d0dd8265cafb5": {
       "candidate_id": "9c8c2600c63c3005e6fc64e791ca2dea2009474d8fd42bc2008d0dd8265cafb5",
       "channel_key": "湖北卫视",
@@ -16914,7 +17914,8 @@
       "production_eligible": false,
       "request_options": "",
       "sources": [
-        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
       ],
       "url": "http://118.122.144.115:8888/newlive/live/hls/12/live.m3u8",
       "url_sha256": "b9b93113ec5cf6f31ade3c5d2ec997caaca4968ef52c8f03cf03b636001a0c20"
@@ -17024,6 +18025,36 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv12hd/50/index.m3u8?msisdn=20260916020304c2032dec0df74a91bceee4f267e73ead&mdspid=&spid=699004&netType=0&sid=5501083627&pid=2028597139&timestamp=20260916020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168185&ParentNodeID=-99&assertID=5501083627&client_ip=171.8.79.254&SecurityKey=20260916020304&promotionId=&mvid=5102910389&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a1660d2f456f91731580b223c4f369c8",
       "url_sha256": "11b5a675e2c703f319a136940df99a90dc50340e15e1898133a6c8d6c6b4c045"
     },
+    "9feeee3114b8d2c63c369e6466b1076fe05ec8ee72953fe8f96227d41314fc84": {
+      "candidate_id": "9feeee3114b8d2c63c369e6466b1076fe05ec8ee72953fe8f96227d41314fc84",
+      "channel_key": "兵团卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "兵团卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/btws/50/20250804/index.m3u8?msisdn=202609180003072b59576225e04011aaa1da45cdb8765f&mdspid=&spid=600697&netType=0&sid=5910022192&pid=2028597139&timestamp=20260918000307&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=956923145&ParentNodeID=-99&assertID=5910022192&client_ip=171.8.79.254&SecurityKey=20260918000307&promotionId=&mvid=5900006716&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=73cbe3dfb15f6a5374ffbce5c5414d24",
+      "url_sha256": "c5e69190c24d145827643d8b2d17d4bfd2abccc203d3826d4a08c800dfca8cb7"
+    },
+    "a19c50766cb6d5dca381f4937b0c35c91f7500b0c65233506d4ce6ef808a9a96": {
+      "candidate_id": "a19c50766cb6d5dca381f4937b0c35c91f7500b0c65233506d4ce6ef808a9a96",
+      "channel_key": "陕西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "陕西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/shan3xiws/50/20220809/index.m3u8?msisdn=20260918020304d012f72296df4726acaae6241128a069&mdspid=&spid=600633&netType=0&sid=5910020475&pid=2028597139&timestamp=20260918020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738910838&ParentNodeID=-99&assertID=5910020475&client_ip=171.8.79.254&SecurityKey=20260918020304&promotionId=&mvid=5900004331&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=3076ecadb13aa7c6ee39dec34496a604",
+      "url_sha256": "686f9728e7e0bdf6cc23819f63ee4cfbc788fdc281b5a02ee3e40c3c2fd86f59"
+    },
     "a211e9031489c0f301e98f4dbf485b7cb4988fccb14cacab1352217effba40d2": {
       "candidate_id": "a211e9031489c0f301e98f4dbf485b7cb4988fccb14cacab1352217effba40d2",
       "channel_key": "兵团卫视",
@@ -17101,6 +18132,22 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/50/index.m3u8?msisdn=2026091222030549737f1336264720abcc3929eab8d087&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20260912220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=171.8.79.254&SecurityKey=20260912220305&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=619abdcbcd2ba9fb0e1aeb86e88a980d",
       "url_sha256": "1c12b2648f21ef03258e48da856fffa030b54e5d057e818b6de0dbc6bd7927b8"
     },
+    "a4a351e5e040e216fe25c65bd166f3ec3631dc1087e7c3fe1edce8d18dfba726": {
+      "candidate_id": "a4a351e5e040e216fe25c65bd166f3ec3631dc1087e7c3fe1edce8d18dfba726",
+      "channel_key": "重庆卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "重庆卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0142_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "218ffa1ef447565bed56f01c4ccbbbdfd5da6e0ff6ce76552a4d0f299e464e2e"
+    },
     "a4c844b3ecf3dff12158d4d88052179e02b694758c35fd82f912096e969a9362": {
       "candidate_id": "a4c844b3ecf3dff12158d4d88052179e02b694758c35fd82f912096e969a9362",
       "channel_key": "cctv4",
@@ -17132,6 +18179,21 @@
       "url": "http://115.48.161.223:9901/tsfile/live/0005_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "a4041dc83bc92fc909f0bc519f270b4f2722c187622ea9d22b49c6432bcc9d4d"
     },
+    "a60cdd6886532132777fd7cd189ea9717dc5e32403b6864180c6a49285bce10e": {
+      "candidate_id": "a60cdd6886532132777fd7cd189ea9717dc5e32403b6864180c6a49285bce10e",
+      "channel_key": "湖北卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "湖北卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0132_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "0ccb41c0366ee7d929818abb2c48dfb1b41ea6185dc70f53dcbf094e09d55c7a"
+    },
     "a64f8860aa01771dedd96afd9f8312db18341df9b463bf6c8e4a6d1c40ef2601": {
       "candidate_id": "a64f8860aa01771dedd96afd9f8312db18341df9b463bf6c8e4a6d1c40ef2601",
       "channel_key": "cctv11",
@@ -17149,7 +18211,6 @@
         "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt",
         "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u",
         "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_china.m3u8",
-        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
         "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_cctv_status.m3u8"
       ],
       "url": "http://74.91.26.218:82/live/cctv11hd.m3u8",
@@ -17352,6 +18413,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r4/dfl/dongfangwshd/600/index.m3u8?msisdn=20260914020308ad147a28c9af4fe7aa49b51f05158e39&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20260914020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=171.8.79.254&SecurityKey=20260914020308&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=50d1900ee5df297195b6c2e87fa4d48c",
       "url_sha256": "47d80d497315f099e15ce90cca3b7818c3e344f1b2300d674fdc36523921f188"
     },
+    "af359f921c9018313bdf1b4c75e25a00197949f1efd15668fd54fe7b580982d8": {
+      "candidate_id": "af359f921c9018313bdf1b4c75e25a00197949f1efd15668fd54fe7b580982d8",
+      "channel_key": "山西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.198.201:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "11116e02614745ab4203b4dfe9cbc3a127d554de715b3d58da571dd47ba3d1da"
+    },
     "af384a9e9e67d29cf6831981fd3ce3dc183ac1f9edd4507f1baa9b28469123ff": {
       "candidate_id": "af384a9e9e67d29cf6831981fd3ce3dc183ac1f9edd4507f1baa9b28469123ff",
       "channel_key": "cctv9",
@@ -17535,6 +18611,23 @@
       "url": "http://119.129.172.79:9901/tsfile/live/0001_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "02a4cbfe87c0f734b0b3a0e6fe2153ab95ff4f1335746268f6989d5875ca8f5c"
     },
+    "b47840e5da5f7a1d6abac26088bcfe34ccaeaf8cea8c08a9c3440e9da6422f54": {
+      "candidate_id": "b47840e5da5f7a1d6abac26088bcfe34ccaeaf8cea8c08a9c3440e9da6422f54",
+      "channel_key": "山东卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山东卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0131_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "eae1cd3eeae0faf260beaf04547b612e6e6e37fd7e86ffc688d0baadc4f03689"
+    },
     "b4c9af172aa1ad91374b28d79d31bea18f7784458271d819fefeb1cdb909a0ca": {
       "candidate_id": "b4c9af172aa1ad91374b28d79d31bea18f7784458271d819fefeb1cdb909a0ca",
       "channel_key": "北京卫视",
@@ -17611,6 +18704,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongnanws/50/20230724/index.m3u8?msisdn=202609160203096d940009f55e4b1caafcef976166f7a6&mdspid=&spid=600717&netType=0&sid=5910022182&pid=2028597139&timestamp=20260916020309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=849116810&ParentNodeID=-99&assertID=5910022182&client_ip=171.8.79.254&SecurityKey=20260916020309&promotionId=&mvid=5900006229&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=fba1caeb803c8d598cbc1c9e0e4954d7",
       "url_sha256": "1aae8422acd66c6f42d4468aa83a29ad50cd4f7a3b8c333dd81884c89209d42c"
+    },
+    "b64e9fe40e267f2d3674f46a79e38db7b5a0f66144e187a59520f81be6114b89": {
+      "candidate_id": "b64e9fe40e267f2d3674f46a79e38db7b5a0f66144e187a59520f81be6114b89",
+      "channel_key": "cctv2",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-2",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv2hd/600/index.m3u8?msisdn=20260918000109272f5a5736fe49d69ee931beec3d712b&mdspid=&spid=699004&netType=0&sid=5500346945&pid=2028597139&timestamp=20260918000109&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=631780532&ParentNodeID=-99&assertID=5500346945&client_ip=171.8.79.254&SecurityKey=20260918000109&promotionId=&mvid=5101064231&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=9e6326efeef059b26b1606a2c574108e",
+      "url_sha256": "c1ddcb8b59f7dd0feb2a4ba5e4c912e4d95b043b2e0d514fe6c1f2ce66ea6eb9"
     },
     "b6e01c17720f5937636b0ad08d54cefea65eb4095d065d60ffa81de4a0b4b96b": {
       "candidate_id": "b6e01c17720f5937636b0ad08d54cefea65eb4095d065d60ffa81de4a0b4b96b",
@@ -17748,6 +18856,23 @@
       ],
       "url": "https://stream1.freetv.fun/368e59cc43274d4c5380dfd940d1f40ee03a4b9cb5b1648b01c42b47f2516d8b.ctv",
       "url_sha256": "7045bc3297c428abaf906af319b7c5e0d388ac460649c884b109dc854366a1c4"
+    },
+    "b9c0613eeb73b2ec558bc45066fc66f1ffd5fedb4f8a2f04b1c8d08f046ca69e": {
+      "candidate_id": "b9c0613eeb73b2ec558bc45066fc66f1ffd5fedb4f8a2f04b1c8d08f046ca69e",
+      "channel_key": "cctv3",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-3",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0003_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "742d174508ef08e06ca840fe5421f2c863c8c311482d17ec8c985141b298f838"
     },
     "bbb82061044a216556f4c0a3eda6496ad66efad55f601e125fcf0b6c8f901628": {
       "candidate_id": "bbb82061044a216556f4c0a3eda6496ad66efad55f601e125fcf0b6c8f901628",
@@ -17900,6 +19025,23 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv3hd/1000/index.m3u8?msisdn=20260916020113cee0a74b0a1d4b45b22a34cc9545680a&mdspid=&spid=699004&netType=0&sid=5500212864&pid=2028597139&timestamp=20260916020113&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878271&ParentNodeID=-99&assertID=5500212864&client_ip=171.8.79.254&SecurityKey=20260916020113&promotionId=&mvid=5100001683&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=96855fa215a571b96dd0aaeb290b237f",
       "url_sha256": "7b48658d559a939a24359bb0560b33d4d6951dac6b1be301d29e00fd0406a896"
     },
+    "bdfc7cf8f34e5147afbc03a37578701ee6f10bb146744bb1069eac821b3e8724": {
+      "candidate_id": "bdfc7cf8f34e5147afbc03a37578701ee6f10bb146744bb1069eac821b3e8724",
+      "channel_key": "广西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "广西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0113_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "0d5dfb3c4a551194b5095be28019d9eee39bfb8091b26d32ac5a5411f64064e5"
+    },
     "be13b164bd7717ce464d71108a7ea92efd621849eaa280f23341363d68e8431e": {
       "candidate_id": "be13b164bd7717ce464d71108a7ea92efd621849eaa280f23341363d68e8431e",
       "channel_key": "cctv2",
@@ -17929,6 +19071,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/nxjj/50/20251225/index.m3u8?msisdn=20260913220311ec8daff4b25e479197ed2407e7670f68&mdspid=&spid=600697&netType=0&sid=5910022409&pid=2028597139&timestamp=20260913220311&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738906901&ParentNodeID=-99&assertID=5910022409&client_ip=171.8.79.254&SecurityKey=20260913220311&promotionId=&mvid=5900004349&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=9e5db14832244f43d92df056c2903c84",
       "url_sha256": "2de47dacbebc5f99b6b0a5ac929a3924c866d52c749556be6a496b449f3ab5c9"
+    },
+    "be933ebd09f1268522c687f71fe3fe3c401be66d974801647e5e383a88fe159a": {
+      "candidate_id": "be933ebd09f1268522c687f71fe3fe3c401be66d974801647e5e383a88fe159a",
+      "channel_key": "陕西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "陕西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/shan3xiws/50/20220809/index.m3u8?msisdn=20260916220305ec319fe26e0544b8acd02422a5518dc7&mdspid=&spid=600633&netType=0&sid=5910020475&pid=2028597139&timestamp=20260916220305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738910838&ParentNodeID=-99&assertID=5910020475&client_ip=171.8.79.254&SecurityKey=20260916220305&promotionId=&mvid=5900004331&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=1eeca3c4825816e505ed1e74559dff59",
+      "url_sha256": "d7cf17d2a4bbbcb47788c7cfb2123b953a1416cfeb0f6e5ded09da3064e3419f"
     },
     "beb9bc90ffb7465f1ef4a82d275c900e5a3239b94261ec053af7c1302ddc87e0": {
       "candidate_id": "beb9bc90ffb7465f1ef4a82d275c900e5a3239b94261ec053af7c1302ddc87e0",
@@ -17974,6 +19131,21 @@
       ],
       "url": "http://101.66.194.194:9901/tsfile/live/0131_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "1bfa6645f0f29c865e35a6c3afcb9d67f3d5f08b96826be55e763829a1027e94"
+    },
+    "c08233a8389507e27636e9fc751151d286dab5204fed1ef34f41d43698b43624": {
+      "candidate_id": "c08233a8389507e27636e9fc751151d286dab5204fed1ef34f41d43698b43624",
+      "channel_key": "辽宁卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "辽宁卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/liaoningwshd/1000/index.m3u8?msisdn=202609180003060114e51265344e119321f55cb49ee479&mdspid=&spid=600572&netType=0&sid=5910022198&pid=2028597139&timestamp=20260918000306&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=630291707&ParentNodeID=-99&assertID=5910022198&client_ip=171.8.79.254&SecurityKey=20260918000306&promotionId=&mvid=5101043014&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=2488a3bdb0d2904636d2694f3b8e8e6d",
+      "url_sha256": "de0f3583aaebc9c8f4308e07783a146d6a725af5c435f2b96c0b46365b377d0e"
     },
     "c0ccd0731ae236d027efc9dcefd487d0ae5622aafa7cf73b7b8bcc3000e4a36a": {
       "candidate_id": "c0ccd0731ae236d027efc9dcefd487d0ae5622aafa7cf73b7b8bcc3000e4a36a",
@@ -18082,6 +19254,21 @@
       "url": "http://101.66.194.200:9901/tsfile/live/0143_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "5de06e99cfddc88a650eab750c0f3bb331cff815842a78a7dd63b154642db5df"
     },
+    "c35ca4a750b5ee43b9649be58c7072590c556efc3d66dc8ba9d1929dfbef1199": {
+      "candidate_id": "c35ca4a750b5ee43b9649be58c7072590c556efc3d66dc8ba9d1929dfbef1199",
+      "channel_key": "cctv9",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-9",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv9hd/50/index.m3u8?msisdn=202609180001345f9bcd182bd8477cb1aef550cbe7df62&mdspid=&spid=699004&netType=0&sid=5501083624&pid=2028597139&timestamp=20260918000134&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168140&ParentNodeID=-99&assertID=5501083624&client_ip=171.8.79.254&SecurityKey=20260918000134&promotionId=&mvid=5102910384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=7f503b9ca4d5a140aa095c06567fecc9",
+      "url_sha256": "b91f75c509a27519d37eac88e9c5539ebc488bf55a4f62597963707299c9d3bb"
+    },
     "c3ca1f1478a9b553867a010e4fcdc8b7c4452113d7379734a1ed17fe8efc0ba8": {
       "candidate_id": "c3ca1f1478a9b553867a010e4fcdc8b7c4452113d7379734a1ed17fe8efc0ba8",
       "channel_key": "辽宁卫视",
@@ -18097,6 +19284,23 @@
       ],
       "url": "http://101.66.198.81:9901/tsfile/live/0121_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "0775294e41a066b5227308759857af558374ab031d9825a646a3c625887edeb2"
+    },
+    "c3cf5ca76c2df915a8dc7cdfa1255c7fc637e7ba6c04380f1a2a937d1b3d26a7": {
+      "candidate_id": "c3cf5ca76c2df915a8dc7cdfa1255c7fc637e7ba6c04380f1a2a937d1b3d26a7",
+      "channel_key": "cctv13",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-13",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0013_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "f4d29ef1bb288a6235cfc0feb0389ab7be78dd6d5154bf110257a4faa4084189"
     },
     "c45f07e67b1007649fad3c9d6e60106a3fd8b6bca596a774bb30f82da970d488": {
       "candidate_id": "c45f07e67b1007649fad3c9d6e60106a3fd8b6bca596a774bb30f82da970d488",
@@ -18238,6 +19442,36 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/hubeiwshd/1000/index.m3u8?msisdn=202609122203097b8a65dfbdda46d7a22c322a6c15e035&mdspid=&spid=600633&netType=0&sid=5910022163&pid=2028597139&timestamp=20260912220309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472496&ParentNodeID=-99&assertID=5910022163&client_ip=171.8.79.254&SecurityKey=20260912220309&promotionId=&mvid=5900004355&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=0aff326ba0ceecc3d8a4e35ec4f75127",
       "url_sha256": "d5aa19967b08f1c00e684fcb088c23a0303e0034637384c06112e523a507f677"
     },
+    "c8c5c88ec09e1fbea8992be86c49e58ea19ba227ae4912385797624a7e8d5b29": {
+      "candidate_id": "c8c5c88ec09e1fbea8992be86c49e58ea19ba227ae4912385797624a7e8d5b29",
+      "channel_key": "河南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "河南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=ec6272699c5c7583aaee1ae79b9bfff0&wsTime=1789686222",
+      "url_sha256": "ada396bbeb5b7505cf3709cfa31b43b63bb0d059945727d3adf2123464a6f12b"
+    },
+    "c9062cc50dab6f0d088f36c8c8717e66e9eedc7cb414eefbd4750519142b29fb": {
+      "candidate_id": "c9062cc50dab6f0d088f36c8c8717e66e9eedc7cb414eefbd4750519142b29fb",
+      "channel_key": "宁夏卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "宁夏卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/2018/SD/ningxia/1000/index.m3u8?msisdn=20260918000308fc14587f07514adfbc602fe07edd98b9&mdspid=&spid=600697&netType=0&sid=5910022262&pid=2028597139&timestamp=20260918000308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738910535&ParentNodeID=-99&assertID=5910022262&client_ip=171.8.79.254&SecurityKey=20260918000308&promotionId=&mvid=5900004337&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=24972b8da7efc47ee00b655621b2d3ff",
+      "url_sha256": "07e46d7bbdbd8204886eb11ce939018df0d64645ad0a5da69531c709fa737280"
+    },
     "cbb7dd3f182cf850b917cf7c7be66a5b550f930940bf3a5f37eecf3fb2df1fbf": {
       "candidate_id": "cbb7dd3f182cf850b917cf7c7be66a5b550f930940bf3a5f37eecf3fb2df1fbf",
       "channel_key": "cctv4",
@@ -18343,6 +19577,21 @@
       "url": "http://tvcdn.stream3.hndt.com/tv/65c4a6d5017e1000b2b6ea2500000000_transios/playlist.m3u8?wsSecret=7e52136ad2315e963a35a3e08e9cfece&wsTime=1789337084",
       "url_sha256": "f4e0706f8f9504408273076f38e0b80460c9ca25c78fdc61a25c70b5d38637c1"
     },
+    "cf24c6c0b413705d16ced575244a07695deb5b0fa8a0332bcc1571f9736861fa": {
+      "candidate_id": "cf24c6c0b413705d16ced575244a07695deb5b0fa8a0332bcc1571f9736861fa",
+      "channel_key": "吉林卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "吉林卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_v/2018/SD/jilin/1000/index.m3u8?msisdn=20260918000307f7513b5a11ce44a19a65ecc81f0a4a79&mdspid=&spid=600633&netType=0&sid=5910022164&pid=2028597139&timestamp=20260918000307&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472500&ParentNodeID=-99&assertID=5910022164&client_ip=171.8.79.254&SecurityKey=20260918000307&promotionId=&mvid=5900004357&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=7115a726db16e6366f7814827f1de3e2",
+      "url_sha256": "07a4275644a0c4329f169d148ba9c66b1c0e306f1aca74ee93fea94fe4cb1b4d"
+    },
     "cfb5a9014dbe82e1b382dd0abf9b2be121b5464910a6dcdbb66ddb362843e360": {
       "candidate_id": "cfb5a9014dbe82e1b382dd0abf9b2be121b5464910a6dcdbb66ddb362843e360",
       "channel_key": "山西卫视",
@@ -18357,6 +19606,21 @@
       ],
       "url": "http://101.66.194.194:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "8b71bee2c6ae90d23216eb276bdc83db10051e74896496c070b0d32c6fff6b75"
+    },
+    "d044dd35170f54f59da63deb9a2b0f35478a12266d2a1a3792861e52c7bde765": {
+      "candidate_id": "d044dd35170f54f59da63deb9a2b0f35478a12266d2a1a3792861e52c7bde765",
+      "channel_key": "cctv17",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-17",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv17hd/50/index.m3u8?msisdn=20260918000303aa81afc6a70a4303ab0588c600d92bdb&mdspid=&spid=699004&netType=0&sid=5501083631&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168256&ParentNodeID=-99&assertID=5501083631&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5102910396&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a5ffa89be39a58ea6b04a71aaaa9b16d",
+      "url_sha256": "38e8ec72381f36071fe5b22299ed0374ef4a966811e084a675f47a2bbdfc22b2"
     },
     "d048bd66783ba0d3e6005e6c9fa0664ba68b0237146c6628738fbdcc59b9acef": {
       "candidate_id": "d048bd66783ba0d3e6005e6c9fa0664ba68b0237146c6628738fbdcc59b9acef",
@@ -18433,6 +19697,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv12hd/50/index.m3u8?msisdn=202609152203044eafea06ea3c42a6b0062f6f739db9da&mdspid=&spid=699004&netType=0&sid=5501083627&pid=2028597139&timestamp=20260915220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168185&ParentNodeID=-99&assertID=5501083627&client_ip=171.8.79.254&SecurityKey=20260915220304&promotionId=&mvid=5102910389&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f1506f5be34e108fa782e8ec8fbf9fcf",
       "url_sha256": "237b5fb26e71d4ce5830c731046cc9c07983a1240e6cc38076644624068741c0"
     },
+    "d0fee6f770da887c56204b6cea66586590d9b418f0e41c92d4a380e54e1ee54c": {
+      "candidate_id": "d0fee6f770da887c56204b6cea66586590d9b418f0e41c92d4a380e54e1ee54c",
+      "channel_key": "河北卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "河北卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/hbws/50/20251225/index.m3u8?msisdn=20260918000123a7a305eff8b44113a69f89080ec18e73&mdspid=&spid=600725&netType=0&sid=5910022316&pid=2028597139&timestamp=20260918000123&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=962042070&ParentNodeID=-99&assertID=5910022316&client_ip=171.8.79.254&SecurityKey=20260918000123&promotionId=&mvid=5900006782&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=14ed6a72ea1c607c088497f7eb4a74bd",
+      "url_sha256": "fb558549e0a4597b2bbc8fb598e2ce16b32f6a3ee6b9414a814b721413607fc9"
+    },
     "d15dc01c9a21d67cc2b0a9bf0e1bdb154ce2c0ce4b9c279943aebcd81089825d": {
       "candidate_id": "d15dc01c9a21d67cc2b0a9bf0e1bdb154ce2c0ce4b9c279943aebcd81089825d",
       "channel_key": "黑龙江卫视",
@@ -18494,6 +19773,21 @@
       ],
       "url": "http://115.48.161.223:9901/tsfile/live/0127_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "05d785987a7d6760080d08e8b6a304f19959ab0cb6d0cedf005ea480483e2b66"
+    },
+    "d2a0ceca1eb7529c26f176d5235cd030caaaa02cd1d357bfb170dcf246e408b7": {
+      "candidate_id": "d2a0ceca1eb7529c26f176d5235cd030caaaa02cd1d357bfb170dcf246e408b7",
+      "channel_key": "黑龙江卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "黑龙江卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.199.225:9901/tsfile/live/0143_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "eb5159703fe506db2dbc2625cd1608efb873b1cd249c13eebf7c49724b42d898"
     },
     "d33e068b413923bbaf3825152a6c7ade9d2fcf31f5837c7f539b0102d58f9fe4": {
       "candidate_id": "d33e068b413923bbaf3825152a6c7ade9d2fcf31f5837c7f539b0102d58f9fe4",
@@ -18664,6 +19958,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5hdnew/600/index.m3u8?msisdn=202609142203033b61deabdb7c4ad281d574893941f166&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20260914220303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=171.8.79.254&SecurityKey=20260914220303&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f30a72fede810009cab14c7fa253440a",
       "url_sha256": "0406759ef64b1333f2dbc69220dea09343575f9740e82aced05bde1fd65074fb"
     },
+    "d86a9180fb8b9220ff686199cd1181b56ec2bb522997558fe2ba9efa58fed0b5": {
+      "candidate_id": "d86a9180fb8b9220ff686199cd1181b56ec2bb522997558fe2ba9efa58fed0b5",
+      "channel_key": "天津卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "天津卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://59.39.89.130:60901/tsfile/live/0125_8.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "a7c57ae3d2cdca0f36890544a8e4c7467db8a7aa66276f3babc41fecf7c05620"
+    },
     "d8dd985d036c279edd3ddb4280eb6376c9c8dffd2032b0cfa10c17d2d2103762": {
       "candidate_id": "d8dd985d036c279edd3ddb4280eb6376c9c8dffd2032b0cfa10c17d2d2103762",
       "channel_key": "青海卫视",
@@ -18693,6 +20002,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/hbws/50/20251225/index.m3u8?msisdn=202609160201240b9733d4e7f94648a3b246e847ef95f8&mdspid=&spid=600725&netType=0&sid=5910022316&pid=2028597139&timestamp=20260916020124&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=962042070&ParentNodeID=-99&assertID=5910022316&client_ip=171.8.79.254&SecurityKey=20260916020124&promotionId=&mvid=5900006782&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=a02da2c663880310233004ed5dc12252",
       "url_sha256": "3cf9113e6786eab24df44912de0d6cf46b404a6554fe504348ce416038f312b5"
+    },
+    "d9aa617060ce27db066fdb9f133b8a21bcad560fcb26d165060e253941480191": {
+      "candidate_id": "d9aa617060ce27db066fdb9f133b8a21bcad560fcb26d165060e253941480191",
+      "channel_key": "cctv5",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-5",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://173.208.234.146/live/cctv5p.m3u8",
+      "url_sha256": "c004d542ed467e083141f5337729ed3719697c4c06253d247ef1399465fe4bf3"
     },
     "d9f6ee0552d1f03ad9347fc87016aea751fdb5ce7050e6cd01452c96719768b9": {
       "candidate_id": "d9f6ee0552d1f03ad9347fc87016aea751fdb5ce7050e6cd01452c96719768b9",
@@ -18736,7 +20060,6 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0007_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -18756,6 +20079,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_v/2018/SD/jilin/1000/index.m3u8?msisdn=202609160203095dfefa57bc434f1d88d02d670e622b69&mdspid=&spid=600633&netType=0&sid=5910022164&pid=2028597139&timestamp=20260916020309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472500&ParentNodeID=-99&assertID=5910022164&client_ip=171.8.79.254&SecurityKey=20260916020309&promotionId=&mvid=5900004357&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=8afaf010a67c1e975b8c5923b64fad36",
       "url_sha256": "f87a715cba0e088a761961cfac5e450e9bf186d21cb14b95aeadebb9cded463c"
+    },
+    "dc5de7733110164d2ba69384d7a5093c6834db7dc97856fda02e72a613ca474d": {
+      "candidate_id": "dc5de7733110164d2ba69384d7a5093c6834db7dc97856fda02e72a613ca474d",
+      "channel_key": "青海卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "青海卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/index.m3u8?msisdn=20260918020304a5c9eedd67004d1684d307ce1a09dc3d&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20260918020304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=171.8.79.254&SecurityKey=20260918020304&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=71da6876c9b73371a91ce0a816b1de12",
+      "url_sha256": "77e97a2841bedfd97f26ff228042e4d1ec4f15c1e121b1f3e7f64ac02fc7b91d"
     },
     "dca112c8802458bc6ba92c3178ebbfe274a44c512a2fb417777e64ea4106cde7": {
       "candidate_id": "dca112c8802458bc6ba92c3178ebbfe274a44c512a2fb417777e64ea4106cde7",
@@ -18801,6 +20139,21 @@
       ],
       "url": "http://101.66.195.190:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "cf4000b0085984302559f5343fd00ac9f1c6fa8f1dbae2cd4e7f2f239bfe1dba"
+    },
+    "dd59850555297d3e414aa566954735d9019c0e15c0c3064a80af015b52e7f46f": {
+      "candidate_id": "dd59850555297d3e414aa566954735d9019c0e15c0c3064a80af015b52e7f46f",
+      "channel_key": "cctv10",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-10",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv10hd/1000/index.m3u8?msisdn=2026091622013920bf63661c3749c2aba1a5c1f6f96287&mdspid=&spid=699004&netType=0&sid=5500212874&pid=2028597139&timestamp=20260916220139&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878405&ParentNodeID=-99&assertID=5500212874&client_ip=171.8.79.254&SecurityKey=20260916220139&promotionId=&mvid=5100001696&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=b16b212e423035b5647a36c742a2b8c5",
+      "url_sha256": "111d39c0f64e7a5c25b627302fb9a3cb2ed233e259335ced90e98c2c6393ac60"
     },
     "dd61ec590912bb7916fa6947069bc270290b9af518a7b14962930758e2481ef0": {
       "candidate_id": "dd61ec590912bb7916fa6947069bc270290b9af518a7b14962930758e2481ef0",
@@ -18911,6 +20264,21 @@
       "url": "http://115.48.161.223:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "3125026b98cb881449e7ef3a25460490af0faa5949c96f973e5abdaff3e6c58a"
     },
+    "df231e5f2f1966c4f3917fe03badcb5b468cf6590bdd3b9e9ca3101a70b73265": {
+      "candidate_id": "df231e5f2f1966c4f3917fe03badcb5b468cf6590bdd3b9e9ca3101a70b73265",
+      "channel_key": "山西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "e757caf5f0e7a76012f581f5d2ba2f68205fa945f62e8e68e1e2a9642a60d3da"
+    },
     "dffb2e701bcb4d356fb1db8615d9cc495d5502ee70483dc154fc59db8966f570": {
       "candidate_id": "dffb2e701bcb4d356fb1db8615d9cc495d5502ee70483dc154fc59db8966f570",
       "channel_key": "广西卫视",
@@ -18957,6 +20325,21 @@
       "url": "http://101.66.198.81:9901/tsfile/live/0006_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "7285f3fdd06c3d0e76117d4cdfe381d2fa05df2b27f032d322a982a99ecbbe87"
     },
+    "e0976f0cb3215a1fea5d802791c2736940c1b5a83af285dcd5da83577ac22042": {
+      "candidate_id": "e0976f0cb3215a1fea5d802791c2736940c1b5a83af285dcd5da83577ac22042",
+      "channel_key": "北京卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "北京卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.194.117:9901/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "63892f496aeb81b4c51fd15adbaedc2cebb1cde781db92f5097695de025d07be"
+    },
     "e0c4961b6c611852020042331f72c03060c21f864e52ed579a82b7f210d54437": {
       "candidate_id": "e0c4961b6c611852020042331f72c03060c21f864e52ed579a82b7f210d54437",
       "channel_key": "宁夏卫视",
@@ -19002,6 +20385,23 @@
       "url": "http://101.66.198.129:9901/tsfile/live/0136_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "b79695106c958f6e2b97b9c0852a651d6d80110a3b9758ba8f3087c2e4a34806"
     },
+    "e24c9500f48a898ce0e44387dd8f356e2a5a860f6fc5f60a5e2f74bf248928ab": {
+      "candidate_id": "e24c9500f48a898ce0e44387dd8f356e2a5a860f6fc5f60a5e2f74bf248928ab",
+      "channel_key": "cctv4k",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4K",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.m3u",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live.txt",
+        "https://raw.githubusercontent.com/CCSH/IPTV/main/live_lite.m3u"
+      ],
+      "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_mbd.m3u8?auth_key=1789650000-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-eba503fd56a63051ed594f34cefa2968&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+      "url_sha256": "a033a772d016cc2ada606447c9f78486f5d68899cf6e46b65b8d5f8d9dcaf0ff"
+    },
     "e3fd5bdd0bdd491002e4bea6ab80796a3ca1898e621477d578113177bd50bd73": {
       "candidate_id": "e3fd5bdd0bdd491002e4bea6ab80796a3ca1898e621477d578113177bd50bd73",
       "channel_key": "兵团卫视",
@@ -19018,6 +20418,21 @@
       ],
       "url": "http://223.247.25.200:1234/956923145",
       "url_sha256": "9f0396fa0f7ae5d69af460b35c81345bcd8f380056fe6c48c04ddd95b8e58067"
+    },
+    "e41bc4fcdc36416a21a23efcd651a0f3a43836ac0f93e0e30e866d19169c9908": {
+      "candidate_id": "e41bc4fcdc36416a21a23efcd651a0f3a43836ac0f93e0e30e866d19169c9908",
+      "channel_key": "贵州卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "贵州卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.199.225:9901/tsfile/live/0120_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "112c9ac8720342f8fd4a0adc5effbba857cb0042d52c916c816fca7be38545c5"
     },
     "e516c5ccc63e45620152422ae41c23d2cfb69a884ce572b209b40c546343497e": {
       "candidate_id": "e516c5ccc63e45620152422ae41c23d2cfb69a884ce572b209b40c546343497e",
@@ -19064,6 +20479,23 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv5hdnew/600/index.m3u8?msisdn=20260915220303ef2acfc0ec9d4d61aaf1f0dd8941ae51&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20260915220303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=171.8.79.254&SecurityKey=20260915220303&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c3c0a97218c703940d8bf919be188530",
       "url_sha256": "bae37864ffc694dddb0f6dd0c2b79814a2f072b4b91090c988220daf2e25a5b2"
     },
+    "e72fd89f3796f4e29ca2958515e4cf0779cac7308c558178d7f06a099db3f985": {
+      "candidate_id": "e72fd89f3796f4e29ca2958515e4cf0779cac7308c558178d7f06a099db3f985",
+      "channel_key": "辽宁卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "辽宁卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0121_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "203517432340f82f93f9d9c5db47b7ca0b81ed6f109e29611370d6a7403a7838"
+    },
     "e796c514b52669ced52aaef78fc5ba1450437bfa673014bc1ec86985dd992156": {
       "candidate_id": "e796c514b52669ced52aaef78fc5ba1450437bfa673014bc1ec86985dd992156",
       "channel_key": "云南卫视",
@@ -19090,6 +20522,7 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://123.163.114.241:9901/tsfile/live/0009_1.m3u8?key=txiptv&playlive=1&authid=0",
@@ -19110,6 +20543,21 @@
       "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_x/2018/SD/ningxia/1000/index.m3u8?msisdn=20260912220310f71b691cc42049f5bd388491fa719892&mdspid=&spid=600697&netType=0&sid=5910022262&pid=2028597139&timestamp=20260912220310&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=738910535&ParentNodeID=-99&assertID=5910022262&client_ip=171.8.79.254&SecurityKey=20260912220310&promotionId=&mvid=5900004337&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=722ae04c6b8f7bf7874733defc601fcc",
       "url_sha256": "cdc8f092051184295a3e14a9c0616c6aa20b6bd8e27fcb4dbc60feee1e0a56fe"
     },
+    "e87d6a24e8e014d7ca7bd7c3857439d7fae29f92e9422fd81c2cd7768f0b6de8": {
+      "candidate_id": "e87d6a24e8e014d7ca7bd7c3857439d7fae29f92e9422fd81c2cd7768f0b6de8",
+      "channel_key": "cctv15",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-15",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv15hd/50/index.m3u8?msisdn=20260918000303ea7a4e770b6549b387a68a578bcf7de8&mdspid=&spid=699004&netType=0&sid=5501083628&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168223&ParentNodeID=-99&assertID=5501083628&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5102910391&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=55d9a9cb829f0c55921824315ae31a9f",
+      "url_sha256": "897385bf3988720d42ce6b00f103ce1e2923abd300c849dcac66a1a49a6bafda"
+    },
     "e899c6906763a848807b1459e921a6b136402c1baa49f7afb049f3d78d7ff53a": {
       "candidate_id": "e899c6906763a848807b1459e921a6b136402c1baa49f7afb049f3d78d7ff53a",
       "channel_key": "cctv14",
@@ -19124,6 +20572,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv14hd/1000/index.m3u8?msisdn=20260915020305f30222b5323849269ccdc572a48eca87&mdspid=&spid=699004&netType=0&sid=5500212875&pid=2028597139&timestamp=20260915020305&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878440&ParentNodeID=-99&assertID=5500212875&client_ip=171.8.79.254&SecurityKey=20260915020305&promotionId=&mvid=5100001697&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=894047b25dde5be06d6c3d5114160364",
       "url_sha256": "c881123667d0a7b0b59707c21c5e993c9eb81136177b47b0920e93176e36f4d6"
+    },
+    "e8a8b8cb5dd46f0cc98a181eb8735c862643fb3e1c717a2f824e14cccdb067a9": {
+      "candidate_id": "e8a8b8cb5dd46f0cc98a181eb8735c862643fb3e1c717a2f824e14cccdb067a9",
+      "channel_key": "河南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "河南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/index.m3u8?msisdn=202609180003067cba157d5eb3405788c58d9aa7b4d657&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20260918000306&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=171.8.79.254&SecurityKey=20260918000306&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4bf2219b41cb775cc12d400f70f196ed",
+      "url_sha256": "8c0d30799487bcd7f2696672a45eb6459e007aa4d1ad00bff15b0da94155225d"
     },
     "e8c171dea0b44aa693f960025b7d1274656cbd1dc01691f80cd1263c8d12dac9": {
       "candidate_id": "e8c171dea0b44aa693f960025b7d1274656cbd1dc01691f80cd1263c8d12dac9",
@@ -19353,6 +20816,21 @@
       "url": "http://123.163.114.241:9901/tsfile/live/0004_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "b336811323aa8f9905bd79b19471ee95392f8f2bea75247b56296809c1a67f37"
     },
+    "ef55de68634929492ce432aa572d5ef3133795be7e0b59f36d3496573c4b01ad": {
+      "candidate_id": "ef55de68634929492ce432aa572d5ef3133795be7e0b59f36d3496573c4b01ad",
+      "channel_key": "cctv14",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-14",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/2018/ocn/cctv14hd/1000/index.m3u8?msisdn=20260918000303667ef2efc9254bbca42812a9f2065b56&mdspid=&spid=699004&netType=0&sid=5500212875&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=624878440&ParentNodeID=-99&assertID=5500212875&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5100001697&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f3cf2a0e2dfd5b6e5d242b35cf59d20c",
+      "url_sha256": "89a47c51efd59e031d07f6ed8b09c8310e70d6587ab81522d6b2faa8909342e9"
+    },
     "ef682b2283a8d4d67a58f6493151f4ee51cbdbc02b3823af67c60795b69e17bf": {
       "candidate_id": "ef682b2283a8d4d67a58f6493151f4ee51cbdbc02b3823af67c60795b69e17bf",
       "channel_key": "兵团卫视",
@@ -19570,6 +21048,23 @@
       "url": "http://115.48.161.223:9901/tsfile/live/0132_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "f60887a3e8a22dc78ef6b11ae20f99fb7744b1127eddb8d9b41275a72f3757ab"
     },
+    "f4304134f9313067ebd360956f3dae724e90fdc896cba8245d1c41c50d6a44de": {
+      "candidate_id": "f4304134f9313067ebd360956f3dae724e90fdc896cba8245d1c41c50d6a44de",
+      "channel_key": "云南卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "云南卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0119_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "90c38172ead4f54101154ff836dd5d7773d7eb4a4eeb63c6b591ae3e35046948"
+    },
     "f45f50d06773d8c9812b363e83b2cf2556c5deb806f60ad3e9c9cbd1dd4c93c9": {
       "candidate_id": "f45f50d06773d8c9812b363e83b2cf2556c5deb806f60ad3e9c9cbd1dd4c93c9",
       "channel_key": "浙江卫视",
@@ -19584,6 +21079,21 @@
       ],
       "url": "http://101.66.194.200:9901/tsfile/live/0124_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "1c80d6b384206d7039252ac60b4157932f35ff96cc62f9f986c848c1bbdecb98"
+    },
+    "f4c0c4e441619878d165fac3a74742ceb122b3f78043510cec92dd952810cb45": {
+      "candidate_id": "f4c0c4e441619878d165fac3a74742ceb122b3f78043510cec92dd952810cb45",
+      "channel_key": "cctv12",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-12",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv12hd/50/index.m3u8?msisdn=2026091800030371d571223e30445e9c7e8f5ad24414e1&mdspid=&spid=699004&netType=0&sid=5501083627&pid=2028597139&timestamp=20260918000303&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=673168185&ParentNodeID=-99&assertID=5501083627&client_ip=171.8.79.254&SecurityKey=20260918000303&promotionId=&mvid=5102910389&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=74b77a08b4a43856b6c2369b12c17014",
+      "url_sha256": "b802c4710ecbebd25cf21dd51571b16c5f83001664b36e7458800acbc0cc6d07"
     },
     "f4c27f7a5c21a1e76e912d514b2e5bbe930d6829c0ba19bf6c59ac1ea6f5615b": {
       "candidate_id": "f4c27f7a5c21a1e76e912d514b2e5bbe930d6829c0ba19bf6c59ac1ea6f5615b",
@@ -19644,6 +21154,53 @@
       ],
       "url": "http://101.66.198.251:9901/tsfile/live/0113_1.m3u8?key=txiptv&playlive=0&authid=0",
       "url_sha256": "5fe0c79fc6760996c07e55d33032a85a14bc8d5da7fcc7b760334bbd256eaa95"
+    },
+    "f69164e7deb3dca9804875194795ecbc3b9d724f2458461c14320d87a5d5d103": {
+      "candidate_id": "f69164e7deb3dca9804875194795ecbc3b9d724f2458461c14320d87a5d5d103",
+      "channel_key": "cctv4",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-4",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r2/cctv/cctv4hd/600/index.m3u8?msisdn=202609180001167efd49d8b48549f5acc072fef23d50c2&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20260918000116&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=171.8.79.254&SecurityKey=20260918000116&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=8e3d2370176bc4a555cf510603fb5428",
+      "url_sha256": "64693ac747335e0481a90ce495ee085cc75951e163f8c05c1d52697d6d1620f8"
+    },
+    "f715ea975c77fcd1e3d5d3624c9c8ea361d20155259c65fa59218cd9b0ae2dd9": {
+      "candidate_id": "f715ea975c77fcd1e3d5d3624c9c8ea361d20155259c65fa59218cd9b0ae2dd9",
+      "channel_key": "深圳卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "深圳卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0126_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "56de5ebb6b0e7392c3a13a5cf9864c82dbafd5f1f247f8db35d087786b53b6eb"
+    },
+    "f7437ae20eafd65216767d3f42819bca33defa169b9827c0343c1114ddf8cc94": {
+      "candidate_id": "f7437ae20eafd65216767d3f42819bca33defa169b9827c0343c1114ddf8cc94",
+      "channel_key": "天津卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "天津卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://live.zbds.top/tv/iptv4.txt",
+        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
+      ],
+      "url": "http://123.163.114.241:9901/tsfile/live/0135_1.m3u8?key=txiptv&playlive=1&authid=0",
+      "url_sha256": "9eccb106f404c258df197acc97291dcbbeafa8e1c5e23042e70f86ea608fdc9a"
     },
     "f791c52d47e947ecd4826906e08a6ac7a5c966ff7f47f4545c63acac47cf4b3d": {
       "candidate_id": "f791c52d47e947ecd4826906e08a6ac7a5c966ff7f47f4545c63acac47cf4b3d",
@@ -19731,7 +21288,6 @@
       "request_options": "",
       "sources": [
         "https://live.zbds.top/tv/iptv4.txt",
-        "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u",
         "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.txt"
       ],
       "url": "http://101.66.198.207:9901/tsfile/live/0010_1.m3u8?key=txiptv&playlive=0&authid=0",
@@ -19814,6 +21370,21 @@
       "url": "https://jsp-tv-live.jxtvcn.com.cn/live-jsp/tv_jxtv1.m3u8?t=1789574525&token=5115d73b-b403-49e5-a2e7-0940535e19ae&d=9601f1ac61e848f18dea1dc0fc027d0d",
       "url_sha256": "1dd4e745c7839075abe1d4221c34a707063202114619c6d0e09ed1ce120ca931"
     },
+    "fc00628ac6105e5ac99b748b00275471fdce3993c7842548150183f3ffb75780": {
+      "candidate_id": "fc00628ac6105e5ac99b748b00275471fdce3993c7842548150183f3ffb75780",
+      "channel_key": "山西卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "山西卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/best-fan/iptv-sources/main/cn_province_status.m3u8"
+      ],
+      "url": "http://101.66.199.225:9901/tsfile/live/0118_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "url_sha256": "0ea67422a8b5d2df4286abc86159568675528f45c61aa4c04d25412800301ae9"
+    },
     "fc8190f4d4b76b81bd14524fa30ea5be2f48df401ecdac2419cab239f389fb51": {
       "candidate_id": "fc8190f4d4b76b81bd14524fa30ea5be2f48df401ecdac2419cab239f389fb51",
       "channel_key": "安徽卫视",
@@ -19843,6 +21414,21 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=20260914220308f916d305d430404f9e14addbc7137230&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260914220308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260914220308&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=WX-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=f5e2323718a7763be32d7d85e35299d5",
       "url_sha256": "bc2181004bfdb8e20d32d9f207d9507b3aef56a5050ec691aa509e40b507ad4b"
+    },
+    "fd1b349273ec5df11d3b92dc75db021bb07c008732687fcff29a3b213da91f75": {
+      "candidate_id": "fd1b349273ec5df11d3b92dc75db021bb07c008732687fcff29a3b213da91f75",
+      "channel_key": "cctv2",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "CCTV-2",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://118.122.144.115:8888/newlive/live/hls/2/live.m3u8",
+      "url_sha256": "6dd30cdbe6749e9924e0b69bc0a8aae0b00d4b2810751220cb714e4f1aa16c8e"
     },
     "fd263268b9fa6d2ee9d252e9034ff575d0798e09a480a7538b9d24845f293ad6": {
       "candidate_id": "fd263268b9fa6d2ee9d252e9034ff575d0798e09a480a7538b9d24845f293ad6",
@@ -19888,6 +21474,21 @@
       ],
       "url": "http://119.129.172.79:9901/tsfile/live/0013_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "ab0e0885ccc83da3b6fe5bba4ac32b769316d6495a7fbed848a47fbd2fbf32ca"
+    },
+    "fdfdb9ec0542ef5e6d8ea9e11f825f6e5a15e39ea6a12445446032a305de6b56": {
+      "candidate_id": "fdfdb9ec0542ef5e6d8ea9e11f825f6e5a15e39ea6a12445446032a305de6b56",
+      "channel_key": "东方卫视",
+      "cloud_stream_probe_performed": false,
+      "group": "卫视台",
+      "home_verified": false,
+      "name": "东方卫视",
+      "production_eligible": false,
+      "request_options": "",
+      "sources": [
+        "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt"
+      ],
+      "url": "http://hlsztemgsplive.miguvideo.com:8080/wd_r4/dfl/dongfangwshd/600/index.m3u8?msisdn=202609162203041edcfd7eccb94e4785b847b2f0190356&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20260916220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=171.8.79.254&SecurityKey=20260916220304&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=e5a4f8e1407e2c50b1b872210462bd3a",
+      "url_sha256": "5543e6bd847b6deecc9c70f8d00c8ba7ab5677116ee76f56e700d0c6e9f3d4f6"
     },
     "fe1e6654913ed24097e6f33e366ac2898c750f103234c6c6a983cec7a584ec7f": {
       "candidate_id": "fe1e6654913ed24097e6f33e366ac2898c750f103234c6c6a983cec7a584ec7f",
