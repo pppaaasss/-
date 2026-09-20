@@ -251,12 +251,15 @@ def ingest(state, reports, now):
         state['processed'][path.stem] = hashlib.sha256(raw).hexdigest()
         budget = state.get('native_budget', {})
         reserved = budget.get('reservations', {}).pop(path.stem, None)
-        # Invalid native metrics leave part of the usage unknown: keep the
-        # original reservation charged, just as with interrupted measurements.
-        if (reserved and value.get('stop_reason') != 'interrupted_batch'
-                and value.get('native_evidence', {}).get('usage_complete', True)):
-            refund_bytes = max(0, reserved['bytes'] - value['usage']['downloaded_bytes'])
-            refund_seconds = max(0, reserved['seconds'] - value['usage']['runtime_s'])
+        # Settle each independently verified counter. Old ambiguous evidence
+        # and interrupted batches retain their original conservative charges.
+        if reserved and value.get('stop_reason') != 'interrupted_batch':
+            evidence = value.get('native_evidence', {})
+            complete = evidence.get('usage_complete', True)
+            refund_bytes = (max(0, reserved['bytes'] - value['usage']['downloaded_bytes'])
+                if evidence.get('usage_bytes_complete', complete) else 0)
+            refund_seconds = (max(0, reserved['seconds'] - value['usage']['runtime_s'])
+                if evidence.get('usage_runtime_complete', complete) else 0)
             budget['bytes'] -= refund_bytes
             budget['seconds'] -= refund_seconds
             if reserved['candidates']:
@@ -314,6 +317,38 @@ def optional_window(config, kind):
     if not isinstance(kinds, list) or any(k not in KINDS for k in kinds):
         raise ValueError('invalid candidate run kinds')
     return kind in kinds
+
+
+def night_budget_config(state, config, now):
+    """A durable night's queue determines bytes; time stays within fixed windows."""
+    plan = state.get('night_plan')
+    day = timestamp(now + 8 * 3600)[:10].replace('-', '')
+    if config.get('candidate_budget_mode') != 'night_queue' or not plan or plan['day'] != day:
+        return config
+    # One reservation per four routes, plus a spare batch for an interrupted
+    # boundary. Keep the normal allowance for current routes and backup checks.
+    batches = (len(plan['candidate_ids']) + config['routes_per_batch'] - 1) // config['routes_per_batch']
+    discovery = max(config['discovery_bytes'], (batches + 1) * min(config['batch_bytes'], 64 * 1024 * 1024))
+    return dict(config, discovery_bytes=discovery,
+        daily_bytes=config['daily_bytes'] + discovery - config['discovery_bytes'])
+
+
+def finish_cycle(state, current, feedback, now):
+    """Publish collected decisions at the deadline even if discovery has work left."""
+    cycle = state.get('cycle')
+    if not cycle or cycle['slot'] in state['completed_slots']:
+        return None
+    for key, route in cycle['current'].items():
+        first = cycle['results'].get(task_row(cycle, key, route['url'], 'current')['task_id'])
+        second = task_row(cycle, key, route['url'], 'current', 2)['task_id']
+        if not first or (not probe_is_good(first['result']) and second not in cycle['results']):
+            return None  # Never present incomplete current checks as actionable.
+    if now - min(epoch(r['started_utc']) for r in cycle['results'].values()) > 18 * 3600:
+        return None
+    report = complete_report(state, cycle, current, feedback, now)
+    state['completed_slots'] = (state['completed_slots'] + [cycle['slot']])[-42:]
+    state['last_report'] = report
+    return report
 
 
 def next_tasks(state, cycle, config, current, feedback, now):
@@ -381,6 +416,7 @@ def complete_report(state, cycle, current, feedback, now):
     state['peak_failures'] = peaks
     bad = {row['channel_key'] for row in rows if row['status'] == 'BAD'}
     check = allowed(state, current, feedback)
+    remaining = sum(check(row) and identity not in state['tested'] for identity, row in state['queue'].items())
     choices, candidates = {}, []
     for identity, task in cycle['task_rows'].items():
         if task['role'] == 'current':
@@ -423,12 +459,14 @@ def complete_report(state, cycle, current, feedback, now):
         'current_results': rows, 'candidate_results': candidates, 'decisions': decisions,
         'policy': {'batch_complete': True, 'formal_check_deferred': False, 'minimum_headroom_ratio': 1.05,
                    'decision_origin': 'cloud_from_household_measurements', 'cloud_stream_probe_performed': False,
+                   'candidate_sweep_complete': remaining == 0,
                    'candidate_mode': cycle.get('candidate_mode', 'daily')},
         'aggregation': {'cycle_id': cycle['id'], 'oldest_measurement_utc': timestamp(generated),
                         'newest_measurement_utc': max(row['finished_utc'] for row in cycle['results'].values()),
                         'batch_ids': sorted(cycle['batch_ids'])},
         'summary': {'channels': len(rows), 'good': sum(r['status']=='GOOD' for r in rows),
                     'bad': len(bad), 'unknown': sum(r['status']=='UNKNOWN' for r in rows),
+                    'candidate_queue_remaining': remaining,
                     'replacements': sum(r['action']=='REPLACE' for r in decisions)}}
     validate_home_report_v2(report, expected_probe_id=state['probe_id'], now_epoch=now, max_age_hours=18)
     return report
@@ -467,8 +505,31 @@ def step(state, config, root, reports, now):
         'received_batches': [row['id'] for row in manifest.get('delivery_batches', [])] if intake_current else []}
     if intake_current and not state['delivery_receipt']['received_batches'] and manifest['candidates']:
         state['delivery_receipt']['received_batches'] = [digest(manifest['candidates'])]
+    if (active and active[0] == KINDS[0] and config.get('candidate_budget_mode') == 'night_queue'):
+        if (state.get('night_plan') or {}).get('day') != active[1]:
+            state['night_plan'] = {'day': active[1], 'candidate_ids': []}
+        check = allowed(state, current, feedback)
+        plan = state['night_plan']
+        incoming = {
+            identity for identity, row in state['queue'].items()
+            if identity not in state['tested'] and check(row)} - set(plan['candidate_ids'])
+        plan['candidate_ids'] = sorted(set(plan['candidate_ids']) | incoming)
+        night_slot = active[1]+'-'+active[0]
+        if incoming and night_slot in state['completed_slots']:
+            # New intake before 11:00 wakes a finished sweep exactly once per
+            # new identity. Previously accepted tests and budgets stay intact.
+            state['completed_slots'].remove(night_slot)
+            if state.get('cycle') and state['cycle']['slot'] == night_slot:
+                state['cycle'].pop('optional_closed', None)
+                state['cycle'].pop('discovery_closed', None)
+    config = night_budget_config(state, config, now)
+    closing_report = None
+    previous = state.get('cycle')
+    if (previous and (not active or previous['slot'] != active[1]+'-'+active[0])
+            and previous['binding']['sha256'] == formal_sha and previous['feedback_sha'] == feedback_sha):
+        closing_report = finish_cycle(state, current, feedback, now)
     if active is None:
-        return state, idle, None
+        return state, idle, closing_report
     kind, day, deadline = active
     slot_id = day + '-' + kind
     manual = config.get('_manual_resume')
@@ -481,7 +542,7 @@ def step(state, config, root, reports, now):
             state['cycle'].pop('discovery_closed', None)
         state.setdefault('manual_resumes', {})[manual['id']] = timestamp(now)
     if slot_id in state['completed_slots']:
-        return state, dict(idle, state='SLOT_COMPLETE'), None
+        return state, dict(idle, state='SLOT_COMPLETE'), closing_report
     cycle_id = digest([slot_id, formal_sha, feedback_sha])
     if not state.get('cycle') or state['cycle']['id'] != cycle_id:
         state['cycle'] = {'id': cycle_id, 'slot': slot_id, 'kind': kind, 'started': now,
@@ -498,12 +559,12 @@ def step(state, config, root, reports, now):
         task = state['batches'][cycle['outstanding']]
         permitted = optional_window(config, kind) or all(t['role'] == 'current' for t in task['tasks'])
         if now < epoch(task['expires_utc']) and permitted:
-            return state, task, None
+            return state, task, closing_report
         # Apply a narrower schedule immediately. Preserve the batch history so
         # already captured, valid household results can still be ingested.
         cycle.pop('outstanding')
     if now < cycle.get('retry_after', 0):
-        return state, dict(idle, state='WAITING_HOME_RESOURCES', last_heartbeat=state.get('last_heartbeat')), None
+        return state, dict(idle, state='WAITING_HOME_RESOURCES', last_heartbeat=state.get('last_heartbeat')), closing_report
     tasks = next_tasks(state, cycle, config, current, feedback, now)
     if not tasks:
         report = complete_report(state, cycle, current, feedback, now)
@@ -511,7 +572,8 @@ def step(state, config, root, reports, now):
         state['last_report'] = report
         return state, dict(idle, state='SLOT_COMPLETE'), report
     if deadline - now < 60:
-        return state, dict(idle, state='WINDOW_ENDING'), None
+        report = finish_cycle(state, current, feedback, now)
+        return state, dict(idle, state='WINDOW_ENDING'), report or closing_report
     task = seal_task({'schema': TASK_SCHEMA, 'probe_id': state['probe_id'], 'cycle_id': cycle_id,
         'candidate_mode': cycle.get('candidate_mode', 'daily'),
         'route_context': ROUTE_CONTEXT, 'run_kind': kind, 'created_utc': timestamp(now),
@@ -538,7 +600,7 @@ def step(state, config, root, reports, now):
                 state['completed_slots'] = (state['completed_slots'] + [slot_id])[-42:]
                 state['last_report'] = report
                 return state, dict(idle, state='SLOT_COMPLETE'), report
-            return state, dict(idle, state='WAITING_BUDGET'), None
+            return state, dict(idle, state='WAITING_BUDGET'), closing_report
         budget['bytes'] += amount
         budget['seconds'] += seconds
         budget['candidates'] += candidates
@@ -549,12 +611,13 @@ def step(state, config, root, reports, now):
     state['batches'][task['batch_id']] = task
     cycle['outstanding'] = task['batch_id']
     cycle['batch_ids'].append(task['batch_id'])
-    return state, task, None
+    return state, task, closing_report
 
 
 def status_snapshot(state, task, config, now):
     """Cloud-only progress: a saved queue or issued task is never a router ACK."""
     config = resume_config(config, now)
+    config = night_budget_config(state, config, now)
     active = slot(now)
     day_start = (int(now) + 8 * 3600) // 86400 * 86400 - 8 * 3600
     next_start = min(day_start + day * 86400 + hour * 3600
@@ -601,7 +664,15 @@ def status_snapshot(state, task, config, now):
             'bytes': budget['bytes'], 'seconds': budget['seconds'],
             'candidates': budget['candidates'],
             'daily_bytes_limit': config['daily_bytes'], 'daily_seconds_limit': config['daily_seconds'],
+            'discovery_bytes_limit': config['discovery_bytes'], 'discovery_seconds_limit': config['discovery_seconds'],
             'daily_candidates_limit': config['daily_candidates']}
+    if state.get('night_plan'):
+        plan = state['night_plan']
+        measured = [identity for identity in plan['candidate_ids'] if identity in state['tested']]
+        status['night_sweep'] = {'day': plan['day'], 'planned': len(plan['candidate_ids']),
+            'measured': len(measured), 'remaining': len(plan['candidate_ids']) - len(measured),
+            'qualified': sum(candidate_is_qualified(state['tested'][identity].get('result', {})) for identity in measured),
+            'complete': len(measured) == len(plan['candidate_ids'])}
     return status
 
 

@@ -242,11 +242,12 @@ class NativeCloudTests(NativeFixture, ThinFixture):
         self.assertEqual('GOOD', good['result']['observed_status'])
         self.assertEqual(1080, good['result']['height'])
         self.assertIn('600', value['native_evidence']['rejected_measurements'][bad['task_id']]['reason'])
-        self.assertFalse(value['native_evidence']['usage_complete'])
+        self.assertTrue(value['native_evidence']['usage_complete'])
         self.assertNotIn(wire.b64(self.prefix), observation.read_text())
         self.now += 4
         cloud.ingest(self.state, self.reports, self.now)
-        self.assertEqual(reserved, self.state['native_budget']['bytes'])
+        self.assertEqual(value['usage']['downloaded_bytes'], self.state['native_budget']['bytes'])
+        self.assertEqual(value['usage']['runtime_s'], self.state['native_budget']['seconds'])
         self.assertNotIn(task['batch_id'], self.state['native_budget']['reservations'])
         next_task, report = self.step()
         self.assertIsNone(report)
@@ -267,7 +268,43 @@ class NativeCloudTests(NativeFixture, ThinFixture):
                 result = cloud.normalise(parsed['results'][0]['result'], task['tasks'][0])
                 self.assertEqual('UNKNOWN', result['observed_status'])
                 self.assertEqual('native_invalid_measurement', result['error'])
-                self.assertFalse(parsed['native_evidence']['usage_complete'])
+                self.assertEqual(field != 2, parsed['native_evidence']['usage_complete'])
+                self.assertTrue(parsed['native_evidence']['usage_runtime_complete'])
+
+    def test_invalid_byte_counter_keeps_bytes_but_settles_verified_completed_runtime(self):
+        self.migrated(); task,_ = self.step()
+        reserved = self.state['native_budget']['bytes']
+        path = self.asset(task, self.change_metric(self.capsule(task), 9, 2, 'nan'))
+        wire.prepare_assets(self.state, path.parent, self.reports, self.now+10)
+        self.now += 4
+        cloud.ingest(self.state, self.reports, self.now)
+        self.assertEqual(reserved, self.state['native_budget']['bytes'])
+        self.assertEqual(2, self.state['native_budget']['seconds'])
+        before = json.dumps(self.state['native_budget'], sort_keys=True)
+        cloud.ingest(self.state, self.reports, self.now)
+        self.assertEqual(before, json.dumps(self.state['native_budget'], sort_keys=True))
+
+    def test_interrupted_and_legacy_unknown_usage_still_keep_full_reservations(self):
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy):
+                self.state = cloud.new_state(self.probe); self.migrated()
+                task,_ = self.step()
+                value = wire.read_native(self.change_metric(self.capsule(task, tail='interrupted_batch' if not legacy else 'completed')),
+                    task, self.now+10)
+                if legacy:
+                    value['native_evidence'].update(usage_complete=False)
+                    value['native_evidence'].pop('usage_bytes_complete')
+                    value['native_evidence'].pop('usage_runtime_complete')
+                folder = self.reports/'observations'/self.probe
+                folder.mkdir(parents=True, exist_ok=True)
+                for old in folder.glob('*.json'):
+                    old.unlink()
+                (folder/(task['batch_id']+'.json')).write_text(json.dumps(value))
+                before = self.state['native_budget'].copy()
+                self.now += 4
+                cloud.ingest(self.state, self.reports, self.now)
+                self.assertEqual(before['bytes'], self.state['native_budget']['bytes'])
+                self.assertEqual(before['seconds'], self.state['native_budget']['seconds'])
 
     def test_unknown_candidate_advances_queue_without_replacement(self):
         self.migrated(); task,_ = self.step()

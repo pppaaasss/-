@@ -81,6 +81,16 @@ def metric(encoded, limit):
         'stream_mbps': total * 8 / duration / 1e6 if total and duration else 0}
 
 
+def transfer_bytes(encoded, limit):
+    """Account bounded byte counters independently of HTTP/quality metadata."""
+    if encoded == '-':
+        return 0
+    fields = decode(encoded, 8192).decode().strip().split('\t')
+    if len(fields) != 8 or not re.fullmatch(r'[0-9]{1,12}', fields[2]):
+        raise ValueError('invalid native byte counter')
+    return int(bounded(fields[2], 0, limit))
+
+
 def media_metadata(raw):
     if not raw:
         return {}
@@ -128,6 +138,7 @@ def read_native(raw, task, now):
     finished = bounded(tail[1], started, min(now + 60, epoch(task['expires_utc'])))
     requested = {r['task_id']: r for r in task['tasks']}
     observations, hashes, rejected, total_bytes = [], {}, {}, 0
+    bytes_complete = True
     for line in lines[1:-1]:
         f = line.split('\t')
         if len(f) != 11 or f[0] != 'R' or f[1] not in requested or f[1] in hashes:
@@ -138,6 +149,19 @@ def read_native(raw, task, now):
             raise ValueError('native measured a different URL')
         begin = bounded(f[3], started, finished)
         end = bounded(f[4], begin, finished)
+        # The worker writes byte counters and record times even for nonstandard
+        # HTTP responses. Bad status/quality fields do not invalidate those
+        # independently bounded counters. Unknown counters keep the reservation.
+        try:
+            if not re.fullmatch(r'[0-9]{1,12}', f[5]):
+                raise ValueError('invalid native manifest byte counter')
+            extra_bytes = int(bounded(f[5], 0, 4 * 98304))
+            transfer_bytes(f[6], 98304)  # Included in extra_bytes, not counted twice.
+            row_bytes = extra_bytes + sum(transfer_bytes(f[n], row['sample_bytes']) for n in (9, 10))
+        except ValueError:
+            bytes_complete = False
+        else:
+            total_bytes += row_bytes
         # Identity and measurement times remain strict. Only malformed transfer
         # metrics become UNKNOWN for this exact, requested route.
         try:
@@ -156,7 +180,6 @@ def read_native(raw, task, now):
             observations.append({'task_id': f[1], 'started_utc': timestamp(begin),
                 'finished_utc': timestamp(end), 'result': result})
             continue
-        total_bytes += sum(m['downloaded_bytes'] for m in samples) + extra_bytes
         result = empty_result(row['name'], url, row['min_height'])
         result['channel_key'] = row['channel_key']
         result['segment_samples'] = samples
@@ -193,9 +216,12 @@ def read_native(raw, task, now):
         'usage': {'downloaded_bytes': total_bytes, 'runtime_s': finished-started},
         'stop_reason': '' if tail[2] == 'completed' else tail[2],
         'native_evidence': {'wire_sha256': hashlib.sha256(raw).hexdigest(), 'media': hashes,
+            'usage_complete': bytes_complete and tail[2] == 'completed',
+            'usage_bytes_complete': bytes_complete,
+            'usage_runtime_complete': tail[2] == 'completed',
             'metadata_origin': 'offline_ffprobe_of_household_bytes', 'cloud_media_requests': False}}
     if rejected:
-        value['native_evidence'].update(rejected_measurements=rejected, usage_complete=False)
+        value['native_evidence']['rejected_measurements'] = rejected
     return validate_observations(value, task, now)
 
 
