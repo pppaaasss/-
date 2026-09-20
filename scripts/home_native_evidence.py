@@ -70,7 +70,11 @@ def metric(encoded, limit):
     duration = bounded(duration, 0, 3600)
     if complete not in ('0', '1') or not url.startswith(('http://', 'https://')):
         raise ValueError('invalid native transfer')
-    return {'curl_code': int(bounded(code, 0, 1000)), 'http_status': int(bounded(status, 0, 599)),
+    # Preserve a useful diagnostic without accepting non-HTTP values as success.
+    if not re.fullmatch(r'[0-9]{1,3}', status) or not 0 <= int(status) <= 599:
+        detail = status if re.fullmatch(r'-?[0-9]{1,12}', status) else 'malformed'
+        raise ValueError('invalid native HTTP status: ' + detail)
+    return {'curl_code': int(bounded(code, 0, 1000)), 'http_status': int(status),
         'downloaded_bytes': count, 'elapsed_s': elapsed, 'total_bytes': total,
         'complete': complete == '1', 'url': url, 'duration_s': duration,
         'download_mbps': count * 8 / elapsed / 1e6,
@@ -123,7 +127,7 @@ def read_native(raw, task, now):
         raise ValueError('native completion missing')
     finished = bounded(tail[1], started, min(now + 60, epoch(task['expires_utc'])))
     requested = {r['task_id']: r for r in task['tasks']}
-    observations, hashes, total_bytes = [], {}, 0
+    observations, hashes, rejected, total_bytes = [], {}, {}, 0
     for line in lines[1:-1]:
         f = line.split('\t')
         if len(f) != 11 or f[0] != 'R' or f[1] not in requested or f[1] in hashes:
@@ -134,9 +138,24 @@ def read_native(raw, task, now):
             raise ValueError('native measured a different URL')
         begin = bounded(f[3], started, finished)
         end = bounded(f[4], begin, finished)
-        manifest = metric(f[6], 98304)
-        samples = [m for m in (metric(f[9], row['sample_bytes']), metric(f[10], row['sample_bytes'])) if m]
-        extra_bytes = int(bounded(f[5], 0, 4 * 98304))
+        # Identity and measurement times remain strict. Only malformed transfer
+        # metrics become UNKNOWN for this exact, requested route.
+        try:
+            manifest = metric(f[6], 98304)
+            samples = [m for m in (metric(f[9], row['sample_bytes']), metric(f[10], row['sample_bytes'])) if m]
+            extra_bytes = int(bounded(f[5], 0, 4 * 98304))
+        except ValueError as exc:
+            result = empty_result(row['name'], url, row['min_height'])
+            result.update(channel_key=row['channel_key'], observed_status='UNKNOWN',
+                error='native_invalid_measurement', probe_runtime_s=end-begin)
+            rejected[f[1]] = {'reason': str(exc)[:200],
+                'record_sha256': hashlib.sha256(line.encode('ascii')).hexdigest()}
+            print('NATIVE_MEASUREMENT_REJECTED', f[1], rejected[f[1]]['reason'])
+            # Do not interpret or publish media from a rejected measurement.
+            hashes[f[1]] = {'measurement_rejected': True}
+            observations.append({'task_id': f[1], 'started_utc': timestamp(begin),
+                'finished_utc': timestamp(end), 'result': result})
+            continue
         total_bytes += sum(m['downloaded_bytes'] for m in samples) + extra_bytes
         result = empty_result(row['name'], url, row['min_height'])
         result['channel_key'] = row['channel_key']
@@ -175,6 +194,8 @@ def read_native(raw, task, now):
         'stop_reason': '' if tail[2] == 'completed' else tail[2],
         'native_evidence': {'wire_sha256': hashlib.sha256(raw).hexdigest(), 'media': hashes,
             'metadata_origin': 'offline_ffprobe_of_household_bytes', 'cloud_media_requests': False}}
+    if rejected:
+        value['native_evidence'].update(rejected_measurements=rejected, usage_complete=False)
     return validate_observations(value, task, now)
 
 
@@ -185,18 +206,32 @@ def prepare_assets(state, inbox, reports, now):
         match = re.fullmatch(r'([0-9a-f]{64})-([0-9a-f]{64})\.native', path.name)
         if not match or match[1] not in state['batches']:
             continue
-        if path.is_symlink() or path.stat().st_size > MAX_NATIVE:
-            raise ValueError('unsafe native asset')
-        raw = path.read_bytes()
-        if hashlib.sha256(raw).hexdigest() != match[2]:
-            raise ValueError('native asset hash mismatch')
         target = Path(reports) / 'observations' / state['probe_id'] / (match[1]+'.json')
-        if target.exists():
-            prior = json.loads(target.read_bytes())
-            if prior.get('native_evidence', {}).get('wire_sha256') != match[2]:
-                raise ValueError('native observation already has different evidence')
-        else:
-            value = read_native(raw, state['batches'][match[1]], now)
+        # Corrupt persisted observations remain fatal; incoming bad evidence
+        # must never overwrite them or prevent unrelated assets being handled.
+        prior = json.loads(target.read_bytes()) if target.exists() else None
+        try:
+            if path.is_symlink() or path.stat().st_size > MAX_NATIVE:
+                raise ValueError('unsafe native asset')
+            raw = path.read_bytes()
+            if hashlib.sha256(raw).hexdigest() != match[2]:
+                raise ValueError('native asset hash mismatch')
+            if prior is not None:
+                if prior.get('native_evidence', {}).get('wire_sha256') != match[2]:
+                    raise ValueError('native observation already has different evidence')
+            else:
+                value = read_native(raw, state['batches'][match[1]], now)
+        except ValueError as exc:
+            # Keep the original draft-release asset: this name is deliberately
+            # excluded from the list eligible for cleanup after durable pushes.
+            rejection = Path(reports) / 'native-rejections' / state['probe_id'] / (path.name + '.json')
+            rejection.parent.mkdir(parents=True, exist_ok=True)
+            evidence = {'schema': 'iptv-native-rejection/v1', 'asset': path.name,
+                'batch_id': match[1], 'reason': str(exc)[:200], 'asset_retained': True}
+            rejection.write_text(json.dumps(evidence, sort_keys=True) + '\n')
+            print('NATIVE_ASSET_REJECTED', path.name, evidence['reason'])
+            continue
+        if prior is None:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(value, sort_keys=True, separators=(',', ':'))+'\n')
         done.append(path.name)

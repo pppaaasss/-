@@ -26,6 +26,9 @@ git -C "$iptv_reports" add -- inbox
 if test -d "$iptv_reports/observations"; then
   git -C "$iptv_reports" add -- observations
 fi
+if test -d "$iptv_reports/native-rejections"; then
+  git -C "$iptv_reports" add -- native-rejections
+fi
 if ! git -C "$iptv_reports" diff --cached --quiet; then
   git -C "$iptv_reports" commit -m 'Aggregate bounded household observations'
   iptv_pushed=false

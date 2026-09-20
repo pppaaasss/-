@@ -153,6 +153,22 @@ class NativeHTTPTests(NativeFixture, unittest.TestCase):
 
 
 class NativeCloudTests(NativeFixture, ThinFixture):
+    def change_metric(self, raw, column=6, field=1, value='600'):
+        lines = raw.decode('ascii').splitlines()
+        row = lines[1].split('\t')
+        fields = base64.b64decode(row[column]).decode().strip().split('\t')
+        fields[field] = value
+        row[column] = wire.b64(('\t'.join(fields) + '\n').encode())
+        lines[1] = '\t'.join(row)
+        return ('\n'.join(lines) + '\n').encode()
+
+    def asset(self, task, raw):
+        inbox = self.root/'native-inbox'
+        inbox.mkdir(exist_ok=True)
+        path = inbox/(task['batch_id']+'-'+hashlib.sha256(raw).hexdigest()+'.native')
+        path.write_bytes(raw)
+        return path
+
     def capsule(self,task,statuses=None,tail='completed'):
         start=int(self.now+1);end=start+2
         lines=['\t'.join([wire.WIRE,self.probe,task['batch_id'],task['cycle_id'],str(start)])]
@@ -209,6 +225,92 @@ class NativeCloudTests(NativeFixture, ThinFixture):
             self.assertEqual('UNKNOWN',cloud.normalise(row['result'],expected)['observed_status'])
         reserved=self.state['native_budget']['bytes'];self.deliver(task,subset=0,stop='interrupted_batch');self.step()
         self.assertGreaterEqual(self.state['native_budget']['bytes'],reserved)
+
+    def test_bad_http_status_is_unknown_while_valid_rows_and_budget_survive(self):
+        self.migrated(); task,_ = self.step()
+        reserved = self.state['native_budget']['bytes']
+        raw = self.change_metric(self.capsule(task))
+        path = self.asset(task, raw)
+        self.assertEqual([path.name], wire.prepare_assets(self.state, path.parent, self.reports, self.now+10))
+        observation = self.reports/'observations'/self.probe/(task['batch_id']+'.json')
+        before = observation.read_bytes()
+        value = json.loads(before)
+        bad, good = value['results']
+        self.assertEqual('UNKNOWN', bad['result']['observed_status'])
+        self.assertEqual(0, bad['result']['sample_count'])
+        self.assertFalse(bad['result']['deep_checked'])
+        self.assertEqual('GOOD', good['result']['observed_status'])
+        self.assertEqual(1080, good['result']['height'])
+        self.assertIn('600', value['native_evidence']['rejected_measurements'][bad['task_id']]['reason'])
+        self.assertFalse(value['native_evidence']['usage_complete'])
+        self.assertNotIn(wire.b64(self.prefix), observation.read_text())
+        self.now += 4
+        cloud.ingest(self.state, self.reports, self.now)
+        self.assertEqual(reserved, self.state['native_budget']['bytes'])
+        self.assertNotIn(task['batch_id'], self.state['native_budget']['reservations'])
+        next_task, report = self.step()
+        self.assertIsNone(report)
+        self.assertEqual([bad['task_id']], [key for key, row in self.state['cycle']['results'].items()
+            if row['result']['observed_status'] == 'UNKNOWN'])
+        self.assertEqual(['cctv1'], [row['channel_key'] for row in next_task['tasks']])
+        self.assertGreaterEqual(self.state['native_budget']['bytes'], reserved)
+        wire.prepare_assets(self.state, path.parent, self.reports, self.now+10)
+        self.assertEqual(before, observation.read_bytes())
+
+    def test_malformed_manifest_or_sample_never_qualifies(self):
+        self.migrated(); task,_ = self.step()
+        raw = self.capsule(task)
+        for column, field, value in ((6,1,'600'), (9,1,'999'), (10,1,'-1'),
+                (6,1,'nan'), (9,1,'200.5'), (9,2,'nan'), (10,3,'0')):
+            with self.subTest(column=column, field=field, value=value), mock.patch.object(wire, 'media_metadata', return_value={}):
+                parsed = wire.read_native(self.change_metric(raw,column,field,value), task, self.now+10)
+                result = cloud.normalise(parsed['results'][0]['result'], task['tasks'][0])
+                self.assertEqual('UNKNOWN', result['observed_status'])
+                self.assertEqual('native_invalid_measurement', result['error'])
+                self.assertFalse(parsed['native_evidence']['usage_complete'])
+
+    def test_unknown_candidate_advances_queue_without_replacement(self):
+        self.migrated(); task,_ = self.step()
+        self.native_deliver(task, {'cctv1':'UNAVAILABLE'}); task,_ = self.step()
+        self.native_deliver(task, {'cctv1':'UNAVAILABLE'}); task,_ = self.step()
+        self.assertEqual('candidate', task['tasks'][0]['role'])
+        row = task['tasks'][0]
+        path = self.asset(task, self.change_metric(self.capsule(task)))
+        wire.prepare_assets(self.state, path.parent, self.reports, self.now+10)
+        self.now += 4
+        idle, report = self.step()
+        self.assertEqual('SLOT_COMPLETE', idle['state'])
+        self.assertEqual(0, report['summary']['replacements'])
+        self.assertIn(row['candidate_id'], self.state['tested'])
+        self.assertNotIn(row['candidate_id'], self.state['queue'])
+        self.assertEqual(self.formal, (self.root/'tv-core.m3u').read_bytes())
+
+    def test_invalid_asset_retained_and_unrelated_valid_batch_processed(self):
+        self.migrated(); first,_ = self.step()
+        bad = self.asset(first, self.capsule(first).replace(first['batch_id'].encode(), b'f'*64, 1))
+        second,_ = self.step(seconds=1801)
+        self.assertNotEqual(first['batch_id'], second['batch_id'])
+        good = self.asset(second, self.capsule(second))
+        for _ in range(2):
+            self.assertEqual([good.name], wire.prepare_assets(self.state, good.parent, self.reports, self.now+10))
+            self.assertFalse((self.reports/'observations'/self.probe/(first['batch_id']+'.json')).exists())
+            self.assertTrue(bad.exists())
+            rejected = self.reports/'native-rejections'/self.probe/(bad.name+'.json')
+            self.assertEqual('native identity mismatch', json.loads(rejected.read_bytes())['reason'])
+        self.now += 4
+        self.step()
+        self.assertEqual(2, self.state['last_heartbeat']['results'])
+
+    def test_conflicting_evidence_never_overwrites_accepted_observation(self):
+        self.migrated(); task,_ = self.step()
+        self.native_deliver(task)
+        observation = self.reports/'observations'/self.probe/(task['batch_id']+'.json')
+        before = observation.read_bytes()
+        conflicting = self.asset(task, self.change_metric(self.capsule(task)))
+        done = wire.prepare_assets(self.state, conflicting.parent, self.reports, self.now+10)
+        self.assertNotIn(conflicting.name, done)
+        self.assertEqual(before, observation.read_bytes())
+        self.assertTrue(conflicting.exists())
 
     def test_optional_budget_exhaustion_completes_formal_report(self):
         self.migrated();task,_=self.step();self.deliver(task)
