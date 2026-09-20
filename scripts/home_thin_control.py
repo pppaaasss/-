@@ -251,7 +251,10 @@ def ingest(state, reports, now):
         state['processed'][path.stem] = hashlib.sha256(raw).hexdigest()
         budget = state.get('native_budget', {})
         reserved = budget.get('reservations', {}).pop(path.stem, None)
-        if reserved and value.get('stop_reason') != 'interrupted_batch':
+        # Invalid native metrics leave part of the usage unknown: keep the
+        # original reservation charged, just as with interrupted measurements.
+        if (reserved and value.get('stop_reason') != 'interrupted_batch'
+                and value.get('native_evidence', {}).get('usage_complete', True)):
             refund_bytes = max(0, reserved['bytes'] - value['usage']['downloaded_bytes'])
             refund_seconds = max(0, reserved['seconds'] - value['usage']['runtime_s'])
             budget['bytes'] -= refund_bytes
