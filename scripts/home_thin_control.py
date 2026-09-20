@@ -287,6 +287,28 @@ def ingest(state, reports, now):
             cycle['retry_after'] = now + 15 * 60
 
 
+def resume_config(config, now):
+    """A reviewed, dated manual request extends only its chosen existing slot."""
+    request = config.get('manual_candidate_resume') or {}
+    day = timestamp(now + 8 * 3600)[:10].replace('-', '')
+    if request.get('day') != day:
+        return config
+    kind, extra = request.get('run_kind'), request.get('extra_seconds')
+    if kind not in KINDS or type(extra) is not int or not 0 <= extra <= 18000:
+        raise ValueError('invalid manual candidate resume')
+    # Keep today's extra time allowance through the evening so time charged
+    # during the manual run cannot strand the later formal checks.
+    effective = dict(config, daily_seconds=config['daily_seconds'] + extra,
+        discovery_seconds=config['discovery_seconds'] + extra)
+    active = slot(now)
+    if active and active[0] == kind:
+        effective['candidate_run_kinds'] = list(dict.fromkeys(
+            config.get('candidate_run_kinds', list(KINDS)) + [kind]))
+        effective['_manual_resume'] = {'id': digest(request), 'slot': day+'-'+kind,
+            'ends_utc': timestamp(active[2])}
+    return effective
+
+
 def optional_window(config, kind):
     kinds = config.get('candidate_run_kinds', list(KINDS))
     if not isinstance(kinds, list) or any(k not in KINDS for k in kinds):
@@ -413,6 +435,7 @@ def complete_report(state, cycle, current, feedback, now):
 
 
 def step(state, config, root, reports, now):
+    config = resume_config(config, now)
     if state['schema'] != STATE_SCHEMA or state['probe_id'] != config['probe_id']:
         raise ValueError('wrong cloud state identity')
     state = copy.deepcopy(state)
@@ -448,6 +471,15 @@ def step(state, config, root, reports, now):
         return state, idle, None
     kind, day, deadline = active
     slot_id = day + '-' + kind
+    manual = config.get('_manual_resume')
+    if manual and manual['id'] not in state.get('manual_resumes', {}):
+        # Reopen at most once, preserving all accepted measurements, pending
+        # tasks, tested identities and resource usage. Never zero a budget.
+        state['completed_slots'] = [s for s in state['completed_slots'] if s != slot_id]
+        if state.get('cycle') and state['cycle']['slot'] == slot_id:
+            state['cycle'].pop('optional_closed', None)
+            state['cycle'].pop('discovery_closed', None)
+        state.setdefault('manual_resumes', {})[manual['id']] = timestamp(now)
     if slot_id in state['completed_slots']:
         return state, dict(idle, state='SLOT_COMPLETE'), None
     cycle_id = digest([slot_id, formal_sha, feedback_sha])
@@ -522,6 +554,7 @@ def step(state, config, root, reports, now):
 
 def status_snapshot(state, task, config, now):
     """Cloud-only progress: a saved queue or issued task is never a router ACK."""
+    config = resume_config(config, now)
     active = slot(now)
     day_start = (int(now) + 8 * 3600) // 86400 * 86400 - 8 * 3600
     next_start = min(day_start + day * 86400 + hour * 3600
