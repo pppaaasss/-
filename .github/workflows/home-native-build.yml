@@ -39,6 +39,13 @@ jobs:
           sample.unlink()
           print('ARM SHA-256 vectors passed')
           PY
+      - name: Export checked public build for connector retrieval
+        run: |
+          python3 - <<'PY'
+          import base64, json, pathlib
+          root = pathlib.Path('/tmp/native')
+          print('NATIVE_BUILD_JSON=' + json.dumps({name:base64.b64encode((root/name).read_bytes()).decode() for name in ('iptv-native', 'build.json')}))
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: ac86u-native-aarch64
