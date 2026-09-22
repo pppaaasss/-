@@ -243,6 +243,107 @@ static int rule(const char *action,uint32_t mark) {
         execlp("iptables","iptables","-t","nat",action,"OUTPUT","-p","tcp","-m","mark","--mark",value,"-j","merlinclash",(char *)NULL);_exit(127);}
     int s;while(waitpid(p,&s,0)<0){if(errno!=EINTR)return -1;}return WIFEXITED(s)?WEXITSTATUS(s):2;
 }
+/* Only a persisted route intent permits cleanup. An idle worker must never
+ * inspect iptables: old firmware may report an absent target as an error.
+ * List OUTPUT successfully before deciding absence; never infer it from -C's
+ * ambiguous exit code. Failed cleanup retains the intent for the next cron. */
+static int route_command(const char *action,uint32_t mark,FILE *output,FILE *errors) {
+    char value[48];snprintf(value,sizeof value,"%u/0xffffffff",mark);
+    fflush(errors);pid_t p=fork();if(p<0)return -1;
+    if(!p) {
+        struct rlimit cap={65536,65536};setrlimit(RLIMIT_FSIZE,&cap);
+        signal(SIGTERM,SIG_DFL);signal(SIGINT,SIG_DFL);signal(SIGHUP,SIG_DFL);
+        dup2(fileno(output),STDOUT_FILENO);dup2(fileno(errors),STDERR_FILENO);
+        if(!strcmp(action,"-S"))execlp("iptables","iptables","-t","nat","-S","OUTPUT",(char *)NULL);
+        else execlp("iptables","iptables","-t","nat","-D","OUTPUT","-p","tcp","-m","mark","--mark",value,"-j","merlinclash",(char *)NULL);
+        perror("iptables exec");_exit(127);
+    }
+    int status=0;double deadline=mono()+2;
+    for(;;) {
+        pid_t got=waitpid(p,&status,WNOHANG);
+        if(got==p)break;
+        if(got<0&&errno!=EINTR)return -1;
+        if(mono()>=deadline) {
+            kill(p,SIGKILL);while(waitpid(p,&status,0)<0&&errno==EINTR){}
+            fprintf(errors,"iptables %s timed out\n",action);fflush(errors);return -1;
+        }
+        usleep(20000);
+    }
+    int rc=WIFEXITED(status)?WEXITSTATUS(status):128;
+    if(rc)fprintf(errors,"iptables %s exit=%d\n",action,rc);
+    fflush(errors);return rc;
+}
+static int listed_route(char *line,uint32_t *mark) {
+    char value[80];unsigned long parsed,mask=0xffffffffUL;char *end;int consumed=0;
+    if(sscanf(line,"-A OUTPUT -p tcp -m mark --mark %79s -j merlinclash %n",value,&consumed)!=1||
+       !consumed||line[consumed])return 0;
+    errno=0;parsed=strtoul(value,&end,0);
+    if(errno||end==value||parsed>UINT32_MAX)return 0;
+    if(*end=='/') {char *tail;mask=strtoul(end+1,&tail,0);if(tail==end+1||*tail||errno)return 0;}
+    else if(*end)return 0;
+    if(mask!=0xffffffffUL||(parsed&0xffff0000UL)!=MARK_BASE)return 0;
+    *mark=(uint32_t)parsed;return 1;
+}
+static int route_present(uint32_t wanted,FILE *errors) {
+    FILE *listing=tmpfile();if(!listing)return -1;
+    if(route_command("-S",0,listing,errors)){fclose(listing);return -1;}
+    rewind(listing);char line[4096];int found=0;
+    while(fgets(line,sizeof line,listing)) {
+        if(!strchr(line,'\n')&&!feof(listing)){found=-1;break;}
+        uint32_t mark;if(listed_route(line,&mark)&&(!wanted||mark==wanted))found=1;
+    }
+    if(ferror(listing))found=-1;
+    fclose(listing);return found;
+}
+static int cleanup_pending_route(const char *root) {
+    char intent[1024],logpath[1024],line[80],*end;
+    snprintf(intent,sizeof intent,"%s/route-mark",root);
+    FILE *pending=fopen(intent,"r");if(!pending)return errno==ENOENT?0:-1;
+    int valid=fgets(line,sizeof line,pending)!=NULL;fclose(pending);
+    snprintf(logpath,sizeof logpath,"%s/route-error.txt",root);
+    FILE *errors=fopen(logpath,"w");if(!errors)return -1;
+    fprintf(errors,"route cleanup time=%lld\n",(long long)time(NULL));
+    errno=0;unsigned long mark=valid?strtoul(line,&end,10):0;
+    if(!valid||errno||mark>UINT32_MAX||(mark&0xffff0000UL)!=MARK_BASE||
+       (*end!='\n'&&*end!='\0')||(*end=='\n'&&end[1])) {
+        fputs("invalid route intent; retained\n",errors);fclose(errors);return -1;
+    }
+    for(int attempt=0;attempt<3;attempt++) {
+        int present=route_present((uint32_t)mark,errors);
+        if(present==0) {
+            int rc=unlink(intent);if(rc)perror("route intent unlink");
+            fputs(rc?"intent removal failed\n":"route absence verified\n",errors);fclose(errors);return rc;
+        }
+        if(present>0) {
+            FILE *output=tmpfile();if(!output){fclose(errors);return -1;}
+            route_command("-D",(uint32_t)mark,output,errors);fclose(output);
+        }
+        usleep(200000);
+    }
+    /* A delete can fail after the VPN has already removed the same rule. */
+    if(route_present((uint32_t)mark,errors)==0&&unlink(intent)==0) {
+        fputs("route absence verified\n",errors);fclose(errors);return 0;
+    }
+    fputs("cleanup pending; next cron retries before sampling\n",errors);fclose(errors);return -1;
+}
+
+/* Explicit upgrade recovery, called with the normal worker locks held. Never
+ * release a manual pause or delete untracked rules from the old runtime. */
+static int recover_route_pause(const char *root) {
+    char paused[1024],metrics[1024],reason[80],logpath[1024];
+    snprintf(paused,sizeof paused,"%s/PAUSED",root);
+    if(access(paused,F_OK))return errno==ENOENT?0:2;
+    snprintf(metrics,sizeof metrics,"%s/resources.txt",root);
+    FILE *f=fopen(metrics,"r");if(!f)return 2;
+    int matches=fscanf(f,"%79s",reason)==1&&!strcmp(reason,"ROUTE_CLEANUP_FAILED");fclose(f);
+    if(!matches){fputs("PAUSE_RETAINED: reason requires inspection\n",stderr);return 2;}
+    snprintf(logpath,sizeof logpath,"%s/route-recovery.txt",root);
+    FILE *errors=fopen(logpath,"w");if(!errors)return 2;
+    int present=route_present(0,errors);fclose(errors);
+    if(present!=0){fputs("PAUSE_RETAINED: rule absence unconfirmed\n",stderr);return 2;}
+    if(cleanup_pending_route(root)||unlink(paused))return 2;
+    puts("ROUTE_PAUSE_RECOVERED");return 0;
+}
 struct transfer { FILE *file; size_t count,kept,limit,keep; int capped,local_error; long status; long long total; char location[URL_MAX]; uint32_t mark; };
 static curl_socket_t open_socket(void *v,curlsocktype purpose,struct curl_sockaddr *a) {
     (void)purpose; struct transfer *t=v;
@@ -400,6 +501,9 @@ static int guard(int argc,char **argv) {
     if(root&&lockfile(legacy?legacy:"/opt/var/lib/iptv-home-probe","daily-worker.lock")<0)return 0;
     proc_guardian=proc_self_id();
     long mem=available(),minimum=mem,peak=group_rss(-1);FILE *metrics=fopen(argv[2],"w");if(!metrics)fail("guard_metrics");
+    if(root&&cleanup_pending_route(root)) {
+        fprintf(metrics,"ROUTE_CLEANUP_RETRY\t%ld\t%ld\t0\n",peak,minimum);fclose(metrics);return 75;
+    }
     unsigned long long t0,i0,t1,i1;int bad=cpu(&t0,&i0);usleep(250000);bad|=cpu(&t1,&i1);
     if(mem<start||bad||t1<=t0||100.0*(1-(double)(i1-i0)/(t1-t0))>=75){fprintf(metrics,"WAITING_RESOURCES\t%ld\t%ld\t0\n",peak,minimum);fclose(metrics);return 75;}
     signal(SIGTERM,stop);signal(SIGINT,stop);signal(SIGHUP,stop);
@@ -430,15 +534,7 @@ static int guard(int argc,char **argv) {
         }
         usleep(250000);
     }
-    if(root) {
-        uint32_t mark=MARK_BASE|((uint32_t)pid&65535);
-        int present=rule("-C",mark);
-        if((present==0 && rule("-D",mark)!=0)||present>1||present<0) {
-            reason="ROUTE_CLEANUP_FAILED";
-            char paused[1024];snprintf(paused,sizeof paused,"%s/PAUSED",root);
-            int fd=open(paused,O_CREAT|O_WRONLY,0600);if(fd>=0)close(fd);
-        }
-    }
+    if(root&&cleanup_pending_route(root))reason="ROUTE_CLEANUP_RETRY";
     fprintf(metrics,"%s\t%ld\t%ld\t%.3f\n",reason,peak,minimum,mono()-began);fclose(metrics);
     return strcmp(reason,"COMPLETED")?75:WIFEXITED(status)?WEXITSTATUS(status):2;
 }
@@ -449,6 +545,14 @@ int main(int argc,char **argv) {
     if(!strcmp(argv[1],"get"))return get(argc,argv);
     if(!strcmp(argv[1],"hls"))return hls(argc,argv);
     if(!strcmp(argv[1],"guard"))return guard(argc,argv);
+    if(!strcmp(argv[1],"route-clean")) {
+        if(argc!=3)fail("route_clean_arguments");
+        return cleanup_pending_route(argv[2])?75:0;
+    }
+    if(!strcmp(argv[1],"recover-route-pause")) {
+        if(argc!=3)fail("route_recovery_arguments");
+        return recover_route_pause(argv[2]);
+    }
     if(!strcmp(argv[1],"lock")) {
         if(argc<6)fail("lock_arguments");
         if(lockfile(argv[2],"worker.lock")<0||lockfile(argv[3],"background-upgrade.lock")<0||
