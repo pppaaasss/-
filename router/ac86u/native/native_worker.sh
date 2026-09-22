@@ -93,11 +93,14 @@ printf 'IPTV_NATIVE_V1\t%s\t%s\t%s\t%s\n' "$probe" "$batch" "$cycle" "$now" > "$
 "$native" commit "$work/new-outbox" "$data/outbox.native"
 
 cleanup_route() {
-  iptables -t nat -D OUTPUT -p tcp -m mark --mark "$mark/0xffffffff" -j merlinclash 2>/dev/null || true
+  "$native" route-clean "$data" || true
 }
 trap cleanup_route EXIT
 trap 'exit 75' HUP INT TERM
 iptables -t nat -S merlinclash >/dev/null
+# Persist intent before insertion, so a killed worker can be cleaned up later.
+printf '%s\n' "$mark" > "$work/route-mark"
+"$native" commit "$work/route-mark" "$data/route-mark"
 iptables -t nat -I OUTPUT 1 -p tcp -m mark --mark "$mark/0xffffffff" -j merlinclash
 # Only the native sampler sets this mark. API uploads retain their normal path.
 status RUNNING
