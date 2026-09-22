@@ -1,28 +1,32 @@
 {
   "changed_occurrences": {
     "tv-all.m3u": {
-      "cctv8": 1,
+      "cctv12": 1,
+      "cctv17": 1,
       "北京卫视": 1,
-      "湖北卫视": 1
+      "辽宁卫视": 1
     },
     "tv-core.m3u": {
-      "cctv8": 1,
+      "cctv12": 1,
+      "cctv17": 1,
       "北京卫视": 1,
-      "湖北卫视": 1
+      "辽宁卫视": 1
     },
     "tv-easy.m3u": {
-      "cctv8": 1,
+      "cctv12": 1,
+      "cctv17": 1,
       "北京卫视": 0,
-      "湖北卫视": 1
+      "辽宁卫视": 1
     },
     "tv.m3u": {
-      "cctv8": 1,
+      "cctv12": 1,
+      "cctv17": 1,
       "北京卫视": 1,
-      "湖北卫视": 1
+      "辽宁卫视": 1
     }
   },
-  "formal_sha256_after": "e2c03deab0cc7f403c2bfe1d9550b1702c12251bfeafe3cb1009eb1df13ae51a",
-  "formal_sha256_before": "81b42b52847f62c9ff7b00d360973b3b83079f843daf97c063543d25ca2f8468",
+  "formal_sha256_after": "1ee8ae9bc0451f06e11d0263a471cb8ef473e5c36d691b443bf23e8c1195c385",
+  "formal_sha256_before": "e2c03deab0cc7f403c2bfe1d9550b1702c12251bfeafe3cb1009eb1df13ae51a",
   "policy": {
     "all_four_playlists_one_git_snapshot": true,
     "exact_reported_route_only": true,
@@ -32,46 +36,53 @@
     "unknown_never_replaces": true
   },
   "probe_id": "home-ac86u-8f8908f0fba9",
-  "processed_utc": "2026-09-21T07:31:20Z",
+  "processed_utc": "2026-09-22T22:13:27Z",
   "production_sha256_after": {
+    "tv-all.m3u": "0f9aa1544a7808e523b0fac9bd4a0de954f2402c59b8d1426f78512e1ef33f0a",
+    "tv-core.m3u": "1ee8ae9bc0451f06e11d0263a471cb8ef473e5c36d691b443bf23e8c1195c385",
+    "tv-easy.m3u": "cc3a2ded2e2d4ccce3ba820e91925e2ce3dd459aaa549a5afc6dc2f7dcd29564",
+    "tv.m3u": "0f9aa1544a7808e523b0fac9bd4a0de954f2402c59b8d1426f78512e1ef33f0a"
+  },
+  "production_sha256_before": {
     "tv-all.m3u": "673121179bdb1989d12ec0b2eaf7902355956e67e7d293a71dfd80a971cbb691",
     "tv-core.m3u": "e2c03deab0cc7f403c2bfe1d9550b1702c12251bfeafe3cb1009eb1df13ae51a",
     "tv-easy.m3u": "e03d2b248f9e8d149bed6b6ef60a9e2b87931d72e6b2e1523f1d80d74a0d0fde",
     "tv.m3u": "673121179bdb1989d12ec0b2eaf7902355956e67e7d293a71dfd80a971cbb691"
   },
-  "production_sha256_before": {
-    "tv-all.m3u": "843b0d7681a9fe342dde28cfca940e746a58a19bb5e9b48a133601b27bd4fb5f",
-    "tv-core.m3u": "81b42b52847f62c9ff7b00d360973b3b83079f843daf97c063543d25ca2f8468",
-    "tv-easy.m3u": "9f91ce6ae58ecf9bc2b563116845f9bad9ad61b14af2ed9a0778bb8416b3fd58",
-    "tv.m3u": "843b0d7681a9fe342dde28cfca940e746a58a19bb5e9b48a133601b27bd4fb5f"
-  },
-  "replacement_count": 3,
+  "replacement_count": 4,
   "replacements": [
     {
-      "candidate_id": "42bcf219082b6a1862a6d1d9dd1366b826847b9191345ea4edfef78f4d875c9a",
-      "channel_key": "cctv8",
-      "name": "CCTV-8",
-      "new_url": "http://101.66.198.201:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=0&authid=0",
-      "old_url": "http://118.122.144.115:8888/newlive/live/hls/9/live.m3u8"
+      "candidate_id": "d3cd1a9c69855ed6e937295474ac97344a5bf8d4ba3bdc3b478b4f3e01e6f538",
+      "channel_key": "cctv12",
+      "name": "CCTV-12",
+      "new_url": "http://107.150.60.122/live/cctv12hd.m3u8",
+      "old_url": "http://183.129.255.66:8480/hls/13/index.m3u8"
     },
     {
-      "candidate_id": "d0cbe69cd5a331682b6e8fcc00d7ea97f9a613150280f4fe15b68a1b9df36572",
+      "candidate_id": "786e2242313a38d5c6461295d6401dce49fe7f9c21fab346ada212815a675215",
+      "channel_key": "cctv17",
+      "name": "CCTV-17",
+      "new_url": "http://183.129.255.66:8480/hls/18/index.m3u8",
+      "old_url": "http://74.91.26.218:82/live/cctv17hd.m3u8"
+    },
+    {
+      "candidate_id": "72e0d55bebf11acd14375e48a56f4bc9a3ee24979663f04c47dd1592d22824b1",
       "channel_key": "北京卫视",
       "name": "北京卫视",
-      "new_url": "http://204.12.221.218:8181/3m1080p/bjws.m3u8",
-      "old_url": "http://101.66.194.117:9901/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0"
+      "new_url": "http://101.66.198.66:9901/tsfile/live/0016_1.m3u8?key=txiptv&playlive=0&authid=0",
+      "old_url": "http://204.12.221.218:8181/3m1080p/bjws.m3u8"
     },
     {
-      "candidate_id": "a60cdd6886532132777fd7cd189ea9717dc5e32403b6864180c6a49285bce10e",
-      "channel_key": "湖北卫视",
-      "name": "湖北卫视",
-      "new_url": "http://101.66.194.117:9901/tsfile/live/0132_1.m3u8?key=txiptv&playlive=0&authid=0",
-      "old_url": "http://204.12.221.218:8181/3m1080p/hbws.m3u8"
+      "candidate_id": "dd5fa6e477e71c0827fd01ed218dfc804f2bb5d2b720f8739a54b0d601a326c7",
+      "channel_key": "辽宁卫视",
+      "name": "辽宁卫视",
+      "new_url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=lnwshd",
+      "old_url": "http://107.150.60.122/live/lnwshd.m3u8"
     }
   ],
-  "report_file": "20260921T065532Z-recheck-1300-4c80e922bcba6518.json",
-  "report_generated_utc": "2026-09-21T06:55:32Z",
-  "report_run_kind": "recheck-1300",
-  "report_sha256": "4c80e922bcba6518eaab9eb5de35ea5ebdda8f5a5720f30a2047e222d0c0caab",
+  "report_file": "20260922T200331Z-primary-0200-1a2e663f3a15c475.json",
+  "report_generated_utc": "2026-09-22T20:03:31Z",
+  "report_run_kind": "primary-0200",
+  "report_sha256": "1a2e663f3a15c4757b2b21b3e70a10efe30cabd125daaeabac2df8c912d3bcbc",
   "schema": "iptv-home-publication/v1"
 }
