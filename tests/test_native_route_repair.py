@@ -71,3 +71,30 @@ class RepairTests(unittest.TestCase):
             repair.prepare('master')
         with self.assertRaises(ValueError):
             repair.validate({'iptv-native': b'bad'}, b'source', {})
+
+    def test_curl_download_preserves_binary_and_removes_temporary_file(self):
+        payload = b'\x7fELF\x00\xff\x01\n'
+        targets = []
+        def download(command, **kwargs):
+            target = Path(command[command.index('--output')+1])
+            targets.append(target)
+            target.write_bytes(payload)
+            return subprocess.CompletedProcess(command, 0, stdout=b'', stderr=b'')
+        with mock.patch.object(repair.subprocess, 'run', side_effect=download):
+            self.assertEqual(payload, repair.fetch('a'*40, 'iptv-native'))
+        self.assertFalse(targets[0].exists())
+
+    def test_partial_tls_download_never_reaches_router(self):
+        commands, targets = [], []
+        def failed(command, **kwargs):
+            commands.append(command)
+            self.assertEqual('curl', command[0])
+            target = Path(command[command.index('--output')+1])
+            targets.append(target)
+            target.write_bytes(b'partial response')
+            return subprocess.CompletedProcess(command, 56, stdout=b'', stderr=b'TLS EOF')
+        with mock.patch.object(repair.subprocess, 'run', side_effect=failed), \
+             mock.patch.object(repair.sys, 'argv', ['repair.py', 'a'*40]):
+            self.assertEqual(2, repair.main())
+        self.assertEqual(1, len(commands))
+        self.assertFalse(targets[0].exists())
