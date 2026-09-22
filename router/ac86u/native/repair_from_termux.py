@@ -3,12 +3,13 @@
 import hashlib
 import io
 import json
+from pathlib import Path
 import re
 import secrets
 import subprocess
 import sys
 import tarfile
-import urllib.request
+import tempfile
 
 HOST = 'wodeluyouqi@192.168.50.1'
 BASE = '/opt/share/iptv-home-native'
@@ -23,11 +24,25 @@ def sha(raw):
 
 def fetch(ref, name):
     url = f'https://raw.githubusercontent.com/pppaaasss/-/{ref}/router/ac86u/native/{name}'
-    with urllib.request.urlopen(url, timeout=30) as response:
-        raw = response.read(131073)
-    if len(raw) > 131072:
-        raise ValueError('下载文件超出预期大小：'+name)
-    return raw
+    print('下载更新文件：'+name, flush=True)
+    # Use the same Termux curl transport that fetched this entry successfully.
+    # A file output is truncated by curl before a retry, so a TLS interruption
+    # cannot concatenate a partial response with the successful retry.
+    with tempfile.TemporaryDirectory(prefix='iptv-download-') as folder:
+        target = Path(folder)/'payload'
+        result = subprocess.run([
+            'curl', '--fail', '--location', '--silent', '--show-error',
+            '--proto', '=https', '--proto-redir', '=https',
+            '--connect-timeout', '10', '--max-time', '30',
+            '--retry', '2', '--retry-all-errors', '--retry-delay', '1',
+            '--retry-max-time', '60', '--max-filesize', '131072',
+            '--output', str(target), url], capture_output=True, timeout=100)
+        if result.returncode:
+            detail = result.stderr.decode('utf-8', errors='replace').strip()[-500:]
+            raise ValueError(f'{name} 下载失败（curl {result.returncode}）：{detail}')
+        if target.stat().st_size > 131072:
+            raise ValueError('下载文件超出预期大小：'+name)
+        return target.read_bytes()
 
 
 def validate(bundle, source, manifest):
