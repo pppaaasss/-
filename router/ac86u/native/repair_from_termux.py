@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import re
+import secrets
 import subprocess
 import sys
 import tarfile
@@ -115,13 +116,13 @@ def main():
     try:
         payload = prepare(sys.argv[1])
         print('文件已下载并校验。请输入路由器登录密码；输入时不显示字符。', flush=True)
-        # mktemp prevents partial downloads or a second installer from sharing
-        # a staging directory. Keep the short installation alive across a
+        # A phone-generated unique name and exclusive mkdir work on the
+        # router's minimal shell (which lacks mktemp). Keep installation alive across a
         # phone SSH disconnect; no token or password enters the payload.
         command = ('set -eu; umask 077; '
                    'unset LD_LIBRARY_PATH LD_PRELOAD PYTHONHOME PYTHONPATH; '
                    'export PATH=/opt/bin:/opt/sbin:/usr/sbin:/usr/bin:/sbin:/bin; '
-                   'work=$(mktemp -d /opt/tmp/iptv-route-repair.XXXXXX); '
+                   'work=/opt/tmp/iptv-route-repair-'+secrets.token_hex(8)+'; mkdir "$work"; '
                    'trap \'rm -rf "$work"\' EXIT; '
                    'tar -xzf - -C "$work"; trap "" HUP; '
                    f'{BASE}/iptv-native lock {DATA} {LEGACY} '
