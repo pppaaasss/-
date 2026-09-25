@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 795330613,
+    "bytes": 862439477,
     "candidates": 132,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 10000,
@@ -9,15 +9,21 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 2053.0
+    "seconds": 2293.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
     "primary-0200"
   ],
-  "generated_utc": "2026-09-25T10:18:39Z",
+  "generated_utc": "2026-09-25T12:54:08Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "1ddaa15cadacadd39f5fe8579fefcfdc4d19d2f1a748b280e2874d2d17bee33d",
+    "created_utc": "2026-09-25T12:54:08Z",
+    "expires_utc": "2026-09-25T13:24:08Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-09-25T07:52:50Z",
     "received_utc": "2026-09-25T10:18:39Z",
@@ -39,24 +45,24 @@
   },
   "progress": {
     "backup_checks_completed": 0,
-    "belongs_to_active_window": false,
+    "belongs_to_active_window": true,
     "candidate_checks_completed": 0,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 8,
-    "current_rechecks_required": 36,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
     "report_complete": false,
-    "slot": "20260925-recheck-1300"
+    "slot": "20260925-peak-2000"
   },
   "queue": 0,
   "router_enabled": null,
-  "state": "WAITING_WINDOW",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 8717,
   "window": {
-    "active": false,
-    "ends_utc": null,
-    "next_starts_utc": "2026-09-25T12:00:00Z",
-    "run_kind": null,
+    "active": true,
+    "ends_utc": "2026-09-25T15:00:00Z",
+    "next_starts_utc": "2026-09-25T18:00:00Z",
+    "run_kind": "peak-2000",
     "timezone": "Asia/Shanghai"
   }
 }
