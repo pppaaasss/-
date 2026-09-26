@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 1123501564,
+    "bytes": 1190610428,
     "candidates": 242,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 10000,
@@ -9,15 +9,21 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 3001.0
+    "seconds": 3241.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
     "primary-0200"
   ],
-  "generated_utc": "2026-09-26T09:58:06Z",
+  "generated_utc": "2026-09-26T14:14:36Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "6820c0fa0ebb24b5c7d9f59947f7223d2488b6b09993c57b38b86a85a918308b",
+    "created_utc": "2026-09-26T14:14:36Z",
+    "expires_utc": "2026-09-26T14:44:36Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-09-26T05:43:06Z",
     "received_utc": "2026-09-26T05:44:00Z",
@@ -39,24 +45,24 @@
   },
   "progress": {
     "backup_checks_completed": 0,
-    "belongs_to_active_window": false,
+    "belongs_to_active_window": true,
     "candidate_checks_completed": 0,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 37,
-    "current_rechecks_required": 37,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
-    "report_complete": true,
-    "slot": "20260926-recheck-1300"
+    "report_complete": false,
+    "slot": "20260926-peak-2000"
   },
   "queue": 0,
   "router_enabled": null,
-  "state": "WAITING_WINDOW",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 8959,
   "window": {
-    "active": false,
-    "ends_utc": null,
-    "next_starts_utc": "2026-09-26T12:00:00Z",
-    "run_kind": null,
+    "active": true,
+    "ends_utc": "2026-09-26T15:00:00Z",
+    "next_starts_utc": "2026-09-26T18:00:00Z",
+    "run_kind": "peak-2000",
     "timezone": "Asia/Shanghai"
   }
 }
