@@ -43,15 +43,7 @@ jobs:
       - name: Record production hashes
         run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
 
-      - name: Fetch source text without cloud stream testing
-        run: |
-          python3 scripts/harvest_incremental.py \
-            --home-only \
-            --home-discovery-output /tmp/home-discovered.jsonl \
-            --output-dir harvest \
-            --workers 12
-
-      - name: Read durable household receipt
+      - name: Read durable household state and receipt
         run: |
           python3 - <<'PYRECEIPT'
           import json, subprocess
@@ -69,9 +61,31 @@ jobs:
           if listed:
               raw = subprocess.check_output(['git', 'show', 'FETCH_HEAD:' + path])
               Path('/tmp/home-delivery-receipt.json').write_bytes(raw)
+          if thin:
+              state_path = subprocess.check_output(['git', 'ls-tree', '--name-only', 'FETCH_HEAD', '--', 'state.json'], text=True).strip()
+              if state_path:
+                  Path('/tmp/home-harvest-state.json').write_bytes(
+                      subprocess.check_output(['git', 'show', 'FETCH_HEAD:state.json']))
           PYRECEIPT
 
+      - name: Check the 800-candidate refill threshold
+        id: refill
+        run: |
+          python3 scripts/plan_home_harvest.py \
+            --state /tmp/home-harvest-state.json \
+            --minimum-pending 800
+
+      - name: Fetch source text without cloud stream testing
+        if: steps.refill.outputs.harvest == 'true'
+        run: |
+          python3 scripts/harvest_incremental.py \
+            --home-only \
+            --home-discovery-output /tmp/home-discovered.jsonl \
+            --output-dir harvest \
+            --workers 12
+
       - name: Publish pending and new home candidates
+        if: steps.refill.outputs.harvest == 'true'
         run: |
           python3 scripts/build_home_candidate_manifest.py \
             --input /tmp/home-discovered.jsonl \
@@ -83,6 +97,7 @@ jobs:
             --feedback config/home-route-feedback.json
 
       - name: Validate home-only contracts
+        if: steps.refill.outputs.harvest == 'true'
         run: |
           python3 - <<'PY'
           import json
@@ -111,6 +126,7 @@ jobs:
           test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
 
       - name: Commit only the home discovery outputs
+        if: steps.refill.outputs.harvest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
