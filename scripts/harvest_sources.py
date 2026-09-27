@@ -35,6 +35,18 @@ WORKERS = 12
 URL_RE = re.compile(r"https?://[^\s]+", re.I)
 GROUP_RE = re.compile(r'group-title=["\']([^"\']+)["\']', re.I)
 
+# These two upstreams append display labels after '$', not HTTP options.
+# Keep the exception source-scoped; unknown suffixes still require review.
+DISPLAY_LABEL_SOURCES = frozenset({
+    "https://raw.githubusercontent.com/adminouyang/TV/master/output/ipv4/result.m3u",
+    "https://raw.githubusercontent.com/czerov/iptv-api/master/output/ipv4/result.m3u",
+})
+DISPLAY_LABEL_RE = re.compile(
+    r"(?:订阅源|(?:北京|天津|上海|重庆|河北|山西|辽宁|吉林|黑龙江|江苏|浙江|"
+    r"安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|"
+    r"青海|内蒙古|广西|西藏|宁夏|新疆)(?:电信|联通|移动)[0-9]{1,4})"
+)
+
 
 def clean_name(value: str) -> str:
     value = value.replace("\ufeff", "").strip().strip("\"'")
@@ -140,6 +152,10 @@ def parse_source(text: str, configured_group: str, source_url: str) -> list[dict
                         "source": source_url,
                     })
         i += 1
+    if source_url in DISPLAY_LABEL_SOURCES:
+        for row in rows:
+            if DISPLAY_LABEL_RE.fullmatch(row["options"]):
+                row["options"] = ""
     return rows
 
 
