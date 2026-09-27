@@ -290,6 +290,9 @@ SOURCES = [
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV_AutoUpdate.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/cnTV1_GuoJi.m3u8", False),
     ("大陆", "https://raw.githubusercontent.com/hujingguang/ChinaIPTV/main/HunanTV_AutoUpdate.m3u8", False),
+    # Independently refreshed IPv4 pool; home-only discovery still requires
+    # household verification before any route can be used for playback.
+    ("大陆", "https://raw.githubusercontent.com/3377/IPTV/master/output/ipv4/result.m3u", False),
     # Active, metadata-rich lists reviewed in August 2026.  Their routes still
     # go through the same manifest + media-segment probes as every other source.
     ("大陆", "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/index.m3u", False),
