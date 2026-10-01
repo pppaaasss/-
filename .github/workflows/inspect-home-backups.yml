@@ -1,0 +1,59 @@
+name: Inspect household backups
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/inspect-home-backups.yml'
+      - 'config/home-route-feedback.json'
+permissions:
+  contents: read
+jobs:
+  inspect-backups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read current household backup state
+        run: |
+          git fetch --depth=1 origin home-control
+          python - <<'PY'
+          import json, subprocess, time
+          from pathlib import Path
+          from scripts.home_thin_control import allowed
+          from scripts.publish_home_decisions import unique_core_routes
+          from router.ac86u.thin_contract import epoch
+          state = json.loads(subprocess.check_output(['git', 'show', 'FETCH_HEAD:state.json']))
+          current = unique_core_routes(Path('tv-core.m3u').read_bytes())
+          check = allowed(state, current, Path('config/home-route-feedback.json'))
+          now = time.time()
+          report = state.get('last_report') or {}
+          print('BACKUP_META_JSON=' + json.dumps({
+              'state_commit': subprocess.check_output(['git','rev-parse','FETCH_HEAD'], text=True).strip(),
+              'checked_epoch': now, 'last_report_generated_utc': report.get('generated_utc'),
+              'archive_total': len(state.get('archive', {}))}))
+          for key in ('cctv4','cctv8','cctv9','cctv13','cctv14','cctv16'):
+              records = []
+              for row in state.get('archive', {}).values():
+                  if row.get('channel_key') != key:
+                      continue
+                  verification = row.get('verification') or {}
+                  expires = row.get('expires_utc')
+                  fresh = bool(expires and epoch(expires) >= now)
+                  eligible = check(row)
+                  reusable = bool(eligible and fresh and row.get('qualification') == 'QUALIFIED'
+                      and not row.get('last_recheck_result') and not row.get('requires_home_reverification')
+                      and row.get('verified_run_kind') in ('primary-0200', 'peak-2000'))
+                  records.append({
+                      'url': row['url'], 'candidate_id': row['candidate_id'],
+                      'qualification': row.get('qualification'), 'last_verified_utc': row.get('last_verified_utc'),
+                      'expires_utc': expires, 'fresh': fresh, 'policy_eligible': eligible,
+                      'cached_reusable': reusable, 'requires_home_reverification': row.get('requires_home_reverification', False),
+                      'last_recheck_result': row.get('last_recheck_result'),
+                      'height': verification.get('height'), 'fps': verification.get('fps'),
+                      'headroom_ratio': verification.get('headroom_ratio')})
+              candidates = [{'url': r['url'], 'qualification': r['qualification'], 'error': r.get('error')}
+                  for r in report.get('candidate_results', []) if r['channel_key'] == key]
+              print('BACKUP_SUMMARY_JSON=' + json.dumps({'channel': key, 'archive_count': len(records),
+                  'cached_reusable_count': sum(r['cached_reusable'] for r in records),
+                  'records': records, 'latest_candidates': candidates}, ensure_ascii=False))
+          PY
