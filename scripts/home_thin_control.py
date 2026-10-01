@@ -31,7 +31,7 @@ from router.ac86u.home_decision import (current_result, candidate_result, candid
 from router.ac86u.peak_policy import apply_peak_policy
 from router.ac86u.push_home_report import report_filename
 from scripts.publish_home_decisions import unique_core_routes, atomic_json, sha256_bytes
-from scripts.home_route_policy import rejected_urls, rejected_hosts
+from scripts.home_route_policy import rejected_urls, rejected_hosts, load_feedback
 from urllib.parse import urlsplit
 
 STATE_SCHEMA = 'iptv-home-cloud-state/v1'
@@ -196,7 +196,7 @@ def allowed(state, current, feedback):
     return check
 
 
-def current_view(state, cycle):
+def current_view(state, cycle, feedback=None):
     attempts = {}
     for key, value in cycle['current'].items():
         attempts[key] = [cycle['results'][task_row(cycle, key, value['url'], 'current', attempt)['task_id']]['result']
@@ -209,6 +209,15 @@ def current_view(state, cycle):
     oldest = min(epoch(row['started_utc']) for row in cycle['results'].values())
     rows, peaks = apply_peak_policy(rows, state['peak_failures'], run_kind=cycle['kind'],
                                    now_epoch=oldest, circuit_open=circuit)
+    # Playback confirms identity as well as throughput. Keep both measured
+    # attempts, but never treat a viewer-rejected route as a healthy channel.
+    viewer_bad = load_feedback(feedback).get('bad', {}) if feedback is not None else {}
+    for row in rows:
+        rejected = any((item.get('url') if isinstance(item, dict) else item) == row['url']
+                       for item in viewer_bad.get(row['channel_key'], []))
+        if rejected and row['attempt_count'] == 2:
+            row.update(status='BAD', failure_confirmed=True,
+                       error='home_viewer_rejected', viewer_rejected=True)
     return rows, circuit, peaks
 
 
@@ -349,6 +358,7 @@ def finish_cycle(state, current, feedback, now):
 def next_tasks(state, cycle, config, current, feedback, now):
     draining = cycle.get('candidate_mode') == 'drain_queue'
     pending = []
+    viewer_bad = load_feedback(feedback).get('bad', {})
     for key, route in cycle['current'].items():
         first = task_row(cycle, key, route['url'], 'current')
         if first['task_id'] not in cycle['results']:
@@ -358,11 +368,13 @@ def next_tasks(state, cycle, config, current, feedback, now):
     for key, route in cycle['current'].items():
         first = task_row(cycle, key, route['url'], 'current')
         second = task_row(cycle, key, route['url'], 'current', 2)
-        if not probe_is_good(cycle['results'][first['task_id']]['result']) and second['task_id'] not in cycle['results']:
+        rejected = any((item.get('url') if isinstance(item, dict) else item) == route['url']
+                       for item in viewer_bad.get(key, []))
+        if (rejected or not probe_is_good(cycle['results'][first['task_id']]['result'])) and second['task_id'] not in cycle['results']:
             pending.append(second)
     if pending:
         return pending[:config['routes_per_batch']]
-    rows, circuit, _ = current_view(state, cycle)
+    rows, circuit, _ = current_view(state, cycle, feedback)
     bad = {row['channel_key'] for row in rows if row['status'] == 'BAD'}
     if (circuit or not optional_window(config, cycle['kind'])
             or (cycle['kind'] == KINDS[1] and not draining) or cycle.get('optional_closed')):
@@ -407,7 +419,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
 
 
 def complete_report(state, cycle, current, feedback, now):
-    rows, circuit, peaks = current_view(state, cycle)
+    rows, circuit, peaks = current_view(state, cycle, feedback)
     state['peak_failures'] = peaks
     bad = {row['channel_key'] for row in rows if row['status'] == 'BAD'}
     check = allowed(state, current, feedback)
