@@ -267,6 +267,10 @@ def ingest(state, reports, now):
                 budget['discovery_seconds'] -= refund_seconds
         state['last_heartbeat'] = {'received_utc': timestamp(now), 'measured_utc': value['finished_utc'],
             'stop_reason': value.get('stop_reason', ''), 'usage': value['usage'], 'results': len(value['results'])}
+        # Temporary batches use the same validated evidence and budget ledger,
+        # but can never enter a production cycle, even after their config expires.
+        if task.get('temporary_campaign_id'):
+            continue
         cycle = state.get('cycle')
         if not cycle or value['cycle_id'] != cycle['id']:
             continue
@@ -320,17 +324,8 @@ def optional_window(config, kind):
 
 
 def night_budget_config(state, config, now):
-    """A durable night's queue determines bytes; time stays within fixed windows."""
-    plan = state.get('night_plan')
-    day = timestamp(now + 8 * 3600)[:10].replace('-', '')
-    if config.get('candidate_budget_mode') != 'night_queue' or not plan or plan['day'] != day:
-        return config
-    # One reservation per four routes, plus a spare batch for an interrupted
-    # boundary. Keep the normal allowance for current routes and backup checks.
-    batches = (len(plan['candidate_ids']) + config['routes_per_batch'] - 1) // config['routes_per_batch']
-    discovery = max(config['discovery_bytes'], (batches + 1) * min(config['batch_bytes'], 64 * 1024 * 1024))
-    return dict(config, discovery_bytes=discovery,
-        daily_bytes=config['daily_bytes'] + discovery - config['discovery_bytes'])
+    """The queue does not grant additional bytes to production or experiments."""
+    return config
 
 
 def finish_cycle(state, current, feedback, now):
@@ -375,7 +370,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
     check = allowed(state, current, feedback)
     # Unseen candidates take priority over archived backup rechecks in a sweep.
     # Accepted results leave the durable queue, including failures and UNKNOWN.
-    if draining and not cycle.get('discovery_closed'):
+    if draining and not cycle.get('discovery_closed') and not config.get('_skip_regular_candidates'):
         for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
             if candidate['candidate_id'] not in state['tested'] and check(candidate):
                 pending.append(task_row(cycle, candidate['channel_key'], candidate['url'], 'candidate'))
@@ -399,7 +394,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
                 break
     if pending:
         return pending[:min(2, config['routes_per_batch'])]
-    if cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed'):
+    if cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed') and not config.get('_skip_regular_candidates'):
         count = sum(row['role'] == 'candidate' for row in cycle['task_rows'].values())
         remaining = max(0, config['daily_candidates'] - count)
         for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
@@ -472,7 +467,7 @@ def complete_report(state, cycle, current, feedback, now):
     return report
 
 
-def step(state, config, root, reports, now):
+def production_step(state, config, root, reports, now):
     config = resume_config(config, now)
     if state['schema'] != STATE_SCHEMA or state['probe_id'] != config['probe_id']:
         raise ValueError('wrong cloud state identity')
@@ -612,6 +607,11 @@ def step(state, config, root, reports, now):
     cycle['outstanding'] = task['batch_id']
     cycle['batch_ids'].append(task['batch_id'])
     return state, task, closing_report
+
+
+def step(state, config, root, reports, now):
+    from scripts.home_test_campaign import campaign_step
+    return campaign_step(state, config, root, reports, now, production_step)
 
 
 def status_snapshot(state, task, config, now):

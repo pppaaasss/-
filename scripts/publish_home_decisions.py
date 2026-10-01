@@ -323,6 +323,12 @@ def publish_latest(
     inspect_shadow: bool = False,
 ) -> dict:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
+    # A one-off test freezes publication until its reviewed configuration is
+    # explicitly removed. Expiry stops sampling, never silently resumes writes.
+    # Presence is fail-closed, including malformed or disabled campaign files.
+    if (root / 'config/home-test-campaign.json').exists():
+        return {'status': 'temporary_test_publication_hold', 'replacement_count': 0,
+                'reason': 'Separate confirmation required before removing campaign hold'}
     config = load_config(config_path)
     if config["enabled"] is not True:
         if not inspect_shadow:

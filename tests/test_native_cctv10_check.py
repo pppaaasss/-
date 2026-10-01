@@ -69,12 +69,14 @@ class CCTV10CheckTests(TestCase):
                 sleep = root/'sleep'; sleep.write_text('#!/bin/sh\n[ "$1" = 2 ]\n'); sleep.chmod(0o755)
                 (root/'identity').write_text('test-probe 192.168.50.1\n')
                 (root/'results').touch()
-                origin = 'http://127.0.0.1:'+str(server.server_port)
+                from tests.native_transport_fixture import PUBLIC, build_transport
+                transport=build_transport(root)
+                origin = 'http://'+PUBLIC+':'+str(server.server_port)
                 routes = [(i+1, suffix, origin+'/'+suffix) for i, suffix in enumerate(('hls', 'fail', 'html'))]
                 (root/'routes').write_text(''.join(str(i)+'\t'+base64.b64encode(url.encode()).decode()+'\n' for i, label, url in routes))
                 script = root/'check.sh'; script.write_text(installer.CHECK_CCTV10_SHELL)
                 subprocess.run(['/bin/sh', str(script), folder], check=True, timeout=20,
-                    env=dict(os.environ, PATH=folder+':'+os.environ['PATH'], IPTV_NATIVE_BASE=folder, IPTV_NATIVE_DATA=folder))
+                    env=dict(os.environ, PATH=folder+':'+os.environ['PATH'], IPTV_NATIVE_BASE=folder, IPTV_NATIVE_DATA=folder, LD_PRELOAD=transport))
                 rows = installer.parse_check_rows((root/'results').read_bytes(), routes)
                 self.assertEqual(['measured', 'transfer_error', 'unsupported'], [r['outcome'] for r in rows])
                 self.assertEqual(2, len(rows[0]['samples']))

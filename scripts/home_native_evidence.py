@@ -191,8 +191,10 @@ def read_native(raw, task, now):
         transfers = ([manifest] if manifest else []) + samples
         failed = [m for m in transfers if m['curl_code'] or not 200 <= m['http_status'] < 300]
         if failed:
-            explicit = any(m['curl_code'] in (7, 28) or m['http_status'] in (404, 410, 500, 502, 503, 504) for m in failed)
-            result.update(observed_status='UNAVAILABLE' if explicit else 'UNKNOWN', error='native_transfer_error')
+            local_failure = any(m['curl_code'] == 1000 for m in failed)
+            explicit = not local_failure and any(m['curl_code'] in (7, 28) or m['http_status'] in (404, 410, 500, 502, 503, 504) for m in failed)
+            result.update(observed_status='UNAVAILABLE' if explicit else 'UNKNOWN',
+                error='native_local_policy_or_transport_error' if local_failure else 'native_transfer_error')
         elif code != 'measured' or result['sample_count'] != 2:
             result.update(observed_status='UNKNOWN', error='native_format_or_sample_unknown')
         else:
