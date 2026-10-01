@@ -218,7 +218,43 @@ static int dns_query(const char *host,const char *server,int port,int type,char 
     }
     return count;
 }
-static struct curl_slist *resolve(const char *url,const char *dns,int dns_port) {
+/* Conservative global-unicast admission for media only. LAN resolver sockets
+ * deliberately bypass this predicate. Special-purpose and transition ranges
+ * fail closed; DNS answers and curl's final socket address are both checked. */
+static int public_destination(int family,const void *raw) {
+    const unsigned char *b=raw;
+    if(family==AF_INET) {
+        uint32_t x;memcpy(&x,raw,4);x=ntohl(x);
+#define NET(base,mask) ((x&(mask))==(base))
+        if(NET(0x00000000u,0xff000000u)||NET(0x0a000000u,0xff000000u)||
+           NET(0x64400000u,0xffc00000u)||NET(0x7f000000u,0xff000000u)||
+           NET(0xa9fe0000u,0xffff0000u)||NET(0xac100000u,0xfff00000u)||
+           NET(0xc0000000u,0xffffff00u)||NET(0xc0000200u,0xffffff00u)||
+           NET(0xc01fc400u,0xffffff00u)||NET(0xc034c100u,0xffffff00u)||
+           NET(0xc0586300u,0xffffff00u)||NET(0xc0af3000u,0xffffff00u)||
+           NET(0xc0a80000u,0xffff0000u)||
+           NET(0xc6120000u,0xfffe0000u)||NET(0xc6336400u,0xffffff00u)||
+           NET(0xcb007100u,0xffffff00u)||x>=0xe0000000u)return 0;
+#undef NET
+        return 1;
+    }
+    if(family!=AF_INET6||(b[0]&0xe0)!=0x20)return 0;
+    /* IETF special-purpose /23, documentation, 6to4 and documentation /20. */
+    if((b[0]==0x20&&b[1]==0x01&&b[2]<2)||
+       (b[0]==0x20&&b[1]==0x01&&b[2]==0x0d&&b[3]==0xb8)||
+       (b[0]==0x20&&b[1]==0x02)||
+       (b[0]==0x26&&b[1]==0x20&&b[2]==0&&b[3]==0x4f&&b[4]==0x80&&b[5]==0)||
+       (b[0]==0x3f&&b[1]==0xfe)||
+       (b[0]==0x3f&&b[1]==0xff&&(b[2]&0xf0)==0))return 0;
+    return 1;
+}
+static int public_numeric(const char *text) {
+    unsigned char raw[16];
+    if(inet_pton(AF_INET,text,raw)==1)return public_destination(AF_INET,raw);
+    if(inet_pton(AF_INET6,text,raw)==1)return public_destination(AF_INET6,raw);
+    return 0;
+}
+static struct curl_slist *resolve(const char *url,const char *dns,int dns_port,int *blocked) {
     CURLU *u=ui(); char *host=NULL,*port=NULL,*user=NULL;
     if(!u||us(u,CURLUPART_URL,url,0)||ug(u,CURLUPART_HOST,&host,0)||ug(u,CURLUPART_PORT,&port,CURLU_DEFAULT_PORT)) fail("url_parse");
     if(!ug(u,CURLUPART_USER,&user,0)) {cf(user);fail("url_credentials");}
@@ -226,12 +262,13 @@ static struct curl_slist *resolve(const char *url,const char *dns,int dns_port) 
     snprintf(numeric,sizeof numeric,"%s",host);
     if(numeric[0]=='[') {memmove(numeric,numeric+1,strlen(numeric));char *end=strchr(numeric,']');if(end)*end=0;}
     int count=0;
-    if(inet_pton(AF_INET,numeric,addr)==1||inet_pton(AF_INET6,numeric,addr)==1) {cf(host);cf(port);uc(u);return NULL;}
+    if(inet_pton(AF_INET,numeric,addr)==1||inet_pton(AF_INET6,numeric,addr)==1) {*blocked=!public_numeric(numeric);cf(host);cf(port);uc(u);return NULL;}
     int six=dns_query(host,dns,dns_port,28,ips,0);
     if(six>0) count=six;
     int four=dns_query(host,dns,dns_port,1,ips,count);
     if(four>0) count=four;
-    if(!count) {cf(host);cf(port);uc(u);return NULL;}
+    if(!count) {*blocked=1;cf(host);cf(port);uc(u);return NULL;}
+    for(int i=0;i<count;i++)if(!public_numeric(ips[i])) {*blocked=1;cf(host);cf(port);uc(u);return NULL;}
     int used=snprintf(entry,sizeof entry,"%s:%s:",host,port);
     for(int i=0;i<count;i++) used+=snprintf(entry+used,sizeof entry-(size_t)used,"%s%s%s%s",i?",":"",strchr(ips[i],':')?"[":"",ips[i],strchr(ips[i],':')?"]":"");
     struct curl_slist *list=ca(NULL,entry); cf(host);cf(port);uc(u);return list;
@@ -347,6 +384,10 @@ static int recover_route_pause(const char *root) {
 struct transfer { FILE *file; size_t count,kept,limit,keep; int capped,local_error; long status; long long total; char location[URL_MAX]; uint32_t mark; };
 static curl_socket_t open_socket(void *v,curlsocktype purpose,struct curl_sockaddr *a) {
     (void)purpose; struct transfer *t=v;
+    const void *raw=NULL;
+    if(a->family==AF_INET&&a->addrlen>=sizeof(struct sockaddr_in))raw=&((struct sockaddr_in *)&a->addr)->sin_addr;
+    else if(a->family==AF_INET6&&a->addrlen>=sizeof(struct sockaddr_in6))raw=&((struct sockaddr_in6 *)&a->addr)->sin6_addr;
+    if(!raw||!public_destination(a->family,raw)){t->local_error=1;t->status=0;return CURL_SOCKET_BAD;}
     if(t->mark && rule("-C",t->mark)){t->local_error=1;return CURL_SOCKET_BAD;}
     int fd=socket(a->family,a->socktype|SOCK_CLOEXEC,a->protocol);
     if(fd>=0 && a->family==AF_INET && t->mark && setsockopt(fd,SOL_SOCKET,SO_MARK,&t->mark,sizeof t->mark)) {t->local_error=1;close(fd);return CURL_SOCKET_BAD;}
@@ -386,7 +427,9 @@ static int get(int argc,char **argv) {
     CURLcode code=CURLE_OK;
     for(int redirects=0;redirects<5;redirects++) {
         CURL *c=ci();if(!c)fail("curl_init");
-        struct curl_slist *hosts=resolve(url,argv[8],dns_port);
+        int blocked=0;
+        struct curl_slist *hosts=resolve(url,argv[8],dns_port,&blocked);
+        if(blocked){t.local_error=1;t.status=0;cl(hosts);cc(c);break;}
         /* Never silently fall back to the runner/router's unrelated DNS. */
         CURLU *u=ui();char *host=NULL;us(u,CURLUPART_URL,url,0);ug(u,CURLUPART_HOST,&host,0);
         unsigned char numeric[16];char h[URL_MAX];snprintf(h,sizeof h,"%s",host?host:"");
@@ -415,6 +458,7 @@ static int get(int argc,char **argv) {
     if(fclose(t.file))fail("sample_flush");
     if(t.capped&&code==CURLE_WRITE_ERROR)code=CURLE_OK;
     if(!t.total&&!t.capped&&code==CURLE_OK)t.total=(long long)t.count;
+    if(t.local_error)t.status=0;
     FILE *f=fopen(argv[6],"w");if(!f)fail("metric_file");
     fprintf(f,"%d\t%ld\t%zu\t%.6f\t%lld\t%d\t%s\n",t.local_error?1000:(int)code,t.status,t.count,fmax(.001,mono()-started),t.total,
             t.total>0&&(long long)t.count>=t.total,url);

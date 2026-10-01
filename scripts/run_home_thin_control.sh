@@ -18,6 +18,19 @@ else
   git -C "$iptv_control" switch --orphan home-control
 fi
 python3 scripts/home_thin_control.py --repo-root "$iptv_repo" --reports "$iptv_reports" --control "$iptv_control"
+python3 - "$iptv_control" <<'PY'
+import json, re, sys
+from pathlib import Path
+from scripts.publish_home_decisions import atomic_json
+root = Path(sys.argv[1])
+state = json.loads((root/'state.json').read_bytes())
+for identity, report in state.get('temporary_campaigns', {}).items():
+    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{2,63}', identity):
+        raise ValueError('invalid temporary report identity')
+    if report.get('schema') != 'iptv-home-temporary-results/v1' or report.get('actionable') is not False:
+        raise ValueError('temporary report must never be actionable')
+    atomic_json(root/'temporary-tests'/(identity+'.json'), report)
+PY
 for iptv_target in "$iptv_reports" "$iptv_control"; do
   git -C "$iptv_target" config user.name 'github-actions[bot]'
   git -C "$iptv_target" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -46,6 +59,9 @@ fi
 # Reports first, then state/tasks. If interrupted, the next pass regenerates
 # the same report from immutable observations before advancing control state.
 git -C "$iptv_control" add -- state.json status.json tasks
+if test -d "$iptv_control/temporary-tests"; then
+  git -C "$iptv_control" add -- temporary-tests
+fi
 if test -f "$iptv_control/delivery-receipt.json"; then
   git -C "$iptv_control" add -- delivery-receipt.json
 fi

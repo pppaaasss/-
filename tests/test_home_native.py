@@ -47,6 +47,8 @@ class NativeFixture:
 
 class NativeHTTPTests(NativeFixture, unittest.TestCase):
     def setUp(self):
+        from tests.native_transport_fixture import PUBLIC, build_transport
+        self.transport = build_transport(self.folder)
         data = self.media_bytes
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args): pass
@@ -60,14 +62,14 @@ class NativeHTTPTests(NativeFixture, unittest.TestCase):
                 except (BrokenPipeError,ConnectionResetError): pass
         self.server = ThreadingHTTPServer(('127.0.0.1',0),Handler)
         self.thread = threading.Thread(target=self.server.serve_forever,daemon=True); self.thread.start()
-        self.url = 'http://127.0.0.1:'+str(self.server.server_port)
+        self.url = 'http://'+PUBLIC+':'+str(self.server.server_port)
 
     def tearDown(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join()
 
     def get(self, url, limit=196608, keep=131072, mark=0, dns='127.0.0.1', port=1):
         out, metric = self.folder/'sample', self.folder/'metric'
-        subprocess.run([str(self.binary),'get',url,str(limit),str(keep),str(out),str(metric),str(mark),dns,str(port)],check=True,timeout=20)
+        subprocess.run([str(self.binary),'get',url,str(limit),str(keep),str(out),str(metric),str(mark),dns,str(port)],check=True,timeout=20,env=dict(os.environ,LD_PRELOAD=self.transport))
         return out.read_bytes(), metric.read_text().strip().split('\t')
 
     def test_redirect_ignored_range_keeps_prefix_and_counts_actual_body(self):
@@ -102,15 +104,15 @@ class NativeHTTPTests(NativeFixture, unittest.TestCase):
             try:
                 for _ in range(2):
                     query,address=server.recvfrom(512);kind=int.from_bytes(query[-4:-2],'big');seen.append(kind)
-                    answer=b'\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04\x7f\x00\x00\x01' if kind==1 else b''
+                    answer=b'\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\x3c\x00\x04\x5d\xb8\xd8\x22' if kind==1 else b''
                     response=query[:2]+b'\x81\x80\x00\x01'+(b'\x00\x01' if answer else b'\x00\x00')+b'\x00\x00\x00\x00'+query[12:]+answer
                     server.sendto(response,address)
             finally: server.close()
         thread=threading.Thread(target=serve);thread.start()
-        raw,metric=self.get(self.url.replace('127.0.0.1','household.invalid')+'/media.ts',port=server.getsockname()[1])
+        raw,metric=self.get(self.url.replace('93.184.216.34','household.invalid')+'/media.ts',port=server.getsockname()[1])
         thread.join();self.assertEqual([28,1],seen);self.assertEqual('0',metric[0]);self.assertEqual(self.prefix,raw)
-        _,metric=self.get(self.url.replace('127.0.0.1','localhost')+'/media.ts')
-        self.assertEqual('6',metric[0])  # localhost must not use system DNS.
+        _,metric=self.get(self.url.replace('93.184.216.34','localhost')+'/media.ts')
+        self.assertEqual('1000',metric[0])  # DNS failure remains local UNKNOWN; no fallback.
 
     def test_missing_mark_rule_is_local_unknown_not_channel_failure(self):
         fake=self.folder/'iptables';fake.write_text('#!/bin/sh\nexit 1\n');fake.chmod(0o755)
@@ -153,6 +155,15 @@ class NativeHTTPTests(NativeFixture, unittest.TestCase):
 
 
 class NativeCloudTests(NativeFixture, ThinFixture):
+    def test_local_address_refusal_remains_unknown_even_with_failed_http(self):
+        self.migrated(); task,_=self.step()
+        raw=self.change_metric(self.capsule(task),column=6,field=1,value='503')
+        raw=self.change_metric(raw,column=9,field=0,value='1000')
+        value=wire.read_native(raw,task,self.now+10)
+        result=value['results'][0]['result']
+        self.assertEqual(result['observed_status'],'UNKNOWN')
+        self.assertEqual(result['error'],'native_local_policy_or_transport_error')
+
     def change_metric(self, raw, column=6, field=1, value='600'):
         lines = raw.decode('ascii').splitlines()
         row = lines[1].split('\t')

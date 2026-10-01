@@ -24,7 +24,7 @@ class NightlyCompletionTests(ThinFixture):
             row = dict(original, url=url, candidate_id=candidate_id('cctv1', url))
             self.state['queue'][row['candidate_id']] = row
 
-    def test_875_candidates_finish_without_manual_budget_changes_and_publish_only_qualified(self):
+    def test_875_candidates_stop_at_fixed_budget_and_keep_remaining_history(self):
         self.add_queue(875)
         original_config = copy.deepcopy(self.config)
         task, _ = self.step(); self.deliver(task, {'cctv1': 'UNAVAILABLE'})
@@ -54,14 +54,14 @@ class NightlyCompletionTests(ThinFixture):
             ids = {r['candidate_id'] for r in task['tasks']}
             self.assertFalse(seen & ids)
             seen.update(ids)
-        self.assertEqual(875, len(seen))
+        self.assertEqual(384, len(seen))
         self.assertLess(self.now, epoch('2026-09-15T03:00:00Z'))
-        self.assertFalse(self.state['queue'])
+        self.assertEqual(875-len(seen),len(self.state['queue']))
         self.assertEqual(original_config, self.config)
         self.assertIn(qualified['candidate_id'], self.state['archive'])
         self.assertEqual(1, len(self.state['archive']))
-        self.assertTrue(report['policy']['candidate_sweep_complete'])
-        self.assertEqual(0, report['summary']['candidate_queue_remaining'])
+        self.assertFalse(report['policy']['candidate_sweep_complete'])
+        self.assertEqual(875-len(seen), report['summary']['candidate_queue_remaining'])
         self.assertEqual(1, report['summary']['replacements'])
         raw = encode(report)
         inbox = self.reports/'inbox'/self.probe
@@ -116,7 +116,7 @@ class NightlyCompletionTests(ThinFixture):
         original = copy.deepcopy(self.state['night_plan'])
         budget = copy.deepcopy(self.state['native_budget'])
         status = cloud.status_snapshot(self.state, task, self.config, self.now)
-        self.assertGreater(status['budget']['discovery_bytes_limit'], 875*12*1024*1024)
+        self.assertEqual(status['budget']['discovery_bytes_limit'], self.config['discovery_bytes'])
         self.assertEqual(self.config['daily_seconds'], status['budget']['daily_seconds_limit'])
         self.step()
         self.assertEqual(original, self.state['night_plan'])
@@ -126,7 +126,7 @@ class NightlyCompletionTests(ThinFixture):
         self.assertEqual(876, len(self.state['night_plan']['candidate_ids']))
         self.now = epoch('2026-09-15T12:05:00Z')
         effective = cloud.night_budget_config(self.state, self.config, self.now)
-        self.assertGreater(effective['daily_bytes'], self.config['daily_bytes'])
+        self.assertEqual(effective['daily_bytes'], self.config['daily_bytes'])
         self.assertEqual(['primary-0200'], effective['candidate_run_kinds'])
         self.now = epoch('2026-09-15T18:05:00Z')
         task, _ = self.step()

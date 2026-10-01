@@ -49,6 +49,19 @@ def playlist(routes):
 
 
 class HomePublishTests(unittest.TestCase):
+    def test_temporary_campaign_holds_all_writes_until_explicit_removal(self):
+        self.queue(self.report())
+        before={name:(self.root/name).read_bytes() for name in PRODUCTION_FILES}
+        hold=self.root/'config/home-test-campaign.json'
+        for contents in ('{}','{"enabled":false,"expires_utc":"2000-01-01T00:00:00Z"}','malformed'):
+            hold.write_text(contents)
+            result=self.publish()
+            self.assertEqual(result['status'],'temporary_test_publication_hold')
+            self.assertEqual(before,{name:(self.root/name).read_bytes() for name in PRODUCTION_FILES})
+            self.assertFalse((self.root/'home-publish/latest.json').exists())
+        hold.unlink()
+        self.assertEqual(self.publish()['status'],'applied')
+
     def candidate_fixture(self):
         from scripts.build_home_candidate_manifest import build_manifest
         manifest, _ = build_manifest(discovery_rows=[],
