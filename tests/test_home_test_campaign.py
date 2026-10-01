@@ -231,6 +231,15 @@ class TemporaryCampaignTests(ThinFixture):
         self.assertTrue(all(r['url'] != task['tasks'][0]['url'] for r in registered['candidates'].values()))
         self.assertEqual(len(self.state['temporary_campaigns']['one-time-test']['results']),4)
 
+    def test_changing_campaign_id_does_not_overlap_an_existing_trial_lease(self):
+        first,_=self.first_temporary()
+        self.campaign['campaign_id']='second-campaign';self.save()
+        idle,_=self.step()
+        self.assertFalse(idle.get('temporary_campaign_id'))
+        self.assertEqual(self.isolated()['status'],'WAITING_PREVIOUS_CAMPAIGN_LEASE')
+        self.assertFalse(self.isolated()['batch_ids'])
+        self.assertEqual(len([r for r in self.state['batches'].values() if r.get('temporary_campaign_id')]),1)
+
     def test_next_night_resumes_only_unmeasured_inputs_after_formal_checks(self):
         task,_=self.first_temporary();self.deliver(task)
         self.now=epoch('2026-09-15T03:00:00Z')

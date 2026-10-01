@@ -287,6 +287,13 @@ def campaign_step(state, config, root, reports, now, production_step):
     # production_step copies state; never mutate the pre-copy campaign reference.
     if campaign and task.get('state')=='SLOT_COMPLETE':
         campaign=state['temporary_campaigns'][campaign['campaign_id']]
+        # Changing the manifest to a different campaign cannot overlap another
+        # still-live experiment lease. Formal tasks retain their priority above.
+        for other in state['temporary_campaigns'].values():
+            lease=state['batches'].get(other.get('outstanding'))
+            if other['campaign_id'] != campaign['campaign_id'] and lease and now < epoch(lease['expires_utc']):
+                campaign['status']='WAITING_PREVIOUS_CAMPAIGN_LEASE'
+                return state,task,report
         issued=dispatch(state,campaign,config,root,now)
         if issued:
             return state,issued,report
