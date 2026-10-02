@@ -3,7 +3,8 @@
   "batch_ids": [
     "8abd0670f64b0c90189d012d7e3f243ccd463dfeae7d6dad1c28d75b7f314932",
     "b1b170e21e7789299bf23ccd0df6dce7f2d778a75ecbbb9def30b5f81d4a69ed",
-    "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304"
+    "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+    "efed043335bae85e6c292dd1bbf16e94973bc23adb705548986ca839d089257c"
   ],
   "campaign_id": "fullpool-home-test-20261002-c1fda683",
   "candidate_count": 2009,
@@ -30212,7 +30213,8 @@
   },
   "collected_batches": [
     "8abd0670f64b0c90189d012d7e3f243ccd463dfeae7d6dad1c28d75b7f314932",
-    "b1b170e21e7789299bf23ccd0df6dce7f2d778a75ecbbb9def30b5f81d4a69ed"
+    "b1b170e21e7789299bf23ccd0df6dce7f2d778a75ecbbb9def30b5f81d4a69ed",
+    "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304"
   ],
   "created_utc": "2026-10-01T11:23:51Z",
   "cycle_id": "08aa9524c153cd550eab78be71bf867166375f94e621cee909c0022ddfc820dd",
@@ -30223,13 +30225,13 @@
   "input_count": 2009,
   "last_stop_reason": "",
   "manifest_sha256": "371d7641e1bc47563feb1696f861133e4710c44f67c47c08593427093eea8812",
-  "measured_count": 8,
+  "measured_count": 12,
   "not_before_utc": "2026-10-01T18:00:00Z",
   "outcomes": {
-    "REJECTED": 5,
-    "UNKNOWN": 3
+    "REJECTED": 8,
+    "UNKNOWN": 4
   },
-  "outstanding": "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+  "outstanding": "efed043335bae85e6c292dd1bbf16e94973bc23adb705548986ca839d089257c",
   "probe_id": "home-ac86u-8f8908f0fba9",
   "production_eligible": false,
   "registered_utc": "2026-10-02T00:32:29Z",
@@ -30266,6 +30268,97 @@
         "width": 0
       },
       "task_id": "4576a4db78afd625776aa49551dd3d17327b6e54cbccc35d05eae49021379a4e"
+    },
+    "00d9b06834395af02f8a3dce1ee145177ad59d756a8379ef2dd2f76ea024f903": {
+      "actionable": false,
+      "batch_id": "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+      "candidate_id": "00d9b06834395af02f8a3dce1ee145177ad59d756a8379ef2dd2f76ea024f903",
+      "observed_utc": "2026-10-02T01:09:44Z",
+      "production_eligible": false,
+      "qualification": "REJECTED",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv3",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-3",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 0.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://1732e975z9.zicp.fun:8082/hls/3/index.m3u8",
+        "url_sha256": "c70f97af3f548c9d0b5a551127a3de736fa8b6daae6d6ddf5839801f7b22d85a",
+        "width": 0
+      },
+      "task_id": "98b00b0c6dd94ee8ce77311a1467ad3227f1c5ca0fe6c18b84b8d10489dfeaa4"
+    },
+    "016f5abe55334620eb313c3af597eae2bca3ae349aa820368af87a43b34a9d18": {
+      "actionable": false,
+      "batch_id": "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+      "candidate_id": "016f5abe55334620eb313c3af597eae2bca3ae349aa820368af87a43b34a9d18",
+      "observed_utc": "2026-10-02T01:09:42Z",
+      "production_eligible": false,
+      "qualification": "UNKNOWN",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv2",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_format_or_sample_unknown",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-2",
+        "observed_status": "UNKNOWN",
+        "probe_runtime_s": 4.0,
+        "sample_count": 0,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 0.026225360299523017,
+            "downloaded_bytes": 3068,
+            "duration_s": 0.0,
+            "elapsed_s": 0.935888,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 3068,
+            "url": "https://smt.passwdword.xyz/Smart.php?id=cctv2"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 0.027398393709908438,
+            "downloaded_bytes": 3063,
+            "duration_s": 0.0,
+            "elapsed_s": 0.894359,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 3063,
+            "url": "https://smt.passwdword.xyz/Smart.php?id=cctv2"
+          }
+        ],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://smt.passwdword.xyz/Smart.php?id=cctv2",
+        "url_sha256": "659b10d2b8f9d07fe48799d8703c14da0a3fabe68c3b1f479557fbb7263da1dd",
+        "width": 0
+      },
+      "task_id": "0435000d7015ac17e555f293819a5059caa612dbd16a8913d29fd5500aada7ac"
     },
     "01a7b9e1a6472d562c468f5f77e21918a59d5781f905ec383309cf435ec6320d": {
       "actionable": false,
@@ -30399,6 +30492,39 @@
       },
       "task_id": "3d2dab9a63ed064fab51299c232c69100540eed62c93cc437e6d6f11b23df2c6"
     },
+    "05de61b876dfe3e9661f540a87b0361b7f696143a753d7c546f5ead7e7ea32fb": {
+      "actionable": false,
+      "batch_id": "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+      "candidate_id": "05de61b876dfe3e9661f540a87b0361b7f696143a753d7c546f5ead7e7ea32fb",
+      "observed_utc": "2026-10-02T01:09:51Z",
+      "production_eligible": false,
+      "qualification": "REJECTED",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv4",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 5.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://[2409:8087:4400:20:1:a0f:11:9]/iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226656/index.m3u8",
+        "url_sha256": "345119a83cd9758680b59db6e41face928c40fd83c9583b3d28a3b3caabf8d78",
+        "width": 0
+      },
+      "task_id": "58b354f8426d57b3093238767d56d7c54d53f1289088f0142ac70dca05faf65b"
+    },
     "06caac8a90ffcafae453ffddd619db69dadffb18d783b492d75d9be50096c0f6": {
       "actionable": false,
       "batch_id": "8abd0670f64b0c90189d012d7e3f243ccd463dfeae7d6dad1c28d75b7f314932",
@@ -30431,6 +30557,39 @@
         "width": 0
       },
       "task_id": "df80ae4d4111ecd56a8bb5f646ba83ff66391e37956e77be281213a4449e4281"
+    },
+    "06e7ac661c6d079a0b72bad951bd612c40c2a9bb033a9375886f53e5cc533e4c": {
+      "actionable": false,
+      "batch_id": "a97041619335f5d2c6aa3db944605aebfc9347eb7431219c909b29448ef3c304",
+      "candidate_id": "06e7ac661c6d079a0b72bad951bd612c40c2a9bb033a9375886f53e5cc533e4c",
+      "observed_utc": "2026-10-02T01:09:36Z",
+      "production_eligible": false,
+      "qualification": "REJECTED",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv17",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-17",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 5.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://[2409:8087:5e00:24::1e]:6060/200000001898/460000089800010210/1.m3u8",
+        "url_sha256": "8f678fb957f228e3a587cc5306a36dd397d5a06f8dc63e3bb9dc5534bbd25c56",
+        "width": 0
+      },
+      "task_id": "f53bf550f45997c3504f157ef36bf8eda15995a80683f2a0e39620d9528513c5"
     },
     "0b73f2b06ac66c28c20860d611f46734aeaf2bb486c4eba5c5fc389d2cb252c1": {
       "actionable": false,
