@@ -86,6 +86,49 @@ class ThinFixture(unittest.TestCase):
 
 
 class ThinFlowTests(ThinFixture):
+    def test_viewer_rejected_playable_channel_uses_verified_replacement(self):
+        feedback = {'good': {}, 'bad': {'cctv1': [{'url': 'http://current.test/one.m3u8',
+                                                   'reason': 'home_wrong_channel'}]}}
+        (self.root/'config/home-route-feedback.json').write_bytes(encode(feedback))
+        self.migrated()
+        first, _ = self.step()
+        self.deliver(first)
+        second, report = self.step()
+        self.assertIsNone(report)
+        self.assertEqual([('cctv1', 2)], [(r['channel_key'], r['attempt']) for r in second['tasks']])
+        self.deliver(second)
+        candidate, _ = self.step()
+        self.assertEqual(['candidate'], [r['role'] for r in candidate['tasks']])
+        self.deliver(candidate)
+        _, report = self.step()
+        row = next(r for r in report['current_results'] if r['channel_key'] == 'cctv1')
+        self.assertEqual(('BAD', True, 2), (row['status'], row['viewer_rejected'], row['attempt_count']))
+        decision = next(r for r in report['decisions'] if r['channel_key'] == 'cctv1')
+        self.assertEqual('REPLACE', decision['action'])
+        self.assertTrue(report['candidate_results'][0]['switch_reverified'])
+        raw = encode(report)
+        path = self.reports/'inbox'/self.probe/cloud.report_filename(report, raw)
+        path.parent.mkdir(parents=True)
+        path.write_bytes(raw)
+        result = publish_latest(root=self.root, config_path=self.root/'config/home-publisher.json',
+            inbox=self.reports/'inbox', now_epoch=self.now, apply=True)
+        self.assertEqual(1, result['replacement_count'])
+
+    def test_viewer_rejection_without_qualified_candidate_remains_unresolved(self):
+        feedback = {'good': {}, 'bad': {'cctv1': [{'url': 'http://current.test/one.m3u8'}]}}
+        (self.root/'config/home-route-feedback.json').write_bytes(encode(feedback))
+        self.migrated()
+        first, _ = self.step()
+        self.deliver(first)
+        second, _ = self.step()
+        self.deliver(second)
+        candidate, _ = self.step()
+        self.deliver(candidate, {'cctv1': 'UNKNOWN'})
+        _, report = self.step()
+        decision = next(r for r in report['decisions'] if r['channel_key'] == 'cctv1')
+        self.assertEqual('UNRESOLVED', decision['action'])
+        self.assertEqual(0, report['summary']['replacements'])
+
     def test_migration_required_before_any_probe(self):
         task, report = self.step()
         self.assertEqual('WAITING_HISTORY_MIGRATION', task['state'])
