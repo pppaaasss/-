@@ -1,23 +1,29 @@
 {
   "budget": {
-    "bytes": 1577521410,
-    "candidates": 376,
+    "bytes": 67108864,
+    "candidates": 0,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 10000,
     "daily_seconds_limit": 54000,
-    "day": "20261002",
+    "day": "20261003",
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 3737.0
+    "seconds": 240
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
     "primary-0200"
   ],
-  "generated_utc": "2026-10-02T15:34:08Z",
+  "generated_utc": "2026-10-02T20:09:48Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "ae62055b6adf6580268981a9563379c3f2d35e51100f6de69b0a33b98cabe801",
+    "created_utc": "2026-10-02T20:09:48Z",
+    "expires_utc": "2026-10-02T20:39:48Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-10-02T02:59:31Z",
     "received_utc": "2026-10-02T03:00:43Z",
@@ -31,32 +37,32 @@
   "last_report_generated_utc": "2026-10-01T19:25:32Z",
   "night_sweep": {
     "complete": false,
-    "day": "20261002",
-    "measured": 148,
-    "planned": 284,
-    "qualified": 6,
+    "day": "20261003",
+    "measured": 0,
+    "planned": 136,
+    "qualified": 0,
     "remaining": 136
   },
   "progress": {
-    "backup_checks_completed": 28,
-    "belongs_to_active_window": false,
-    "candidate_checks_completed": 148,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 26,
-    "current_rechecks_required": 26,
+    "backup_checks_completed": 0,
+    "belongs_to_active_window": true,
+    "candidate_checks_completed": 0,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
-    "report_complete": true,
-    "slot": "20261002-primary-0200"
+    "report_complete": false,
+    "slot": "20261003-primary-0200"
   },
   "queue": 137,
   "router_enabled": null,
-  "state": "WAITING_WINDOW",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 10949,
   "window": {
-    "active": false,
-    "ends_utc": null,
-    "next_starts_utc": "2026-10-02T18:00:00Z",
-    "run_kind": null,
+    "active": true,
+    "ends_utc": "2026-10-03T03:00:00Z",
+    "next_starts_utc": "2026-10-03T05:00:00Z",
+    "run_kind": "primary-0200",
     "timezone": "Asia/Shanghai"
   }
 }
