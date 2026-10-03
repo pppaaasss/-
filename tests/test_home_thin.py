@@ -44,6 +44,7 @@ class ThinFixture(unittest.TestCase):
         self.config['enabled'] = True
         # Keep coverage of legacy daily mode; queue drain tests opt in.
         self.config['candidate_mode'] = 'daily'
+        self.config.pop('stop_temporary_campaigns', None)
         self.config.pop('candidate_budget_mode', None)
         self.probe = self.config['probe_id']
         self.state = cloud.new_state(self.probe)
