@@ -77,6 +77,7 @@ def build_manifest(
     generated_utc: str,
     rejected_urls: set[str] | None = None,
     rejected_hosts: set[str] | None = None,
+    candidate_selector=None,
 ) -> tuple[dict, dict]:
     rejected_urls = set(rejected_urls or ())
     rejected_hosts = {value.casefold() for value in (rejected_hosts or ())}
@@ -136,6 +137,11 @@ def build_manifest(
     candidates = {k:v for k,v in candidates.items() if v['url'] not in conflicts}
 
     ordered = sorted(candidates.values(), key=lambda item: (str(item["channel_key"]), str(item["candidate_id"])))
+    # Discovery normalization/conflict rejection is unbounded by the delivery
+    # envelope. Daily intake filters history and selects its <=800 rows here,
+    # before the final manifest's 10,000-row contract validation.
+    if candidate_selector is not None:
+        ordered = candidate_selector(ordered)
     manifest = {
         "schema": CANDIDATE_SCHEMA,
         "generated_utc": generated_utc,

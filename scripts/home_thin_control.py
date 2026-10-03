@@ -37,6 +37,12 @@ from urllib.parse import urlsplit
 STATE_SCHEMA = 'iptv-home-cloud-state/v1'
 
 
+def datetime_day(now):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.fromtimestamp(now, ZoneInfo('Asia/Shanghai')).strftime('%Y%m%d')
+
+
 def new_state(probe):
     return {'schema': STATE_SCHEMA, 'probe_id': probe, 'tested': {}, 'archive': {},
             'queue': {}, 'peak_failures': {}, 'completed_slots': [], 'batches': {},
@@ -380,10 +386,15 @@ def next_tasks(state, cycle, config, current, feedback, now):
             or (cycle['kind'] == KINDS[1] and not draining) or cycle.get('optional_closed')):
         return []
     check = allowed(state, current, feedback)
+    candidates_ordered = sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id']))
+    if config.get('daily_verified_intake'):
+        from scripts.daily_home_intake import order_daily_candidates
+        candidates_ordered = order_daily_candidates(state, config.get('_daily_ids', []),
+            min(config['routes_per_batch'], max(0, 800 - (state.get('native_budget', {}).get('candidates', 0) if state.get('native_budget', {}).get('day') == cycle['slot'][:8] else 0))))
     # Unseen candidates take priority over archived backup rechecks in a sweep.
     # Accepted results leave the durable queue, including failures and UNKNOWN.
     if draining and not cycle.get('discovery_closed') and not config.get('_skip_regular_candidates'):
-        for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
+        for candidate in candidates_ordered:
             if candidate['candidate_id'] not in state['tested'] and check(candidate):
                 pending.append(task_row(cycle, candidate['channel_key'], candidate['url'], 'candidate'))
                 if len(pending) >= config['routes_per_batch']:
@@ -409,7 +420,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
     if cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed') and not config.get('_skip_regular_candidates'):
         count = sum(row['role'] == 'candidate' for row in cycle['task_rows'].values())
         remaining = max(0, config['daily_candidates'] - count)
-        for candidate in sorted(state['queue'].values(), key=lambda r:(r['channel_key'] not in bad, r['candidate_id'])):
+        for candidate in candidates_ordered:
             if remaining <= len(pending):
                 break
             if candidate['candidate_id'] not in state['tested'] and check(candidate):
@@ -502,9 +513,17 @@ def production_step(state, config, root, reports, now):
     manifest_raw = (root / 'harvest/home-candidates.json').read_bytes()
     manifest = validate_candidate_manifest(json.loads(manifest_raw))
     intake_current = manifest['formal_playlist']['sha256'] == formal_sha
+    if config.get('daily_verified_intake'):
+        from scripts.daily_home_intake import admitted_daily_ids
+        ids = admitted_daily_ids(manifest, state, formal_raw, feedback, now) if intake_current else []
+        intake_current = bool(ids)
+        config = dict(config, _daily_ids=ids, daily_candidates=min(800, config['daily_candidates']))
+        state['daily_intake'] = {'day': datetime_day(now), 'candidate_ids': ids,
+            'available': len(ids), 'target': 800, 'shortfall': max(0, 800-len(ids)),
+            'reason': 'ready' if len(ids) == 800 else 'insufficient_fresh_unmeasured_candidates'}
     if intake_current:
         for row in manifest['candidates']:
-            if row['candidate_id'] not in state['tested']:
+            if row['candidate_id'] not in state['tested'] and (not config.get('daily_verified_intake') or row['candidate_id'] in config['_daily_ids']):
                 state['queue'][row['candidate_id']] = row
     # Receipt explicitly describes CLOUD persistence, never household qualification.
     state['delivery_receipt'] = {'schema': 'iptv-cloud-delivery-receipt/v1', 'probe_id': state['probe_id'],
@@ -517,14 +536,24 @@ def production_step(state, config, root, reports, now):
             state['night_plan'] = {'day': active[1], 'candidate_ids': []}
         check = allowed(state, current, feedback)
         plan = state['night_plan']
-        incoming = {
+        eligible_today = {
             identity for identity, row in state['queue'].items()
-            if identity not in state['tested'] and check(row)} - set(plan['candidate_ids'])
+            if identity not in state['tested'] and check(row) and
+                (not config.get('daily_verified_intake') or identity in config['_daily_ids'])}
+        incoming = eligible_today - set(plan['candidate_ids'])
         plan['candidate_ids'] = sorted(set(plan['candidate_ids']) | incoming)
         night_slot = active[1]+'-'+active[0]
-        if incoming and night_slot in state['completed_slots']:
-            # New intake before 11:00 wakes a finished sweep exactly once per
-            # new identity. Previously accepted tests and budgets stay intact.
+        reopen = bool(incoming)
+        if config.get('daily_verified_intake'):
+            # Today's evidence can re-authorize pending IDs already in the old
+            # plan. A manifest is acknowledged once, even if budgets stop it,
+            # so polling cannot repeatedly reopen a resource-exhausted slot.
+            admission = sha256_bytes(manifest_raw)
+            reopen = bool(eligible_today) and plan.get('daily_admission_sha') != admission
+            if eligible_today:
+                plan['daily_admission_sha'] = admission
+        if reopen and night_slot in state['completed_slots']:
+            # Preserve all prior observations and the shared daily ledger.
             state['completed_slots'].remove(night_slot)
             if state.get('cycle') and state['cycle']['slot'] == night_slot:
                 state['cycle'].pop('optional_closed', None)
@@ -592,6 +621,7 @@ def production_step(state, config, root, reports, now):
         # Admission lives in GitHub's durable state, never in router Python.
         budget = state.setdefault('native_budget', {})
         if budget.get('day') != day:
+            state.pop('daily_stop_reason', None)
             budget = state['native_budget'] = dict(day=day, bytes=0, seconds=0,
                 candidates=0, discovery_bytes=0, discovery_seconds=0, reservations={})
         amount, seconds = task['limits']['bytes'], task['limits']['seconds']
@@ -601,6 +631,8 @@ def production_step(state, config, root, reports, now):
                 budget['candidates'] + candidates > config['daily_candidates'] or
                 (candidates and (budget['discovery_bytes'] + amount > config['discovery_bytes'] or
                     budget['discovery_seconds'] + seconds > config['discovery_seconds']))):
+            if config.get('daily_verified_intake'):
+                state['daily_stop_reason'] = 'daily_count_or_shared_resource_budget'
             if all(t['role'] != 'current' for t in tasks):
                 cycle['optional_closed'] = True
                 report = complete_report(state, cycle, current, feedback, now)
@@ -685,6 +717,9 @@ def status_snapshot(state, task, config, now):
             'measured': len(measured), 'remaining': len(plan['candidate_ids']) - len(measured),
             'qualified': sum(candidate_is_qualified(state['tested'][identity].get('result', {})) for identity in measured),
             'complete': len(measured) == len(plan['candidate_ids'])}
+    if config.get('daily_verified_intake'):
+        from scripts.daily_home_intake import daily_progress
+        status['daily_800'] = daily_progress(state, task, now)
     return status
 
 

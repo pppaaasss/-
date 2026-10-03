@@ -92,6 +92,15 @@ class HomePublishTests(unittest.TestCase):
                 self.publish()
         self.assertEqual(before, path.read_bytes())
 
+    def test_explicit_hold_survives_manifest_removal_and_apply_shadow(self):
+        config=json.loads(self.config_path.read_bytes());config['publication_hold']=True
+        self.config_path.write_text(json.dumps(config))
+        self.queue(self.report())
+        before={p.name:p.read_bytes() for p in self.root.glob('*.m3u')}
+        result=self.publish()
+        self.assertEqual(result['status'],'manual_publication_hold')
+        self.assertEqual(before,{p.name:p.read_bytes() for p in self.root.glob('*.m3u')})
+
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)

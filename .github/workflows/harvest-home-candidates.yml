@@ -68,56 +68,25 @@ jobs:
                       subprocess.check_output(['git', 'show', 'FETCH_HEAD:state.json']))
           PYRECEIPT
 
-      - name: Check the 800-candidate refill threshold
-        id: refill
+      - name: Verify daily GitHub playlist changes and select at most 800
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python3 scripts/plan_home_harvest.py \
-            --state /tmp/home-harvest-state.json \
-            --minimum-pending 800
+          python3 scripts/daily_home_intake.py --state /tmp/home-harvest-state.json
 
-      - name: Fetch source text without cloud stream testing
-        if: steps.refill.outputs.harvest == 'true'
+      - name: Validate daily intake contracts
         run: |
-          python3 scripts/harvest_incremental.py \
-            --home-only \
-            --home-discovery-output /tmp/home-discovered.jsonl \
-            --output-dir harvest \
-            --workers 12
-
-      - name: Publish pending and new home candidates
-        if: steps.refill.outputs.harvest == 'true'
-        run: |
-          python3 scripts/build_home_candidate_manifest.py \
-            --input /tmp/home-discovered.jsonl \
-            --formal tv-core.m3u \
-            --output harvest/home-candidates.json \
-            --index harvest/home-candidate-index.json \
-            --no-bootstrap \
-            --receipt /tmp/home-delivery-receipt.json \
-            --feedback config/home-route-feedback.json
-
-      - name: Validate home-only contracts
-        if: steps.refill.outputs.harvest == 'true'
-        run: |
+          python3 -m unittest tests.test_daily_home_intake tests.test_home_test_campaign tests.test_home_first_contract -v
           python3 - <<'PY'
           import json
           from pathlib import Path
           from router.ac86u.home_contract import validate_candidate_manifest
-
-          discovery = json.loads(Path('harvest/home-discovery-manifest.json').read_text(encoding='utf-8'))
-          assert discovery['stream_probe_performed'] is False
-          assert discovery['production_modified'] is False
-          assert discovery['policy']['home_probe_is_the_only_health_authority'] is True
-          assert discovery['policy']['hong_kong_evidence_consulted'] is False
-          assert discovery['policy']['hong_kong_tombstones_consulted'] is False
-          manifest = json.loads(Path('harvest/home-candidates.json').read_text(encoding='utf-8'))
+          manifest = json.loads(Path('harvest/home-candidates.json').read_bytes())
           validate_candidate_manifest(manifest)
-          assert manifest['cloud_stream_probe_performed'] is False
-          assert manifest['home_verified'] is False
+          assert manifest['candidate_count'] <= 800
+          assert manifest['daily_target'] == 800
           assert manifest['production_eligible'] is False
-          print('home candidate delta', manifest['candidate_count'])
           PY
-          python3 -m unittest tests.test_home_first_contract tests.test_home_candidate_incremental -v
 
       - name: Prove all four production playlists unchanged
         run: |
@@ -126,7 +95,6 @@ jobs:
           test -z "$(git status --porcelain -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u)"
 
       - name: Commit only the home discovery outputs
-        if: steps.refill.outputs.harvest == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -139,8 +107,7 @@ jobs:
           }
           git add \
             harvest/home-discovery-manifest.json \
-            harvest/home-candidates.json \
-            harvest/home-candidate-index.json
+            harvest/home-candidates.json
           bad="$(git diff --cached --name-only | grep -Ev '^harvest/home-(discovery-manifest|candidates|candidate-index)\.json$' || true)"
           test -z "$bad" || { echo 'Unexpected staged paths:'; echo "$bad"; exit 1; }
           if git diff --cached --quiet; then

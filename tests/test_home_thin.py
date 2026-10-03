@@ -44,6 +44,7 @@ class ThinFixture(unittest.TestCase):
         self.config['enabled'] = True
         # Keep coverage of legacy daily mode; queue drain tests opt in.
         self.config['candidate_mode'] = 'daily'
+        self.config.pop('daily_verified_intake', None)
         self.config.pop('stop_temporary_campaigns', None)
         self.config.pop('candidate_budget_mode', None)
         self.probe = self.config['probe_id']
@@ -53,6 +54,7 @@ class ThinFixture(unittest.TestCase):
             (self.root/name).write_bytes(self.formal)
         (self.root/'config/home-route-feedback.json').write_text('{"good":{},"bad":{}}')
         publisher = json.loads((Path(__file__).resolve().parents[1]/'config/home-publisher.json').read_bytes())
+        publisher.pop('publication_hold', None)
         (self.root/'config/home-publisher.json').write_text(json.dumps(publisher))
         self.manifest, _ = build_manifest(discovery_rows=[{'name':'CCTV-1','url':'http://candidate.test/one.m3u8', 'sources':['fixture']}],
             formal_bytes=self.formal, formal_url=publisher['formal_playlist_url'], source_revision='a'*40,
