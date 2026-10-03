@@ -69,6 +69,40 @@ class DailyControllerTests(ThinFixture):
         self.assertFalse(idle.get('tasks'))
         self.assertGreater(len(self.state['queue']),0)
 
+    def test_fresh_intake_reopens_completed_slot_for_existing_planned_ids(self):
+        self.prepare_daily()
+        task,_=self.step();self.deliver(task)
+        cloud.ingest(self.state,self.reports,self.now)
+        cycle=self.state['cycle']
+        slot=cycle['slot']
+        ids=[r['candidate_id'] for r in self.manifest['candidates']]
+        self.state['night_plan']={'day':'20260915','candidate_ids':ids}
+        self.state['completed_slots'].append(slot)
+        cycle.update(optional_closed=True,discovery_closed=True)
+        first=self.manifest['candidates'][0]
+        self.state['tested'][first['candidate_id']]={'result':first}
+        self.state['native_budget']['candidates']=480
+        budget=copy.deepcopy(self.state['native_budget'])
+        tested=copy.deepcopy(self.state['tested'])
+        task,_=self.step()
+        self.assertTrue(task.get('tasks'))
+        self.assertTrue(all(r['role']=='candidate' for r in task['tasks']))
+        self.assertNotIn(first['candidate_id'],{r['candidate_id'] for r in task['tasks']})
+        self.assertEqual(self.state['native_budget']['candidates'],484)
+        self.assertEqual(self.state['native_budget']['bytes'],budget['bytes']+task['limits']['bytes'])
+        self.assertEqual(self.state['tested'],tested)
+        self.assertNotIn(slot,self.state['completed_slots'])
+        # Once acknowledged, the same evidence cannot reopen an exhausted slot
+        # repeatedly, even when unmeasured IDs remain in the plan.
+        self.deliver(task)
+        cloud.ingest(self.state,self.reports,self.now)
+        self.state['completed_slots'].append(slot)
+        self.state['native_budget']['candidates']=800
+        before=copy.deepcopy(self.state['native_budget'])
+        idle,_=self.step()
+        self.assertEqual(idle['state'],'SLOT_COMPLETE')
+        self.assertEqual(self.state['native_budget'],before)
+
     def test_stale_intake_never_imports_old_queue_or_temporary_results(self):
         self.prepare_daily()
         first=self.manifest['candidates'][0]
@@ -119,3 +153,21 @@ class DailyControllerTests(ThinFixture):
         self.assertEqual([r['url'] for r in m['candidates']],[urls[3]])
         self.assertEqual(summary['shortfall'],799)
         self.assertFalse(m['production_eligible'])
+
+    def test_large_discovery_filters_history_before_delivery_envelope_limit(self):
+        self.migrated()
+        rows=[dict(name='CCTV-1',url=f'https://pool.example.com/{i}',sources=['verified'])
+              for i in range(10001)]
+        for row in rows[:9500]:
+            candidate=make_candidate(row)
+            self.state['tested'][candidate['candidate_id']]={'result':candidate}
+        before=copy.deepcopy(self.state['tested'])
+        manifest,summary=build_daily(rows,self.state,self.formal,
+            self.root/'config/home-route-feedback.json',self.now,[{'source':'verified'}])
+        self.assertEqual(summary['discovery_rows'],10001)
+        self.assertEqual(summary['history_and_safety_exclusions'],
+                         {'formal_queue_archive_or_tested_history':9500})
+        self.assertEqual(manifest['candidate_count'],501)
+        self.assertEqual(summary['shortfall'],299)
+        self.assertLessEqual(manifest['candidate_count'],800)
+        self.assertEqual(self.state['tested'],before)

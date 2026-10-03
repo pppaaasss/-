@@ -536,15 +536,24 @@ def production_step(state, config, root, reports, now):
             state['night_plan'] = {'day': active[1], 'candidate_ids': []}
         check = allowed(state, current, feedback)
         plan = state['night_plan']
-        incoming = {
+        eligible_today = {
             identity for identity, row in state['queue'].items()
             if identity not in state['tested'] and check(row) and
-                (not config.get('daily_verified_intake') or identity in config['_daily_ids'])} - set(plan['candidate_ids'])
+                (not config.get('daily_verified_intake') or identity in config['_daily_ids'])}
+        incoming = eligible_today - set(plan['candidate_ids'])
         plan['candidate_ids'] = sorted(set(plan['candidate_ids']) | incoming)
         night_slot = active[1]+'-'+active[0]
-        if incoming and night_slot in state['completed_slots']:
-            # New intake before 11:00 wakes a finished sweep exactly once per
-            # new identity. Previously accepted tests and budgets stay intact.
+        reopen = bool(incoming)
+        if config.get('daily_verified_intake'):
+            # Today's evidence can re-authorize pending IDs already in the old
+            # plan. A manifest is acknowledged once, even if budgets stop it,
+            # so polling cannot repeatedly reopen a resource-exhausted slot.
+            admission = sha256_bytes(manifest_raw)
+            reopen = bool(eligible_today) and plan.get('daily_admission_sha') != admission
+            if eligible_today:
+                plan['daily_admission_sha'] = admission
+        if reopen and night_slot in state['completed_slots']:
+            # Preserve all prior observations and the shared daily ledger.
             state['completed_slots'].remove(night_slot)
             if state.get('cycle') and state['cycle']['slot'] == night_slot:
                 state['cycle'].pop('optional_closed', None)

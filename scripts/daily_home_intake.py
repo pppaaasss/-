@@ -122,15 +122,19 @@ def build_daily(rows, state, formal, feedback, now, evidence):
         raise ValueError('history_not_migrated')
     verified = {e['source'] for e in evidence}
     rows = [dict(r, sources=sorted(set(r['sources']) & verified)) for r in rows if set(r['sources']) & verified]
+    accepted, excluded = {}, {}
+    def select(normalized):
+        nonlocal accepted, excluded
+        # Existing pending IDs require today's evidence; measured/archived
+        # history and every existing safety/conflict check remain authoritative.
+        accepted, excluded = eligible_rows(normalized, dict(state, queue={}), formal, feedback)
+        fast_sources = {e['source'] for e in evidence if e.get('priority_refresh')}
+        fast_urls = {r['url'] for r in accepted.values() if set(r['sources']) & fast_sources}
+        return diverse_rows(accepted.values(), priority_urls=fast_urls)
     manifest, summary = build_manifest(discovery_rows=rows, formal_bytes=formal,
         formal_url=DEFAULT_FORMAL_URL, source_revision='verified-github-file-content',
-        generated_utc=timestamp(now))
-    # Pending queue identities are allowed only when rediscovered in today's
-    # verified text; tested/archive/formal/veto and prior trial history are not.
-    accepted, excluded = eligible_rows(manifest['candidates'], dict(state, queue={}), formal, feedback)
-    fast_sources = {e['source'] for e in evidence if e.get('priority_refresh')}
-    fast_urls = {r['url'] for r in accepted.values() if set(r['sources']) & fast_sources}
-    selected = diverse_rows(accepted.values(), priority_urls=fast_urls)
+        generated_utc=timestamp(now), candidate_selector=select)
+    selected = manifest['candidates']
     manifest.update(candidates=selected, candidate_count=len(selected), candidate_set_sha256=object_sha256(selected),
         daily_intake_day=target_day(now), daily_target=LIMIT,
         source_evidence_sha256=object_sha256(evidence))
