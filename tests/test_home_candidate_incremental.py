@@ -36,12 +36,13 @@ def row(url='http://candidate.test/cctv1.m3u8', sources=None):
 
 
 class HomeCandidateIncrementalTests(unittest.TestCase):
-    def test_daily_workflow_finishes_before_the_0200_home_run(self):
+    def test_daily_workflow_schedules_verified_text_intake_before_0200(self):
         root = Path(__file__).resolve().parents[1]
         workflow = (root / '.github/workflows/harvest-home-candidates.yml').read_text(encoding='utf-8')
         self.assertIn("cron: '30 16 * * *'", workflow)
-        self.assertIn('--home-only', workflow)
-        self.assertIn('hong_kong_evidence_consulted', workflow)
+        self.assertIn('scripts/daily_home_intake.py --state /tmp/home-harvest-state.json', workflow)
+        self.assertNotIn('steps.refill.outputs.harvest', workflow)
+        self.assertIn("assert manifest['candidate_count'] <= 800", workflow)
         self.assertIn('production-before.sha256', workflow)
         self.assertIn('production-after.sha256', workflow)
         self.assertNotIn('ffprobe', workflow)
