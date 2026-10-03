@@ -205,6 +205,47 @@ def normal_slot_complete(state, root, now):
         and cycle.get('feedback_sha') == sha256_bytes((root/'config/home-route-feedback.json').read_bytes()))
 
 
+def initial_host(url):
+    """Group initial URL hosts only; never resolve DNS or follow redirects."""
+    host = (urlsplit(url).hostname or '').lower().rstrip('.')
+    try:
+        return ipaddress.ip_address(host).compressed
+    except ValueError:
+        return host.encode('idna').decode('ascii')
+
+
+def choose_candidates(accepted, state, limit):
+    """Rotate hosts across temporary campaigns with a bounded failure penalty."""
+    measured, rejected, channels = Counter(), Counter(), Counter()
+    seen = set()
+    for previous in state.get('temporary_campaigns', {}).values():
+        for identity, record in previous.get('results', {}).items():
+            row = previous.get('candidates', {}).get(identity) or record.get('result') or {}
+            url = row.get('url')
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            host = initial_host(url)
+            measured[host] += 1
+            rejected[host] += record.get('qualification') == 'REJECTED'
+            channels[row.get('channel_key', '')] += 1
+    pending = dict(accepted)
+    chosen, used = [], set()
+    for _ in range(min(limit, len(pending))):
+        def priority(row):
+            host = initial_host(row['url'])
+            return (host in used, measured[host] + min(2, rejected[host] // 2),
+                    channels[row['channel_key']], host, row['candidate_id'])
+        row = min(pending.values(), key=priority)
+        host = initial_host(row['url'])
+        chosen.append(row)
+        used.add(host)
+        measured[host] += 1
+        channels[row['channel_key']] += 1
+        del pending[row['candidate_id']]
+    return chosen
+
+
 def dispatch(state, campaign, config, root, now):
     from scripts.home_thin_control import task_row
     active = slot(now)
@@ -226,12 +267,7 @@ def dispatch(state, campaign, config, root, now):
     if not accepted:
         campaign['status'] = 'COMPLETE'
         return None
-    # Fair channel order over the whole campaign, without an arbitrary nightly cap.
-    tally = Counter(campaign['candidates'][i]['channel_key'] for i in campaign['results'])
-    chosen=[]
-    for _ in range(min(4,config['routes_per_batch'],len(accepted))):
-        row = min(accepted.values(),key=lambda r:(tally[r['channel_key']],r['channel_key'],r['candidate_id']))
-        chosen.append(row); tally[row['channel_key']]+=1; del accepted[row['candidate_id']]
+    chosen = choose_candidates(accepted, state, min(4, config['routes_per_batch']))
     amount, seconds = min(config['batch_bytes'],64*1024*1024), min(config['batch_seconds'],240)
     budget = state.get('native_budget',{})
     if config.get('router_runtime') != 'native-v1' or budget.get('day') != active[1]:
