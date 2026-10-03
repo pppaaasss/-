@@ -1,15 +1,15 @@
 {
   "budget": {
-    "bytes": 502266370,
-    "candidates": 480,
+    "bytes": 67108864,
+    "candidates": 0,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 800,
     "daily_seconds_limit": 54000,
-    "day": "20261003",
+    "day": "20261004",
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 3722.0
+    "seconds": 240
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -18,24 +18,30 @@
   "daily_800": {
     "available_unmeasured": 0,
     "candidate_batches": 0,
-    "day": "20261003",
+    "day": "20261004",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": null,
-    "formal_or_backup_batches": 46,
+    "formal_or_backup_batches": 1,
     "intake_reason": "insufficient_fresh_unmeasured_candidates",
     "measured": 0,
     "observed_batch_spacing_seconds": null,
     "qualified": 0,
-    "reason": "WINDOW_ENDING",
-    "reserved_candidate_count": 480,
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
+    "reserved_candidate_count": 0,
     "settled_candidate_batches": 0,
     "shortfall": 800,
     "target": 800,
-    "transition_temporary_measured": 480
+    "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-10-03T14:59:48Z",
+  "generated_utc": "2026-10-03T18:20:04Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "711ec20a91cc453599cfcc64413ed7dcf19ad53b16fe0fae90389c6222edb3d0",
+    "created_utc": "2026-10-03T18:20:04Z",
+    "expires_utc": "2026-10-03T18:50:04Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-10-03T14:57:58Z",
     "received_utc": "2026-10-03T14:59:48Z",
@@ -48,33 +54,33 @@
   },
   "last_report_generated_utc": "2026-10-02T20:10:01Z",
   "night_sweep": {
-    "complete": false,
-    "day": "20261003",
+    "complete": true,
+    "day": "20261004",
     "measured": 0,
-    "planned": 744,
+    "planned": 0,
     "qualified": 0,
-    "remaining": 744
+    "remaining": 0
   },
   "progress": {
     "backup_checks_completed": 0,
     "belongs_to_active_window": true,
     "candidate_checks_completed": 0,
-    "current_first_pass_completed": 4,
+    "current_first_pass_completed": 0,
     "current_rechecks_completed": 0,
-    "current_rechecks_required": 2,
+    "current_rechecks_required": 0,
     "current_total": 53,
     "report_complete": false,
-    "slot": "20261003-peak-2000"
+    "slot": "20261004-primary-0200"
   },
   "queue": 745,
   "router_enabled": null,
-  "state": "WINDOW_ENDING",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 10949,
   "window": {
     "active": true,
-    "ends_utc": "2026-10-03T15:00:00Z",
-    "next_starts_utc": "2026-10-03T18:00:00Z",
-    "run_kind": "peak-2000",
+    "ends_utc": "2026-10-04T03:00:00Z",
+    "next_starts_utc": "2026-10-04T05:00:00Z",
+    "run_kind": "primary-0200",
     "timezone": "Asia/Shanghai"
   }
 }
