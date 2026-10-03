@@ -48,6 +48,21 @@ class TemporaryCampaignTests(ThinFixture):
         self.assertEqual({r['candidate_id'] for r in picked}, set(pending))
         self.assertEqual(len(pending), 4)
 
+    def test_stop_preserves_live_lease_then_history_and_never_dispatches_again(self):
+        task,_=self.first_temporary()
+        self.config['stop_temporary_campaigns']=True
+        (self.root/MANIFEST_PATH).unlink()
+        original=copy.deepcopy(self.isolated()['candidates'])
+        same,_=self.step();self.assertEqual(same,task)
+        self.assertEqual(self.isolated()['status'],'STOPPING_AFTER_LEASE')
+        self.deliver(task)
+        with mock.patch('scripts.home_test_campaign.dispatch') as dispatch:
+            self.step();dispatch.assert_not_called()
+        self.assertEqual(self.isolated()['status'],'STOPPED_BY_USER')
+        self.assertEqual(len(self.isolated()['results']),4)
+        self.assertEqual(self.isolated()['candidates'],original)
+
+
     def setUp(self):
         super().setUp()
         self.migrated()

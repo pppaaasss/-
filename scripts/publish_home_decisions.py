@@ -330,6 +330,9 @@ def publish_latest(
         return {'status': 'temporary_test_publication_hold', 'replacement_count': 0,
                 'reason': 'Separate confirmation required before removing campaign hold'}
     config = load_config(config_path)
+    if config.get("publication_hold") is not False and "publication_hold" in config:
+        return {"status": "manual_publication_hold", "replacement_count": 0,
+                "reason": "Current routes retained pending explicit publication review"}
     if config["enabled"] is not True:
         if not inspect_shadow:
             return {"status": "disabled", "replacement_count": 0}

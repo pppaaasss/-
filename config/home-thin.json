@@ -9,11 +9,13 @@
   "batch_seconds": 240,
   "batch_bytes": 67108864,
   "candidate_mode": "drain_queue",
-  "candidate_run_kinds": ["primary-0200"],
+  "candidate_run_kinds": [
+    "primary-0200"
+  ],
   "candidate_budget_mode": "night_queue",
   "daily_seconds": 54000,
   "daily_bytes": 8589934592,
-  "daily_candidates": 10000,
+  "daily_candidates": 800,
   "discovery_seconds": 32400,
   "discovery_bytes": 6442450944,
   "minimum_start_kib": 59392,
@@ -22,5 +24,7 @@
   "maximum_cpu_percent": 75,
   "minimum_headroom_ratio": 1.05,
   "require_history_migration": true,
-  "router_runtime": "native-v1"
+  "router_runtime": "native-v1",
+  "daily_verified_intake": true,
+  "stop_temporary_campaigns": true
 }

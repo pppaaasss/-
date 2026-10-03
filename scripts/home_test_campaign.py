@@ -307,6 +307,18 @@ def campaign_step(state, config, root, reports, now, production_step):
         return production_step(state,config,root,reports,now)
     ingest(state,reports,now)
     collect_results(state,reports,now)
+    if config.get('stop_temporary_campaigns') is True:
+        # Settle existing leases/results, never register or dispatch another trial.
+        for previous in state.get('temporary_campaigns', {}).values():
+            lease = state['batches'].get(previous.get('outstanding'))
+            if lease and lease['batch_id'] not in state['processed'] and now < epoch(lease['expires_utc']):
+                previous['status'] = 'STOPPING_AFTER_LEASE'
+                return state, lease, None
+        for previous in state.get('temporary_campaigns', {}).values():
+            previous.pop('outstanding', None)
+            previous['status'] = 'STOPPED_BY_USER'
+        state.pop('temporary_campaign_error', None)
+        return production_step(state, config, root, reports, now)
     campaign=None
     try:
         campaign=register_campaign(state,root,now)
