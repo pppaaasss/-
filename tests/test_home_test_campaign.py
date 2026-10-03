@@ -6,10 +6,48 @@ from router.ac86u.home_contract import make_candidate, candidate_id
 from router.ac86u.thin_contract import encode, timestamp, epoch
 from scripts import home_thin_control as cloud
 from scripts.home_test_campaign import MANIFEST_PATH, SCHEMA
+from scripts.home_test_campaign import initial_host, choose_candidates
 from tests.test_home_thin import ThinFixture
 
 
 class TemporaryCampaignTests(ThinFixture):
+    def test_host_normalization_ipv6_and_batch_diversity(self):
+        self.assertEqual(initial_host('https://EXAMPLE.COM.:443/a'), 'example.com')
+        self.assertEqual(initial_host('http://[2606:4700:0000:0000::1111]:80/a'),
+                         initial_host('https://[2606:4700::1111]/b'))
+        rows = [make_candidate(dict(name='CCTV-1', url=url, sources=['test'])) for url in (
+            'https://a.example.com/1', 'https://a.example.com/2',
+            'https://b.example.com/1', 'http://[2606:4700::1111]/1')]
+        picked = choose_candidates({r['candidate_id']: r for r in rows}, {}, 3)
+        self.assertEqual(len({initial_host(r['url']) for r in picked}), 3)
+
+    def test_unseen_hosts_cross_campaign_history_and_unknown(self):
+        rows = [make_candidate(dict(name='CCTV-1', url=f'https://{host}.example.com/new', sources=['test']))
+                for host in ('a', 'b', 'z')]
+        def history(host, qualification):
+            return {'results': {str(i): {'qualification': qualification,
+                    'result': {'url': f'https://{host}.example.com/{i}', 'channel_key': 'cctv1'}}
+                    for i in range(2)}}
+        state = {'temporary_campaigns': {'old': history('a', 'REJECTED'),
+                                        'current': history('b', 'UNKNOWN')}}
+        original = copy.deepcopy(state)
+        picked = choose_candidates({r['candidate_id']: r for r in rows}, state, 3)
+        self.assertEqual([initial_host(r['url']) for r in picked],
+                         ['z.example.com', 'b.example.com', 'a.example.com'])
+        self.assertEqual(state, original)
+
+    def test_host_order_channel_fairness_and_no_starvation_fallback(self):
+        rows = [make_candidate(dict(name=name, url=f'https://same.example.com/{i}', sources=['test']))
+                for i, name in enumerate(['CCTV-1', 'CCTV-1', 'CCTV-2', 'CCTV-2'])]
+        pending = {r['candidate_id']: r for r in rows}
+        state = {'temporary_campaigns': {'old': {'results': {
+            'old': {'qualification': 'REJECTED', 'result': {
+                'url': 'https://same.example.com/old', 'channel_key': 'cctv1'}}}}}}
+        picked = choose_candidates(pending, state, 4)
+        self.assertEqual(picked[0]['channel_key'], 'cctv2')
+        self.assertEqual({r['candidate_id'] for r in picked}, set(pending))
+        self.assertEqual(len(pending), 4)
+
     def setUp(self):
         super().setUp()
         self.migrated()
@@ -75,10 +113,32 @@ class TemporaryCampaignTests(ThinFixture):
     def test_unexpired_lease_is_reused_without_double_reservation(self):
         task,_=self.first_temporary()
         budget=copy.deepcopy(self.state['native_budget'])
-        retry,report=self.step()
+        with mock.patch('scripts.home_test_campaign.choose_candidates') as choose:
+            retry,report=self.step()
+            choose.assert_not_called()
         self.assertEqual(retry,task)
         self.assertIsNone(report)
         self.assertEqual(budget,self.state['native_budget'])
+
+    def test_host_rounds_eventually_drain_rejected_and_unknown_hosts(self):
+        rows = [make_candidate(dict(name='CCTV-1', sources=['test'],
+                    url=f'https://{host}.example.com/{i}'))
+                for host in ('a', 'b', 'c') for i in range(4)]
+        pending = {r['candidate_id']: r for r in rows}
+        history = {'candidates': dict(pending), 'results': {}}
+        state = {'temporary_campaigns': {'trial': history}}
+        for turn in range(6):
+            chosen = choose_candidates(pending, state, 2)
+            self.assertEqual(len(chosen), 2)
+            if len({initial_host(r['url']) for r in pending.values()}) >= 2:
+                self.assertEqual(len({initial_host(r['url']) for r in chosen}), 2)
+            for row in chosen:
+                identity = row['candidate_id']
+                history['results'][identity] = {'qualification':
+                    'REJECTED' if initial_host(row['url']) == 'a.example.com' else 'UNKNOWN'}
+                del pending[identity]
+        self.assertFalse(pending)
+        self.assertEqual(len(history['results']), 12)
 
     def test_shared_refund_and_result_collection_are_idempotent(self):
         task,_=self.first_temporary()
