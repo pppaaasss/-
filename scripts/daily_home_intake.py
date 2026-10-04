@@ -11,7 +11,7 @@ import time
 from collections import Counter
 from datetime import datetime, timedelta
 from urllib.parse import quote, urlencode, urlsplit, unquote
-from urllib.request import Request, urlopen
+from urllib.request import Request, build_opener, HTTPRedirectHandler
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -46,14 +46,26 @@ def github_file(url):
         raise ValueError('unsupported_github_reference')
     if not path.lower().endswith(('.m3u', '.m3u8', '.txt')) or 'readme' in path.lower():
         raise ValueError('not_a_playlist_file')
-    return owner, repo, ref, unquote(path)
+    path = unquote(path)
+    if ref in ('.', '..') or any(x in ('', '.', '..') for x in path.split('/')) or any(c in path for c in '\\?#%\r\n'):
+        raise ValueError('unsafe_github_file_path')
+    return owner, repo, ref, path
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        raise ValueError('source_redirect_rejected')
 
 
 def read_url(url, api=False):
+    p = urlsplit(url)
+    expected = 'api.github.com' if api else 'raw.githubusercontent.com'
+    if p.scheme != 'https' or p.netloc != expected or p.fragment:
+        raise ValueError('untrusted_source_endpoint')
     headers = {'User-Agent': 'home-daily-text-intake', 'Accept': 'application/vnd.github+json' if api else 'text/plain'}
     if api and os.environ.get('GH_TOKEN'):
         headers['Authorization'] = 'Bearer ' + os.environ['GH_TOKEN']
-    with urlopen(Request(url, headers=headers), timeout=20) as response:
+    with build_opener(NoRedirect()).open(Request(url, headers=headers), timeout=20) as response:
         raw = response.read(MAX_BYTES + 1)
     if len(raw) > MAX_BYTES:
         raise ValueError('source_too_large')
@@ -144,6 +156,78 @@ def build_daily(rows, state, formal, feedback, now, evidence):
     return manifest, summary
 
 
+def collect_daily(sources, state, formal, feedback, now, read=None):
+    from scripts.home_source_expansion import (ReadBudget, IntakeBudgetExceeded,
+        discover_files, MAX_FILES, MAX_REQUESTS, MAX_SECONDS)
+    budget = ReadBudget(read or read_url)
+    raw_rows, evidence, failures, seen = [], [], [], set()
+    audit = dict(attempted=False, queries=[], repositories_examined=0,
+        rejected_repository_metadata=0, truncated_trees=0, errors=[],
+        stop_reason='registry_sufficient', max_files=MAX_FILES,
+        max_requests=MAX_REQUESTS, max_seconds=MAX_SECONDS)
+
+    def collect(source, origin):
+        url = source['url']
+        if url in seen:
+            return
+        budget.check()
+        seen.add(url)
+        try:
+            content, proof = verified_text(url, now, budget)
+            parsed = harvest_sources.parse_source(content, source.get('group', '大陆'), url)
+            raw_rows.extend(parsed)
+            proof.update(entries=len(parsed), origin=origin)
+            if origin == 'search':
+                proof.update(discovery_repository=source['discovery_repository'],
+                             discovery_query=source['discovery_query'])
+            evidence.append(proof)
+        except IntakeBudgetExceeded:
+            raise
+        except Exception as exc:
+            failures.append(dict(source=url, origin=origin, error=type(exc).__name__,
+                reason=str(exc)[:120] if isinstance(exc, ValueError) else 'source_fetch_or_api_failure'))
+
+    def build():
+        normalized = normalize_rows(raw_rows)
+        manifest, summary = build_daily(normalized, state, formal, feedback, now, evidence)
+        summary.update(parsed_rows=len(raw_rows), normalized_rows=len(normalized),
+                       normalization_merged_or_invalid=len(raw_rows)-len(normalized))
+        return manifest, summary
+
+    try:
+        for source in sources[:MAX_FILES]:
+            collect(source, 'registry')
+        manifest, summary = build()
+        audit['registry_selected'] = manifest['candidate_count']
+        if manifest['candidate_count'] < LIMIT:
+            audit.update(stop_reason='bounded_search_results_exhausted')
+            if len(seen) >= MAX_FILES:
+                audit['stop_reason'] = 'file_budget_exhausted'
+            else:
+                audit['attempted'] = True
+                for source in discover_files(now, budget, seen, audit):
+                    collect(source, 'search')
+                    manifest, summary = build()
+                    if manifest['candidate_count'] >= LIMIT:
+                        audit['stop_reason'] = 'target_reached'
+                        break
+                    if len(seen) >= MAX_FILES:
+                        audit['stop_reason'] = 'file_budget_exhausted'
+                        break
+    except IntakeBudgetExceeded as exc:
+        audit['stop_reason'] = str(exc)
+    except Exception as exc:
+        # A failed search never claims that all GitHub supply is exhausted.
+        audit['stop_reason'] = 'search_failed'
+        audit['errors'].append(dict(reason=type(exc).__name__))
+    manifest, summary = build()
+    audit['expansion_net_selected_delta'] = manifest['candidate_count'] - audit.get('registry_selected', manifest['candidate_count'])
+    audit.update(requests_used=budget.requests, files_attempted=len(seen),
+                 selected_after_expansion=manifest['candidate_count'],
+                 search_files_attempted=sum(x.get('origin')=='search' for x in evidence+failures))
+    return manifest, summary, evidence, failures, audit
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--state', required=True)
@@ -160,22 +244,11 @@ def main():
         {'url': url, 'group': group} for group, url, _ in build_playlist.SOURCES
         if url.startswith('https://raw.githubusercontent.com/')]
     sources = list({r['url']: r for r in sources}.values())[:48]
-    raw_rows, evidence, failures = [], [], []
-    for source in sources:
-        try:
-            text, proof = verified_text(source['url'], now)
-            parsed = harvest_sources.parse_source(text, source.get('group', '大陆'), source['url'])
-            raw_rows.extend(parsed)
-            proof['entries'] = len(parsed)
-            evidence.append(proof)
-        except Exception as exc:
-            # Do not expose tokens or signed media URLs in error messages.
-            failures.append({'source': source['url'], 'error': type(exc).__name__,
-                             'reason': str(exc)[:120] if isinstance(exc, ValueError) else 'source_fetch_or_api_failure'})
-    manifest, summary = build_daily(normalize_rows(raw_rows), state, (root/'tv-core.m3u').read_bytes(),
-        root/'config/home-route-feedback.json', now, evidence)
+    manifest, summary, evidence, failures, expansion = collect_daily(
+        sources, state, (root/'tv-core.m3u').read_bytes(),
+        root/'config/home-route-feedback.json', now)
     report = dict(generated_utc=timestamp(now), day=manifest['daily_intake_day'], summary=summary,
-        sources=evidence, failures=failures, stream_probe_performed=False, production_modified=False,
+        sources=evidence, failures=failures, expansion=expansion, stream_probe_performed=False, production_modified=False,
         policy={'home_probe_is_the_only_health_authority': True, 'hong_kong_evidence_consulted': False,
                 'hong_kong_tombstones_consulted': False})
     for name, value in [('home-candidates.json', manifest), ('home-discovery-manifest.json', report)]:
