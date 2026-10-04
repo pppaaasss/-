@@ -20,9 +20,13 @@ class ExpansionTests(ThinFixture):
             if '/search/repositories?' in url:
                 if mode == 'failure':
                     raise OSError('no service')
-                return json.dumps({'items':[{'full_name':'owner/new', 'default_branch':'main',
+                if mode == 'trees_fail':
+                    return json.dumps({'items':[dict(full_name='owner/'+n, default_branch='main') for n in ['one','two']]}).encode()
+                return json.dumps({'incomplete_results': mode == 'incomplete', 'items':[{'full_name':'owner/new', 'default_branch':'main',
                     'url':'http://127.0.0.1/evil'}]}).encode()
             if '/git/trees/' in url:
+                if mode == 'trees_fail':
+                    raise OSError('tree unavailable')
                 return json.dumps({'tree':[
                     {'type':'blob','mode':'120000','path':'link.m3u'},
                     {'type':'blob','mode':'100644','path':'../escape.m3u'},
@@ -30,7 +34,7 @@ class ExpansionTests(ThinFixture):
                     {'type':'blob','mode':'100644','path':'live.m3u','size':300},
                     {'type':'blob','mode':'100644','path':'z.m3u','size':300}]}).encode()
             if '/commits?' in url:
-                age = 90000 if mode == 'stale' and '/new/' in url else 60
+                age = 90000 if mode in ('stale', 'incomplete') and '/new/' in url else 60
                 return json.dumps([{'sha':'a'*40,'commit':{'committer':{'date':timestamp(self.now-age)}}},
                     {'sha':'b'*40,'commit':{'committer':{'date':timestamp(self.now-3600)}}}]).encode()
             route = 'same' if mode == 'duplicate' else ('new' if '/new/' in url else 'same')
@@ -80,6 +84,24 @@ class ExpansionTests(ThinFixture):
         self.assertEqual(a['stop_reason'],'search_failed')
         self.assertTrue(a['errors'])
 
+    def test_failed_trees_and_incomplete_search_are_not_normal_exhaustion(self):
+        (m,s,e,f,a),calls=self.run_collect('trees_fail')
+        self.assertEqual(a['stop_reason'],'search_read_failures')
+        self.assertEqual(len(a['errors']),2)
+        self.assertEqual(a['repositories_examined'],2)
+        (m,s,e,f,a),calls=self.run_collect('incomplete')
+        self.assertEqual(a['stop_reason'],'search_incomplete')
+
+    def test_global_deadline_still_returns_report(self):
+        import time
+        self.migrated()
+        with mock.patch.object(expansion,'MAX_SECONDS',0.02):
+            m,s,e,f,a=intake.collect_daily([dict(url='https://raw.githubusercontent.com/owner/new/main/live.m3u')],
+                self.state,self.formal,self.root/'config/home-route-feedback.json',self.now,
+                lambda *args: time.sleep(1))
+        self.assertEqual(a['stop_reason'],'time_budget_exhausted')
+        self.assertEqual(m['candidate_count'],0)
+
     def test_total_request_and_file_limits_include_search(self):
         with mock.patch.object(expansion,'MAX_REQUESTS',4):
             (m,s,e,f,a),calls=self.run_collect()
@@ -115,3 +137,30 @@ class TransportSafetyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'time_budget'):
             b('https://api.github.com/x',True)
         transport.assert_not_called()
+
+
+class DiscoveryFairnessTests(unittest.TestCase):
+    def test_repositories_rotate_and_live_files_beat_archives(self):
+        def read(url, api=False):
+            if '/search/' in url:
+                return json.dumps({'items':[dict(full_name='o/'+x,default_branch='main') for x in ['a','b']]}).encode()
+            return json.dumps({'tree':[dict(path=p,mode='100644',type='blob',size=5)
+                for p in ['archive/aaa.m3u','old.txt','live.m3u','result.m3u','other.m3u','z.m3u']]}).encode()
+        audit=dict(queries=[],errors=[],repositories_examined=0,rejected_repository_metadata=0,truncated_trees=0)
+        rows=list(expansion.discover_files(1791060000,read,set(),audit))
+        self.assertEqual([r['discovery_repository'] for r in rows[:6]],['o/a','o/b']*3)
+        self.assertTrue(all(r['url'].endswith('/live.m3u') for r in rows[:2]))
+        self.assertTrue(all('/archive/' in r['url'] for r in rows[-2:]))
+
+    def test_read_deadline_interrupts_full_transport_and_restores_alarm(self):
+        import signal
+        import time
+        previous=signal.getsignal(signal.SIGALRM)
+        b=expansion.ReadBudget(lambda *args:time.sleep(1))
+        with mock.patch.object(expansion,'MAX_READ_SECONDS',0.02):
+            started=time.monotonic()
+            with self.assertRaisesRegex(TimeoutError,'read_deadline'):
+                b('https://api.github.com/x',True)
+            self.assertLess(time.monotonic()-started,0.5)
+        self.assertEqual(signal.getsignal(signal.SIGALRM),previous)
+        self.assertEqual(signal.getitimer(signal.ITIMER_REAL)[0],0)
