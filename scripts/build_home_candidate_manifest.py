@@ -100,6 +100,7 @@ def build_manifest(
         "invalid": 0,
         "home_feedback": 0,
     }
+    identity_merges = 0
     for source in discovery_rows:
         try:
             row = make_candidate(source)
@@ -125,6 +126,7 @@ def build_manifest(
         if previous is None:
             candidates[identity] = row
         else:
+            identity_merges += 1
             previous["sources"] = sorted(set(previous["sources"]) | set(row["sources"]))
 
     labels = {}
@@ -163,6 +165,7 @@ def build_manifest(
     summary = {
         "formal_channels": len(current),
         "discovery_rows": len(discovery_rows),
+        "identity_merges": identity_merges,
         "candidate_count": len(ordered),
         "rejected": rejected,
     }

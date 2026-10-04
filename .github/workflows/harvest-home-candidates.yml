@@ -76,7 +76,7 @@ jobs:
 
       - name: Validate daily intake contracts
         run: |
-          python3 -m unittest tests.test_daily_home_intake tests.test_home_test_campaign tests.test_home_first_contract -v
+          python3 -m unittest tests.test_home_source_expansion tests.test_daily_home_intake tests.test_home_test_campaign tests.test_home_first_contract -v
           python3 - <<'PY'
           import json
           from pathlib import Path
