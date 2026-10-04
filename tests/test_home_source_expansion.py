@@ -152,6 +152,40 @@ class DiscoveryFairnessTests(unittest.TestCase):
         self.assertTrue(all(r['url'].endswith('/live.m3u') for r in rows[:2]))
         self.assertTrue(all('/archive/' in r['url'] for r in rows[-2:]))
 
+    def test_china_files_and_repositories_win_scarce_six_slots(self):
+        from urllib.parse import parse_qs, urlsplit
+        calls=[]
+        def read(url,api=False):
+            calls.append(url)
+            if '/search/' in url:
+                q=parse_qs(urlsplit(url).query)['q'][0]
+                self.assertTrue(any(t in q for t in ('cctv','china','卫视')))
+                return json.dumps({'items':[
+                    dict(full_name='o/foreign',default_branch='main',description='Worldwide entertainment'),
+                    dict(full_name='o/china',default_branch='main',description='CCTV 中国卫视')]}).encode()
+            paths = (['bg.m3u','playlist.m3u'] if '/foreign/' in url else
+                     ['live.m3u','archive/cctv.m3u']+[f'cn/channel{i}.m3u' for i in range(6)])
+            return json.dumps({'tree':[dict(path=p,type='blob',mode='100644') for p in paths]}).encode()
+        audit=dict(queries=[],errors=[],repositories_examined=0,rejected_repository_metadata=0,truncated_trees=0)
+        rows=list(expansion.discover_files(1791060000,read,set(),audit))
+        self.assertTrue(all('/cn/' in r['url'] for r in rows[:6]))
+        self.assertEqual(len([u for u in calls if '/search/' in u]),3)
+        self.assertEqual(audit['repositories_examined'],2)  # cross-query dedup
+        self.assertTrue(all('discovery_query' in r for r in rows))
+
+    def test_relevance_never_increases_shared_limits(self):
+        self.assertEqual((expansion.MAX_FILES, expansion.MAX_REQUESTS, expansion.MAX_SECONDS),(48,144,1200))
+        calls=[]
+        def read(url,api=False):
+            calls.append(url)
+            return json.dumps({'items':[dict(full_name='o/cctv',default_branch='main')]}).encode()
+        audit=dict(queries=[],errors=[],repositories_examined=0,rejected_repository_metadata=0,truncated_trees=0)
+        budget=expansion.ReadBudget(read)
+        with mock.patch.object(expansion,'MAX_REQUESTS',2):
+            with self.assertRaises(expansion.IntakeBudgetExceeded):
+                list(expansion.discover_files(1791060000,budget,set(),audit))
+        self.assertEqual(len(calls),2)
+
     def test_read_deadline_interrupts_full_transport_and_restores_alarm(self):
         import signal
         import time
