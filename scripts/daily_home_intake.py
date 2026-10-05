@@ -224,7 +224,7 @@ def collect_daily(sources, state, formal, feedback, now, read=None):
         if audit['errors'] or any(f.get('origin') == 'search' and f['reason'] == 'source_fetch_or_api_failure' for f in failures):
             audit['stop_reason'] = 'search_read_failures'
         elif (audit.get('search_incomplete') or audit['truncated_trees']
-              or audit['rejected_repository_metadata']):
+              or audit['rejected_repository_metadata'] or audit.get('repository_scan_limited')):
             audit['stop_reason'] = 'search_incomplete'
     manifest, summary = build()
     audit['expansion_net_selected_delta'] = manifest['candidate_count'] - audit.get('registry_selected', manifest['candidate_count'])
