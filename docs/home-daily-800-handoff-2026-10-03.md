@@ -163,3 +163,13 @@ PR140首跑[run37229495030](https://github.com/pppaaasss/-/actions/runs/37229495
 - TimLee88/IPTV：output/ipv4/result.m3u；最新提交b4b901aecf003ed55c3ad4285dd8c76a1d9cf2bd（2026-10-06T02:15:41Z），上一版本0dab1cbf2bf50147ec92498e0a0141406896d648，内容不同；播放URL行数147。
 
 5文件合计690行播放地址；尚未执行最新持久历史去重、频道/安全过滤和家庭测量，不宣称690条净新增、不宣称已补足800或合格。下一次既有00:30采集会重新读取最新版本并核验真实更新，再产出面向10月7日的每日输入；02–11实测。当前工具无可用workflow_dispatch能力，未触发额外采集。正式清单、用户反馈、publication_hold、家庭预算/窗口与历史不变。验收应读取下一次真实采集run和home-discovery-manifest的selected_count/shortfall/expansion，不能只看本配置提交。
+
+## 2026-10-06 实际补足800条每日输入
+
+PR144只是入口调整，不能算800验收。本轮随后读取home-control完整持久历史（blob fbdd2cc54b8d62063fb359d1a83d1db44f1fd058，已测11514、archive309，含临时测量历史），用master现有verified_text、normalize_rows、build_daily和validate_candidate_manifest执行真实文本采集与筛选。每日候选筛选按既有实现忽略尚未测量的queue，保留tested/archive和已测临时历史，不重置账本。
+
+读取38个具体文件的新旧路径版本，34份通过24小时内实际内容/频道条目变化核验，3份空/不变、1份过期被拒。规范化14538行，范围外11685、当前32、跨身份冲突17、身份合并92；安全/请求选项1241、已测/归档376、范围/人工否决58被排除。最终eligible1037，按既有主机/频道轮转选择800，shortfall0，daily_intake_day=20261007。800条中实际IPv6地址23条，IPv6命名的上游文件含大量IPv4地址；IPv6仍受现有家庭网络与运行保护检查，不宣称家中可达。
+
+本次更新每日home-candidates及home-discovery-manifest，同时保留dated-inputs/20261007快照，来源每份的新旧commit、内容摘要和更新时间在报告中。将本轮18个对入选候选有贡献的文件加入固定入口，并保留PR144的17个入口，共35个，既有搜索仍可使用最多13个文件机会；实际请求/时间预算仍可能先耗尽。采集脚本、Actions触发器与预算未修改。
+
+这800条是静态入选待测，不是800合格或已测。现在为白天，未请求媒体、DNS或家庭补跑。既有00:30采集仍会重新核验更新并可能覆盖每日输入；固定快照用于审计，不绕过新鲜度/日期/反馈绑定。不保证之后每天800或9小时内测完。02–11家庭窗口和800硬上限、四份正式清单、publication_hold、用户反馈均保持。持续验收须比较最新采集产物与家庭night_sweep结果。
