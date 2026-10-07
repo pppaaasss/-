@@ -236,6 +236,30 @@ class HomePublishTests(unittest.TestCase):
         self.assertTrue(receipt['policy']['good_routes_remain_untouched'])
         self.assertIsNone(receipt['policy']['replacement_count_limit'])
 
+    def test_legacy_peak_failure_cannot_replace_a_recovered_or_unknown_route(self):
+        before = {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES}
+        for latest in ('GOOD', 'UNKNOWN', 'BAD'):
+            with self.subTest(latest=latest):
+                report = self.report()
+                report['current_results'][0].update(
+                    peak_failure_retained=True, latest_observed_status=latest)
+                self.assertEqual({}, publisher_module.replacement_plan(
+                    report, self.root / 'config/home-route-feedback.json'))
+        self.queue(report)
+        result = self.publish()
+        self.assertEqual(0, result['replacement_count'])
+        self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
+
+    def test_legacy_peak_failure_does_not_block_another_current_failure(self):
+        report = self.report(replace_keys=('cctv1', 'cctv2'))
+        report['current_results'][0].update(
+            peak_failure_retained=True, latest_observed_status='UNKNOWN')
+        self.queue(report)
+        result = self.publish()
+        self.assertEqual(1, result['replacement_count'])
+        self.assertIn('https://current.test/cctv1.m3u8', self.urls('tv-core.m3u'))
+        self.assertIn('https://backup.test/cctv2.m3u8', self.urls('tv-core.m3u'))
+
     def test_duplicate_report_is_idempotent_after_the_playlist_changes(self):
         self.queue(self.report())
         self.publish()

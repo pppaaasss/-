@@ -1,4 +1,4 @@
-"""Persist URL-specific evening failures independently of off-peak results."""
+"""Keep evening failure history without overriding the current measurements."""
 from datetime import datetime, timezone, timedelta
 
 
@@ -20,9 +20,5 @@ def apply_peak_policy(current, previous, *, run_kind, now_epoch, circuit_open=Fa
                 failures[key] = dict(row, peak_failed_epoch=now_epoch)
             elif row['status'] == 'GOOD' and old and old['url'] == row['url']:
                 failures.pop(key, None)
-        elif old and old['url'] == row['url']:
-            # Explicitly label retained evidence; never call this a new failure.
-            row = dict(old, peak_failure_retained=True,
-                       latest_observed_status=value['status'])
         output.append(row)
     return output, failures

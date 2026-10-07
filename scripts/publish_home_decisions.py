@@ -218,6 +218,10 @@ def replacement_plan(report: dict, feedback_path: Path) -> dict[str, dict]:
         if decision["action"] != "REPLACE":
             continue
         key = str(decision["channel_key"])
+        # Older reports promoted stored evening failures over GOOD/UNKNOWN
+        # measurements. Keep those reports as history, not replacement evidence.
+        if current[key].get("peak_failure_retained") is True:
+            continue
         candidate = candidates[str(decision["replacement_candidate_id"])]
         new_url = str(candidate["url"])
         if str(candidate.get("request_options") or ""):
@@ -412,6 +416,7 @@ def publish_latest(
             "home_is_only_health_authority": True,
             "unknown_never_replaces": True,
             "good_routes_remain_untouched": True,
+            "current_failure_required": True,
             "exact_reported_route_only": True,
             "replacement_count_limit": None,
             "all_four_playlists_one_git_snapshot": True,

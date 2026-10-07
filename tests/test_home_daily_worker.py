@@ -124,19 +124,33 @@ class DailyWorkerTests(unittest.TestCase):
             afternoon=enqueue(root,'recheck-1300',cutoff+5*3600)
             self.assertEqual(afternoon,next_job(root,cutoff+5*3600)[0])
 
-    def test_peak_bad_survives_offpeak_good_but_is_url_specific(self):
+    def test_peak_history_does_not_override_current_good(self):
         bad = dict(channel_key='cctv1', url='https://a.test/1', status='BAD', failure_confirmed=True)
         night = epoch('2026-09-07T12:00:00')
         _, failures = apply_peak_policy([bad], {}, run_kind='peak-2000', now_epoch=night)
         good = dict(bad, status='GOOD', failure_confirmed=False)
         rows, failures = apply_peak_policy([good], failures, run_kind='primary-0200', now_epoch=night+21600)
-        self.assertEqual('BAD', rows[0]['status'])
-        self.assertTrue(rows[0]['peak_failure_retained'])
+        self.assertEqual(good, rows[0])
+        self.assertEqual('BAD', failures['cctv1']['status'])
         rows, failures = apply_peak_policy([dict(good, url='https://new.test/1')], failures,
             run_kind='primary-0200', now_epoch=night+21600)
         self.assertEqual('GOOD', rows[0]['status'])
         _, failures = apply_peak_policy([good], failures, run_kind='peak-2000', now_epoch=night+86400)
         self.assertEqual({}, failures)
+
+    def test_peak_history_does_not_override_current_unknown_or_bad(self):
+        bad = dict(channel_key='cctv5', url='https://a.test/5', status='BAD',
+                   failure_confirmed=True, error='old_slow_transfer')
+        night = epoch('2026-09-07T12:00:00')
+        _, failures = apply_peak_policy([bad], {}, run_kind='peak-2000', now_epoch=night)
+        unknown = dict(bad, status='UNKNOWN', failure_confirmed=False, error='')
+        fresh_bad = dict(bad, error='current_transfer_failure')
+        for current in (unknown, fresh_bad):
+            with self.subTest(status=current['status']):
+                rows, history = apply_peak_policy([current], failures,
+                    run_kind='primary-0200', now_epoch=night+2*86400)
+                self.assertEqual([current], rows)
+                self.assertEqual(failures, history)
 
     def test_circuit_and_outside_window_cannot_create_peak_failure(self):
         bad = dict(channel_key='cctv1', url='https://a.test/1', status='BAD', failure_confirmed=True)
