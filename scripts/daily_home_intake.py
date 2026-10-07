@@ -24,7 +24,7 @@ from scripts.home_test_campaign import eligible_rows, initial_host
 from router.ac86u.home_contract import object_sha256
 from router.ac86u.thin_contract import epoch, timestamp
 
-LIMIT = 800
+LIMIT = 500
 ZONE = ZoneInfo('Asia/Shanghai')
 MAX_BYTES = 12 * 1024 * 1024
 
@@ -262,19 +262,20 @@ def main():
     print(json.dumps(summary, ensure_ascii=False))
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
-            f.write(f"Daily target 800; selected {len(manifest['candidates'])}; shortfall {summary['shortfall']}. "
+            f.write(f"Daily target {LIMIT}; selected {len(manifest['candidates'])}; shortfall {summary['shortfall']}. "
                     "Static admission only; household measurement determines qualification.\n")
 
 
 
 def admitted_daily_ids(manifest, state, formal, feedback, now):
     day = datetime.fromtimestamp(now, ZONE).strftime('%Y%m%d')
-    if manifest.get('daily_intake_day') != day or manifest.get('daily_target') != LIMIT:
+    if manifest.get('daily_intake_day') != day or manifest.get('daily_target') not in (LIMIT, 800):
         return []
     if not 0 <= now - epoch(manifest['generated_utc']) <= 24*3600:
         return []
     rows = manifest['candidates']
-    if len(rows) > LIMIT or not re.fullmatch('[0-9a-f]{64}', manifest.get('source_evidence_sha256', '')):
+    # Accept the previous 800 manifest during deployment; dispatch still caps at 500.
+    if len(rows) > manifest['daily_target'] or not re.fullmatch('[0-9a-f]{64}', manifest.get('source_evidence_sha256', '')):
         return []
     # Recheck latest user vetoes and *all* measured trial/normal history.
     accepted, _ = eligible_rows(rows, dict(state, queue={}), formal, feedback)

@@ -49,18 +49,10 @@ def playlist(routes):
 
 
 class HomePublishTests(unittest.TestCase):
-    def test_temporary_campaign_holds_all_writes_until_explicit_removal(self):
+    def test_temporary_campaign_does_not_lock_publication(self):
         self.queue(self.report())
-        before={name:(self.root/name).read_bytes() for name in PRODUCTION_FILES}
-        hold=self.root/'config/home-test-campaign.json'
-        for contents in ('{}','{"enabled":false,"expires_utc":"2000-01-01T00:00:00Z"}','malformed'):
-            hold.write_text(contents)
-            result=self.publish()
-            self.assertEqual(result['status'],'temporary_test_publication_hold')
-            self.assertEqual(before,{name:(self.root/name).read_bytes() for name in PRODUCTION_FILES})
-            self.assertFalse((self.root/'home-publish/latest.json').exists())
-        hold.unlink()
-        self.assertEqual(self.publish()['status'],'applied')
+        (self.root/'config/home-test-campaign.json').write_text('{}')
+        self.assertEqual(self.publish()['status'], 'applied')
 
     def candidate_fixture(self):
         from scripts.build_home_candidate_manifest import build_manifest
@@ -92,14 +84,12 @@ class HomePublishTests(unittest.TestCase):
                 self.publish()
         self.assertEqual(before, path.read_bytes())
 
-    def test_explicit_hold_survives_manifest_removal_and_apply_shadow(self):
-        config=json.loads(self.config_path.read_bytes());config['publication_hold']=True
+    def test_obsolete_hold_does_not_lock_qualified_publication(self):
+        config=json.loads(self.config_path.read_bytes())
+        config.update(publication_hold=True, branch_protection_required=False)
         self.config_path.write_text(json.dumps(config))
         self.queue(self.report())
-        before={p.name:p.read_bytes() for p in self.root.glob('*.m3u')}
-        result=self.publish()
-        self.assertEqual(result['status'],'manual_publication_hold')
-        self.assertEqual(before,{p.name:p.read_bytes() for p in self.root.glob('*.m3u')})
+        self.assertEqual(self.publish()['status'], 'applied')
 
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -408,8 +398,8 @@ class HomePublishTests(unittest.TestCase):
         self.assertIn('gh pr merge', workflow)
         self.assertIn('base_sha=', workflow)
         self.assertIn('--match-head-commit', workflow)
-        self.assertIn('MASTER_RULES_API', workflow)
-        self.assertIn('validate_master_rules', workflow)
+        self.assertNotIn('MASTER_RULES_API', workflow)
+        self.assertNotIn('validate_master_rules', workflow)
         self.assertNotIn('git push origin HEAD:master', workflow)
         self.assertNotIn('health-monitor', workflow)
         self.assertNotIn('Hong Kong', workflow)

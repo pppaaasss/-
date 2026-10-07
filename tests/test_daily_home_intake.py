@@ -40,7 +40,7 @@ class SourceEvidenceTests(unittest.TestCase):
     def test_refresh_priority_never_defeats_host_diversity_or_cap(self):
         rows=[make_candidate(dict(name='CCTV-1',sources=['test'],url=f'https://h{i%10}.example.com/{i}')) for i in range(805)]
         chosen=diverse_rows(rows,priority_urls=[rows[0]['url']])
-        self.assertEqual(len(chosen),800)
+        self.assertEqual(len(chosen),500)
         from scripts.home_test_campaign import initial_host
         self.assertEqual(len({initial_host(r['url']) for r in chosen[:10]}),10)
         self.assertEqual(target_day(epoch('2026-10-03T16:30:00Z')),'20261004')
@@ -50,20 +50,20 @@ class DailyControllerTests(ThinFixture):
     def prepare_daily(self):
         self.migrated()
         self.config.update(daily_verified_intake=True,stop_temporary_campaigns=True,
-            daily_candidates=800,candidate_mode='drain_queue',candidate_budget_mode='night_queue')
+            daily_candidates=500,candidate_mode='drain_queue',candidate_budget_mode='night_queue')
         self.manifest['candidates']=[make_candidate(dict(name='CCTV-1',sources=['verified'],url=f'https://h{i}.example.com/a')) for i in range(8)]
         from router.ac86u.home_contract import object_sha256
         self.manifest.update(candidate_count=8,candidate_set_sha256=object_sha256(self.manifest['candidates']),
-            daily_intake_day='20260915',daily_target=800,source_evidence_sha256='a'*64)
+            daily_intake_day='20260915',daily_target=500,source_evidence_sha256='a'*64)
         (self.root/'harvest/home-candidates.json').write_bytes(encode(self.manifest))
 
     def test_final_partial_batch_and_next_day_ledger(self):
         self.prepare_daily()
         task,_=self.step();self.deliver(task)
-        self.state['native_budget']['candidates']=799
+        self.state['native_budget']['candidates']=499
         task,_=self.step()
         self.assertEqual(len(task['tasks']),1)
-        self.assertEqual(self.state['native_budget']['candidates'],800)
+        self.assertEqual(self.state['native_budget']['candidates'],500)
         self.deliver(task)
         idle,_=self.step()
         self.assertFalse(idle.get('tasks'))
@@ -97,7 +97,7 @@ class DailyControllerTests(ThinFixture):
         self.deliver(task)
         cloud.ingest(self.state,self.reports,self.now)
         self.state['completed_slots'].append(slot)
-        self.state['native_budget']['candidates']=800
+        self.state['native_budget']['candidates']=500
         before=copy.deepcopy(self.state['native_budget'])
         idle,_=self.step()
         self.assertEqual(idle['state'],'SLOT_COMPLETE')
@@ -114,7 +114,7 @@ class DailyControllerTests(ThinFixture):
     def test_previous_day_full_budget_does_not_block_new_day_candidates(self):
         self.prepare_daily()
         task,_=self.step();self.deliver(task)
-        self.state['native_budget'].update(day='20260914',candidates=800)
+        self.state['native_budget'].update(day='20260914',candidates=500)
         task,_=self.step()
         self.assertTrue(task.get('tasks'))
         self.assertEqual(self.state['native_budget']['day'],'20260915')
@@ -132,16 +132,40 @@ class DailyControllerTests(ThinFixture):
         self.prepare_daily()
         task,_=self.step();self.deliver(task)
         task,_=self.step()
-        status=cloud.status_snapshot(self.state,task,self.config,self.now)['daily_800']
+        status=cloud.status_snapshot(self.state,task,self.config,self.now)['daily_candidates']
         self.assertEqual(status['measured'],0)
         self.assertEqual(status['candidate_batches'],1)
         self.assertGreater(status['formal_or_backup_batches'],0)
         self.assertIsNone(status['estimated_additional_window_capacity'])
         self.deliver(task);next_task,_=self.step()
-        status=cloud.status_snapshot(self.state,next_task,self.config,self.now)['daily_800']
+        status=cloud.status_snapshot(self.state,next_task,self.config,self.now)['daily_candidates']
         self.assertEqual(status['measured'],4)
         self.assertIsNotNone(status['observed_batch_spacing_seconds'])
         self.assertFalse(status['estimate_is_guarantee'])
+
+    def test_existing_800_manifest_uses_500_cap_without_resetting_ledger(self):
+        self.prepare_daily()
+        self.manifest['daily_target'] = 800
+        (self.root/'harvest/home-candidates.json').write_bytes(encode(self.manifest))
+        task,_=self.step();self.deliver(task)
+        self.state['native_budget']['candidates'] = 499
+        task,_=self.step()
+        self.assertEqual(len(task['tasks']), 1)
+        self.assertEqual(self.state['native_budget']['candidates'], 500)
+        self.deliver(task)
+        idle,_=self.step()
+        self.assertFalse(idle.get('tasks'))
+        self.assertEqual(self.state['native_budget']['candidates'], 500)
+
+    def test_already_over_500_keeps_history_and_stops_new_candidates(self):
+        self.prepare_daily()
+        task,_=self.step();self.deliver(task)
+        self.state['native_budget']['candidates'] = 528
+        before=copy.deepcopy(self.state['tested'])
+        idle,_=self.step()
+        self.assertFalse(idle.get('tasks'))
+        self.assertEqual(self.state['native_budget']['candidates'], 528)
+        self.assertEqual(self.state['tested'], before)
 
     def test_builder_history_veto_auth_and_shortfall(self):
         self.migrated()
@@ -151,7 +175,7 @@ class DailyControllerTests(ThinFixture):
         f=self.root/'config/home-route-feedback.json';f.write_text(json.dumps({'bad':{'cctv1':[{'url':urls[2]}]}}))
         m,summary=build_daily(rows,self.state,self.formal,f,self.now,[{'source':'verified','priority_refresh':True}])
         self.assertEqual([r['url'] for r in m['candidates']],[urls[3]])
-        self.assertEqual(summary['shortfall'],799)
+        self.assertEqual(summary['shortfall'],499)
         self.assertFalse(m['production_eligible'])
 
     def test_large_discovery_filters_history_before_delivery_envelope_limit(self):
@@ -167,7 +191,7 @@ class DailyControllerTests(ThinFixture):
         self.assertEqual(summary['discovery_rows'],10001)
         self.assertEqual(summary['history_and_safety_exclusions'],
                          {'formal_queue_archive_or_tested_history':9500})
-        self.assertEqual(manifest['candidate_count'],501)
-        self.assertEqual(summary['shortfall'],299)
-        self.assertLessEqual(manifest['candidate_count'],800)
+        self.assertEqual(manifest['candidate_count'],500)
+        self.assertEqual(summary['shortfall'],0)
+        self.assertLessEqual(manifest['candidate_count'],500)
         self.assertEqual(self.state['tested'],before)

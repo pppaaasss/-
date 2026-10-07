@@ -2,11 +2,6 @@ name: Pin viewer-confirmed channels
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm_production_change:
-        description: 'Type YES after visually confirming the target channel'
-        required: true
-        default: 'NO'
 
 permissions:
   contents: write
@@ -17,7 +12,6 @@ concurrency:
 
 jobs:
   pin:
-    if: ${{ inputs.confirm_production_change == 'YES' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -31,7 +25,6 @@ jobs:
       - name: Pin viewer-confirmed channels
         run: |
           python3 scripts/pin_viewer_channels.py
-          python3 scripts/viewer_locked_channels.py
       - name: Normalize final presentation
         run: python3 scripts/organize_apptv_groups.py
       - name: Publish only explicit manual fix

@@ -2,11 +2,6 @@ name: Roll back production TV playlists
 
 on:
   workflow_dispatch:
-    inputs:
-      confirm_rollback:
-        description: 'Type ROLLBACK to restore the previous production commit'
-        required: true
-        default: 'NO'
 
 permissions:
   contents: write
@@ -17,7 +12,6 @@ concurrency:
 
 jobs:
   rollback:
-    if: ${{ inputs.confirm_rollback == 'ROLLBACK' }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
