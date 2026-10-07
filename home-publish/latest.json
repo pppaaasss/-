@@ -1,12 +1,48 @@
 {
   "changed_occurrences": {
-    "tv-all.m3u": {},
-    "tv-core.m3u": {},
-    "tv-easy.m3u": {},
-    "tv.m3u": {}
+    "tv-all.m3u": {
+      "cctv11": 1,
+      "cctv16": 1,
+      "cctv5": 1,
+      "cctv6": 1,
+      "广西卫视": 1,
+      "河北卫视": 1,
+      "浙江卫视": 1,
+      "黑龙江卫视": 1
+    },
+    "tv-core.m3u": {
+      "cctv11": 1,
+      "cctv16": 1,
+      "cctv5": 1,
+      "cctv6": 1,
+      "广西卫视": 1,
+      "河北卫视": 1,
+      "浙江卫视": 1,
+      "黑龙江卫视": 1
+    },
+    "tv-easy.m3u": {
+      "cctv11": 1,
+      "cctv16": 1,
+      "cctv5": 1,
+      "cctv6": 1,
+      "广西卫视": 1,
+      "河北卫视": 0,
+      "浙江卫视": 1,
+      "黑龙江卫视": 0
+    },
+    "tv.m3u": {
+      "cctv11": 1,
+      "cctv16": 1,
+      "cctv5": 1,
+      "cctv6": 1,
+      "广西卫视": 1,
+      "河北卫视": 1,
+      "浙江卫视": 1,
+      "黑龙江卫视": 1
+    }
   },
-  "formal_sha256_after": "c1f2b993093bc0958a7de52c63293139a21a598355f7f220f78796b79500647d",
-  "formal_sha256_before": "c1f2b993093bc0958a7de52c63293139a21a598355f7f220f78796b79500647d",
+  "formal_sha256_after": "fd1627ca430151e36f44a84eca3300a74fe6bf01c1c03d055716c2baed4c831f",
+  "formal_sha256_before": "6d485e09639a17035d05df9e10bf2be4a31fa0940a16750c292894001c408f2b",
   "policy": {
     "all_four_playlists_one_git_snapshot": true,
     "exact_reported_route_only": true,
@@ -16,24 +52,81 @@
     "unknown_never_replaces": true
   },
   "probe_id": "home-ac86u-8f8908f0fba9",
-  "processed_utc": "2026-10-01T14:28:41Z",
+  "processed_utc": "2026-10-07T05:58:22Z",
   "production_sha256_after": {
-    "tv-all.m3u": "8231c64cadd73c8ceac7195407475f284ccb581d484e3167d02b07739b939610",
-    "tv-core.m3u": "c1f2b993093bc0958a7de52c63293139a21a598355f7f220f78796b79500647d",
-    "tv-easy.m3u": "2d8f2aa573bbceb011ef9c3b1c915d5c05b61439857d34ffaefb5289e6cb000a",
-    "tv.m3u": "8231c64cadd73c8ceac7195407475f284ccb581d484e3167d02b07739b939610"
+    "tv-all.m3u": "fb59f6e4f8c5f6f28f9908e61e03a089d182601468ab2aa3b25a74fc49c3bee0",
+    "tv-core.m3u": "fd1627ca430151e36f44a84eca3300a74fe6bf01c1c03d055716c2baed4c831f",
+    "tv-easy.m3u": "db181142f21acf13499e3e9cd490a47e86981d15ba8cd464c4ca713959c96872",
+    "tv.m3u": "fb59f6e4f8c5f6f28f9908e61e03a089d182601468ab2aa3b25a74fc49c3bee0"
   },
   "production_sha256_before": {
-    "tv-all.m3u": "8231c64cadd73c8ceac7195407475f284ccb581d484e3167d02b07739b939610",
-    "tv-core.m3u": "c1f2b993093bc0958a7de52c63293139a21a598355f7f220f78796b79500647d",
-    "tv-easy.m3u": "2d8f2aa573bbceb011ef9c3b1c915d5c05b61439857d34ffaefb5289e6cb000a",
-    "tv.m3u": "8231c64cadd73c8ceac7195407475f284ccb581d484e3167d02b07739b939610"
+    "tv-all.m3u": "1094c61c237d1beab079b5a2e0e9d820a53179340f468001391a8bc04e3704dc",
+    "tv-core.m3u": "6d485e09639a17035d05df9e10bf2be4a31fa0940a16750c292894001c408f2b",
+    "tv-easy.m3u": "89822ece20ad81a6d40c069e821e2b11e2b1858cf02f9f7fef5109c1b095cf7e",
+    "tv.m3u": "1094c61c237d1beab079b5a2e0e9d820a53179340f468001391a8bc04e3704dc"
   },
-  "replacement_count": 0,
-  "replacements": [],
-  "report_file": "20261001T132731Z-peak-2000-2bcb9d814429b9d9.json",
-  "report_generated_utc": "2026-10-01T13:27:31Z",
-  "report_run_kind": "peak-2000",
-  "report_sha256": "2bcb9d814429b9d9c185ed1f4edda7f58dff0af3ea32c1aee971037bf2168da6",
+  "replacement_count": 8,
+  "replacements": [
+    {
+      "candidate_id": "ba5387439c4071751e09129d4f374b264e878ba0b43c0b53fed1ff9c769b8d2c",
+      "channel_key": "cctv11",
+      "name": "CCTV-11",
+      "new_url": "http://1.24.39.180:808/hls/11/index.m3u8",
+      "old_url": "http://120.40.39.246:352/newlive/live/hls/12/live.m3u8"
+    },
+    {
+      "candidate_id": "dac85dee1f14352c8a46a2f19ad90b1c343238f2b0bd6ee2134012ef3b5e94eb",
+      "channel_key": "cctv16",
+      "name": "CCTV-16",
+      "new_url": "https://cdn.qd.je/163189.php?id=cctv16-2",
+      "old_url": "http://219.147.245.238:25480/newlive/live/hls/17/live.m3u8"
+    },
+    {
+      "candidate_id": "902d8f22551fabcd20e4672620d744af99cce556d6599dfe8f62a416b439105c",
+      "channel_key": "cctv5",
+      "name": "CCTV-5",
+      "new_url": "http://183.243.90.98:9003/hls/5/index.m3u8",
+      "old_url": "http://120.40.39.246:352/newlive/live/hls/5/live.m3u8"
+    },
+    {
+      "candidate_id": "9f19b3ec7ed9e284d10b5735498d380f477dda32fe5cb5c53fe9b7222c9cc656",
+      "channel_key": "cctv6",
+      "name": "CCTV-6",
+      "new_url": "http://183.243.90.98:9003/hls/6/index.m3u8",
+      "old_url": "http://219.147.245.238:25480/newlive/live/hls/7/live.m3u8"
+    },
+    {
+      "candidate_id": "fa5582c301fb860a491bd0b0306076c2dc20a6b6c5363ad8762e88f735a81e61",
+      "channel_key": "广西卫视",
+      "name": "广西卫视",
+      "new_url": "http://mg.hmysapp.cn:177/偷源狗/卫视/广西卫视.php?id=301",
+      "old_url": "http://bztv.tvbus.cc:8081/cdnlive/gxws.m3u8"
+    },
+    {
+      "candidate_id": "66b5dea67ab5f608986b6d887b2a0967069cf9d7e68f7f70a6520e03330e13da",
+      "channel_key": "河北卫视",
+      "name": "河北卫视",
+      "new_url": "http://222.223.41.27:8888/hls/16/index.m3u8",
+      "old_url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=hewshd"
+    },
+    {
+      "candidate_id": "15dc445ecc73af52ec56bd222f2d7a7d388aae70941957327a8b302c7b5cb920",
+      "channel_key": "浙江卫视",
+      "name": "浙江卫视",
+      "new_url": "https://bd-xwl.cztv.com/live/channel4k2160p.m3u8",
+      "old_url": "http://bztv.tvbus.cc:8081/cdnlive/zjws.m3u8"
+    },
+    {
+      "candidate_id": "bfc9e2f27ef1c6bc7b4766fa5ee52185caa8b640db70e5447d3ce8d1ee829e18",
+      "channel_key": "黑龙江卫视",
+      "name": "黑龙江卫视",
+      "new_url": "https://s1.abntelevision.com/avivamientoabr/stream/avivamientohd/avivamientohd/chunks.m3u8",
+      "old_url": "http://101.66.194.205:9901/tsfile/live/0143_1.m3u8?key=txiptv&playlive=0&authid=0"
+    }
+  ],
+  "report_file": "20261006T213031Z-primary-0200-dcb5301e4ef6ab20.json",
+  "report_generated_utc": "2026-10-06T21:30:31Z",
+  "report_run_kind": "primary-0200",
+  "report_sha256": "dcb5301e4ef6ab20fbe161da60da622c61053c9ccc9d8fb93c17a76046896400",
   "schema": "iptv-home-publication/v1"
 }
