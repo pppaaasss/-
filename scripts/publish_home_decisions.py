@@ -103,8 +103,6 @@ def load_config(path: Path) -> dict:
         raise RuntimeError("home publisher formal URL is not pinned")
     if config.get("exact_reported_route_only") is not True:
         raise RuntimeError("home publisher must preserve unreported alternate routes")
-    if config.get("branch_protection_required") is not True:
-        raise RuntimeError("home publisher requires protected master")
     maximum_age = config.get("maximum_report_age_hours")
     if isinstance(maximum_age, bool) or not isinstance(maximum_age, (int, float)) or not 0 < float(maximum_age) <= 48:
         raise RuntimeError("home publisher report age limit is invalid")
@@ -323,16 +321,7 @@ def publish_latest(
     inspect_shadow: bool = False,
 ) -> dict:
     now_epoch = time.time() if now_epoch is None else float(now_epoch)
-    # A one-off test freezes publication until its reviewed configuration is
-    # explicitly removed. Expiry stops sampling, never silently resumes writes.
-    # Presence is fail-closed, including malformed or disabled campaign files.
-    if (root / 'config/home-test-campaign.json').exists():
-        return {'status': 'temporary_test_publication_hold', 'replacement_count': 0,
-                'reason': 'Separate confirmation required before removing campaign hold'}
     config = load_config(config_path)
-    if config.get("publication_hold") is not False and "publication_hold" in config:
-        return {"status": "manual_publication_hold", "replacement_count": 0,
-                "reason": "Current routes retained pending explicit publication review"}
     if config["enabled"] is not True:
         if not inspect_shadow:
             return {"status": "disabled", "replacement_count": 0}

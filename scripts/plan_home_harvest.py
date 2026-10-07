@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch upstream text only when fewer than 800 schedulable candidates remain."""
+"""Fetch upstream text only when fewer than 500 schedulable candidates remain."""
 import argparse
 import json
 import os
@@ -15,7 +15,7 @@ from scripts.home_thin_control import STATE_SCHEMA, allowed
 from scripts.publish_home_decisions import sha256_bytes, unique_core_routes
 
 
-def plan_harvest(state, manifest, formal_bytes, feedback, probe_id, minimum_pending=800):
+def plan_harvest(state, manifest, formal_bytes, feedback, probe_id, minimum_pending=500):
     if type(minimum_pending) is not int or minimum_pending < 1:
         raise ValueError('minimum_pending must be a positive integer')
     # Without migrated durable history, never use a raw count to skip discovery.
@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--formal', default='tv-core.m3u')
     parser.add_argument('--feedback', default='config/home-route-feedback.json')
     parser.add_argument('--config', default='config/home-thin.json')
-    parser.add_argument('--minimum-pending', type=int, default=800)
+    parser.add_argument('--minimum-pending', type=int, default=500)
     args = parser.parse_args()
     config = json.loads(Path(args.config).read_text())
     state_path = Path(args.state)

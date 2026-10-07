@@ -390,7 +390,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
     if config.get('daily_verified_intake'):
         from scripts.daily_home_intake import order_daily_candidates
         candidates_ordered = order_daily_candidates(state, config.get('_daily_ids', []),
-            min(config['routes_per_batch'], max(0, 800 - (state.get('native_budget', {}).get('candidates', 0) if state.get('native_budget', {}).get('day') == cycle['slot'][:8] else 0))))
+            min(config['routes_per_batch'], max(0, config['daily_candidates'] - (state.get('native_budget', {}).get('candidates', 0) if state.get('native_budget', {}).get('day') == cycle['slot'][:8] else 0))))
     # Unseen candidates take priority over archived backup rechecks in a sweep.
     # Accepted results leave the durable queue, including failures and UNKNOWN.
     if draining and not cycle.get('discovery_closed') and not config.get('_skip_regular_candidates'):
@@ -514,13 +514,13 @@ def production_step(state, config, root, reports, now):
     manifest = validate_candidate_manifest(json.loads(manifest_raw))
     intake_current = manifest['formal_playlist']['sha256'] == formal_sha
     if config.get('daily_verified_intake'):
-        from scripts.daily_home_intake import admitted_daily_ids
+        from scripts.daily_home_intake import LIMIT, admitted_daily_ids
         ids = admitted_daily_ids(manifest, state, formal_raw, feedback, now) if intake_current else []
         intake_current = bool(ids)
-        config = dict(config, _daily_ids=ids, daily_candidates=min(800, config['daily_candidates']))
+        config = dict(config, _daily_ids=ids, daily_candidates=min(LIMIT, config['daily_candidates']))
         state['daily_intake'] = {'day': datetime_day(now), 'candidate_ids': ids,
-            'available': len(ids), 'target': 800, 'shortfall': max(0, 800-len(ids)),
-            'reason': 'ready' if len(ids) == 800 else 'insufficient_fresh_unmeasured_candidates'}
+            'available': len(ids), 'target': LIMIT, 'shortfall': max(0, LIMIT-len(ids)),
+            'reason': 'ready' if len(ids) >= LIMIT else 'insufficient_fresh_unmeasured_candidates'}
     if intake_current:
         for row in manifest['candidates']:
             if row['candidate_id'] not in state['tested'] and (not config.get('daily_verified_intake') or row['candidate_id'] in config['_daily_ids']):
@@ -719,7 +719,9 @@ def status_snapshot(state, task, config, now):
             'complete': len(measured) == len(plan['candidate_ids'])}
     if config.get('daily_verified_intake'):
         from scripts.daily_home_intake import daily_progress
-        status['daily_800'] = daily_progress(state, task, now)
+        status['daily_candidates'] = daily_progress(state, task, now)
+        # Compatibility for existing consumers of the historical field name.
+        status['daily_800'] = status['daily_candidates']
     return status
 
 

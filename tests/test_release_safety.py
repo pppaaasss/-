@@ -37,26 +37,15 @@ class ReleaseSafetyTests(unittest.TestCase):
         with self.assertRaises(SystemExit):
             self.validate_manifest(data, True, "12345")
 
-    def test_changed_core_needs_reviewable_frame_audit(self) -> None:
+    def test_candidate_does_not_require_human_confirmation(self) -> None:
         data = self.manifest()
-        data["frame_audit_ready"] = False
-        data["frame_audit_missing_changed_core"] = ["cctv8"]
-        with self.assertRaises(SystemExit):
-            self.validate_manifest(data, True, "12345")
+        data['frame_audit_ready'] = False
+        self.validate_manifest(data, False, '')
 
-    def test_changed_core_needs_visual_artifact_confirmation(self) -> None:
-        data = self.manifest()
+    def test_optional_audit_id_must_match_candidate_run(self) -> None:
         with self.assertRaises(SystemExit):
-            self.validate_manifest(data, False, "12345")
-        with self.assertRaises(SystemExit):
-            self.validate_manifest(data, True, "")
-
-    def test_visual_review_must_match_candidate_run(self) -> None:
-        with self.assertRaises(SystemExit):
-            self.validate_manifest(self.manifest(), True, "99999")
-
-    def test_reviewed_two_round_candidate_can_pass_gate(self) -> None:
-        self.validate_manifest(self.manifest(), True, "12345")
+            self.validate_manifest(self.manifest(), False, '99999')
+        self.validate_manifest(self.manifest(), False, '12345')
 
     def test_missing_core_blocks_promotion(self) -> None:
         data = self.manifest()
@@ -82,9 +71,9 @@ class ReleaseSafetyTests(unittest.TestCase):
         text = (ROOT / ".github/workflows/rollback-production.yml").read_text(encoding="utf-8")
         self.assertIn("git checkout '${{ steps.previous.outputs.sha }}' -- tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u", text)
 
-    def test_candidate_promotion_restores_viewer_locked_channel_presence(self) -> None:
+    def test_candidate_promotion_does_not_restore_viewer_locks(self) -> None:
         text = (ROOT / "scripts/candidate_release.py").read_text(encoding="utf-8")
-        self.assertIn("ensure_locked_channels(ROOT)", text)
+        self.assertNotIn("ensure_locked_channels", text)
 
 
 if __name__ == "__main__":

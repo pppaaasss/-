@@ -305,6 +305,18 @@ class CoreHealthRotationTests(unittest.TestCase):
         self.assertEqual(0, result["replacement_count"])
         self.assertEqual("home_accepted_lock", result["decisions"][0]["reason"])
 
+    def test_unlocked_home_accepted_degraded_route_can_be_replaced(self):
+        self.write_case(["CCTV-4"])
+        state = json.loads(self.state.read_text())
+        state['policy']['home_accepted_routes_are_locked'] = False
+        self.state.write_text(json.dumps(state))
+        self.feedback.write_text(json.dumps({
+            'good': {'cctv4': [{'url': 'http://old1.test/live.m3u8'}]}, 'bad': {},
+        }))
+        result = self.run_case()
+        self.assertEqual(1, result['replacement_count'])
+        self.assertEqual('quality_degraded', result['decisions'][0]['reason'])
+
     def test_home_rejected_route_is_still_replaced(self):
         self.write_case(["CCTV-8"])
         current = "http://old1.test/live.m3u8"

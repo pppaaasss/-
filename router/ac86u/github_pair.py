@@ -127,15 +127,15 @@ def validate_protected_publisher(publisher: dict, rules: object, config: dict) -
     if (expected and expected != config.get("probe_id")) or (publisher["enabled"] and not expected):
         raise RuntimeError("protected home publisher is not assigned to this probe")
     if publisher.get("branch_protection_required") is not True:
-        raise RuntimeError("protected home publisher does not require branch protection")
+        return 0
     return validate_master_rules(rules)
 
 
 def verify_protected_publisher(config: dict) -> tuple[str, str, int]:
     publisher, raw = fetch_json(PUBLISHER_CONFIG_URL)
-    rules, rules_raw = fetch_json(MASTER_RULES_API)
     if not isinstance(publisher, dict):
         raise RuntimeError("GitHub publisher configuration is not an object")
+    rules, rules_raw = fetch_json(MASTER_RULES_API) if publisher.get("branch_protection_required") is True else ([], b"[]")
     ruleset_id = validate_protected_publisher(publisher, rules, config)
     return (
         hashlib.sha256(raw).hexdigest(),

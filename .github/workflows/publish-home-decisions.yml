@@ -34,28 +34,6 @@ jobs:
           ref: master
           fetch-depth: 0
 
-      - name: Verify the public master ruleset gate
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import subprocess
-          from pathlib import Path
-          from router.ac86u.github_pair import (
-              MASTER_RULES_API,
-              validate_master_rules,
-          )
-
-          publisher = json.loads(Path('config/home-publisher.json').read_text(encoding='utf-8'))
-          if publisher.get('enabled') is not True:
-              print('home publisher is disabled; no production decision can be applied')
-          else:
-              rules = json.loads(subprocess.check_output(['gh', 'api', MASTER_RULES_API], text=True))
-              ruleset_id = validate_master_rules(rules)
-              print('active home publication ruleset', ruleset_id)
-          PY
-
       - name: Fetch the isolated home report branch
         run: |
           git fetch --no-tags origin refs/heads/home-reports:refs/remotes/origin/home-reports

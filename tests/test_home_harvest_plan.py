@@ -35,8 +35,8 @@ class HomeHarvestPlanTests(unittest.TestCase):
         self.state['queue'] = {row['candidate_id']: row for row in
                                (candidate(i) for i in range(count))}
 
-    def test_refill_below_800_and_use_existing_queue_at_or_above_800(self):
-        for count, harvest in ((0, True), (799, True), (800, False), (801, False)):
+    def test_refill_below_500_and_use_existing_queue_at_or_above_500(self):
+        for count, harvest in ((0, True), (499, True), (500, False), (501, False)):
             with self.subTest(count=count):
                 self.add(count)
                 before = copy.deepcopy(self.state)
@@ -45,37 +45,37 @@ class HomeHarvestPlanTests(unittest.TestCase):
                 self.assertEqual(self.state, before)
 
     def test_tested_and_unschedulable_rows_do_not_fill_threshold(self):
-        self.add(800)
+        self.add(500)
         row = candidate(0)
         self.state['tested'][row['candidate_id']] = {'legacy': True}
-        option = candidate(801, options='Referer=https://example.com')
+        option = candidate(501, options='Referer=https://example.com')
         self.state['queue'][option['candidate_id']] = option
         current = make_candidate(dict(name='CCTV1', url='https://current.test/live', sources=['test']))
         self.state['queue'][current['candidate_id']] = current
-        self.assertEqual(799, self.plan()['pending'])
+        self.assertEqual(499, self.plan()['pending'])
         self.assertTrue(self.plan()['harvest'])
 
     def test_pending_manifest_is_counted_once_only_when_bound_to_current_playlist(self):
-        self.add(799)
-        manifest, _ = build_manifest(discovery_rows=[candidate(0), candidate(799)],
+        self.add(499)
+        manifest, _ = build_manifest(discovery_rows=[candidate(0), candidate(499)],
             formal_bytes=FORMAL, formal_url='https://example.com/tv.m3u',
             source_revision='test', generated_utc='2026-09-27T06:00:00Z')
-        self.assertEqual(800, self.plan(manifest)['pending'])
+        self.assertEqual(500, self.plan(manifest)['pending'])
         self.assertFalse(self.plan(manifest)['harvest'])
         manifest['formal_playlist']['sha256'] = '0' * 64
-        self.assertEqual(799, self.plan(manifest)['pending'])
+        self.assertEqual(499, self.plan(manifest)['pending'])
 
     def test_feedback_and_conflicting_channel_addresses_do_not_fill_threshold(self):
-        self.add(801)
+        self.add(501)
         self.feedback.write_text(json.dumps({'bad': {'CCTV1': [{'url': 'https://source.test/0'}]}}))
         conflict = make_candidate(dict(name='CCTV2', url='https://source.test/1', sources=['test']))
         self.state['archive'][conflict['candidate_id']] = conflict
-        self.assertEqual(799, self.plan()['pending'])
+        self.assertEqual(499, self.plan()['pending'])
         self.assertTrue(self.plan()['harvest'])
 
     def test_missing_or_unmigrated_history_triggers_discovery(self):
         self.assertTrue(plan_harvest(None, None, FORMAL, self.feedback, PROBE)['harvest'])
-        self.add(800)
+        self.add(500)
         self.state['migration_complete'] = False
         self.assertTrue(self.plan()['harvest'])
 

@@ -42,7 +42,7 @@ class HomeCandidateIncrementalTests(unittest.TestCase):
         self.assertIn("cron: '30 16 * * *'", workflow)
         self.assertIn('scripts/daily_home_intake.py --state /tmp/home-harvest-state.json', workflow)
         self.assertNotIn('steps.refill.outputs.harvest', workflow)
-        self.assertIn("assert manifest['candidate_count'] <= 800", workflow)
+        self.assertIn("assert manifest['candidate_count'] <= 500", workflow)
         self.assertIn('production-before.sha256', workflow)
         self.assertIn('production-after.sha256', workflow)
         self.assertNotIn('ffprobe', workflow)
@@ -50,8 +50,8 @@ class HomeCandidateIncrementalTests(unittest.TestCase):
         self.assertIn('gh pr merge', workflow)
         self.assertIn('base_sha=', workflow)
         self.assertIn('--match-head-commit', workflow)
-        self.assertIn('MASTER_RULES_API', workflow)
-        self.assertIn('validate_master_rules', workflow)
+        self.assertNotIn('MASTER_RULES_API', workflow)
+        self.assertNotIn('validate_master_rules', workflow)
         self.assertNotIn('git push origin HEAD:master', workflow)
 
     def test_first_run_bootstraps_without_dumping_historical_pool(self):

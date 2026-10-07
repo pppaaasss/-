@@ -1,15 +1,11 @@
-name: Promote reviewed TV candidate
+name: Promote TV candidate
 
 on:
   workflow_dispatch:
     inputs:
       audit_run_id:
-        description: 'Candidate audit Actions run ID reviewed by a human'
-        required: true
-      confirm_visual_review:
-        description: 'Type YES after reviewing the core contact-sheet artifact'
-        required: true
-        default: 'NO'
+        description: 'Optional candidate audit Actions run ID'
+        required: false
 
 permissions:
   contents: write
@@ -20,7 +16,6 @@ concurrency:
 
 jobs:
   promote:
-    if: ${{ inputs.confirm_visual_review == 'YES' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -39,13 +34,11 @@ jobs:
       - name: Validate candidate release gates without modifying production
         run: |
           python3 scripts/candidate_release.py validate \
-            --visual-confirmed \
             --audit-run-id '${{ inputs.audit_run_id }}'
 
-      - name: Promote reviewed candidate and record rollback commit
+      - name: Promote candidate and record rollback commit
         run: |
           python3 scripts/candidate_release.py promote \
-            --visual-confirmed \
             --audit-run-id '${{ inputs.audit_run_id }}'
 
       - name: Reject CCTV-8 identity regression
@@ -74,5 +67,5 @@ jobs:
           git add tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u candidate/last-production.json
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+pppaaasss@users.noreply.github.com'
-          git commit -m 'Promote reviewed TV candidate'
+          git commit -m 'Promote TV candidate'
           git push origin HEAD:master

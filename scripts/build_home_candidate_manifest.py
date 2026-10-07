@@ -140,7 +140,7 @@ def build_manifest(
 
     ordered = sorted(candidates.values(), key=lambda item: (str(item["channel_key"]), str(item["candidate_id"])))
     # Discovery normalization/conflict rejection is unbounded by the delivery
-    # envelope. Daily intake filters history and selects its <=800 rows here,
+    # envelope. Daily intake filters history and selects its <=500 rows here,
     # before the final manifest's 10,000-row contract validation.
     if candidate_selector is not None:
         ordered = candidate_selector(ordered)

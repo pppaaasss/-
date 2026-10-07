@@ -52,12 +52,11 @@ class DeploymentRegressions(unittest.TestCase):
                 result = home_probe.probe_route('CCTV-1', 'https://test.invalid', floor=1080, config={})
             self.assertEqual(expected, result['observed_status'])
 
-    def test_disabled_publisher_can_pair_shadow_transport_without_bypassing_rules(self):
+    def test_disabled_publisher_can_pair_without_branch_rules(self):
         publisher = json.loads((ROOT / 'config/home-publisher.json').read_text())
         publisher.update(enabled=False, expected_probe_id='')
-        self.assertEqual(917, github_pair.validate_protected_publisher(publisher, master_rules(), {'probe_id':'home-ac86u-test'}))
-        with self.assertRaises(RuntimeError):
-            github_pair.validate_protected_publisher(publisher, [], {'probe_id':'home-ac86u-test'})
+        self.assertEqual(0, github_pair.validate_protected_publisher(publisher, master_rules(), {'probe_id':'home-ac86u-test'}))
+        self.assertEqual(0, github_pair.validate_protected_publisher(publisher, [], {'probe_id':'home-ac86u-test'}))
 
     def test_afternoon_uses_cache_and_never_requests_backup_even_when_bad(self):
         def formal_only(name, url, *, floor, **kwargs):

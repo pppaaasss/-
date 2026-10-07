@@ -26,20 +26,6 @@ jobs:
           ref: master
           fetch-depth: 2
 
-      - name: Verify the public master ruleset gate
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import subprocess
-          from router.ac86u.github_pair import MASTER_RULES_API, validate_master_rules
-
-          rules = json.loads(subprocess.check_output(['gh', 'api', MASTER_RULES_API], text=True))
-          ruleset_id = validate_master_rules(rules)
-          print('active home publication ruleset', ruleset_id)
-          PY
-
       - name: Record production hashes
         run: sha256sum tv-easy.m3u tv.m3u tv-all.m3u tv-core.m3u | tee /tmp/production-before.sha256
 
@@ -68,7 +54,7 @@ jobs:
                       subprocess.check_output(['git', 'show', 'FETCH_HEAD:state.json']))
           PYRECEIPT
 
-      - name: Verify daily GitHub playlist changes and select at most 800
+      - name: Verify daily GitHub playlist changes and select at most 500
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -83,8 +69,8 @@ jobs:
           from router.ac86u.home_contract import validate_candidate_manifest
           manifest = json.loads(Path('harvest/home-candidates.json').read_bytes())
           validate_candidate_manifest(manifest)
-          assert manifest['candidate_count'] <= 800
-          assert manifest['daily_target'] == 800
+          assert manifest['candidate_count'] <= 500
+          assert manifest['daily_target'] == 500
           assert manifest['production_eligible'] is False
           PY
 

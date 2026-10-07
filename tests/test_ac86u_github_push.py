@@ -339,6 +339,12 @@ class AC86UGitHubPairTests(unittest.TestCase):
         rules = master_rules()
         self.assertEqual(917, github_pair.validate_protected_publisher(publisher, rules, router))
 
+        unlocked = dict(publisher, branch_protection_required=False)
+        self.assertEqual(0, github_pair.validate_protected_publisher(unlocked, [], router))
+        with mock.patch.object(github_pair, 'fetch_json', return_value=(unlocked, b'{}')) as fetch:
+            github_pair.verify_protected_publisher(router)
+            fetch.assert_called_once_with(github_pair.PUBLISHER_CONFIG_URL)
+
         wrong_probe = dict(publisher, expected_probe_id="home-ac86u-other")
         with self.assertRaisesRegex(RuntimeError, "assigned"):
             github_pair.validate_protected_publisher(wrong_probe, rules, router)
