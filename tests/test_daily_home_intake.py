@@ -167,6 +167,16 @@ class DailyControllerTests(ThinFixture):
         self.assertEqual(self.state['native_budget']['candidates'], 528)
         self.assertEqual(self.state['tested'], before)
 
+    def test_lowered_candidate_cap_does_not_stop_afternoon_formal_checks(self):
+        self.prepare_daily()
+        task,_=self.step();self.deliver(task)
+        self.state['native_budget']['candidates'] = 528
+        self.now=epoch('2026-09-15T05:05:00Z')
+        task,_=self.step()
+        self.assertTrue(task.get('tasks'))
+        self.assertTrue(all(row['role']=='current' for row in task['tasks']))
+        self.assertEqual(self.state['native_budget']['candidates'], 528)
+
     def test_builder_history_veto_auth_and_shortfall(self):
         self.migrated()
         urls=['https://a.example.com/live','https://b.example.com/live?token=abc','https://c.example.com/live','https://d.example.com/live']

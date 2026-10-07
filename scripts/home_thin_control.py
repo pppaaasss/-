@@ -628,7 +628,7 @@ def production_step(state, config, root, reports, now):
         candidates = sum(t['role'] == 'candidate' for t in tasks)
         if (budget['bytes'] + amount > config['daily_bytes'] or
                 budget['seconds'] + seconds > config['daily_seconds'] or
-                budget['candidates'] + candidates > config['daily_candidates'] or
+                (candidates and budget['candidates'] + candidates > config['daily_candidates']) or
                 (candidates and (budget['discovery_bytes'] + amount > config['discovery_bytes'] or
                     budget['discovery_seconds'] + seconds > config['discovery_seconds']))):
             if config.get('daily_verified_intake'):
