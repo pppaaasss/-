@@ -27,7 +27,7 @@ from router.ac86u.home_contract import (REPORT_SCHEMA, BACKUP_SCHEMA, candidate_
     validate_backup_pool, _verification)
 from router.ac86u.home_decision import (current_result, candidate_result, candidate_is_qualified,
     mass_failure_circuit, probe_is_good, update_backup_pool, eligible_backups,
-    cached_backup_result, backup_score)
+    cached_backup_result, backup_sort_key)
 from router.ac86u.peak_policy import apply_peak_policy
 from router.ac86u.push_home_report import report_filename
 from scripts.publish_home_decisions import unique_core_routes, atomic_json, sha256_bytes
@@ -406,7 +406,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
             and candidate_is_qualified(cycle['results'][identity]['result']) for identity, row in cycle['task_rows'].items())
         if measured_good:
             continue
-        backups = sorted((r for r in state['archive'].values() if r['channel_key'] == key and check(r)), key=lambda r:-backup_score(r))
+        backups = sorted((r for r in state['archive'].values() if r['channel_key'] == key and check(r)), key=backup_sort_key)
         for backup in backups:
             if any(row['candidate_id'] == backup['candidate_id'] and row['role'] != 'current'
                    for row in cycle['task_rows'].values()):
@@ -445,14 +445,17 @@ def complete_report(state, cycle, current, feedback, now):
             purpose='switch-reverification' if switching else 'daily-qualification', switch_reverified=switching)
         evidence['observed_utc'] = cycle['results'][identity]['finished_utc']
         candidates.append(evidence)
-        if switching:
-            choices.setdefault(task['channel_key'], task['candidate_id'])
+    # Compare every qualified route already measured in this cycle. Iteration
+    # order and being the first passing candidate are not quality evidence.
+    for evidence in sorted(candidates, key=backup_sort_key):
+        if evidence['switch_reverified']:
+            choices.setdefault(evidence['channel_key'], evidence['candidate_id'])
     generated = min(epoch(row['started_utc']) for row in cycle['results'].values())
     if cycle['kind'] == KINDS[1] and not circuit:
         for key in sorted(bad):
             if key in choices:
                 continue  # Prefer fresh evidence; never duplicate a candidate.
-            for backup in sorted(state['archive'].values(), key=lambda r:-backup_score(r)):
+            for backup in sorted(state['archive'].values(), key=backup_sort_key):
                 if (backup['channel_key'] == key and check(backup) and not backup.get('last_recheck_result')
                         and not backup.get('requires_home_reverification')
                         and backup.get('verified_run_kind') in (KINDS[0], KINDS[2])

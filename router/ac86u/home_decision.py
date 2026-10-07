@@ -239,7 +239,7 @@ def update_backup_pool(
 
     ranked = sorted(
         kept.values(),
-        key=lambda row: (str(row["channel_key"]), -backup_score(row), str(row["candidate_id"])),
+        key=lambda row: (str(row["channel_key"]), backup_sort_key(row)),
     )
     backups: list[dict] = []
     per_channel: dict[str, int] = {}
@@ -263,13 +263,20 @@ def update_backup_pool(
     return pool
 
 
-def backup_score(row: dict) -> float:
+def backup_sort_key(row: dict) -> tuple:
+    """Rank qualified routes by playback headroom, then startup and throughput.
+
+    Qualification already enforces the picture-quality floor. Higher FPS or
+    stream bitrate must not outweigh faster delivery of an adequate picture.
+    """
     verification = row.get("verification") or {}
     return (
-        int(verification.get("height") or 0) * 1_000_000
-        + min(float(verification.get("fps") or 0), 60) * 10_000
-        + min(float(verification.get("stream_mbps") or verification.get("bitrate_mbps") or 0), 100) * 100
-        + min(float(verification.get("headroom_ratio") or 0), 100)
+        -float(verification.get("headroom_ratio") or 0),
+        float(verification.get("startup_s") or 0),
+        -float(verification.get("min_download_mbps") or 0),
+        -int(verification.get("height") or 0),
+        -float(verification.get("fps") or 0),
+        str(row.get("candidate_id") or ""),
     )
 
 
@@ -284,7 +291,7 @@ def eligible_backups(pool: dict | None, channel_key: str, *, now_epoch: float) -
         and row.get("qualification") == "QUALIFIED"
         and _parse_utc(str(row.get("expires_utc"))) >= now
     ]
-    return sorted(rows, key=lambda row: (-backup_score(row), str(row.get("candidate_id"))))
+    return sorted(rows, key=backup_sort_key)
 
 
 def backup_refresh_candidates(

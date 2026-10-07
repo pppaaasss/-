@@ -89,6 +89,46 @@ class ThinFixture(unittest.TestCase):
 
 
 class ThinFlowTests(ThinFixture):
+    def test_repair_selects_fastest_measured_qualified_route_not_first_pass(self):
+        self.manifest, _ = build_manifest(discovery_rows=[
+            {'name': 'CCTV-1', 'url': 'http://candidate.test/one.m3u8', 'sources': ['fixture']},
+            {'name': 'CCTV-1', 'url': 'http://candidate.test/other.m3u8', 'sources': ['fixture']},
+        ], formal_bytes=self.formal, formal_url=self.manifest['formal_playlist']['url'],
+            source_revision='a'*40, generated_utc=timestamp(self.now))
+        (self.root/'harvest/home-candidates.json').write_bytes(encode(self.manifest))
+        self.migrated()
+        first, _ = self.step()
+        self.deliver(first, {'cctv1': 'UNAVAILABLE'})
+        retry, _ = self.step()
+        self.deliver(retry, {'cctv1': 'UNAVAILABLE'})
+        candidates, _ = self.step()
+        self.assertEqual(2, len(candidates['tasks']))
+        observation = self.deliver(candidates)
+        slow, fast = observation['results']
+        slow['result'].update(min_download_mbps=25, stream_mbps=8, bitrate_mbps=8,
+                              headroom_ratio=3.125, startup_s=1.5, fps=50)
+        fast['result'].update(min_download_mbps=48, stream_mbps=4, bitrate_mbps=4,
+                              headroom_ratio=12, startup_s=1.3, fps=25)
+        path = self.reports/'observations'/self.probe/(candidates['batch_id']+'.json')
+        path.write_bytes(encode(observation))
+        _, report = self.step()
+        expected = candidates['tasks'][1]['candidate_id']
+        decision = next(r for r in report['decisions'] if r['channel_key']=='cctv1')
+        self.assertEqual(expected, decision['replacement_candidate_id'])
+        cycle = copy.deepcopy(self.state['cycle'])
+        cycle['task_rows'] = dict(reversed(list(cycle['task_rows'].items())))
+        current = cloud.unique_core_routes(self.formal)
+        feedback = self.root/'config/home-route-feedback.json'
+        reordered = cloud.complete_report(self.state, cycle, current, feedback, self.now)
+        decision = next(r for r in reordered['decisions'] if r['channel_key']=='cctv1')
+        self.assertEqual(expected, decision['replacement_candidate_id'])
+        # A viewer-rejected fast source must still lose to the usable alternate.
+        feedback.write_bytes(encode({'good': {}, 'bad': {'cctv1': [
+            {'url': candidates['tasks'][1]['url'], 'reason': 'home_wrong_channel'}]}}))
+        vetoed = cloud.complete_report(self.state, cycle, current, feedback, self.now)
+        decision = next(r for r in vetoed['decisions'] if r['channel_key']=='cctv1')
+        self.assertEqual(candidates['tasks'][0]['candidate_id'], decision['replacement_candidate_id'])
+
     def test_viewer_rejected_playable_channel_uses_verified_replacement(self):
         feedback = {'good': {}, 'bad': {'cctv1': [{'url': 'http://current.test/one.m3u8',
                                                    'reason': 'home_wrong_channel'}]}}

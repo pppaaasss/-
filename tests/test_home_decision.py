@@ -9,6 +9,7 @@ from router.ac86u.home_contract import (
 )
 from router.ac86u.home_decision import (
     MAX_BACKUPS_PER_CHANNEL,
+    backup_sort_key,
     backup_refresh_candidates,
     candidate_result,
     current_result,
@@ -143,7 +144,7 @@ class HomeDecisionTests(unittest.TestCase):
             ttl_hours=1,
         )
         selected = eligible_backups(pool, "cctv1", now_epoch=NOW)
-        self.assertEqual([higher["candidate_id"], lower["candidate_id"]], [row["candidate_id"] for row in selected])
+        self.assertEqual([lower["candidate_id"], higher["candidate_id"]], [row["candidate_id"] for row in selected])
 
         refreshed = update_backup_pool(
             pool,
@@ -156,6 +157,27 @@ class HomeDecisionTests(unittest.TestCase):
             ttl_hours=1,
         )
         self.assertEqual(0, refreshed["backup_count"])
+
+    def test_faster_1080p25_route_beats_slower_1080p50_with_higher_bitrate(self):
+        fast, slow = candidate('fast'), candidate('slow')
+        fast_probe = dict(raw_probe(speed=48), fps=25, stream_mbps=4,
+                          bitrate_mbps=4, headroom_ratio=12, startup_s=1.3)
+        slow_probe = dict(raw_probe(speed=25), fps=50, stream_mbps=8,
+                          bitrate_mbps=8, headroom_ratio=3.125, startup_s=1.5)
+        pool = update_backup_pool(None, [(slow, slow_probe), (fast, fast_probe)],
+            probe_id='home-ac86u-test', now_epoch=NOW,
+            formal_playlist_sha256=FORMAL_SHA, candidate_manifest_sha256=MANIFEST_SHA,
+            current_urls={}, ttl_hours=36)
+        self.assertEqual([fast['candidate_id'], slow['candidate_id']],
+            [r['candidate_id'] for r in eligible_backups(pool, 'cctv1', now_epoch=NOW)])
+
+    def test_equal_headroom_prefers_quicker_start_then_faster_download(self):
+        slow_start = dict(candidate('slow-start'), verification=dict(raw_probe(), startup_s=8))
+        quick_start = dict(candidate('quick-start'), verification=dict(raw_probe(), startup_s=1))
+        faster_transfer = dict(candidate('fast-transfer'), verification=dict(raw_probe(),
+                              startup_s=1, min_download_mbps=40))
+        self.assertEqual([faster_transfer, quick_start, slow_start],
+            sorted([slow_start, quick_start, faster_transfer], key=backup_sort_key))
 
     def test_corrupt_existing_pool_is_never_trusted(self):
         pool = update_backup_pool(
