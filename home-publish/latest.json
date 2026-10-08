@@ -1,11 +1,31 @@
 {
   "changed_occurrences": {
-    "tv-all.m3u": {},
-    "tv-core.m3u": {},
-    "tv-easy.m3u": {},
-    "tv.m3u": {}
+    "tv-all.m3u": {
+      "cctv16": 1,
+      "广东卫视": 1,
+      "江西卫视": 1,
+      "重庆卫视": 1
+    },
+    "tv-core.m3u": {
+      "cctv16": 1,
+      "广东卫视": 1,
+      "江西卫视": 1,
+      "重庆卫视": 1
+    },
+    "tv-easy.m3u": {
+      "cctv16": 1,
+      "广东卫视": 1,
+      "江西卫视": 1,
+      "重庆卫视": 1
+    },
+    "tv.m3u": {
+      "cctv16": 1,
+      "广东卫视": 1,
+      "江西卫视": 1,
+      "重庆卫视": 1
+    }
   },
-  "formal_sha256_after": "c17774b4560fd2f6760340634b2c54d963053218dd7b4e9a6807a50e5aa650da",
+  "formal_sha256_after": "1eabecc590396dada48ff3b0e21d195efebaee88976e845828ab80475e101240",
   "formal_sha256_before": "c17774b4560fd2f6760340634b2c54d963053218dd7b4e9a6807a50e5aa650da",
   "policy": {
     "all_four_playlists_one_git_snapshot": true,
@@ -17,12 +37,12 @@
     "unknown_never_replaces": true
   },
   "probe_id": "home-ac86u-8f8908f0fba9",
-  "processed_utc": "2026-10-08T13:18:23Z",
+  "processed_utc": "2026-10-08T21:10:32Z",
   "production_sha256_after": {
-    "tv-all.m3u": "d6a0f469a649f2d04ccd10da47c5a529b7acbee333d6b682d07f7733b665d7f0",
-    "tv-core.m3u": "c17774b4560fd2f6760340634b2c54d963053218dd7b4e9a6807a50e5aa650da",
-    "tv-easy.m3u": "5e24dc10a221f48741773b9e3ff86e953a7dc994d391f8f3ec418b3233dafa61",
-    "tv.m3u": "d6a0f469a649f2d04ccd10da47c5a529b7acbee333d6b682d07f7733b665d7f0"
+    "tv-all.m3u": "bd1b8719814ec25e85db1e2080d61b7609263a4aa692cbfaf95953f26a59439b",
+    "tv-core.m3u": "1eabecc590396dada48ff3b0e21d195efebaee88976e845828ab80475e101240",
+    "tv-easy.m3u": "fe688c6927078a7a5500a2e5fada6bec147ed4b8264909b2cf3d80bf33471ac4",
+    "tv.m3u": "bd1b8719814ec25e85db1e2080d61b7609263a4aa692cbfaf95953f26a59439b"
   },
   "production_sha256_before": {
     "tv-all.m3u": "d6a0f469a649f2d04ccd10da47c5a529b7acbee333d6b682d07f7733b665d7f0",
@@ -30,11 +50,40 @@
     "tv-easy.m3u": "5e24dc10a221f48741773b9e3ff86e953a7dc994d391f8f3ec418b3233dafa61",
     "tv.m3u": "d6a0f469a649f2d04ccd10da47c5a529b7acbee333d6b682d07f7733b665d7f0"
   },
-  "replacement_count": 0,
-  "replacements": [],
-  "report_file": "20261008T120901Z-peak-2000-59de53ed813ced83.json",
-  "report_generated_utc": "2026-10-08T12:09:01Z",
-  "report_run_kind": "peak-2000",
-  "report_sha256": "59de53ed813ced8384cf6bdf0a2215bb01140d53ab35dc42ec5b576aec7bdeb4",
+  "replacement_count": 4,
+  "replacements": [
+    {
+      "candidate_id": "5eae52f5c45d8e2d9bdea706bd693f32fad1b6db599e35a6a98353631821ceca",
+      "channel_key": "cctv16",
+      "name": "CCTV-16",
+      "new_url": "http://219.147.245.238:25480/newlive/live/hls/17/live.m3u8",
+      "old_url": "https://cdn.qd.je/163189.php?id=cctv16-2"
+    },
+    {
+      "candidate_id": "8f60feabf2515d5faf0f8769a7b3ba20441f01efed8cdbbb5a3d17c053dc0b6c",
+      "channel_key": "广东卫视",
+      "name": "广东卫视",
+      "new_url": "http://107.150.60.122/live/gdwshd.m3u8",
+      "old_url": "http://120.40.39.246:352/newlive/live/hls/34/live.m3u8"
+    },
+    {
+      "candidate_id": "4afd8296617a678d620919793804998027670b25e57166fa011200b8c848929a",
+      "channel_key": "江西卫视",
+      "name": "江西卫视",
+      "new_url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=jxwshd",
+      "old_url": "http://bztv.tvbus.cc:8081/cdnlive/jxws.m3u8"
+    },
+    {
+      "candidate_id": "beb24648830fad5230a4fc0e451833b28b69c67a4abefe3f6026ca101d33bad8",
+      "channel_key": "重庆卫视",
+      "name": "重庆卫视",
+      "new_url": "http://107.150.60.122/live/cqwshd.m3u8",
+      "old_url": "http://192.151.150.154/live/cqwshd.m3u8"
+    }
+  ],
+  "report_file": "20261008T194601Z-primary-0200-8638b6ec5d4062bd.json",
+  "report_generated_utc": "2026-10-08T19:46:01Z",
+  "report_run_kind": "primary-0200",
+  "report_sha256": "8638b6ec5d4062bd76ba78ab062af9d5f48e715a443f0898fa5b7f2c2f98d964",
   "schema": "iptv-home-publication/v1"
 }
