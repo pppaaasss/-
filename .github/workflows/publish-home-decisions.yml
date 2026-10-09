@@ -1,4 +1,4 @@
-name: Publish home-qualified IPTV decisions
+name: Collect home-qualified IPTV backups (manual source changes)
 
 on:
   push:
@@ -64,12 +64,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python3 scripts/home_native_assets.py cleanup
 
-      - name: Validate latest report and apply exact routes only
+      - name: Inspect latest household report without changing formal routes
         run: |
           python3 scripts/publish_home_decisions.py \
             --inbox /tmp/home-reports/inbox \
             --config config/home-publisher.json \
-            --apply --inspect-shadow
+            --inspect-shadow
 
       - name: Validate the one-snapshot output scope
         run: |
