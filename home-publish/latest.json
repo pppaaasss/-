@@ -1,24 +1,28 @@
 {
   "changed_occurrences": {
     "tv-all.m3u": {
-      "cctv5": 1,
-      "湖北卫视": 1
+      "cctv1": 1,
+      "cctv4": 1,
+      "cctv5": 1
     },
     "tv-core.m3u": {
-      "cctv5": 1,
-      "湖北卫视": 1
+      "cctv1": 1,
+      "cctv4": 1,
+      "cctv5": 1
     },
     "tv-easy.m3u": {
-      "cctv5": 1,
-      "湖北卫视": 1
+      "cctv1": 1,
+      "cctv4": 1,
+      "cctv5": 1
     },
     "tv.m3u": {
-      "cctv5": 1,
-      "湖北卫视": 1
+      "cctv1": 1,
+      "cctv4": 1,
+      "cctv5": 1
     }
   },
-  "formal_sha256_after": "ac5e482b5f1f1f2fe483cb1df8c7fe124519d0a14357898a3b2602792f99541e",
-  "formal_sha256_before": "1eabecc590396dada48ff3b0e21d195efebaee88976e845828ab80475e101240",
+  "formal_sha256_after": "0adb888336aa0612e64f753ac0130075ba0cb698b5a5cbaa2ceedf12a59352ec",
+  "formal_sha256_before": "ac5e482b5f1f1f2fe483cb1df8c7fe124519d0a14357898a3b2602792f99541e",
   "policy": {
     "all_four_playlists_one_git_snapshot": true,
     "current_failure_required": true,
@@ -29,39 +33,46 @@
     "unknown_never_replaces": true
   },
   "probe_id": "home-ac86u-8f8908f0fba9",
-  "processed_utc": "2026-10-09T03:00:24Z",
+  "processed_utc": "2026-10-09T07:17:24Z",
   "production_sha256_after": {
+    "tv-all.m3u": "52a2d9d3b92d019119c4741379a9307baed1de24eeda11565dd028aea83a870b",
+    "tv-core.m3u": "0adb888336aa0612e64f753ac0130075ba0cb698b5a5cbaa2ceedf12a59352ec",
+    "tv-easy.m3u": "584b1924ac8efe776a8d991fb681dd4124a0f2009f4c2cbd9b1ec54d7d5f4663",
+    "tv.m3u": "52a2d9d3b92d019119c4741379a9307baed1de24eeda11565dd028aea83a870b"
+  },
+  "production_sha256_before": {
     "tv-all.m3u": "4bd363e728caa2d2be328da459da868813e1f073cf70642556eb2fc69f5bddea",
     "tv-core.m3u": "ac5e482b5f1f1f2fe483cb1df8c7fe124519d0a14357898a3b2602792f99541e",
     "tv-easy.m3u": "f41d8546d3560b7b26b2bc5b13fd05bd5c2f9b0aa7c2b940a512a63b8ac44040",
     "tv.m3u": "4bd363e728caa2d2be328da459da868813e1f073cf70642556eb2fc69f5bddea"
   },
-  "production_sha256_before": {
-    "tv-all.m3u": "bd1b8719814ec25e85db1e2080d61b7609263a4aa692cbfaf95953f26a59439b",
-    "tv-core.m3u": "1eabecc590396dada48ff3b0e21d195efebaee88976e845828ab80475e101240",
-    "tv-easy.m3u": "fe688c6927078a7a5500a2e5fada6bec147ed4b8264909b2cf3d80bf33471ac4",
-    "tv.m3u": "bd1b8719814ec25e85db1e2080d61b7609263a4aa692cbfaf95953f26a59439b"
-  },
-  "replacement_count": 2,
+  "replacement_count": 3,
   "replacements": [
     {
-      "candidate_id": "84183172254ffec66cfb42b4f2f1e8b72200fd2b07630fe7171915dbea364130",
-      "channel_key": "cctv5",
-      "name": "CCTV-5",
-      "new_url": "http://173.208.212.130:8181/1080p/cctv5.m3u8",
-      "old_url": "http://120.40.39.246:352/newlive/live/hls/5/live.m3u8"
+      "candidate_id": "742e52e70fd94f0d17d40fcee61b6e6ccbaae76aadf8f17431cf3f551aa1d261",
+      "channel_key": "cctv1",
+      "name": "CCTV-1",
+      "new_url": "http://1.24.39.180:808/hls/1/index.m3u8",
+      "old_url": "http://219.147.245.238:25480/newlive/live/hls/1/live.m3u8"
     },
     {
-      "candidate_id": "d8b5f32809c9ace8408dc460163a26d14c068f5d9422d50ae28844bd5fce8730",
-      "channel_key": "湖北卫视",
-      "name": "湖北卫视",
-      "new_url": "http://222.223.41.27:8888/hls/41/index.m3u8",
-      "old_url": "http://192.151.150.154/live/hbwshd.m3u8"
+      "candidate_id": "8039d1504d50e0c1b66f8f5ae2f33d1f7225ea94db67b64711915ff7e0aa4b6e",
+      "channel_key": "cctv4",
+      "name": "CCTV-4",
+      "new_url": "http://121.17.146.84:50003/hls/4/index.m3u8",
+      "old_url": "http://69.30.245.50/live/cctv4.m3u8"
+    },
+    {
+      "candidate_id": "c942653f7123cef69378bda897de67891c5dd1a6ebd80b763be861b5d898bf14",
+      "channel_key": "cctv5",
+      "name": "CCTV-5",
+      "new_url": "http://222.223.41.27:8888/hls/5/index.m3u8",
+      "old_url": "http://173.208.212.130:8181/1080p/cctv5.m3u8"
     }
   ],
-  "report_file": "20261008T232831Z-primary-0200-4bd9cda506fcccd5.json",
-  "report_generated_utc": "2026-10-08T23:28:31Z",
-  "report_run_kind": "primary-0200",
-  "report_sha256": "4bd9cda506fcccd5dd977dc4e5c278a2087ceaa6d48cd207116b8e008afc5b87",
+  "report_file": "20261009T055831Z-recheck-1300-47827bb138c2ad74.json",
+  "report_generated_utc": "2026-10-09T05:58:31Z",
+  "report_run_kind": "recheck-1300",
+  "report_sha256": "47827bb138c2ad749fc3ad72358fd713e0f0467cb2245c2c5012e818c6dd7026",
   "schema": "iptv-home-publication/v1"
 }
