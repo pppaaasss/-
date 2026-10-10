@@ -403,6 +403,89 @@ class HomePublishTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'same latest timestamp'):
             self.publish()
 
+    def incremental_reports(self):
+        earlier = self.report()
+        earlier['policy'] = {'candidate_mode': 'drain_queue', 'candidate_sweep_complete': False}
+        earlier['aggregation'] = {
+            'cycle_id': 'c' * 64,
+            'oldest_measurement_utc': earlier['generated_utc'],
+            'newest_measurement_utc': '2026-09-02T13:02:00Z',
+            'batch_ids': ['a' * 64],
+        }
+        later = json.loads(json.dumps(earlier))
+        later['aggregation']['batch_ids'].append('b' * 64)
+        later['aggregation']['newest_measurement_utc'] = '2026-09-02T13:05:00Z'
+        candidate = json.loads(json.dumps(later['candidate_results'][0]))
+        candidate['url'] = 'https://backup.test/cctv1-second.m3u8'
+        candidate['candidate_id'] = candidate_id('cctv1', candidate['url'], '')
+        candidate['purpose'] = 'daily-qualification'
+        candidate['switch_reverified'] = False
+        later['candidate_results'].append(candidate)
+        later['policy']['candidate_sweep_complete'] = True
+        return earlier, later
+
+    def test_shadow_uses_latest_incremental_snapshot_without_any_write(self):
+        earlier, later = self.incremental_reports()
+        first = self.queue(earlier)
+        second = self.queue(later)
+        self.write_config(enabled=False)
+        before = {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES}
+        result = publish_latest(root=self.root, config_path=self.config_path,
+            inbox=self.inbox, now_epoch=self.now, inspect_shadow=True, apply=True)
+        self.assertEqual('shadow', result['status'])
+        self.assertEqual(hashlib.sha256(second.read_bytes()).hexdigest(), result['report_sha256'])
+        self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
+        self.assertTrue(first.exists())
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_incremental_snapshot_can_include_reopened_candidate_intake(self):
+        earlier, later = self.incremental_reports()
+        earlier['policy']['candidate_sweep_complete'] = True
+        later['policy']['candidate_sweep_complete'] = False
+        self.queue(earlier)
+        second = self.queue(later)
+        config = json.loads(self.config_path.read_bytes())
+        self.assertEqual(second, publisher_module.latest_report_path(self.inbox, config))
+
+    def test_incremental_report_keeps_original_evidence_expiry(self):
+        earlier, later = self.incremental_reports()
+        self.queue(earlier)
+        self.queue(later)
+        result = publish_latest(root=self.root, config_path=self.config_path,
+            inbox=self.inbox, now_epoch=self.now + 19 * 3600, apply=True)
+        self.assertEqual('stale_report', result['status'])
+        self.assertEqual(earlier['generated_utc'], result['report_generated_utc'])
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_incremental_snapshot_conflicts_still_reject(self):
+        for conflict in ('cycle', 'batches', 'current', 'candidate', 'time'):
+            with self.subTest(conflict=conflict):
+                earlier, later = self.incremental_reports()
+                if conflict == 'cycle':
+                    later['aggregation']['cycle_id'] = 'd' * 64
+                elif conflict == 'batches':
+                    later['aggregation']['batch_ids'] = ['b' * 64, 'd' * 64]
+                elif conflict == 'current':
+                    later['current_results'][1]['verification']['startup_s'] = 1.5
+                elif conflict == 'candidate':
+                    later['candidate_results'][0]['verification']['startup_s'] = 1.5
+                else:
+                    later['aggregation']['newest_measurement_utc'] = '2026-09-02T13:01:00Z'
+                first, second = self.queue(earlier), self.queue(later)
+                with self.assertRaisesRegex(RuntimeError, 'same latest timestamp'):
+                    self.publish()
+                first.unlink()
+                second.unlink()
+
+    def test_incremental_snapshot_checks_predecessor_filename_integrity(self):
+        earlier, later = self.incremental_reports()
+        first = self.queue(earlier)
+        self.queue(later)
+        earlier['decisions'][0]['reason'] = 'content_changed_after_upload'
+        first.write_text(json.dumps(earlier))
+        with self.assertRaisesRegex(RuntimeError, 'filename and content hash disagree'):
+            self.publish()
+
     def test_disabled_publisher_never_needs_an_inbox(self):
         self.write_config(enabled=False)
         result = self.publish()
