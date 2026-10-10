@@ -55,6 +55,9 @@ class ThinFixture(unittest.TestCase):
         (self.root/'config/home-route-feedback.json').write_text('{"good":{},"bad":{}}')
         publisher = json.loads((Path(__file__).resolve().parents[1]/'config/home-publisher.json').read_bytes())
         publisher.pop('publication_hold', None)
+        # Exercise opt-in publication in this isolated fixture, independent of
+        # the live setting that only collects backups and uses manual changes.
+        publisher['enabled'] = True
         (self.root/'config/home-publisher.json').write_text(json.dumps(publisher))
         self.manifest, _ = build_manifest(discovery_rows=[{'name':'CCTV-1','url':'http://candidate.test/one.m3u8', 'sources':['fixture']}],
             formal_bytes=self.formal, formal_url=publisher['formal_playlist_url'], source_revision='a'*40,

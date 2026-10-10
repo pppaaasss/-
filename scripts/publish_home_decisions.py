@@ -148,8 +148,59 @@ def unique_core_routes(raw: bytes) -> dict[str, Entry]:
     return routes
 
 
-def latest_report_path(inbox: Path, probe_id: str) -> Path | None:
-    directory = inbox / probe_id
+def report_extends(earlier: dict, later: dict) -> bool:
+    """Recognize a later snapshot of the same immutable household measurements.
+
+    The controller emits a formal-check snapshot before closing the candidate
+    sweep. Both retain the oldest measurement timestamp for evidence expiry.
+    A larger, consistent batch set identifies progress without refreshing age.
+    """
+    derived = {"aggregation", "candidate_results", "decisions", "summary"}
+    before = {key: value for key, value in earlier.items() if key not in derived}
+    after = {key: value for key, value in later.items() if key not in derived}
+    before["policy"] = dict(before.get("policy") or {})
+    after["policy"] = dict(after.get("policy") or {})
+    before["policy"].pop("candidate_sweep_complete", None)
+    after["policy"].pop("candidate_sweep_complete", None)
+    if before != after:
+        return False
+    old = earlier.get("aggregation")
+    new = later.get("aggregation")
+    if not isinstance(old, dict) or not isinstance(new, dict):
+        return False
+    cycle_id = old.get("cycle_id")
+    if not isinstance(cycle_id, str) or not re.fullmatch(r"[0-9a-f]{64}", cycle_id):
+        return False
+    if new.get("cycle_id") != cycle_id:
+        return False
+    batches = []
+    for aggregation in (old, new):
+        if aggregation.get("oldest_measurement_utc") != earlier["generated_utc"]:
+            return False
+        ids = aggregation.get("batch_ids")
+        if not isinstance(ids, list) or not ids or any(
+            not isinstance(identity, str) or not re.fullmatch(r"[0-9a-f]{64}", identity)
+            for identity in ids
+        ):
+            return False
+        if len(set(ids)) != len(ids):
+            return False
+        batches.append(set(ids))
+    if not batches[0] < batches[1]:
+        return False
+    try:
+        if not parse_utc(earlier["generated_utc"]) <= parse_utc(
+            old.get("newest_measurement_utc")
+        ) <= parse_utc(new.get("newest_measurement_utc")):
+            return False
+    except (RuntimeError, TypeError, ValueError):
+        return False
+    candidates = {row["candidate_id"]: row for row in later["candidate_results"]}
+    return all(candidates.get(row["candidate_id"]) == row for row in earlier["candidate_results"])
+
+
+def latest_report_path(inbox: Path, config: dict) -> Path | None:
+    directory = inbox / str(config["expected_probe_id"])
     if not directory.exists():
         return None
     if directory.is_symlink() or not directory.is_dir():
@@ -166,9 +217,18 @@ def latest_report_path(inbox: Path, probe_id: str) -> Path | None:
         return None
     latest_stamp = max(stamp for stamp, _path in candidates)
     latest = [path for stamp, path in candidates if stamp == latest_stamp]
-    if len(latest) != 1:
+    if len(latest) == 1:
+        return latest[0]
+    # Validate every tied snapshot, including its filename/content hash. Choose
+    # only a unique snapshot containing all earlier evidence unchanged.
+    reports = [(path, load_report(path, config, now_epoch=None)[0]) for path in latest]
+    newest = [path for path, report in reports if all(
+        path == other_path or report_extends(other, report)
+        for other_path, other in reports
+    )]
+    if len(newest) != 1:
         raise RuntimeError("multiple home reports claim the same latest timestamp")
-    return latest[0]
+    return newest[0]
 
 
 def load_report(path: Path, config: dict, *, now_epoch: float | None) -> tuple[dict, bytes, str]:
@@ -334,7 +394,7 @@ def publish_latest(
             if len(identities) != 1:
                 return {"status": "shadow_no_unique_probe", "replacement_count": 0}
             config = dict(config, expected_probe_id=identities[0])
-    path = latest_report_path(inbox, str(config["expected_probe_id"]))
+    path = latest_report_path(inbox, config)
     if path is None:
         return {"status": "no_report", "replacement_count": 0}
     # Validate structure, identity and the content hash before checking replay or age.
