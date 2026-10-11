@@ -228226,6 +228226,45 @@
       ],
       "temporary_campaign_id": "fullpool-home-test-20261002-c1fda683-r2"
     },
+    "e0903527501151c1815c14dad2015f45ee9282084c30b9939219ceb193b4a9ed": {
+      "batch_id": "e0903527501151c1815c14dad2015f45ee9282084c30b9939219ceb193b4a9ed",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-11T00:27:32Z",
+      "cycle_id": "bdf61bd7edb4356d7107dbb235068be3f07fd8cec468a11e2a20d5966f144180",
+      "expires_utc": "2026-10-11T00:57:32Z",
+      "feedback_sha256": "e9bb5283c5620f74d0a8be0889b5934d9f83432ef263bab069166f135c2b6745",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "dbcb15c0449e12fa563d4827ee2c280084253e6e1c7e116ce7eb1069e442f8e0",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "816c29a1ce7e8058588a1319af3904a3409b7473bbb26f766e8d37a1756b5558",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "5463e172ae43ff72da64a28dc4add369cd11c9e9d418599bb08f7fe3c0dec784",
+          "url": "https://t.freetv.fun/live/cctv4-4.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "e0bbe3ca687b8c0db09fdd5b23a879c9f51c26bea2349d65dbd49e5bb2f43186": {
       "batch_id": "e0bbe3ca687b8c0db09fdd5b23a879c9f51c26bea2349d65dbd49e5bb2f43186",
       "candidate_mode": "drain_queue",
@@ -259128,7 +259167,8 @@
       "2d194b879d6751c6d300c715b79c2bbc740d598972363c41b0cd7858928e45c6",
       "02ebe389e39b9b5626cc6d441f86482b5f299396eea5b448254b9e206ce653f6",
       "a4d268bbb6efb6d34f63d4c12e532b2d4e4251c2a5b0d7ef8866285d1763d2e5",
-      "1dcaca18bc70edb7c0ada6149841a5b0ac6162b884ab95ec43bbe692f618a4b5"
+      "1dcaca18bc70edb7c0ada6149841a5b0ac6162b884ab95ec43bbe692f618a4b5",
+      "e0903527501151c1815c14dad2015f45ee9282084c30b9939219ceb193b4a9ed"
     ],
     "binding": {
       "channel_count": 53,
@@ -259301,7 +259341,7 @@
     "id": "bdf61bd7edb4356d7107dbb235068be3f07fd8cec468a11e2a20d5966f144180",
     "kind": "primary-0200",
     "manifest_sha": "af3697642765eb175766c33ea62f5abfab916c28fd596189fc350000b55e35f9",
-    "outstanding": "1dcaca18bc70edb7c0ada6149841a5b0ac6162b884ab95ec43bbe692f618a4b5",
+    "outstanding": "e0903527501151c1815c14dad2015f45ee9282084c30b9939219ceb193b4a9ed",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -261639,6 +261679,35 @@
         },
         "started_utc": "2026-10-10T22:26:46Z",
         "task_id": "14ffd16f8128e1f058410ad77b41af5dba2680ac661b6ea918f0dee921d44254"
+      },
+      "1656a8c53bb021b94cb77b61c8378dc54122d0e7fc4f8c0c795868f4046f51a5": {
+        "finished_utc": "2026-10-11T00:26:33Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv4",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://t.freetv.fun/live/cctv-4hd.m3u8",
+          "url_sha256": "c34bc08547893744bdccf76cebd1772c3c0d4f88f5d78669af62170cb3fc497f",
+          "width": 0
+        },
+        "started_utc": "2026-10-11T00:26:19Z",
+        "task_id": "1656a8c53bb021b94cb77b61c8378dc54122d0e7fc4f8c0c795868f4046f51a5"
       },
       "16e33fc9ea1f21c6464e4b5deee29c1b0435df843d14e23762c23992f6056589": {
         "finished_utc": "2026-10-10T22:24:25Z",
@@ -270076,6 +270145,35 @@
         "started_utc": "2026-10-10T23:54:18Z",
         "task_id": "8e7037342c96f03597fc51f512bac3c75fc95a81946bf8e605525cea1ef3ab22"
       },
+      "900aa6196a7c75dcc9d67eec5b467896db2195b70dfe3343709c0c3e132ff3d2": {
+        "finished_utc": "2026-10-11T00:26:17Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv4",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://t.freetv.fun/live/cctv4.m3u8",
+          "url_sha256": "95f6a8a5cb822571f7dbeeb9a4ef4f830ba7b88a6b6ffbf1b12f6a7291b921c3",
+          "width": 0
+        },
+        "started_utc": "2026-10-11T00:26:03Z",
+        "task_id": "900aa6196a7c75dcc9d67eec5b467896db2195b70dfe3343709c0c3e132ff3d2"
+      },
       "901d62dba732c1ea4b6ff45f37126f1f985a47234d31369a9ca5b56944ae8cd6": {
         "finished_utc": "2026-10-10T19:40:15Z",
         "result": {
@@ -275092,6 +275190,35 @@
         "started_utc": "2026-10-10T22:58:30Z",
         "task_id": "c90a3371260e7d570aff0444f218a7bc443d8260021abdec0b593bb24576eed0"
       },
+      "cac55f6f637a2228e73ccb861d2ced22e9045aa95328b824007a5ea3edee0b5d": {
+        "finished_utc": "2026-10-11T00:25:45Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv4",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://t.freetv.fun/live/cctv-4gao-qing.m3u8",
+          "url_sha256": "e9837c0bc7053c8ce59e5c0d75f3065ef841214a0e4d2ab1142c0566c6914f23",
+          "width": 0
+        },
+        "started_utc": "2026-10-11T00:25:31Z",
+        "task_id": "cac55f6f637a2228e73ccb861d2ced22e9045aa95328b824007a5ea3edee0b5d"
+      },
       "cb9f3ae25d239a67dec101d4066f29ad7880a92ceaefbb0b161a707482c16809": {
         "finished_utc": "2026-10-10T23:44:22Z",
         "result": {
@@ -275561,6 +275688,35 @@
         },
         "started_utc": "2026-10-10T23:15:00Z",
         "task_id": "d111c5aa8766502f922d4bc41356f1ba277738b57e7a20e232ab7fe882c89736"
+      },
+      "d1be0dfd1985acec1e37d320af8a7990b1f4db46f1274ac61e389ade39c3c059": {
+        "finished_utc": "2026-10-11T00:26:01Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv4",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://t.freetv.fun/live/cctv4-3.m3u8",
+          "url_sha256": "6152cd22cf536e60694c55e0b63bd87297e470bd71ca9328917418f2e759637d",
+          "width": 0
+        },
+        "started_utc": "2026-10-11T00:25:47Z",
+        "task_id": "d1be0dfd1985acec1e37d320af8a7990b1f4db46f1274ac61e389ade39c3c059"
       },
       "d290098cee9924683c9eb19e4cd6ba73e661a8bd72977fe12c6533effe05bf6f": {
         "finished_utc": "2026-10-10T21:38:48Z",
@@ -279946,6 +280102,22 @@
         "url": "http://124.112.188.154:4022/rtp/238.1.78.239:7784",
         "viewer_accepted_quality": false
       },
+      "1656a8c53bb021b94cb77b61c8378dc54122d0e7fc4f8c0c795868f4046f51a5": {
+        "attempt": 1,
+        "candidate_id": "6fb9f2c35b9405e829979960a8a7a729d7f9f6466c2488f216d7e3742c694ccb",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "1656a8c53bb021b94cb77b61c8378dc54122d0e7fc4f8c0c795868f4046f51a5",
+        "url": "https://t.freetv.fun/live/cctv-4hd.m3u8",
+        "viewer_accepted_quality": false
+      },
       "16e33fc9ea1f21c6464e4b5deee29c1b0435df843d14e23762c23992f6056589": {
         "attempt": 1,
         "candidate_id": "4cacc28937ba6a361cbd8c427534fbbbf9be139436a3417609055baedfe9d1e8",
@@ -282890,6 +283062,22 @@
         "url": "https://t.freetv.fun/live/cctv11-1.m3u8",
         "viewer_accepted_quality": false
       },
+      "900aa6196a7c75dcc9d67eec5b467896db2195b70dfe3343709c0c3e132ff3d2": {
+        "attempt": 1,
+        "candidate_id": "6a05577975f694d09023dfe5b1697418d4956bc004fe5b63b8a3039f59876b1d",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "900aa6196a7c75dcc9d67eec5b467896db2195b70dfe3343709c0c3e132ff3d2",
+        "url": "https://t.freetv.fun/live/cctv4.m3u8",
+        "viewer_accepted_quality": false
+      },
       "901d62dba732c1ea4b6ff45f37126f1f985a47234d31369a9ca5b56944ae8cd6": {
         "attempt": 1,
         "candidate_id": "66b5dea67ab5f608986b6d887b2a0967069cf9d7e68f7f70a6520e03330e13da",
@@ -284682,6 +284870,22 @@
         "url": "http://118.113.40.5:1234/631780421",
         "viewer_accepted_quality": false
       },
+      "cac55f6f637a2228e73ccb861d2ced22e9045aa95328b824007a5ea3edee0b5d": {
+        "attempt": 1,
+        "candidate_id": "30c71ae2fd1406cebeb201ad15ebf701b20b7123256ba48a2db7e6e0b7493ce0",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "cac55f6f637a2228e73ccb861d2ced22e9045aa95328b824007a5ea3edee0b5d",
+        "url": "https://t.freetv.fun/live/cctv-4gao-qing.m3u8",
+        "viewer_accepted_quality": false
+      },
       "cb9f3ae25d239a67dec101d4066f29ad7880a92ceaefbb0b161a707482c16809": {
         "attempt": 1,
         "candidate_id": "866ba9af1dfc8fc3254bf5bb210f7154872cf32358946c7e1a59689f83bb1f50",
@@ -284856,6 +285060,22 @@
         "sample_bytes": 6291456,
         "task_id": "d111c5aa8766502f922d4bc41356f1ba277738b57e7a20e232ab7fe882c89736",
         "url": "http://rrs01.hw.gmcc.net:8088/PLTV/81/224/3221226690/1.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "d1be0dfd1985acec1e37d320af8a7990b1f4db46f1274ac61e389ade39c3c059": {
+        "attempt": 1,
+        "candidate_id": "5363aac6c10b30699b0c4b07ab0f1149b2cef1e62ec9060a7936975b605aa3a3",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "d1be0dfd1985acec1e37d320af8a7990b1f4db46f1274ac61e389ade39c3c059",
+        "url": "https://t.freetv.fun/live/cctv4-3.m3u8",
         "viewer_accepted_quality": false
       },
       "d290098cee9924683c9eb19e4cd6ba73e661a8bd72977fe12c6533effe05bf6f": {
@@ -286116,17 +286336,13 @@
     ]
   },
   "daily_intake": {
-    "available": 5,
+    "available": 1,
     "candidate_ids": [
-      "30c71ae2fd1406cebeb201ad15ebf701b20b7123256ba48a2db7e6e0b7493ce0",
-      "5363aac6c10b30699b0c4b07ab0f1149b2cef1e62ec9060a7936975b605aa3a3",
-      "6a05577975f694d09023dfe5b1697418d4956bc004fe5b63b8a3039f59876b1d",
-      "6fb9f2c35b9405e829979960a8a7a729d7f9f6466c2488f216d7e3742c694ccb",
       "816c29a1ce7e8058588a1319af3904a3409b7473bbb26f766e8d37a1756b5558"
     ],
     "day": "20261011",
     "reason": "insufficient_fresh_unmeasured_candidates",
-    "shortfall": 495,
+    "shortfall": 499,
     "target": 500
   },
   "delivery_receipt": {
@@ -286138,13 +286354,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-11T00:24:03Z",
-    "received_utc": "2026-10-11T00:25:06Z",
+    "measured_utc": "2026-10-11T00:26:33Z",
+    "received_utc": "2026-10-11T00:27:32Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
       "downloaded_bytes": 0,
-      "runtime_s": 63.0
+      "runtime_s": 62.0
     }
   },
   "last_report": {
@@ -293382,18 +293598,18 @@
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
     "bytes": 2416996161,
-    "candidates": 360,
+    "candidates": 361,
     "day": "20261011",
     "discovery_bytes": 2113811252,
-    "discovery_seconds": 4266.0,
+    "discovery_seconds": 4328.0,
     "reservations": {
-      "1dcaca18bc70edb7c0ada6149841a5b0ac6162b884ab95ec43bbe692f618a4b5": {
+      "e0903527501151c1815c14dad2015f45ee9282084c30b9939219ceb193b4a9ed": {
         "bytes": 67108864,
-        "candidates": 4,
+        "candidates": 1,
         "seconds": 240
       }
     },
-    "seconds": 4661.0
+    "seconds": 4723.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -295092,6 +295308,7 @@
     "1d931a1acc064c03ac5702d04b45c83db72f3b262e3df193e349b826ec07e098": "f3d3ad6e8158bc71b1b1a914ab578f038d14e92ef174344ceeaa994b83e872f7",
     "1dac4e6967a97dc0231ed52f82cc2216bef97a39781e70d15e85c766974230f7": "0f0bf7ed94bee5aa0db25f7e2e8426bff100b779e44a84b64bb05280ae0e3453",
     "1dae82da3721474a63378b555afbe35c9af278ca2758f35bb0f15f73c4c59b2a": "23bcef79fbd458b89d429fccff109b5d0bca0cf4d9b6f2c3d5e2b82ef1a710d8",
+    "1dcaca18bc70edb7c0ada6149841a5b0ac6162b884ab95ec43bbe692f618a4b5": "e7ccfa50d3368071c049c218906f9c2b1ef493e53ac15f030072ed5091ce3e4e",
     "1dcf4972420bb35d864e6dab7f89091b3fdf80e35fb8e7ea4e7374e079725e95": "48d7b04a54ecd9f3bd09db6a3237a28d6f055d963ade16e3df72b821648efe75",
     "1ddaa15cadacadd39f5fe8579fefcfdc4d19d2f1a748b280e2874d2d17bee33d": "a9ca2b211d6509a4238bc2a09f01ef13ef53b9e21a7378b9f4e551da46aa87bb",
     "1df945800ed59d5faf86438bc56663835c082930321e4430ec90cd76c14a9c7d": "010659757502b63ec76515aa71d2b1fc81b1421f56e2838fcbaff7cd9b200f08",
@@ -298709,21 +298926,6 @@
       "url": "http://45.192.97.170:8880/play/15.m3u8",
       "url_sha256": "1d87f09149ac225fb68abc2ce2aa3566ebf9c400bb0c31e036ea3e08187c14dd"
     },
-    "30c71ae2fd1406cebeb201ad15ebf701b20b7123256ba48a2db7e6e0b7493ce0": {
-      "candidate_id": "30c71ae2fd1406cebeb201ad15ebf701b20b7123256ba48a2db7e6e0b7493ce0",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/tkdwbiao/iptv-api/master/output/ipv6/result.m3u"
-      ],
-      "url": "https://t.freetv.fun/live/cctv-4gao-qing.m3u8",
-      "url_sha256": "e9837c0bc7053c8ce59e5c0d75f3065ef841214a0e4d2ab1142c0566c6914f23"
-    },
     "30cd1fe152b9d1aa405f36536ab0db989b5a32134d00fac5959b8d4bd2bd36ab": {
       "candidate_id": "30cd1fe152b9d1aa405f36536ab0db989b5a32134d00fac5959b8d4bd2bd36ab",
       "channel_key": "江苏卫视",
@@ -299494,21 +299696,6 @@
       "url": "http://smzb.bypbwxx.top/lvdou/zhibojm-yangshi.php?token=8a5d59f6aa673404ffa630e5132359",
       "url_sha256": "f0ee0eb3c0f0dcf57391d0a21c836f325789f9305e45fff45417eb43e34598b4"
     },
-    "5363aac6c10b30699b0c4b07ab0f1149b2cef1e62ec9060a7936975b605aa3a3": {
-      "candidate_id": "5363aac6c10b30699b0c4b07ab0f1149b2cef1e62ec9060a7936975b605aa3a3",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/tkdwbiao/iptv-api/master/output/ipv6/result.m3u"
-      ],
-      "url": "https://t.freetv.fun/live/cctv4-3.m3u8",
-      "url_sha256": "6152cd22cf536e60694c55e0b63bd87297e470bd71ca9328917418f2e759637d"
-    },
     "5370961a74e593267b5af538eee495be1fe97783914c0a6df74d2ec747b30257": {
       "candidate_id": "5370961a74e593267b5af538eee495be1fe97783914c0a6df74d2ec747b30257",
       "channel_key": "cctv14",
@@ -300143,21 +300330,6 @@
       "url": "http://45.192.97.170:8880/play/784.m3u8",
       "url_sha256": "eedd035b92e2d41bd78c236577a3e7513bd69c5a82d1c7a1084430f9f7d0c957"
     },
-    "6a05577975f694d09023dfe5b1697418d4956bc004fe5b63b8a3039f59876b1d": {
-      "candidate_id": "6a05577975f694d09023dfe5b1697418d4956bc004fe5b63b8a3039f59876b1d",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/tkdwbiao/iptv-api/master/output/ipv6/result.m3u"
-      ],
-      "url": "https://t.freetv.fun/live/cctv4.m3u8",
-      "url_sha256": "95f6a8a5cb822571f7dbeeb9a4ef4f830ba7b88a6b6ffbf1b12f6a7291b921c3"
-    },
     "6a296fc07ed323977677bb99986678bcc51ede7353de173f028bf9f4006b3d38": {
       "candidate_id": "6a296fc07ed323977677bb99986678bcc51ede7353de173f028bf9f4006b3d38",
       "channel_key": "cctv5plus",
@@ -300322,21 +300494,6 @@
       ],
       "url": "http://45.192.97.170:8880/play/537.m3u8",
       "url_sha256": "ed781496bdeaf2d11c40cf2f15bd6bd17be134e4a690bb9115152f1a430a0d28"
-    },
-    "6fb9f2c35b9405e829979960a8a7a729d7f9f6466c2488f216d7e3742c694ccb": {
-      "candidate_id": "6fb9f2c35b9405e829979960a8a7a729d7f9f6466c2488f216d7e3742c694ccb",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/tkdwbiao/iptv-api/master/output/ipv6/result.m3u"
-      ],
-      "url": "https://t.freetv.fun/live/cctv-4hd.m3u8",
-      "url_sha256": "c34bc08547893744bdccf76cebd1772c3c0d4f88f5d78669af62170cb3fc497f"
     },
     "6ffb9089e0f114d2e655ca5072442720850cdc464dfea3a11e78568217bca777": {
       "candidate_id": "6ffb9089e0f114d2e655ca5072442720850cdc464dfea3a11e78568217bca777",
@@ -493759,6 +493916,33 @@
         "width": 0
       }
     },
+    "30c71ae2fd1406cebeb201ad15ebf701b20b7123256ba48a2db7e6e0b7493ce0": {
+      "last_checked_utc": "2026-10-11T00:25:45Z",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv4",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://t.freetv.fun/live/cctv-4gao-qing.m3u8",
+        "url_sha256": "e9837c0bc7053c8ce59e5c0d75f3065ef841214a0e4d2ab1142c0566c6914f23",
+        "width": 0
+      }
+    },
     "30c7ea09e9f09896a918a319ceb0d3c153d3f41161cbbc0a8dc5e204da28e1c0": {
       "candidate": {
         "_queue_priority": 1,
@@ -570138,6 +570322,33 @@
     "53555cdda881012067274aa13d91968ab5b09d6fd69f701e1e4101d9405fe7de": {
       "legacy": true
     },
+    "5363aac6c10b30699b0c4b07ab0f1149b2cef1e62ec9060a7936975b605aa3a3": {
+      "last_checked_utc": "2026-10-11T00:26:01Z",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv4",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://t.freetv.fun/live/cctv4-3.m3u8",
+        "url_sha256": "6152cd22cf536e60694c55e0b63bd87297e470bd71ca9328917418f2e759637d",
+        "width": 0
+      }
+    },
     "5364e650caa4fbe2b70c18e4ec98a31c11bc06754efeedcce3ea5c047ceb3de1": {
       "legacy": true
     },
@@ -618928,6 +619139,33 @@
       },
       "unknown_attempts": 1
     },
+    "6a05577975f694d09023dfe5b1697418d4956bc004fe5b63b8a3039f59876b1d": {
+      "last_checked_utc": "2026-10-11T00:26:17Z",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv4",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://t.freetv.fun/live/cctv4.m3u8",
+        "url_sha256": "95f6a8a5cb822571f7dbeeb9a4ef4f830ba7b88a6b6ffbf1b12f6a7291b921c3",
+        "width": 0
+      }
+    },
     "6a0c4cd5e8a1908197630782d537d4835b68a0444e9aaca6d92003d6c4fb5a80": {
       "last_checked_utc": "2026-09-28T20:06:00Z",
       "result": {
@@ -632247,6 +632485,33 @@
         }
       },
       "unknown_attempts": 0
+    },
+    "6fb9f2c35b9405e829979960a8a7a729d7f9f6466c2488f216d7e3742c694ccb": {
+      "last_checked_utc": "2026-10-11T00:26:33Z",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv4",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://t.freetv.fun/live/cctv-4hd.m3u8",
+        "url_sha256": "c34bc08547893744bdccf76cebd1772c3c0d4f88f5d78669af62170cb3fc497f",
+        "width": 0
+      }
     },
     "6fbb8343eb2ce23606df2150f3bb46d9684833e9ac8251f6b3f245e77fcb3a1d": {
       "candidate": {
