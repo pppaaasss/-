@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 1550067885,
+    "bytes": 1617176749,
     "candidates": 444,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 500,
@@ -9,7 +9,7 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 7004.0
+    "seconds": 7244.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -21,12 +21,12 @@
     "day": "20261012",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 23,
+    "formal_or_backup_batches": 24,
     "intake_reason": "insufficient_fresh_unmeasured_candidates",
     "measured": 407,
     "observed_batch_spacing_seconds": 156.42727272727274,
     "qualified": 3,
-    "reason": "WAITING_WINDOW",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 444,
     "settled_candidate_batches": 111,
     "shortfall": 93,
@@ -39,21 +39,27 @@
     "day": "20261012",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 23,
+    "formal_or_backup_batches": 24,
     "intake_reason": "insufficient_fresh_unmeasured_candidates",
     "measured": 407,
     "observed_batch_spacing_seconds": 156.42727272727274,
     "qualified": 3,
-    "reason": "WAITING_WINDOW",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 444,
     "settled_candidate_batches": 111,
     "shortfall": 93,
     "target": 500,
     "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-10-12T09:21:39Z",
+  "generated_utc": "2026-10-12T13:20:16Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "e5feb2eb3cda7de08431b3287a590fbda6cf3804ee158c2e309fdf0c390a4723",
+    "created_utc": "2026-10-12T13:20:16Z",
+    "expires_utc": "2026-10-12T13:50:16Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-10-12T02:57:36Z",
     "received_utc": "2026-10-12T03:00:16Z",
@@ -74,25 +80,25 @@
     "remaining": 21
   },
   "progress": {
-    "backup_checks_completed": 7,
-    "belongs_to_active_window": false,
-    "candidate_checks_completed": 407,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 20,
-    "current_rechecks_required": 20,
+    "backup_checks_completed": 0,
+    "belongs_to_active_window": true,
+    "candidate_checks_completed": 0,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
-    "report_complete": true,
-    "slot": "20261012-primary-0200"
+    "report_complete": false,
+    "slot": "20261012-peak-2000"
   },
   "queue": 504,
   "router_enabled": null,
-  "state": "WAITING_WINDOW",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 13492,
   "window": {
-    "active": false,
-    "ends_utc": null,
-    "next_starts_utc": "2026-10-12T12:00:00Z",
-    "run_kind": null,
+    "active": true,
+    "ends_utc": "2026-10-12T15:00:00Z",
+    "next_starts_utc": "2026-10-12T18:00:00Z",
+    "run_kind": "peak-2000",
     "timezone": "Asia/Shanghai"
   }
 }
