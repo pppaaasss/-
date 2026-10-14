@@ -299,6 +299,65 @@ class HomePublishTests(unittest.TestCase):
         self.assertEqual(candidate_before, candidate_path.read_bytes())
         self.assertFalse((self.root / 'home-publish/latest.json').exists())
 
+    def cached_report(self):
+        report = self.report(replace_keys=())
+        report['run_kind'] = 'recheck-1300'
+        url = 'https://backup.test/cctv1.m3u8'
+        report['candidate_results'] = [{
+            'candidate_id': candidate_id('cctv1', url, ''),
+            'channel_key': 'cctv1', 'url': url, 'request_options': '',
+            'qualification': 'QUALIFIED', 'purpose': 'primary-cache',
+            'switch_reverified': False, 'verification': verification(deep=True),
+            'verified_run_kind': 'primary-0200',
+            'last_verified_utc': '2026-09-01T02:00:00Z',
+            'expires_utc': '2026-09-02T13:05:00Z',
+        }]
+        return report
+
+    def test_expired_cache_waits_without_writes_in_enabled_and_shadow_modes(self):
+        self.queue(self.cached_report())
+        before = {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES}
+        for enabled in (True, False):
+            self.write_config(enabled=enabled)
+            result = publish_latest(root=self.root, config_path=self.config_path,
+                inbox=self.inbox, now_epoch=self.now, apply=True, inspect_shadow=True)
+            self.assertEqual('stale_cached_backup', result['status'])
+            self.assertEqual(0, result['replacement_count'])
+            self.assertFalse(result['evidence_expired'])
+            self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
+            self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_cli_expired_cache_succeeds_with_waiting_summary(self):
+        self.queue(self.cached_report())
+        summary = self.root / 'step-summary.md'
+        result = subprocess.run([sys.executable, str(Path(publisher_module.__file__)),
+            '--repo-root', str(self.root), '--inbox', str(self.inbox),
+            '--now-epoch', str(self.now), '--apply'],
+            env={**os.environ, 'GITHUB_STEP_SUMMARY': str(summary)},
+            capture_output=True, text=True, timeout=10)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual('stale_cached_backup', json.loads(result.stdout.splitlines()[0])['status'])
+        self.assertIn('cached backup evidence has expired', summary.read_text())
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
+    def test_cache_expiry_boundary_still_allows_valid_report(self):
+        self.queue(self.cached_report())
+        self.now -= 5 * 60
+        self.assertEqual('applied', self.publish()['status'])
+
+    def test_expired_cache_cannot_hide_invalid_report_or_future_timestamp(self):
+        report = self.cached_report()
+        path = self.queue(report)
+        self.now -= 30 * 60
+        with self.assertRaisesRegex(Exception, 'future-dated'):
+            self.publish()
+        self.now += 30 * 60
+        path.unlink()
+        report['candidate_results'][0]['expires_utc'] = '2026-09-02T12:59:00Z'
+        self.queue(report)
+        with self.assertRaisesRegex(Exception, 'invalid verification times'):
+            self.publish()
+
     def test_published_report_remains_duplicate_after_expiry(self):
         self.queue(self.report())
         self.publish()
@@ -514,3 +573,4 @@ class HomePublishTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+

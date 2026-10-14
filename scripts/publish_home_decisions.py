@@ -20,6 +20,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from router.ac86u.home_contract import (  # noqa: E402
+    ContractError,
     PROBE_ID_RE,
     canonical_name,
     station_key,
@@ -420,12 +421,20 @@ def publish_latest(
         return {"status": "stale_report", "replacement_count": 0, **report_info}
     # Fresh, unprocessed reports still need every time-dependent contract gate,
     # including future timestamps and cached backup expiry, before any write.
-    validate_home_report_v2(
-        report,
-        expected_probe_id=str(config["expected_probe_id"]),
-        now_epoch=now_epoch,
-        max_age_hours=float(config["maximum_report_age_hours"]),
-    )
+    try:
+        validate_home_report_v2(
+            report,
+            expected_probe_id=str(config["expected_probe_id"]),
+            now_epoch=now_epoch,
+            max_age_hours=float(config["maximum_report_age_hours"]),
+        )
+    except ContractError as exc:
+        # The immutable report was already fully validated above. A cache that
+        # expires while this inbox is idle is an expected no-op, not a failed
+        # collection job. Keep the evidence intact and never extend its expiry.
+        if str(exc) != "cached backup expired before publication":
+            raise
+        return {"status": "stale_cached_backup", "replacement_count": 0, **report_info}
     policy = report.get('policy') or {}
     if policy.get('batch_complete') is False or policy.get('formal_check_deferred') is True:
         return {'status': 'partial_batch', 'replacement_count': 0}
@@ -510,6 +519,16 @@ def main() -> int:
             inspect_shadow=args.inspect_shadow,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        if result.get("status") == "stale_cached_backup":
+            message = (
+                "Waiting for a fresh home report: cached backup evidence has expired. "
+                "No routes or publication receipt were changed."
+            )
+            print(message)
+            summary = os.environ.get("GITHUB_STEP_SUMMARY")
+            if summary:
+                with Path(summary).open("a", encoding="utf-8") as handle:
+                    handle.write(message + "\n")
         if result.get("evidence_expired"):
             message = (
                 "Waiting for a fresh home report: latest evidence is "
@@ -530,3 +549,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
