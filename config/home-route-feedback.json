@@ -395,6 +395,11 @@
         "observed_utc": "2026-08-31T07:05:37Z",
         "reason": "home_accepted_720p_fallback",
         "url": "http://74.91.26.218:82/live/cctv4hd.m3u8"
+      },
+      {
+        "url": "http://ylt.7766.org:333/hls/4/index.m3u8",
+        "observed_utc": "2026-10-14T06:54:40.768Z",
+        "reason": "home_user_confirmed_playable_after_manual_switch"
       }
     ],
     "cctv1": [
@@ -422,6 +427,13 @@
         "observed_utc": "2026-10-13T10:29:51.235Z",
         "reason": "home_user_very_satisfied_after_manual_switch"
       }
+    ],
+    "cctv8": [
+      {
+        "url": "http://113.195.172.192:1808/hls/167/index.m3u8",
+        "observed_utc": "2026-10-14T06:54:40.768Z",
+        "reason": "home_user_confirmed_playable_after_manual_switch"
+      }
     ]
   },
   "policy": {
@@ -430,7 +442,7 @@
     "formal_playlists_are_user_controlled": true,
     "home_playback_overrides_github_runner": true
   },
-  "updated_utc": "2026-10-14T06:52:45.534Z",
+  "updated_utc": "2026-10-14T06:54:40.768Z",
   "version": 1,
   "viewer_selected_routes": {
     "cctv5plus": {
@@ -458,18 +470,20 @@
       "previous_url": "http://58.210.139.130:9901/tsfile/live/0008_1.m3u8?key=txiptv&playlive=1&authid=0",
       "selected_utc": "2026-10-14T06:50:38.344Z",
       "reason": "user_requested_use_valid_home_qualified_backup",
-      "current_playback_confirmed": false,
-      "notify_when_qualified_backup_available": true
+      "current_playback_confirmed": true,
+      "notify_when_qualified_backup_available": true,
+      "confirmed_utc": "2026-10-14T06:54:40.768Z"
     },
     "cctv4": {
       "url": "http://ylt.7766.org:333/hls/4/index.m3u8",
       "previous_url": "http://121.17.146.84:50003/hls/4/index.m3u8",
       "selected_utc": "2026-10-14T06:52:45.534Z",
       "reason": "user_requested_historical_route_trial",
-      "current_playback_confirmed": false,
+      "current_playback_confirmed": true,
       "qualification_expired": true,
       "last_home_verified_utc": "2026-10-10T22:52:57Z",
-      "notify_when_qualified_backup_available": true
+      "notify_when_qualified_backup_available": true,
+      "confirmed_utc": "2026-10-14T06:54:40.768Z"
     }
   },
   "viewer_status_overrides": {
@@ -526,6 +540,22 @@
       "url": "http://204.12.221.218:8181/3m1080p/gzws.m3u8",
       "observed_utc": "2026-10-11T06:39:54.137Z",
       "reason": "user_requested_mark_normal",
+      "scope": "daily_report_only",
+      "retain_technical_history": true
+    },
+    "CCTV-8": {
+      "url": "http://113.195.172.192:1808/hls/167/index.m3u8",
+      "status": "normal",
+      "observed_utc": "2026-10-14T06:54:40.768Z",
+      "reason": "home_user_confirmed_playable_after_manual_switch",
+      "scope": "daily_report_only",
+      "retain_technical_history": true
+    },
+    "CCTV-4": {
+      "url": "http://ylt.7766.org:333/hls/4/index.m3u8",
+      "status": "normal",
+      "observed_utc": "2026-10-14T06:54:40.768Z",
+      "reason": "home_user_confirmed_playable_after_manual_switch",
       "scope": "daily_report_only",
       "retain_technical_history": true
     }
