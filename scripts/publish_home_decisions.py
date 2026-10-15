@@ -441,6 +441,14 @@ def publish_latest(
 
     formal_path = root / str(config["formal_playlist"])
     formal_raw = formal_path.read_bytes()
+    if (config["enabled"] is not True and inspect_shadow
+            and report["formal_playlist"]["url"] == config["formal_playlist_url"]
+            and report["formal_playlist"]["sha256"] != sha256_bytes(formal_raw)):
+        # Manual route changes leave immutable older reports in the inbox.
+        # Keep them as evidence, without treating them as current or consuming them.
+        return {"status": "superseded_formal_playlist", "replacement_count": 0,
+                "reported_formal_sha256": report["formal_playlist"]["sha256"],
+                "current_formal_sha256": sha256_bytes(formal_raw), **report_info}
     report_binding(report, formal_raw, config)
     if config["enabled"] is not True or report.get("actionable") is not True:
         return {"status": "shadow", "replacement_count": 0, "report_sha256": report_sha}
@@ -519,6 +527,13 @@ def main() -> int:
             inspect_shadow=args.inspect_shadow,
         )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
+        if result.get("status") == "superseded_formal_playlist":
+            message = "Waiting for a home report bound to the current playlist; older evidence retained. No routes or publication receipt were changed."
+            print(message)
+            summary = os.environ.get("GITHUB_STEP_SUMMARY")
+            if summary:
+                with Path(summary).open("a", encoding="utf-8") as handle:
+                    handle.write(message + "\n")
         if result.get("status") == "stale_cached_backup":
             message = (
                 "Waiting for a fresh home report: cached backup evidence has expired. "

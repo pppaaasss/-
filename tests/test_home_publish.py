@@ -284,6 +284,21 @@ class HomePublishTests(unittest.TestCase):
             self.publish()
         self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
 
+    def test_disabled_shadow_waits_after_manual_route_change_without_writes(self):
+        self.queue(self.report())
+        self.write_config(enabled=False)
+        path = self.root / 'tv-core.m3u'
+        path.write_bytes(path.read_bytes().replace(b'https://current.test/cctv1.m3u8',
+            b'https://manual.test/cctv1.m3u8'))
+        before = {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES}
+        result = publish_latest(root=self.root, config_path=self.config_path,
+            inbox=self.inbox, now_epoch=self.now, inspect_shadow=True, apply=True)
+        self.assertEqual('superseded_formal_playlist', result['status'])
+        self.assertEqual(0, result['replacement_count'])
+        self.assertNotEqual(result['reported_formal_sha256'], result['current_formal_sha256'])
+        self.assertEqual(before, {name: (self.root / name).read_bytes() for name in PRODUCTION_FILES})
+        self.assertFalse((self.root / 'home-publish/latest.json').exists())
+
     def test_stale_report_waits_without_writing_a_receipt(self):
         self.queue(self.report(generated='2026-09-01T18:00:00Z'))
         candidate_path, _ = self.candidate_fixture()
