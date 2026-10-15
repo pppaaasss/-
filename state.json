@@ -3091,11 +3091,13 @@
       "candidate_id": "3db4dfcecc78a185cf9808f4380cff1f754de5529ed6264107792754ae777700",
       "channel_key": "cctv7",
       "expires_utc": "2026-10-05T09:02:12Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-03T21:02:12Z",
       "name": "CCTV-7",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-03T21:02:12Z",
       "request_options": "",
+      "retry_after_epoch": 1792106476.0,
       "source_manifest_sha256": "3a07455476211fb3bad47526807f753771cc078a13cce519a7cfad80f5bac915",
       "url": "http://183.250.156.180:9999/newlive/live/hls/8/live.m3u8",
       "url_sha256": "7fab6a85185a08973145fcfff9ac6ab78aeec25f58b409a08a99467b09b36f2d",
@@ -3712,7 +3714,7 @@
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-09-12T18:45:24Z",
       "request_options": "",
-      "retry_after_epoch": 1791495931.0,
+      "retry_after_epoch": 1792106480.0,
       "source_manifest_sha256": "a0de6aacd7ba313d6082cf6280f974e1e46dffebc5383878091d6a5f3737115b",
       "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=20260913020308c861c8421a1548eb8a568205064f171b&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260913020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260913020308&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c17ac3c78e02fb893023b9bc70d9805d",
       "url_sha256": "881d28148fd8ae4d44862f249bc916de29aee17677df99e15a688ece1f733787",
@@ -251540,6 +251542,61 @@
         }
       ]
     },
+    "d392e3d4f15f769af6fe6a51f276515c4ccdefb0cb56ab0468ebe74ee2f8bdfb": {
+      "batch_id": "d392e3d4f15f769af6fe6a51f276515c4ccdefb0cb56ab0468ebe74ee2f8bdfb",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-15T22:23:23Z",
+      "cycle_id": "ff449889c5ef4fbcc7d5422705848f9d019531fc84fd681baf140fa82dad2e24",
+      "expires_utc": "2026-10-15T22:53:23Z",
+      "feedback_sha256": "a07c076ccdc0c1b3fafce8917a0bb095d93f745a52ce182c1a2316100687439b",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b4726e8a96019009a10c62f1d4137ae3b0c94eeb132f4ba4c6df7f35b23228bf",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "e1299fa73d1cd04f4b2d630c72555c9d14ca4a75384554f8566a24c8a920c3ad",
+          "channel_key": "cctv7",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-7",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "f894ff42eb4b70c0f73419202a8f1dee69047d1cf1b50461914c5d3da28f1ff5",
+          "url": "http://113.195.172.192:1808/hls/166/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "f97ae99101aadf8cce6559cb26c73755d564cbd3d6f71c72478b9e4203769382",
+          "channel_key": "广东卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "广东卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "3be32ef5c26513ea7c4b80e3b959dec75036c3b72cbd84def01a6615015f56ec",
+          "url": "http://175.168.96.35:7788/608831231",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "d3d18656ded39efdecb0b08b4027c9675c640cf6079a5f418ae03d6a30703bd3": {
       "batch_id": "d3d18656ded39efdecb0b08b4027c9675c640cf6079a5f418ae03d6a30703bd3",
       "candidate_mode": "drain_queue",
@@ -302258,7 +302315,8 @@
       "bbf0d4a40429bc3ee70df6bbd89a0619bd24f14e2ed0353d8b6915c9d344c3b2",
       "1c2561f1fd9711db0029b9a6835d7c066d2b1fbe99df33f6aaf142a98124886e",
       "b68e96b11a5f59356b1d970bf3aaaf301f4d482184b634209f7e90f7cc88443c",
-      "71a2464c16ac59321a85d1177ad1316bb523f15c9dfaceaf6424cade45a36196"
+      "71a2464c16ac59321a85d1177ad1316bb523f15c9dfaceaf6424cade45a36196",
+      "d392e3d4f15f769af6fe6a51f276515c4ccdefb0cb56ab0468ebe74ee2f8bdfb"
     ],
     "binding": {
       "channel_count": 53,
@@ -302431,7 +302489,7 @@
     "id": "ff449889c5ef4fbcc7d5422705848f9d019531fc84fd681baf140fa82dad2e24",
     "kind": "primary-0200",
     "manifest_sha": "4207f653ae1cd3405a44f242f8cd59688bf037f0d255e78948e9a1a66bebc246",
-    "outstanding": "71a2464c16ac59321a85d1177ad1316bb523f15c9dfaceaf6424cade45a36196",
+    "outstanding": "d392e3d4f15f769af6fe6a51f276515c4ccdefb0cb56ab0468ebe74ee2f8bdfb",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -305648,6 +305706,35 @@
         "started_utc": "2026-10-15T21:43:43Z",
         "task_id": "5aa95a6402051125857c043a558dabd39a0d6c98a3c8e80c9ff42254273089bc"
       },
+      "5bb8d3d55bb53174ab88c8c91cb98d7f903b3652de9fcc8dbe89b4aea447fd1d": {
+        "finished_utc": "2026-10-15T22:21:20Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "广东卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "广东卫视",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 2.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=20260913020308c861c8421a1548eb8a568205064f171b&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260913020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260913020308&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c17ac3c78e02fb893023b9bc70d9805d",
+          "url_sha256": "881d28148fd8ae4d44862f249bc916de29aee17677df99e15a688ece1f733787",
+          "width": 0
+        },
+        "started_utc": "2026-10-15T22:21:18Z",
+        "task_id": "5bb8d3d55bb53174ab88c8c91cb98d7f903b3652de9fcc8dbe89b4aea447fd1d"
+      },
       "5cf628589f60238e40765b2ccc47a8382bd4c55e2e50d39b7f380f66925b7838": {
         "finished_utc": "2026-10-15T21:00:29Z",
         "result": {
@@ -308791,6 +308878,60 @@
         "started_utc": "2026-10-15T21:00:32Z",
         "task_id": "def100d7fb1d4590e5e33f4e8a48205e8bdde8334565eb4c3e52242a32a603c7"
       },
+      "e166e4b3911fca4ee9acab37c2dd35e46e896499532c1dd874f7fcfa6e124755": {
+        "finished_utc": "2026-10-15T22:21:16Z",
+        "result": {
+          "avg_download_mbps": 20.993461729598557,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv7",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 50.0,
+          "headroom_ratio": 0.4170125367726202,
+          "height": 1080,
+          "min_download_mbps": 3.604874048406724,
+          "min_height": 1080,
+          "name": "CCTV-7",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 15.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 38.382049410790394,
+              "downloaded_bytes": 6291456,
+              "duration_s": 8.0,
+              "elapsed_s": 1.311333,
+              "http_status": 206,
+              "stream_mbps": 8.648,
+              "total_bytes": 8648000,
+              "url": "http://183.250.156.180:9999/newlive/live/hls/8/program-11351.ts"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 3.604874048406724,
+              "downloaded_bytes": 6291456,
+              "duration_s": 8.0,
+              "elapsed_s": 13.96211,
+              "http_status": 206,
+              "stream_mbps": 8.641044,
+              "total_bytes": 8641044,
+              "url": "http://183.250.156.180:9999/newlive/live/hls/8/program-11352.ts"
+            }
+          ],
+          "startup_s": 1.3851060000000002,
+          "status": "UNKNOWN",
+          "stream_mbps": 8.644522,
+          "url": "http://183.250.156.180:9999/newlive/live/hls/8/live.m3u8",
+          "url_sha256": "7fab6a85185a08973145fcfff9ac6ab78aeec25f58b409a08a99467b09b36f2d",
+          "width": 1920
+        },
+        "started_utc": "2026-10-15T22:21:01Z",
+        "task_id": "e166e4b3911fca4ee9acab37c2dd35e46e896499532c1dd874f7fcfa6e124755"
+      },
       "e1c131429ee3e936c654949e31120b1eb303cd538e2858d8e4e4e71f5c6aa31a": {
         "finished_utc": "2026-10-15T20:56:58Z",
         "result": {
@@ -311057,6 +311198,22 @@
         "url": "http://[2409:8087:1a01:df::4077]/ottrrs.hl.chinamobile.com/PLTV/88888888/224/3221226450/1.m3u8?icpid=88888888&from=1&hms_devid=1012&vqe=3",
         "viewer_accepted_quality": false
       },
+      "5bb8d3d55bb53174ab88c8c91cb98d7f903b3652de9fcc8dbe89b4aea447fd1d": {
+        "attempt": 1,
+        "candidate_id": "46f6fe207aa839e41c2deb265b37ca31d633e0a396071e48d17200f3e2b1a8b5",
+        "channel_key": "广东卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "广东卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "5bb8d3d55bb53174ab88c8c91cb98d7f903b3652de9fcc8dbe89b4aea447fd1d",
+        "url": "http://hlsztemgsplive.miguvideo.com:8080/ws_w/2018/gdws/gdws711/1000/index.m3u8?msisdn=20260913020308c861c8421a1548eb8a568205064f171b&mdspid=&spid=699054&netType=0&sid=2202428795&pid=2028597139&timestamp=20260913020308&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=608831231&ParentNodeID=-99&assertID=2202428795&client_ip=171.8.79.254&SecurityKey=20260913020308&promotionId=&mvid=2202428795&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=c17ac3c78e02fb893023b9bc70d9805d",
+        "viewer_accepted_quality": false
+      },
       "5cf628589f60238e40765b2ccc47a8382bd4c55e2e50d39b7f380f66925b7838": {
         "attempt": 1,
         "candidate_id": "b27aaf01f80c6530a9c00c0ab3f875b626215ace8ef8976f398998cd9556deaf",
@@ -312273,6 +312430,22 @@
         "url": "http://[2409:8087:1a01:df::4077]:80/ottrrs.hl.chinamobile.com/yinhe/88888888/224/3221225732/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "e166e4b3911fca4ee9acab37c2dd35e46e896499532c1dd874f7fcfa6e124755": {
+        "attempt": 1,
+        "candidate_id": "3db4dfcecc78a185cf9808f4380cff1f754de5529ed6264107792754ae777700",
+        "channel_key": "cctv7",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-7",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "e166e4b3911fca4ee9acab37c2dd35e46e896499532c1dd874f7fcfa6e124755",
+        "url": "http://183.250.156.180:9999/newlive/live/hls/8/live.m3u8",
+        "viewer_accepted_quality": false
+      },
       "e1c131429ee3e936c654949e31120b1eb303cd538e2858d8e4e4e71f5c6aa31a": {
         "attempt": 1,
         "candidate_id": "edde9dad69cc0706d5640704312e8c3622cfb1383781441e4ff4ddb1ccfa8d70",
@@ -312688,13 +312861,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-15T22:17:40Z",
-    "received_utc": "2026-10-15T22:20:27Z",
+    "measured_utc": "2026-10-15T22:21:20Z",
+    "received_utc": "2026-10-15T22:23:23Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 12583150,
-      "runtime_s": 9.0
+      "downloaded_bytes": 12583130,
+      "runtime_s": 19.0
     }
   },
   "last_report": {
@@ -314373,19 +314546,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 522026783,
+    "bytes": 534609913,
     "candidates": 83,
     "day": "20261016",
     "discovery_bytes": 103190351,
     "discovery_seconds": 498.0,
     "reservations": {
-      "71a2464c16ac59321a85d1177ad1316bb523f15c9dfaceaf6424cade45a36196": {
+      "d392e3d4f15f769af6fe6a51f276515c4ccdefb0cb56ab0468ebe74ee2f8bdfb": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 1376.0
+    "seconds": 1395.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -316994,6 +317167,7 @@
     "714bf118e58b77f6202c7d5a6308603c65c9ab154c74f71fbff214e311bd675b": "0f0f5cf62815ef6952273f2c7be6ee6a564a739c1b974c20c7f1979719b984e5",
     "71692ddc2db679dac57501012fe9b99945c1bd252594f200be0425080ee82cc6": "499f54be6907406b4a71bf82a4d6405f720e7bbeffe2d830650565cf08b55050",
     "717d6d50bb51e7f728ad169c1fd13fc3c66e43f706decc231109b9a7778e6021": "f63a17635900c33014f25c8715eb1b9885770b9792f98efd04f31100f75f9938",
+    "71a2464c16ac59321a85d1177ad1316bb523f15c9dfaceaf6424cade45a36196": "c25370d402c526c94e3e0da4e286a100af66320eba7215e9a9f791a4d8d2e937",
     "71adf36ede40cfc9c9828f5129e170d1c197e3a9e03680d9a5fc3004ffa14155": "900993100349e15d87642ce91605fef88110b555e134e1c9608e7fccb865964a",
     "71d2f3d947675d3429c2de27e3c00a8c72e217d5cd54fc2696e18f312f552121": "5ff077f41483e646cf69e20b49a1f0f2e0798bdaa03ff7e5b55928a230b08a24",
     "71d4c629796694dc16783d7780c3087a1b010a51f0b0ee2937bd29bdee402826": "b791d3e1a526e37bdc6e081b8508cb2993a555b109e8344ff885e5c1a1ed929b",
