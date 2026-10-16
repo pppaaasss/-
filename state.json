@@ -108,6 +108,33 @@
       },
       "verified_run_kind": "primary-0200"
     },
+    "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410": {
+      "candidate_id": "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410",
+      "channel_key": "cctv5",
+      "expires_utc": "2026-10-18T08:00:03Z",
+      "last_verified_utc": "2026-10-16T20:00:03Z",
+      "name": "CCTV-5",
+      "qualification": "QUALIFIED",
+      "qualified_utc": "2026-10-16T20:00:03Z",
+      "request_options": "",
+      "source_manifest_sha256": "28a8988f651f834954c03b81aeb5d444a83b1c4f357291acd421268fc9a12776",
+      "url": "http://145.239.65.118:20178/cctv5.m3u8",
+      "url_sha256": "1953cf2c360b893de35affe6705ebd28fb9b26eabfd36702361efaa6b5f9e9db",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 50.0,
+        "headroom_ratio": 14.30915780909353,
+        "height": 1080,
+        "min_download_mbps": 52.256635044740825,
+        "sample_count": 2,
+        "startup_s": 1.897972,
+        "stream_mbps": 3.651971397752809,
+        "width": 1920
+      },
+      "verified_run_kind": "primary-0200"
+    },
     "030bb3c0e3836ad4630216235ad6281c580dda92dbf6742e49234871629772f3": {
       "candidate_id": "030bb3c0e3836ad4630216235ad6281c580dda92dbf6742e49234871629772f3",
       "channel_key": "广东卫视",
@@ -56902,6 +56929,93 @@
           "sample_bytes": 2097152,
           "task_id": "c6901e9b448eea5bfd7dfad18a72646f0afc7ba522e2271abf1bb3d60f0a3af2",
           "url": "http://hmfs.f3322.net:3388/hls/25/index.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "21e611b450727e09025ac81f9d20bc30db4e117b12746380263971731d891436": {
+      "batch_id": "21e611b450727e09025ac81f9d20bc30db4e117b12746380263971731d891436",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-16T20:03:36Z",
+      "cycle_id": "ca9b204f51e47fea2d464448e6384e4ed19e016b67ab9b3e48f53b5fcd7d8d26",
+      "expires_utc": "2026-10-16T20:33:36Z",
+      "feedback_sha256": "c496f83c433d188cbe6c639c460d92817ddf51dcb7e996aed722ab866fd48d6e",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b4726e8a96019009a10c62f1d4137ae3b0c94eeb132f4ba4c6df7f35b23228bf",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "1172447dba866d6b39c5e57d4c9ec10e1246984dd3901bbd036de3ad94ab19c1",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "755fe5e6415d1632dcd27e810b45709fcbacb941b03f8cd1ad76243936cb7689",
+          "url": "http://145.239.65.118:20178/cctv4.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "e071c9e895284fe80902356d8082648655b2dc89a80c23909c4fde1470139cac",
+          "channel_key": "天津卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "天津卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "1c9de62b6b5c1f42dbd3b7adebffb060c29714601fcf660675f90205b2ffefc8",
+          "url": "http://221.220.131.58:8012/rtp/239.3.1.141:1234",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "5da28c4f05392f1c8dcaaaa385fc831c3db21ec7474c0123c5e004624b0d5c22",
+          "channel_key": "cctv5plus",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-5+",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "bf9675266fd3438190827dbc85e7fa8604ae3a56bd59694a6a130e79e6f6783f",
+          "url": "http://171.119.206.17:6000/rtp/226.0.2.168:9256",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "42be8dd9c887534045496fcc0c05c765e66cc6e170ff6945ead9b38ae017fec6",
+          "channel_key": "cctv7",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-7",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "cb5203d90de8816dbb132260a80018cbcb0f3c78cfb8e26ebb75d4944e1d559b",
+          "url": "http://116.2.161.83:4010/rtp/232.0.0.136:1234",
           "viewer_accepted_quality": false
         }
       ]
@@ -305943,7 +306057,8 @@
       "e9a4d69681c26a6ff344e0eaf6613dabc1bd8f39ee6e67ab24e2c31dbea50230",
       "630b58e8f50c2b0bc330f09fbd36c8fb9e6f49691d4544fa034e4bb27ea389a9",
       "95ead72a24bcb73e696576706dd1f0d956fae8c3aa6172a870d51a1dbefeeec4",
-      "64e8950a76fc79be68b6a73ee7435f4a4966ee048bf24f81f08f6c0a7d127b4a"
+      "64e8950a76fc79be68b6a73ee7435f4a4966ee048bf24f81f08f6c0a7d127b4a",
+      "21e611b450727e09025ac81f9d20bc30db4e117b12746380263971731d891436"
     ],
     "binding": {
       "channel_count": 53,
@@ -306116,7 +306231,7 @@
     "id": "ca9b204f51e47fea2d464448e6384e4ed19e016b67ab9b3e48f53b5fcd7d8d26",
     "kind": "primary-0200",
     "manifest_sha": "28a8988f651f834954c03b81aeb5d444a83b1c4f357291acd421268fc9a12776",
-    "outstanding": "64e8950a76fc79be68b6a73ee7435f4a4966ee048bf24f81f08f6c0a7d127b4a",
+    "outstanding": "21e611b450727e09025ac81f9d20bc30db4e117b12746380263971731d891436",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -306562,6 +306677,35 @@
         },
         "started_utc": "2026-10-16T19:06:27Z",
         "task_id": "1ec2eb5afcbe434219ee952e211f57470fd8b49b1bfe39a8c5bfc6f959bae0dc"
+      },
+      "219cd2d1770caf522e22a6f6dedbe45bd8c0afecd9fb3dca70cb2b809fbedddd": {
+        "finished_utc": "2026-10-16T20:00:06Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "山西卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "山西卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 0.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://221.220.131.58:8012/rtp/239.3.1.42:8172",
+          "url_sha256": "21a9c040d197a4773bf1d5eccd1b353398bf4a13201a56542106b55b432edafc",
+          "width": 0
+        },
+        "started_utc": "2026-10-16T20:00:06Z",
+        "task_id": "219cd2d1770caf522e22a6f6dedbe45bd8c0afecd9fb3dca70cb2b809fbedddd"
       },
       "24d767d57b4f72b31f09c294f74887f669be11eef2cad1f6e08b56ded1e947b1": {
         "finished_utc": "2026-10-16T19:12:41Z",
@@ -307618,6 +307762,60 @@
         },
         "started_utc": "2026-10-16T19:45:03Z",
         "task_id": "60d72998d5541afac490a5f5c0d060f96c8aafce070e6565a4b14a5ba79bd281"
+      },
+      "613d49b80bc69c6ec2f945dae2f4f62976319b8eb16b455088ddaabc743693b7": {
+        "finished_utc": "2026-10-16T20:00:39Z",
+        "result": {
+          "avg_download_mbps": 6.678808517192804,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv2",
+          "codec": "",
+          "deep_checked": false,
+          "error": "quality_metadata_unavailable",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 6.072820787792691,
+          "min_height": 1080,
+          "name": "CCTV-2",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 16.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 7.284796246592917,
+              "downloaded_bytes": 6291456,
+              "duration_s": 0.0,
+              "elapsed_s": 6.909136,
+              "http_status": 200,
+              "stream_mbps": 0,
+              "total_bytes": 0,
+              "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 6.072820787792691,
+              "downloaded_bytes": 6291456,
+              "duration_s": 0.0,
+              "elapsed_s": 8.288018,
+              "http_status": 200,
+              "stream_mbps": 0,
+              "total_bytes": 0,
+              "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234"
+            }
+          ],
+          "startup_s": 7.213589,
+          "status": "UNKNOWN",
+          "stream_mbps": 0,
+          "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234",
+          "url_sha256": "a468f113a88b8b7e920184e3175e457f54846d37048ac303e2cd676d01f4217c",
+          "width": 0
+        },
+        "started_utc": "2026-10-16T20:00:23Z",
+        "task_id": "613d49b80bc69c6ec2f945dae2f4f62976319b8eb16b455088ddaabc743693b7"
       },
       "62a27cecc5ee92d07ce7bdab36909f8e581f88cbead48ecafdeaf5cec352f75d": {
         "finished_utc": "2026-10-16T19:20:42Z",
@@ -309177,6 +309375,60 @@
         "started_utc": "2026-10-16T19:09:13Z",
         "task_id": "c50d7e1a22e575843309985c677ad193b931e23c816f31070064ec566e9cceb2"
       },
+      "c5c6ef6a47e3bc17533f34212e26ca83a13436142b56a4d9c95af5e86ed297d7": {
+        "finished_utc": "2026-10-16T20:00:03Z",
+        "result": {
+          "avg_download_mbps": 188.1864853634979,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv5",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "",
+          "fps": 50.0,
+          "headroom_ratio": 14.30915780909353,
+          "height": 1080,
+          "min_download_mbps": 52.256635044740825,
+          "min_height": 1080,
+          "name": "CCTV-5",
+          "observed_status": "GOOD",
+          "probe_runtime_s": 2.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 324.11633568225494,
+              "downloaded_bytes": 2213512,
+              "duration_s": 5.0,
+              "elapsed_s": 0.054635,
+              "http_status": 206,
+              "stream_mbps": 3.5416192,
+              "total_bytes": 2213512,
+              "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/F0AD1F489D1865C4248E55014A29A88A84130D7066A18051102DD28B6C01772E812115694B3347610DDE8F5DA3685A2B343203F8CCD98DD1249D1ACF98FB5ABFBD962682C1C70B8588FDAC86935FA617A83EDFFC558F3763E24E2BE1CF7475DC/83c7d203vodcq1300029864/97ef71045001834823985660236/0-7-1786182616.ts?timeshift=1&endtime=1792180801&sid=2024078403&starttime=1792180501&svrtime=1792180802"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 52.256635044740825,
+              "downloaded_bytes": 3348468,
+              "duration_s": 7.12,
+              "elapsed_s": 0.512619,
+              "http_status": 206,
+              "stream_mbps": 3.762323595505618,
+              "total_bytes": 3348468,
+              "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/F0AD1F489D1865C4248E55014A29A88A84130D7066A18051102DD28B6C01772E812115694B3347610DDE8F5DA3685A2B343203F8CCD98DD1249D1ACF98FB5ABFBD962682C1C70B8588FDAC86935FA617A83EDFFC558F3763E24E2BE1CF7475DC/83c7d203vodcq1300029864/97ef71045001834823985660236/0-7-1786182617.ts?timeshift=1&endtime=1792180801&sid=2024078403&starttime=1792180501&svrtime=1792180802"
+            }
+          ],
+          "startup_s": 1.897972,
+          "status": "UNKNOWN",
+          "stream_mbps": 3.651971397752809,
+          "url": "http://145.239.65.118:20178/cctv5.m3u8",
+          "url_sha256": "1953cf2c360b893de35affe6705ebd28fb9b26eabfd36702361efaa6b5f9e9db",
+          "width": 1920
+        },
+        "started_utc": "2026-10-16T20:00:01Z",
+        "task_id": "c5c6ef6a47e3bc17533f34212e26ca83a13436142b56a4d9c95af5e86ed297d7"
+      },
       "c7dfc62d655b8a4c2ed81a6ac298b1eada545f3f57ebf8b009a16244d8a210e2": {
         "finished_utc": "2026-10-16T19:24:03Z",
         "result": {
@@ -309446,6 +309698,60 @@
         },
         "started_utc": "2026-10-16T19:34:41Z",
         "task_id": "d716f5d10249131056a1c1e54d28cd2be0cab986905aa397a4ab5a0f02079400"
+      },
+      "d9a3ccdea5dd3bea478c2bb24bacca2743f3cb3ddc5e99124a70dd682490b9a0": {
+        "finished_utc": "2026-10-16T20:00:21Z",
+        "result": {
+          "avg_download_mbps": 7.879058353291699,
+          "bitrate_mbps": 0.0,
+          "channel_key": "海南卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "quality_metadata_unavailable",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 7.866719349401567,
+          "min_height": 1080,
+          "name": "海南卫视",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 13.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 7.866719349401567,
+              "downloaded_bytes": 6291456,
+              "duration_s": 0.0,
+              "elapsed_s": 6.398048,
+              "http_status": 200,
+              "stream_mbps": 0,
+              "total_bytes": 0,
+              "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 7.891397357181829,
+              "downloaded_bytes": 6291456,
+              "duration_s": 0.0,
+              "elapsed_s": 6.37804,
+              "http_status": 200,
+              "stream_mbps": 0,
+              "total_bytes": 0,
+              "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608"
+            }
+          ],
+          "startup_s": 6.618965,
+          "status": "UNKNOWN",
+          "stream_mbps": 0,
+          "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608",
+          "url_sha256": "94f3d0045d73ab1512e926aea14f252e046abf00aadf7486750727a6ce63a740",
+          "width": 0
+        },
+        "started_utc": "2026-10-16T20:00:08Z",
+        "task_id": "d9a3ccdea5dd3bea478c2bb24bacca2743f3cb3ddc5e99124a70dd682490b9a0"
       },
       "dbf235f6e4b2ebe6ff2ca17f6114589ce45571018f2376adc1703a278eda1f66": {
         "finished_utc": "2026-10-16T19:37:05Z",
@@ -310410,6 +310716,22 @@
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=tjwshd",
         "viewer_accepted_quality": false
       },
+      "219cd2d1770caf522e22a6f6dedbe45bd8c0afecd9fb3dca70cb2b809fbedddd": {
+        "attempt": 1,
+        "candidate_id": "2aa0a01e7659f16f20ac60918e7cf81b2c095d98b3e3ae3a4b76c08099c5c254",
+        "channel_key": "山西卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "山西卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "219cd2d1770caf522e22a6f6dedbe45bd8c0afecd9fb3dca70cb2b809fbedddd",
+        "url": "http://221.220.131.58:8012/rtp/239.3.1.42:8172",
+        "viewer_accepted_quality": false
+      },
       "24d767d57b4f72b31f09c294f74887f669be11eef2cad1f6e08b56ded1e947b1": {
         "attempt": 1,
         "candidate_id": "8f60feabf2515d5faf0f8769a7b3ba20441f01efed8cdbbb5a3d17c053dc0b6c",
@@ -310728,6 +311050,22 @@
         "sample_bytes": 6291456,
         "task_id": "60d72998d5541afac490a5f5c0d060f96c8aafce070e6565a4b14a5ba79bd281",
         "url": "http://116.2.161.83:4010/rtp/232.0.0.18:1234",
+        "viewer_accepted_quality": false
+      },
+      "613d49b80bc69c6ec2f945dae2f4f62976319b8eb16b455088ddaabc743693b7": {
+        "attempt": 1,
+        "candidate_id": "deb7b2a0425ed3111b0f69005662d529efae52a0a08473d995414b94310a5be8",
+        "channel_key": "cctv2",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-2",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "613d49b80bc69c6ec2f945dae2f4f62976319b8eb16b455088ddaabc743693b7",
+        "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234",
         "viewer_accepted_quality": false
       },
       "62a27cecc5ee92d07ce7bdab36909f8e581f88cbead48ecafdeaf5cec352f75d": {
@@ -311210,6 +311548,22 @@
         "url": "http://183.94.146.79:9901/tsfile/live/0137_1.m3u8?key=txiptv&playlive=1&authid=0",
         "viewer_accepted_quality": false
       },
+      "c5c6ef6a47e3bc17533f34212e26ca83a13436142b56a4d9c95af5e86ed297d7": {
+        "attempt": 1,
+        "candidate_id": "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410",
+        "channel_key": "cctv5",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-5",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "c5c6ef6a47e3bc17533f34212e26ca83a13436142b56a4d9c95af5e86ed297d7",
+        "url": "http://145.239.65.118:20178/cctv5.m3u8",
+        "viewer_accepted_quality": false
+      },
       "c7dfc62d655b8a4c2ed81a6ac298b1eada545f3f57ebf8b009a16244d8a210e2": {
         "attempt": 1,
         "candidate_id": "d8b5f32809c9ace8408dc460163a26d14c068f5d9422d50ae28844bd5fce8730",
@@ -311288,6 +311642,22 @@
         "sample_bytes": 2097152,
         "task_id": "d716f5d10249131056a1c1e54d28cd2be0cab986905aa397a4ab5a0f02079400",
         "url": "http://222.71.55.147:9901/tsfile/live/0115_1.m3u8?key=txiptv&playlive=0&authid=0",
+        "viewer_accepted_quality": false
+      },
+      "d9a3ccdea5dd3bea478c2bb24bacca2743f3cb3ddc5e99124a70dd682490b9a0": {
+        "attempt": 1,
+        "candidate_id": "469b31a31e635d6e9c7bb2c4bb2772b9325274fd35cda0a30c42d2be3f0caf54",
+        "channel_key": "海南卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "海南卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "d9a3ccdea5dd3bea478c2bb24bacca2743f3cb3ddc5e99124a70dd682490b9a0",
+        "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608",
         "viewer_accepted_quality": false
       },
       "dbf235f6e4b2ebe6ff2ca17f6114589ce45571018f2376adc1703a278eda1f66": {
@@ -311563,18 +311933,14 @@
     ]
   },
   "daily_intake": {
-    "available": 40,
+    "available": 36,
     "candidate_ids": [
-      "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410",
       "b852e3508f2aaa6be862355cc73f27cdf3f992d2a8f00cf74b296f2ba9fb7988",
       "1070b13e4adf6ba7140b400c05f6bff1cca4a136cdde661cf52901b1b08ee50f",
       "12b7a8b7bc226244c382aead1548f3a8f028ecb1ad77450694267bd0564f47f7",
       "189070e474e01445eebaf11fbd7f066d7b079aad2761c5df27b0be2fe92337a7",
       "19579b7f21e1918f3cd9587185ba5dd69058c27c92dfd06ce0476625b35035b8",
       "1172447dba866d6b39c5e57d4c9ec10e1246984dd3901bbd036de3ad94ab19c1",
-      "2aa0a01e7659f16f20ac60918e7cf81b2c095d98b3e3ae3a4b76c08099c5c254",
-      "469b31a31e635d6e9c7bb2c4bb2772b9325274fd35cda0a30c42d2be3f0caf54",
-      "deb7b2a0425ed3111b0f69005662d529efae52a0a08473d995414b94310a5be8",
       "38e3393510e3d411b606ddd4e678403979dae030d7fb5f46f100bff444e1aacf",
       "5da28c4f05392f1c8dcaaaa385fc831c3db21ec7474c0123c5e004624b0d5c22",
       "3e57e0dd936160e6e991fa8aaf90fe469fa491477c55b4f2208bec2ddf6d5df5",
@@ -311608,7 +311974,7 @@
     ],
     "day": "20261017",
     "reason": "insufficient_fresh_unmeasured_candidates",
-    "shortfall": 460,
+    "shortfall": 464,
     "target": 500
   },
   "delivery_receipt": {
@@ -311620,13 +311986,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-16T19:56:37Z",
-    "received_utc": "2026-10-16T19:59:36Z",
+    "measured_utc": "2026-10-16T20:00:39Z",
+    "received_utc": "2026-10-16T20:03:36Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 22469562,
-      "runtime_s": 36.0
+      "downloaded_bytes": 30931124,
+      "runtime_s": 38.0
     }
   },
   "last_report": {
@@ -316100,19 +316466,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 401851126,
-    "candidates": 20,
+    "bytes": 432782250,
+    "candidates": 24,
     "day": "20261017",
-    "discovery_bytes": 155538292,
-    "discovery_seconds": 404.0,
+    "discovery_bytes": 186469416,
+    "discovery_seconds": 442.0,
     "reservations": {
-      "64e8950a76fc79be68b6a73ee7435f4a4966ee048bf24f81f08f6c0a7d127b4a": {
+      "21e611b450727e09025ac81f9d20bc30db4e117b12746380263971731d891436": {
         "bytes": 67108864,
         "candidates": 4,
         "seconds": 240
       }
     },
-    "seconds": 732.0
+    "seconds": 770.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -318554,6 +318920,7 @@
     "6452ab35e6f835d592cb1d7219252750c9f356d5135a6477bea41da8185d1ac2": "644f89f0bf5add3ee72e03e18b8917cd2e93db690a3f97ab9802bf1b6787ae6e",
     "64536beb6cd247f78ef36ab800ac48cc5bdc83febe042f523cb58ccda984b745": "a498b5e0db6048943f59668b49e04a801d6ed0df9089ed5133330d2d74873973",
     "64a31d47bfb4b8b82c49b31d7a1015b41e5fd995468a7370f3e38555af5c7150": "721c830d24ffd948f883389556e74b9c0ddd3cab393e4b3fdb05aca9e86a1d17",
+    "64e8950a76fc79be68b6a73ee7435f4a4966ee048bf24f81f08f6c0a7d127b4a": "670a1b6b638c94a41efcc8d8720df56231c0e5dc87a8cdb577c5f3cf6db7267f",
     "65176c277adde7f56ac0a4c8f48b5f5814d3d2fc49ac2c18b073c0cd47febe24": "27949adc0b4466118286b1e8b857951a4a9f1526aea07d5eed4cd9d1889a7a13",
     "652b17051dcc91d49b116e5b9317a1bd4de31ebf0a16d7cb965157e1d604a257": "4665f3b6eb5d3a7b932c35958c13c209b9da060555396fb1d391f6546e9dd30c",
     "653cbf10f8ff1bf21028f664c0f1ef649b11498659f8788154f18f325227fb7a": "acbcc4b70c917356736d2a76617b1041190f08e31a724707a4596ef309a232a1",
@@ -320740,21 +321107,6 @@
       "url": "http://115.29.208.41:23001/live/1203.m3u8",
       "url_sha256": "3c9b038387d0406928c650b149354da2c4ba9674844de21c1b24adf81cb64e04"
     },
-    "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410": {
-      "candidate_id": "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410",
-      "channel_key": "cctv5",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-5",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/yyyr-otz/iptv-api/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://145.239.65.118:20178/cctv5.m3u8",
-      "url_sha256": "1953cf2c360b893de35affe6705ebd28fb9b26eabfd36702361efaa6b5f9e9db"
-    },
     "02576f6ad6f8761b6209e030a32dd4f8076065bdcaf80f23fd052f94a06f4387": {
       "candidate_id": "02576f6ad6f8761b6209e030a32dd4f8076065bdcaf80f23fd052f94a06f4387",
       "channel_key": "东南卫视",
@@ -322068,21 +322420,6 @@
       "url": "http://45.192.97.170:8880/play/121.m3u8",
       "url_sha256": "348b348a37845930966e2ccb8706161bbff4d36405a48e6499d621971d26673f"
     },
-    "2aa0a01e7659f16f20ac60918e7cf81b2c095d98b3e3ae3a4b76c08099c5c254": {
-      "candidate_id": "2aa0a01e7659f16f20ac60918e7cf81b2c095d98b3e3ae3a4b76c08099c5c254",
-      "channel_key": "山西卫视",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "山西卫视",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/adminouyang/TV/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://221.220.131.58:8012/rtp/239.3.1.42:8172",
-      "url_sha256": "21a9c040d197a4773bf1d5eccd1b353398bf4a13201a56542106b55b432edafc"
-    },
     "2af5974c0dcc8a706d83e8b5df8455676fc7fc9c8ad029e778b0e938e6364a91": {
       "candidate_id": "2af5974c0dcc8a706d83e8b5df8455676fc7fc9c8ad029e778b0e938e6364a91",
       "channel_key": "cctv5plus",
@@ -322861,21 +323198,6 @@
       ],
       "url": "http://gslbmgsplive.miguvideo.com/envivo_x/2018/SD/ningxia/1000/index.m3u8?msisdn=2f427c3cc16b57dcb5cf619dbba151eb&mdspid=&spid=600697&netType=0&sid=5910022262&pid=2028597139&timestamp=20261002025043&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=738910535&ParentNodeID=-99&assertID=5910022262&client_ip=39.103.188.159&SecurityKey=20261002025043&promotionId=&mvid=5900004337&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&puData=0955b4433ba177c0bd64a0e7a908a19c&ddCalcu=c099v15aa5z8ba0494a373eb0aa14767dcb0&sv=10004&ct=android",
       "url_sha256": "c7372ceae2a0e0ba0f05843fe67bbf5e1da88af426d8eb5c45c454d6799da269"
-    },
-    "469b31a31e635d6e9c7bb2c4bb2772b9325274fd35cda0a30c42d2be3f0caf54": {
-      "candidate_id": "469b31a31e635d6e9c7bb2c4bb2772b9325274fd35cda0a30c42d2be3f0caf54",
-      "channel_key": "海南卫视",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "海南卫视",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/adminouyang/TV/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608",
-      "url_sha256": "94f3d0045d73ab1512e926aea14f252e046abf00aadf7486750727a6ce63a740"
     },
     "4797e9c9fc548c9980c2367c28783fc72e030d8b4076ae044a2625b71afbe237": {
       "candidate_id": "4797e9c9fc548c9980c2367c28783fc72e030d8b4076ae044a2625b71afbe237",
@@ -329146,21 +329468,6 @@
       ],
       "url": "http://36.136.38.87:9901/tsfile/live/0015_1.m3u8?key=txiptv&playlive=1&authid=0",
       "url_sha256": "5b92cc0e82c62dfcb54ed1104cc8ea35b2e1940f032332afbc0e11578f020b68"
-    },
-    "deb7b2a0425ed3111b0f69005662d529efae52a0a08473d995414b94310a5be8": {
-      "candidate_id": "deb7b2a0425ed3111b0f69005662d529efae52a0a08473d995414b94310a5be8",
-      "channel_key": "cctv2",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-2",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/adminouyang/TV/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234",
-      "url_sha256": "a468f113a88b8b7e920184e3175e457f54846d37048ac303e2cd676d01f4217c"
     },
     "df8a3a011308eaa98f70c697ef01b3318e570c63c7fdaaed7370e3c1c123840a": {
       "candidate_id": "df8a3a011308eaa98f70c697ef01b3318e570c63c7fdaaed7370e3c1c123840a",
@@ -415890,6 +416197,59 @@
         "url": "http://122.136.120.235:9003/hls/23/index.m3u8",
         "url_sha256": "b3ba7f972c9956f6979b7dd9ad15dcd9d07d8c099a4f3664ede4182e09875485",
         "width": 0
+      }
+    },
+    "01cc8ba8f8099c36b4fd5e50cba8e552977f3b2effeddb7e55185e0677f70410": {
+      "last_checked_utc": "2026-10-16T20:00:03Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 188.1864853634979,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv5",
+        "codec": "h264",
+        "deep_checked": true,
+        "error": "",
+        "fps": 50.0,
+        "headroom_ratio": 14.30915780909353,
+        "height": 1080,
+        "min_download_mbps": 52.256635044740825,
+        "min_height": 1080,
+        "name": "CCTV-5",
+        "observed_status": "GOOD",
+        "probe_runtime_s": 2.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 324.11633568225494,
+            "downloaded_bytes": 2213512,
+            "duration_s": 5.0,
+            "elapsed_s": 0.054635,
+            "http_status": 206,
+            "stream_mbps": 3.5416192,
+            "total_bytes": 2213512,
+            "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/F0AD1F489D1865C4248E55014A29A88A84130D7066A18051102DD28B6C01772E812115694B3347610DDE8F5DA3685A2B343203F8CCD98DD1249D1ACF98FB5ABFBD962682C1C70B8588FDAC86935FA617A83EDFFC558F3763E24E2BE1CF7475DC/83c7d203vodcq1300029864/97ef71045001834823985660236/0-7-1786182616.ts?timeshift=1&endtime=1792180801&sid=2024078403&starttime=1792180501&svrtime=1792180802"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 52.256635044740825,
+            "downloaded_bytes": 3348468,
+            "duration_s": 7.12,
+            "elapsed_s": 0.512619,
+            "http_status": 206,
+            "stream_mbps": 3.762323595505618,
+            "total_bytes": 3348468,
+            "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/F0AD1F489D1865C4248E55014A29A88A84130D7066A18051102DD28B6C01772E812115694B3347610DDE8F5DA3685A2B343203F8CCD98DD1249D1ACF98FB5ABFBD962682C1C70B8588FDAC86935FA617A83EDFFC558F3763E24E2BE1CF7475DC/83c7d203vodcq1300029864/97ef71045001834823985660236/0-7-1786182617.ts?timeshift=1&endtime=1792180801&sid=2024078403&starttime=1792180501&svrtime=1792180802"
+          }
+        ],
+        "startup_s": 1.897972,
+        "status": "UNKNOWN",
+        "stream_mbps": 3.651971397752809,
+        "url": "http://145.239.65.118:20178/cctv5.m3u8",
+        "url_sha256": "1953cf2c360b893de35affe6705ebd28fb9b26eabfd36702361efaa6b5f9e9db",
+        "width": 1920
       }
     },
     "01cd7f4a9d3af264c46a2dcba23e84085f0533d62bf1b4a799d3bdbf31e7b185": {
@@ -512859,6 +513219,34 @@
       },
       "unknown_attempts": 1
     },
+    "2aa0a01e7659f16f20ac60918e7cf81b2c095d98b3e3ae3a4b76c08099c5c254": {
+      "last_checked_utc": "2026-10-16T20:00:06Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "山西卫视",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "山西卫视",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 0.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://221.220.131.58:8012/rtp/239.3.1.42:8172",
+        "url_sha256": "21a9c040d197a4773bf1d5eccd1b353398bf4a13201a56542106b55b432edafc",
+        "width": 0
+      }
+    },
     "2aab14fe8a73521b38e38dcdc97972a70c24dfc03139323089a32066c789b9c6": {
       "last_checked_utc": "2026-10-14T01:45:02Z",
       "result": {
@@ -580301,6 +580689,59 @@
         }
       },
       "unknown_attempts": 1
+    },
+    "469b31a31e635d6e9c7bb2c4bb2772b9325274fd35cda0a30c42d2be3f0caf54": {
+      "last_checked_utc": "2026-10-16T20:00:21Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 7.879058353291699,
+        "bitrate_mbps": 0.0,
+        "channel_key": "海南卫视",
+        "codec": "",
+        "deep_checked": false,
+        "error": "quality_metadata_unavailable",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 7.866719349401567,
+        "min_height": 1080,
+        "name": "海南卫视",
+        "observed_status": "UNKNOWN",
+        "probe_runtime_s": 13.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": false,
+            "curl_code": 0,
+            "download_mbps": 7.866719349401567,
+            "downloaded_bytes": 6291456,
+            "duration_s": 0.0,
+            "elapsed_s": 6.398048,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 0,
+            "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608"
+          },
+          {
+            "complete": false,
+            "curl_code": 0,
+            "download_mbps": 7.891397357181829,
+            "downloaded_bytes": 6291456,
+            "duration_s": 0.0,
+            "elapsed_s": 6.37804,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 0,
+            "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608"
+          }
+        ],
+        "startup_s": 6.618965,
+        "status": "UNKNOWN",
+        "stream_mbps": 0,
+        "url": "http://171.119.206.17:6000/rtp/226.0.2.212:9608",
+        "url_sha256": "94f3d0045d73ab1512e926aea14f252e046abf00aadf7486750727a6ce63a740",
+        "width": 0
+      }
     },
     "469c40d6eb0747cfe39aed0439de71ae644495475ac603e71960a0b58de44c30": {
       "candidate": {
@@ -941788,6 +942229,59 @@
         }
       },
       "unknown_attempts": 1
+    },
+    "deb7b2a0425ed3111b0f69005662d529efae52a0a08473d995414b94310a5be8": {
+      "last_checked_utc": "2026-10-16T20:00:39Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 6.678808517192804,
+        "bitrate_mbps": 0.0,
+        "channel_key": "cctv2",
+        "codec": "",
+        "deep_checked": false,
+        "error": "quality_metadata_unavailable",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 6.072820787792691,
+        "min_height": 1080,
+        "name": "CCTV-2",
+        "observed_status": "UNKNOWN",
+        "probe_runtime_s": 16.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": false,
+            "curl_code": 0,
+            "download_mbps": 7.284796246592917,
+            "downloaded_bytes": 6291456,
+            "duration_s": 0.0,
+            "elapsed_s": 6.909136,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 0,
+            "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234"
+          },
+          {
+            "complete": false,
+            "curl_code": 0,
+            "download_mbps": 6.072820787792691,
+            "downloaded_bytes": 6291456,
+            "duration_s": 0.0,
+            "elapsed_s": 8.288018,
+            "http_status": 200,
+            "stream_mbps": 0,
+            "total_bytes": 0,
+            "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234"
+          }
+        ],
+        "startup_s": 7.213589,
+        "status": "UNKNOWN",
+        "stream_mbps": 0,
+        "url": "http://116.2.161.83:4010/rtp/232.0.0.135:1234",
+        "url_sha256": "a468f113a88b8b7e920184e3175e457f54846d37048ac303e2cd676d01f4217c",
+        "width": 0
+      }
     },
     "debcd6badcef40282f9fb18ae5db983707b1a24de4bf76918738429062815fdc": {
       "candidate": {
