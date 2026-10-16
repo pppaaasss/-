@@ -304003,7 +304003,6 @@
     "id": "5171605190c1cbd2817f4b2446dcf2348ea37efcd96f0453611854dd254986a9",
     "kind": "recheck-1300",
     "manifest_sha": "28a8988f651f834954c03b81aeb5d444a83b1c4f357291acd421268fc9a12776",
-    "outstanding": "60ad9c307115c091e2f25e8b7d5c26dc1186b1e166c7b9c71000acebffa0da6e",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -304503,6 +304502,60 @@
         },
         "started_utc": "2026-10-16T06:05:34Z",
         "task_id": "4bf02368997ec22c4e59dbc56a58f701edbe9718942e9e96024c55934c377293"
+      },
+      "556fba9f912b4c446fa96223474499362dd764c1b40facc1b7f26c3001cd9b12": {
+        "finished_utc": "2026-10-16T06:27:33Z",
+        "result": {
+          "avg_download_mbps": 30.760094836521652,
+          "bitrate_mbps": 0,
+          "channel_key": "黑龙江卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "",
+          "fps": 50.0,
+          "headroom_ratio": 1.940999767596516,
+          "height": 1080,
+          "min_download_mbps": 20.188751627521906,
+          "min_height": 1080,
+          "name": "黑龙江卫视",
+          "observed_status": "GOOD",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 41.3314380455214,
+              "downloaded_bytes": 2097152,
+              "duration_s": 5.0,
+              "elapsed_s": 0.405919,
+              "http_status": 206,
+              "stream_mbps": 10.4010624,
+              "total_bytes": 6500664,
+              "url": "http://1.24.39.180:808/hls/38/chunk_272977.ts"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 20.188751627521906,
+              "downloaded_bytes": 2097152,
+              "duration_s": 5.0,
+              "elapsed_s": 0.831018,
+              "http_status": 206,
+              "stream_mbps": 10.401363199999999,
+              "total_bytes": 6500852,
+              "url": "http://1.24.39.180:808/hls/38/chunk_272978.ts"
+            }
+          ],
+          "startup_s": 0.527166,
+          "status": "UNKNOWN",
+          "stream_mbps": 10.4012128,
+          "url": "http://1.24.39.180:808/hls/38/index.m3u8",
+          "url_sha256": "b9ed66613024b8c995a78015f4c1957ff21edcca13f60dcac106642ffb56009c",
+          "width": 1920
+        },
+        "started_utc": "2026-10-16T06:27:32Z",
+        "task_id": "556fba9f912b4c446fa96223474499362dd764c1b40facc1b7f26c3001cd9b12"
       },
       "57dd9dffe41938cbe1dcb16444f85fcda39cafb4cd85909895c5e56404782599": {
         "finished_utc": "2026-10-16T05:46:27Z",
@@ -306936,6 +306989,22 @@
         "url": "http://222.71.55.147:9901/tsfile/live/0112_1.m3u8?key=txiptv&playlive=0&authid=0",
         "viewer_accepted_quality": false
       },
+      "556fba9f912b4c446fa96223474499362dd764c1b40facc1b7f26c3001cd9b12": {
+        "attempt": 1,
+        "candidate_id": "3eebe5f5210e63e24235938099e3655a2450fc53c74ae19d15291c839cf887bf",
+        "channel_key": "黑龙江卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "黑龙江卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "556fba9f912b4c446fa96223474499362dd764c1b40facc1b7f26c3001cd9b12",
+        "url": "http://1.24.39.180:808/hls/38/index.m3u8",
+        "viewer_accepted_quality": false
+      },
       "57dd9dffe41938cbe1dcb16444f85fcda39cafb4cd85909895c5e56404782599": {
         "attempt": 1,
         "candidate_id": "d43dd69987de12e3a8a83e4f9fc6639a1be909e0285fb770e059e7abff0fa18a",
@@ -307639,13 +307708,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-16T06:25:05Z",
-    "received_utc": "2026-10-16T06:27:06Z",
-    "results": 4,
+    "measured_utc": "2026-10-16T06:27:33Z",
+    "received_utc": "2026-10-16T09:59:31Z",
+    "results": 1,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 16778017,
-      "runtime_s": 34.0
+      "downloaded_bytes": 4194492,
+      "runtime_s": 1.0
     }
   },
   "last_report": {
@@ -312119,19 +312188,13 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 779475134,
+    "bytes": 716560762,
     "candidates": 83,
     "day": "20261016",
     "discovery_bytes": 103190351,
     "discovery_seconds": 498.0,
-    "reservations": {
-      "60ad9c307115c091e2f25e8b7d5c26dc1186b1e166c7b9c71000acebffa0da6e": {
-        "bytes": 67108864,
-        "candidates": 0,
-        "seconds": 240
-      }
-    },
-    "seconds": 1871.0
+    "reservations": {},
+    "seconds": 1632.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -314536,6 +314599,7 @@
     "6080d154dbb32bc24132f50f2399e5bd4bfdd23e3382c967e753c63d3fa8bcd5": "0217f45c71960420d98da582f594ddc6f23dbec1ddc30557145827b8f463a305",
     "608f14776ca9a284c9ab4ef9e62097de5fa43c3407dfdc199df76893ec8ebbc4": "b5b19bbbe3a44329ff5994a5835e99816dab24ff346f39cbd374f99a016e1759",
     "609d45c506e31ec8732a68ea112511ddbb589c9460d7b8479742ce5150b5c826": "db780b8fae2108d5e40fff26ffd52c657e9b79a0d93ac5f8509ed718b3089f3c",
+    "60ad9c307115c091e2f25e8b7d5c26dc1186b1e166c7b9c71000acebffa0da6e": "cfbb3dd6214755b583df3f70f3d72523182a342cb31de03c4aaf6bb9aab1f972",
     "60cf2f5f0767f3dc2fc1e377b9a03bfd58ee5ba8bf64dbd141b014972787c581": "640e8332798c3530a82e9c240fab6a1bce3de20a4202e013233d2c94a8769399",
     "60d04d24efb7a9f4f362c04f3649aad5a9c3e809bb6c954ff5a0546ebcffba34": "aa8989187a5cbcc833ddd2ad62d77c1b1c368420b71de2ab9fdc5efb4d34ad11",
     "60e08b626f70ef1b651cb64b5a0a781de25329bc71eed740ef6580e55bbbe61e": "81ad48ca167ba9cf9a6a73d18091afd99c6579dc3725c01be2baba3f96a3e2b6",
