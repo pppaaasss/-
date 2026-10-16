@@ -310,7 +310,15 @@ def daily_progress(state, task, now):
     formal_batches = sum(all(r['role']!='candidate' for r in b['tasks']) for b in batches)
     capacity = min(max(0,LIMIT-reserved),int(remaining_s/spacing*4)) if spacing and spacing>0 else None
     from router.ac86u.home_decision import candidate_is_qualified
+    old = [v for v in measured if v.get('measurement_origin') == 'historical_recheck']
+    old_reserved = {r['candidate_id'] for b in candidate_batches for r in b['tasks']
+                    if r.get('measurement_origin') == 'historical_recheck'}
     return dict(day=day, target=LIMIT, measured=len(measured), shortfall=max(0,LIMIT-len(measured)),
+        new_measured=len(measured)-len(old), historical_rechecks_measured=len(old),
+        new_qualified=sum(candidate_is_qualified(v.get('result',{})) for v in measured
+                          if v.get('measurement_origin') != 'historical_recheck'),
+        historical_rechecks_reserved=len(old_reserved),
+        historical_rechecks_qualified=sum(candidate_is_qualified(v.get('result',{})) for v in old),
         qualified=sum(candidate_is_qualified(v.get('result',{})) for v in measured),
         available_unmeasured=state.get('daily_intake',{}).get('available',0),
         transition_temporary_measured=transition_measured, reserved_candidate_count=reserved,

@@ -242,7 +242,13 @@ def backup_record(state, task, observation, cycle):
     elif identity in state['archive']:
         state['archive'][identity].update(last_recheck_result='failed_or_unknown', retry_after_epoch=measured + 3600)
     if task['role'] == 'candidate':
-        state['tested'][identity] = {'last_checked_utc': observation['finished_utc'], 'result': raw}
+        previous = state['tested'].get(identity)
+        record = {'last_checked_utc': observation['finished_utc'], 'result': raw,
+                  'measurement_origin': task.get('measurement_origin', 'new_candidate')}
+        if previous:
+            record['previous_checks'] = list(previous.get('previous_checks', [])) + [
+                {k: v for k, v in previous.items() if k != 'previous_checks'}]
+        state['tested'][identity] = record
         state['queue'].pop(identity, None)
 
 
@@ -401,6 +407,18 @@ def next_tasks(state, cycle, config, current, feedback, now):
                     return pending
         if pending:
             return pending
+    if (config.get('daily_old_source_topup') and config.get('daily_verified_intake')
+            and cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed')
+            and not config.get('_skip_regular_candidates')):
+        from scripts.home_old_source_topup import historical_candidates
+        budget = state.get('native_budget', {})
+        used = budget.get('candidates', 0) if budget.get('day') == cycle['slot'][:8] else 0
+        limit = min(config['routes_per_batch'], max(0, config['daily_candidates'] - used))
+        for old in historical_candidates(state, current, feedback, now, limit):
+            pending.append(dict(task_row(cycle, old['channel_key'], old['url'], 'candidate'),
+                                measurement_origin='historical_recheck'))
+        if pending:
+            return pending
     for key in sorted(bad):
         measured_good = any(row['role'] != 'current' and row['channel_key'] == key
             and candidate_is_qualified(cycle['results'][identity]['result']) for identity, row in cycle['task_rows'].items())
@@ -444,6 +462,8 @@ def complete_report(state, cycle, current, feedback, now):
         evidence = candidate_result(dict(task, request_options=''), raw,
             purpose='switch-reverification' if switching else 'daily-qualification', switch_reverified=switching)
         evidence['observed_utc'] = cycle['results'][identity]['finished_utc']
+        evidence['measurement_origin'] = task.get('measurement_origin',
+            'backup_recheck' if task['role'] == 'backup' else 'new_candidate')
         candidates.append(evidence)
     # Compare every qualified route already measured in this cycle. Iteration
     # order and being the first passing candidate are not quality evidence.
@@ -717,6 +737,7 @@ def status_snapshot(state, task, config, now):
         plan = state['night_plan']
         measured = [identity for identity in plan['candidate_ids'] if identity in state['tested']]
         status['night_sweep'] = {'day': plan['day'], 'planned': len(plan['candidate_ids']),
+            'scope': 'new_candidates_only',
             'measured': len(measured), 'remaining': len(plan['candidate_ids']) - len(measured),
             'qualified': sum(candidate_is_qualified(state['tested'][identity].get('result', {})) for identity in measured),
             'complete': len(measured) == len(plan['candidate_ids'])}
