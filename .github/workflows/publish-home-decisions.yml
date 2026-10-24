@@ -60,7 +60,8 @@ jobs:
         if: env.IPTV_NATIVE_ASSET_COUNT != '' && env.IPTV_NATIVE_ASSET_COUNT != '0'
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}/iptv-ffmpeg-apt
+          # apt's lock/partial entries are root-only; cache readable packages.
+          path: ${{ runner.temp }}/iptv-ffmpeg-apt/*.deb
           key: ${{ runner.os }}-${{ runner.arch }}-iptv-ffmpeg-v1-${{ steps.native-decoder-cache.outputs.key }}
 
       - name: Ensure native sample decoder
