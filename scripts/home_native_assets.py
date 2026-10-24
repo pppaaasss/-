@@ -45,7 +45,8 @@ def prepare(directory):
         index[name] = asset['id']
     (directory/'asset-index.json').write_text(json.dumps(index))
     with open(os.environ['GITHUB_ENV'], 'a') as env:
-        env.write(f'IPTV_NATIVE_RELEASE_ID={release["id"]}\nIPTV_NATIVE_INBOX={directory}\n')
+        env.write(f'IPTV_NATIVE_RELEASE_ID={release["id"]}\nIPTV_NATIVE_INBOX={directory}\n'
+                  f'IPTV_NATIVE_ASSET_COUNT={len(index)}\n')
     print('Native inbox ready; temporary assets:', len(index))
 
 
