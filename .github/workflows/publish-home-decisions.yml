@@ -32,11 +32,11 @@ jobs:
         with:
           # Resolve master after obtaining the lock, not the queued event SHA.
           ref: master
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Fetch the isolated home report branch
         run: |
-          git fetch --no-tags origin refs/heads/home-reports:refs/remotes/origin/home-reports
+          git fetch --depth=1 --no-tags origin refs/heads/home-reports:refs/remotes/origin/home-reports
           rm -rf /tmp/home-reports
           git worktree add --detach /tmp/home-reports refs/remotes/origin/home-reports
 
@@ -49,11 +49,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if python3 -c 'import json,sys; c=json.load(open("config/home-thin.json")); sys.exit(0 if c.get("enabled") and c.get("router_runtime")=="native-v1" else 1)'; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends ffmpeg
-          fi
           python3 scripts/home_native_assets.py prepare
+
+      - name: Identify native decoder package cache
+        if: env.IPTV_NATIVE_ASSET_COUNT != '' && env.IPTV_NATIVE_ASSET_COUNT != '0'
+        id: native-decoder-cache
+        run: echo "key=${ImageOS:-unknown}-${ImageVersion:-unknown}-$(date -u +%G%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore native decoder packages
+        if: env.IPTV_NATIVE_ASSET_COUNT != '' && env.IPTV_NATIVE_ASSET_COUNT != '0'
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/iptv-ffmpeg-apt
+          key: ${{ runner.os }}-${{ runner.arch }}-iptv-ffmpeg-v1-${{ steps.native-decoder-cache.outputs.key }}
+
+      - name: Ensure native sample decoder
+        if: env.IPTV_NATIVE_ASSET_COUNT != '' && env.IPTV_NATIVE_ASSET_COUNT != '0'
+        run: |
+          if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+            mkdir -p "$RUNNER_TEMP/iptv-ffmpeg-apt/partial"
+            sudo apt-get update -qq
+            sudo apt-get -o Dir::Cache::archives="$RUNNER_TEMP/iptv-ffmpeg-apt" \
+              install -y --no-install-recommends ffmpeg
+          fi
+          ffmpeg -version
+          ffprobe -version
 
       - name: Schedule and aggregate bounded household measurements
         run: |

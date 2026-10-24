@@ -9,7 +9,7 @@ if ! python3 -c 'import json,sys; sys.exit(0 if json.load(open("config/home-thin
   exit 0
 fi
 if git ls-remote --exit-code --heads origin home-control >/dev/null; then
-  git fetch --no-tags origin refs/heads/home-control:refs/remotes/origin/home-control
+  git fetch --depth=1 --no-tags origin refs/heads/home-control:refs/remotes/origin/home-control
   git worktree add --detach "$iptv_control" refs/remotes/origin/home-control
 else
   iptv_remote_status=$?
