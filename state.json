@@ -6937,11 +6937,13 @@
       "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
       "channel_key": "东方卫视",
       "expires_utc": "2026-09-09T04:04:31Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-09-07T16:04:31Z",
       "name": "东方卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-09-07T16:04:31Z",
       "request_options": "",
+      "retry_after_epoch": 1792970282.0,
       "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
       "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
       "url_sha256": "8ac6f399c68db1efb4be88542fa24e94423956eb7acc4d0dfcd6c5c8d9adc498",
@@ -401212,6 +401214,97 @@
         }
       ]
     },
+    "f4bd01472b4fdd0d71f46e3fd33d7f1b09d60b74febbe5d22e36aa523e2ab5c3": {
+      "batch_id": "f4bd01472b4fdd0d71f46e3fd33d7f1b09d60b74febbe5d22e36aa523e2ab5c3",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-25T22:18:44Z",
+      "cycle_id": "f4c90b06cba2ab7a61b568617fba193bd48c591d72dac96485e9810d50e358a0",
+      "expires_utc": "2026-10-25T22:48:44Z",
+      "feedback_sha256": "25895ea82118536e281443af2d711f4a28b59c6c812fe14cd76f8ba686c1854a",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b4726e8a96019009a10c62f1d4137ae3b0c94eeb132f4ba4c6df7f35b23228bf",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "61f71f5bbe6052467aafa611f5f14ae851e306fb04c88f0a678c4666db0a4ea1",
+          "channel_key": "安徽卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "安徽卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "6c0db5173f8f3a226bb0a8244ab7beff0277b394c52f77e906067b4f203eea76",
+          "url": "http://[2409:8087:7000:20:1000::22]:6060/yinhe/2/ch00000090990000001346/index.m3u8?virtualDomain=yinhe.live_hls.zte.com",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "62c3dc7ad89796fab7976d8c7bb04a7df0352db6e0e9a8879447960cca8f3be0",
+          "channel_key": "安徽卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "安徽卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "ac70417c39bd2a09515275dec5577621c1d987aaadcda88297aed584521c05ef",
+          "url": "http://120.76.248.139/live/bfgd/4200000096.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "6395c73880206dbb55264298ba73a63eb0ca8f4b500b39b2a0c45ab6591337a7",
+          "channel_key": "深圳卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "深圳卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "1412bd787033711f117a194a26530db63ed0734bd2c7fe19b6ed19091c8d124d",
+          "url": "http://bst.mobile.live.bestvcdn.com.cn/live/program/live991/weixinszwshd/live.m3u8?se=weixin&ct=1&_cp=1&_fk=",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "6b024cf6121054f51cf080f9f182b6dc5fed8e6df536da06b4c148bf161010a5",
+          "channel_key": "cctv11",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-11",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "aa1aa1ed7f06934cc3b5e8734cbbb8894584661dd69be641e14a46b1941adb3f",
+          "url": "http://39.134.67.108/PLTV/88888888/224/3221225517/1.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "f4bea1d6cf5d49d70080b33cace24ffcb96671142309789b6b6cf43d07330242": {
       "batch_id": "f4bea1d6cf5d49d70080b33cace24ffcb96671142309789b6b6cf43d07330242",
       "candidate_mode": "drain_queue",
@@ -420010,7 +420103,8 @@
       "4acd0dd870ea4354f7f5d8115895ecfc9648fa98396f78d2aa1a47c3c7c84a32",
       "a183bf7c6dc3fcba0964522eddb7947e01fbb06956db88b0ebb068309a5710ee",
       "3e03897606788a8e068b6218548c9906a77979d6299e13a0da95bfb33f011211",
-      "408e0c810f2391e4d2b70d9431d123b0f1b90b5623c9212a2f4aefb03d2fd477"
+      "408e0c810f2391e4d2b70d9431d123b0f1b90b5623c9212a2f4aefb03d2fd477",
+      "f4bd01472b4fdd0d71f46e3fd33d7f1b09d60b74febbe5d22e36aa523e2ab5c3"
     ],
     "binding": {
       "channel_count": 53,
@@ -420183,7 +420277,7 @@
     "id": "f4c90b06cba2ab7a61b568617fba193bd48c591d72dac96485e9810d50e358a0",
     "kind": "primary-0200",
     "manifest_sha": "fc84a4279384625a91bc0d843ef491f106b5288b29c17b975f336e685320d001",
-    "outstanding": "408e0c810f2391e4d2b70d9431d123b0f1b90b5623c9212a2f4aefb03d2fd477",
+    "outstanding": "f4bd01472b4fdd0d71f46e3fd33d7f1b09d60b74febbe5d22e36aa523e2ab5c3",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -422057,6 +422151,60 @@
         "started_utc": "2026-10-25T19:16:44Z",
         "task_id": "1ce638c4b2b73f99efe9f3b588d641b6cb753aa296a64ab127b73e2edd45b67b"
       },
+      "1d413aa040c4bc04f8dfc7c021ef78cd5a822330fcf6a6430658c57a8419bc19": {
+        "finished_utc": "2026-10-25T22:18:02Z",
+        "result": {
+          "avg_download_mbps": 60.31928860881108,
+          "bitrate_mbps": 0,
+          "channel_key": "东方卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 21.516061285427796,
+          "height": 1080,
+          "min_download_mbps": 53.16007234518991,
+          "min_height": 1080,
+          "name": "东方卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 53.16007234518991,
+              "downloaded_bytes": 771552,
+              "duration_s": 3.04,
+              "elapsed_s": 0.11611,
+              "http_status": 206,
+              "stream_mbps": 2.0304,
+              "total_bytes": 771552,
+              "url": "https://bp-resource-dfl.bestv.cn/material/6b920aedc3acb159165b20284279005a/2026/1012/video/a28e148649eb407c9771ce1a69adbc37-00366.ts"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 67.47850487243225,
+              "downloaded_bytes": 1106192,
+              "duration_s": 3.04,
+              "elapsed_s": 0.131146,
+              "http_status": 206,
+              "stream_mbps": 2.9110315789473686,
+              "total_bytes": 1106192,
+              "url": "https://bp-resource-dfl.bestv.cn/material/6b920aedc3acb159165b20284279005a/2026/1012/video/a28e148649eb407c9771ce1a69adbc37-00367.ts"
+            }
+          ],
+          "startup_s": 0.343271,
+          "status": "UNKNOWN",
+          "stream_mbps": 2.4707157894736844,
+          "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
+          "url_sha256": "8ac6f399c68db1efb4be88542fa24e94423956eb7acc4d0dfcd6c5c8d9adc498",
+          "width": 1920
+        },
+        "started_utc": "2026-10-25T22:18:01Z",
+        "task_id": "1d413aa040c4bc04f8dfc7c021ef78cd5a822330fcf6a6430658c57a8419bc19"
+      },
       "1ec2a0802f388fc653dd16b828e865b7e92807403c20d73d79d83ad8a3cdd4b8": {
         "finished_utc": "2026-10-25T19:20:37Z",
         "result": {
@@ -422139,6 +422287,35 @@
         },
         "started_utc": "2026-10-25T20:55:03Z",
         "task_id": "1f019ca75160c3a7bf88f0c7a1ec126323bf3e51db8a1f22a1e775b9640502d6"
+      },
+      "1fb942f0d9ed3179bb4c0b0289e83a19493d3c1efd3b11d5bfedaa0d1b2c7a5c": {
+        "finished_utc": "2026-10-25T22:18:14Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "东方卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "东方卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 0.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
+          "url_sha256": "743de6cbd3b4ef8331efc0bf9cac57e61e50df91e511fb5943bf086c67aa5999",
+          "width": 0
+        },
+        "started_utc": "2026-10-25T22:18:14Z",
+        "task_id": "1fb942f0d9ed3179bb4c0b0289e83a19493d3c1efd3b11d5bfedaa0d1b2c7a5c"
       },
       "1fd48a73541e7487cce6ebc8334da9e3551543334bba1038bc1616465679330a": {
         "finished_utc": "2026-10-25T22:07:27Z",
@@ -424147,6 +424324,35 @@
         },
         "started_utc": "2026-10-25T22:14:09Z",
         "task_id": "407dd384ff7860a32c99b910cf8e53c2517b49a9b0d3ced4f8bde663b58b7832"
+      },
+      "40ea06db7fd060b6aa6451133f51982c1370cba47ff93d9d98b379b7fffe7c4f": {
+        "finished_utc": "2026-10-25T22:18:04Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "东方卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "东方卫视",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 0.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
+          "url_sha256": "fa19788b157663f1f612487fdb03a6b8df2b4f549163f6eb73872d7b47122199",
+          "width": 0
+        },
+        "started_utc": "2026-10-25T22:18:04Z",
+        "task_id": "40ea06db7fd060b6aa6451133f51982c1370cba47ff93d9d98b379b7fffe7c4f"
       },
       "415a7845b8d1be88f9a076d037b574162ba7ce45377b722ab7b41a1786888afe": {
         "finished_utc": "2026-10-25T20:06:18Z",
@@ -434665,6 +434871,35 @@
         "started_utc": "2026-10-25T19:51:23Z",
         "task_id": "ef25c568f69795b98a1069a9c2e58148380d85b8aea812260d1ef3cb3359d672"
       },
+      "f0070a07e6e33681963981aff887f5f07808891a746a43aa0448bf0d64a1c87a": {
+        "finished_utc": "2026-10-25T22:18:11Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "江苏卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "江苏卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
+          "url_sha256": "34814ae453c6fcb743c68d0e4886df3187d7b36fc0b2b933e8ffbb437a15b155",
+          "width": 0
+        },
+        "started_utc": "2026-10-25T22:18:06Z",
+        "task_id": "f0070a07e6e33681963981aff887f5f07808891a746a43aa0448bf0d64a1c87a"
+      },
       "f008205cb9430924393af83e3e33120425b3ee61716f60a626586731fc99f3c0": {
         "finished_utc": "2026-10-25T20:00:06Z",
         "result": {
@@ -436523,6 +436758,23 @@
         "url": "http://219.147.245.238:25480/newlive/live/hls/17/live.m3u8",
         "viewer_accepted_quality": false
       },
+      "1d413aa040c4bc04f8dfc7c021ef78cd5a822330fcf6a6430658c57a8419bc19": {
+        "attempt": 1,
+        "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
+        "channel_key": "东方卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东方卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "1d413aa040c4bc04f8dfc7c021ef78cd5a822330fcf6a6430658c57a8419bc19",
+        "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
+        "viewer_accepted_quality": false
+      },
       "1ec2a0802f388fc653dd16b828e865b7e92807403c20d73d79d83ad8a3cdd4b8": {
         "attempt": 1,
         "candidate_id": "84b8974d2178e2cc663559e2e4bb3006f801519e1027bce2a6d42eae2dd8b3c8",
@@ -436554,6 +436806,23 @@
         "sample_bytes": 6291456,
         "task_id": "1f019ca75160c3a7bf88f0c7a1ec126323bf3e51db8a1f22a1e775b9640502d6",
         "url": "http://218.244.147.118:6389/wtvlive/migu2/617276571_5",
+        "viewer_accepted_quality": false
+      },
+      "1fb942f0d9ed3179bb4c0b0289e83a19493d3c1efd3b11d5bfedaa0d1b2c7a5c": {
+        "attempt": 1,
+        "candidate_id": "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02",
+        "channel_key": "东方卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东方卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "1fb942f0d9ed3179bb4c0b0289e83a19493d3c1efd3b11d5bfedaa0d1b2c7a5c",
+        "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
         "viewer_accepted_quality": false
       },
       "1fd48a73541e7487cce6ebc8334da9e3551543334bba1038bc1616465679330a": {
@@ -437421,6 +437690,23 @@
         "sample_bytes": 6291456,
         "task_id": "407dd384ff7860a32c99b910cf8e53c2517b49a9b0d3ced4f8bde663b58b7832",
         "url": "http://39.134.242.92:80/180000001002/00000001000000000090000000215605/main.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "40ea06db7fd060b6aa6451133f51982c1370cba47ff93d9d98b379b7fffe7c4f": {
+        "attempt": 1,
+        "candidate_id": "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8",
+        "channel_key": "东方卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东方卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "40ea06db7fd060b6aa6451133f51982c1370cba47ff93d9d98b379b7fffe7c4f",
+        "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
         "viewer_accepted_quality": false
       },
       "415a7845b8d1be88f9a076d037b574162ba7ce45377b722ab7b41a1786888afe": {
@@ -442067,6 +442353,23 @@
         "url": "http://61.145.188.90:50055/udp/239.77.0.84:5146",
         "viewer_accepted_quality": false
       },
+      "f0070a07e6e33681963981aff887f5f07808891a746a43aa0448bf0d64a1c87a": {
+        "attempt": 1,
+        "candidate_id": "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c",
+        "channel_key": "江苏卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "江苏卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "f0070a07e6e33681963981aff887f5f07808891a746a43aa0448bf0d64a1c87a",
+        "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
+        "viewer_accepted_quality": false
+      },
       "f008205cb9430924393af83e3e33120425b3ee61716f60a626586731fc99f3c0": {
         "attempt": 1,
         "candidate_id": "0e9d1ef1b60bb834b42ad87b44bafecfeb69f7dc0fefcfdf614e7b345de7e99e",
@@ -442549,13 +442852,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-25T22:17:17Z",
-    "received_utc": "2026-10-25T22:17:47Z",
+    "measured_utc": "2026-10-25T22:18:14Z",
+    "received_utc": "2026-10-25T22:18:44Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 146,
-      "runtime_s": 17.0
+      "downloaded_bytes": 1878614,
+      "runtime_s": 13.0
     }
   },
   "last_report": {
@@ -444182,19 +444485,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 588981791,
-    "candidates": 341,
+    "bytes": 590860405,
+    "candidates": 345,
     "day": "20261026",
-    "discovery_bytes": 318809292,
-    "discovery_seconds": 2182.0,
+    "discovery_bytes": 320687906,
+    "discovery_seconds": 2195.0,
     "reservations": {
-      "408e0c810f2391e4d2b70d9431d123b0f1b90b5623c9212a2f4aefb03d2fd477": {
+      "f4bd01472b4fdd0d71f46e3fd33d7f1b09d60b74febbe5d22e36aa523e2ab5c3": {
         "bytes": 67108864,
         "candidates": 4,
         "seconds": 240
       }
     },
-    "seconds": 2593.0
+    "seconds": 2606.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -446309,6 +446612,7 @@
     "40333114a029ac1bd3ce298299bd28799a4ae9e8a2da35a5419e2736a4f1f0d4": "3faba767dc2fce209d7aaa8cf3d8bfc47e2c90ed8e438e056e54cee1c1142be9",
     "4038c33d61e51a274667707eade9cb25338d480e93465a835d3f943a50e183f2": "ee683e403ea28b78aac141e88b528011acb9ba23a06de56ae3f68ecdc86aab9a",
     "4088a9623bb64852b52bac3a9656746e5becdf046277e2f96d23f1965075af0d": "4a243d12eadae1130499c8376c388c1ddfe69a5895424eacf9060b836e6fce4d",
+    "408e0c810f2391e4d2b70d9431d123b0f1b90b5623c9212a2f4aefb03d2fd477": "dabf2b5052f0030ddc4beed48ccc6e2932b48b8248a88a6f2202778f5ca94e44",
     "409132b480d5ce7afc3bc7fca9dcd92e1c381a0608f91a94a9d2b76b4b9e23ec": "4d1df5e44371345cbdee63dfbd87e6a83647cfdc5e87da4335ce2ca7b2898745",
     "40944929cfef97e3f54f333c60fe48abf1ef3b26e9cae61b45bf5acd6a2075c2": "a1bd989736791ab0b9bfe7778be6fad0022f10681c8758e3f78afba848d1f5f9",
     "409befe08f7716d7ceaa3dfbb4149bf31324ced83c9544bc74745ded8a5a6c4a": "43005aef37585e4e3e7d590925f16ee10b70a5666956515dfaebb9f73b8348c0",
@@ -787826,50 +788130,105 @@
       "unknown_attempts": 1
     },
     "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84": {
-      "candidate": {
-        "_queue_priority": 1,
-        "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
-        "channel_key": "东方卫视",
-        "cloud_stream_probe_performed": false,
-        "group": "卫视台",
-        "home_verified": false,
-        "name": "东方卫视",
-        "production_eligible": false,
-        "request_options": "",
-        "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
-        "sources": [
-          "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
-          "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt"
-        ],
-        "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
-        "url_sha256": "8ac6f399c68db1efb4be88542fa24e94423956eb7acc4d0dfcd6c5c8d9adc498"
-      },
-      "last_checked_utc": "2026-09-07T16:04:31Z",
-      "qualification": "QUALIFIED",
-      "result": {
-        "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
-        "channel_key": "东方卫视",
-        "error": "",
-        "purpose": "daily-qualification",
-        "qualification": "QUALIFIED",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 12.879,
-          "height": 1080,
-          "min_download_mbps": 62.465,
-          "sample_count": 2,
-          "startup_s": 0.25,
-          "stream_mbps": 4.85,
-          "width": 1920
+      "last_checked_utc": "2026-10-25T22:18:02Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "candidate": {
+            "_queue_priority": 1,
+            "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
+            "channel_key": "东方卫视",
+            "cloud_stream_probe_performed": false,
+            "group": "卫视台",
+            "home_verified": false,
+            "name": "东方卫视",
+            "production_eligible": false,
+            "request_options": "",
+            "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
+            "sources": [
+              "https://raw.githubusercontent.com/Supprise0901/TVBox_live/main/live.txt",
+              "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt"
+            ],
+            "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
+            "url_sha256": "8ac6f399c68db1efb4be88542fa24e94423956eb7acc4d0dfcd6c5c8d9adc498"
+          },
+          "last_checked_utc": "2026-09-07T16:04:31Z",
+          "qualification": "QUALIFIED",
+          "result": {
+            "candidate_id": "502b2fb70716107423e9ef31a4b90f323092781b82a06e72233f068ad27b3f84",
+            "channel_key": "东方卫视",
+            "error": "",
+            "purpose": "daily-qualification",
+            "qualification": "QUALIFIED",
+            "request_options": "",
+            "switch_reverified": false,
+            "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
+            "verification": {
+              "bitrate_mbps": 0.0,
+              "codec": "h264",
+              "deep_checked": true,
+              "fps": 25.0,
+              "headroom_ratio": 12.879,
+              "height": 1080,
+              "min_download_mbps": 62.465,
+              "sample_count": 2,
+              "startup_s": 0.25,
+              "stream_mbps": 4.85,
+              "width": 1920
+            }
+          },
+          "unknown_attempts": 0
         }
-      },
-      "unknown_attempts": 0
+      ],
+      "result": {
+        "avg_download_mbps": 60.31928860881108,
+        "bitrate_mbps": 0,
+        "channel_key": "东方卫视",
+        "codec": "h264",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 21.516061285427796,
+        "height": 1080,
+        "min_download_mbps": 53.16007234518991,
+        "min_height": 1080,
+        "name": "东方卫视",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 1.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 53.16007234518991,
+            "downloaded_bytes": 771552,
+            "duration_s": 3.04,
+            "elapsed_s": 0.11611,
+            "http_status": 206,
+            "stream_mbps": 2.0304,
+            "total_bytes": 771552,
+            "url": "https://bp-resource-dfl.bestv.cn/material/6b920aedc3acb159165b20284279005a/2026/1012/video/a28e148649eb407c9771ce1a69adbc37-00366.ts"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 67.47850487243225,
+            "downloaded_bytes": 1106192,
+            "duration_s": 3.04,
+            "elapsed_s": 0.131146,
+            "http_status": 206,
+            "stream_mbps": 2.9110315789473686,
+            "total_bytes": 1106192,
+            "url": "https://bp-resource-dfl.bestv.cn/material/6b920aedc3acb159165b20284279005a/2026/1012/video/a28e148649eb407c9771ce1a69adbc37-00367.ts"
+          }
+        ],
+        "startup_s": 0.343271,
+        "status": "UNKNOWN",
+        "stream_mbps": 2.4707157894736844,
+        "url": "https://bp-resource-dfl.bestv.cn/148/3/video.m3u8",
+        "url_sha256": "8ac6f399c68db1efb4be88542fa24e94423956eb7acc4d0dfcd6c5c8d9adc498",
+        "width": 1920
+      }
     },
     "502be78f62304a4ab6c2016b987210f4605cc3e113b0b821d047f5102425fd9c": {
       "last_checked_utc": "2026-10-07T02:50:14Z",
@@ -791958,50 +792317,80 @@
       }
     },
     "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8": {
-      "candidate": {
-        "_queue_priority": 1,
-        "candidate_id": "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8",
-        "channel_key": "东方卫视",
-        "cloud_stream_probe_performed": false,
-        "group": "卫视台",
-        "home_verified": false,
-        "name": "东方卫视",
-        "production_eligible": false,
-        "request_options": "",
-        "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
-        "sources": [
-          "https://m3u.ibert.me/fmml_itv.m3u",
-          "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/itv.m3u"
-        ],
-        "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
-        "url_sha256": "fa19788b157663f1f612487fdb03a6b8df2b4f549163f6eb73872d7b47122199"
-      },
-      "last_checked_utc": "2026-09-07T16:04:31Z",
-      "qualification": "UNKNOWN",
-      "result": {
-        "candidate_id": "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8",
-        "channel_key": "东方卫视",
-        "error": "HTTPError:HTTP Error 403: Forbidden",
-        "purpose": "daily-qualification",
-        "qualification": "UNKNOWN",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "",
-          "deep_checked": false,
-          "fps": 0.0,
-          "headroom_ratio": 0.0,
-          "height": 0,
-          "min_download_mbps": 0.0,
-          "sample_count": 0,
-          "startup_s": 0.0,
-          "stream_mbps": 0.0,
-          "width": 0
+      "last_checked_utc": "2026-10-25T22:18:04Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "candidate": {
+            "_queue_priority": 1,
+            "candidate_id": "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8",
+            "channel_key": "东方卫视",
+            "cloud_stream_probe_performed": false,
+            "group": "卫视台",
+            "home_verified": false,
+            "name": "东方卫视",
+            "production_eligible": false,
+            "request_options": "",
+            "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
+            "sources": [
+              "https://m3u.ibert.me/fmml_itv.m3u",
+              "https://raw.githubusercontent.com/fanmingming/live/main/tv/m3u/itv.m3u"
+            ],
+            "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
+            "url_sha256": "fa19788b157663f1f612487fdb03a6b8df2b4f549163f6eb73872d7b47122199"
+          },
+          "last_checked_utc": "2026-09-07T16:04:31Z",
+          "qualification": "UNKNOWN",
+          "result": {
+            "candidate_id": "51a38db5d919ff5dca0cfeda450238c6aafe9e353efbe6974e375ba9e65518b8",
+            "channel_key": "东方卫视",
+            "error": "HTTPError:HTTP Error 403: Forbidden",
+            "purpose": "daily-qualification",
+            "qualification": "UNKNOWN",
+            "request_options": "",
+            "switch_reverified": false,
+            "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
+            "verification": {
+              "bitrate_mbps": 0.0,
+              "codec": "",
+              "deep_checked": false,
+              "fps": 0.0,
+              "headroom_ratio": 0.0,
+              "height": 0,
+              "min_download_mbps": 0.0,
+              "sample_count": 0,
+              "startup_s": 0.0,
+              "stream_mbps": 0.0,
+              "width": 0
+            }
+          },
+          "unknown_attempts": 1
         }
-      },
-      "unknown_attempts": 1
+      ],
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "东方卫视",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "东方卫视",
+        "observed_status": "UNKNOWN",
+        "probe_runtime_s": 0.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://gslbserv.itv.cmvideo.cn/6000000001000003639/1.m3u8?channel-id=wasusyt&Contentid=6000000001000003639&livemode=1&stbId=3",
+        "url_sha256": "fa19788b157663f1f612487fdb03a6b8df2b4f549163f6eb73872d7b47122199",
+        "width": 0
+      }
     },
     "51af8181ab68372a337e62d08af3d73f2f0412a131077316af91b9d2872049e0": {
       "candidate": {
@@ -793816,50 +794205,80 @@
       "legacy": true
     },
     "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c": {
-      "candidate": {
-        "_queue_priority": 1,
-        "candidate_id": "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c",
-        "channel_key": "江苏卫视",
-        "cloud_stream_probe_performed": false,
-        "group": "卫视台",
-        "home_verified": false,
-        "name": "江苏卫视",
-        "production_eligible": false,
-        "request_options": "",
-        "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
-        "sources": [
-          "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
-          "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt"
-        ],
-        "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
-        "url_sha256": "34814ae453c6fcb743c68d0e4886df3187d7b36fc0b2b933e8ffbb437a15b155"
-      },
-      "last_checked_utc": "2026-09-07T16:04:31Z",
-      "qualification": "UNKNOWN",
-      "result": {
-        "candidate_id": "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c",
-        "channel_key": "江苏卫视",
-        "error": "RuntimeError:local_transport_failure",
-        "purpose": "daily-qualification",
-        "qualification": "UNKNOWN",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "",
-          "deep_checked": false,
-          "fps": 0.0,
-          "headroom_ratio": 0.0,
-          "height": 0,
-          "min_download_mbps": 0.0,
-          "sample_count": 0,
-          "startup_s": 0.0,
-          "stream_mbps": 0.0,
-          "width": 0
+      "last_checked_utc": "2026-10-25T22:18:11Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "candidate": {
+            "_queue_priority": 1,
+            "candidate_id": "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c",
+            "channel_key": "江苏卫视",
+            "cloud_stream_probe_performed": false,
+            "group": "卫视台",
+            "home_verified": false,
+            "name": "江苏卫视",
+            "production_eligible": false,
+            "request_options": "",
+            "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
+            "sources": [
+              "https://raw.githubusercontent.com/suxuang/myIPTV/main/ipv4.m3u",
+              "https://raw.githubusercontent.com/xisohi/CHINA-IPTV/main/TV/live.txt"
+            ],
+            "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
+            "url_sha256": "34814ae453c6fcb743c68d0e4886df3187d7b36fc0b2b933e8ffbb437a15b155"
+          },
+          "last_checked_utc": "2026-09-07T16:04:31Z",
+          "qualification": "UNKNOWN",
+          "result": {
+            "candidate_id": "52572b38fed261ea0d1deb08574f123ff4ef99b6cb393d31c84741e627ca096c",
+            "channel_key": "江苏卫视",
+            "error": "RuntimeError:local_transport_failure",
+            "purpose": "daily-qualification",
+            "qualification": "UNKNOWN",
+            "request_options": "",
+            "switch_reverified": false,
+            "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
+            "verification": {
+              "bitrate_mbps": 0.0,
+              "codec": "",
+              "deep_checked": false,
+              "fps": 0.0,
+              "headroom_ratio": 0.0,
+              "height": 0,
+              "min_download_mbps": 0.0,
+              "sample_count": 0,
+              "startup_s": 0.0,
+              "stream_mbps": 0.0,
+              "width": 0
+            }
+          },
+          "unknown_attempts": 1
         }
-      },
-      "unknown_attempts": 1
+      ],
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "江苏卫视",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "江苏卫视",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 5.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://iptv.huuc.edu.cn/hls/jshd.m3u8",
+        "url_sha256": "34814ae453c6fcb743c68d0e4886df3187d7b36fc0b2b933e8ffbb437a15b155",
+        "width": 0
+      }
     },
     "525ee931dc2dd4b71751cc81e37cb5486a0a725cdf59d9f48e5f227c80c06eec": {
       "last_checked_utc": "2026-10-22T02:09:28Z",
@@ -803825,49 +804244,79 @@
       }
     },
     "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02": {
-      "candidate": {
-        "_queue_priority": 1,
-        "candidate_id": "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02",
-        "channel_key": "东方卫视",
-        "cloud_stream_probe_performed": false,
-        "group": "卫视台",
-        "home_verified": false,
-        "name": "东方卫视",
-        "production_eligible": false,
-        "request_options": "",
-        "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
-        "sources": [
-          "https://cdn.jsdelivr.net/gh/XiaoZhang5656/xiaozhang-5656.github.io@main/iptv-live.txt"
-        ],
-        "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
-        "url_sha256": "743de6cbd3b4ef8331efc0bf9cac57e61e50df91e511fb5943bf086c67aa5999"
-      },
-      "last_checked_utc": "2026-09-07T16:04:31Z",
-      "qualification": "UNKNOWN",
-      "result": {
-        "candidate_id": "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02",
-        "channel_key": "东方卫视",
-        "error": "RuntimeError:local_transport_failure",
-        "purpose": "daily-qualification",
-        "qualification": "UNKNOWN",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "",
-          "deep_checked": false,
-          "fps": 0.0,
-          "headroom_ratio": 0.0,
-          "height": 0,
-          "min_download_mbps": 0.0,
-          "sample_count": 0,
-          "startup_s": 0.0,
-          "stream_mbps": 0.0,
-          "width": 0
+      "last_checked_utc": "2026-10-25T22:18:14Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "candidate": {
+            "_queue_priority": 1,
+            "candidate_id": "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02",
+            "channel_key": "东方卫视",
+            "cloud_stream_probe_performed": false,
+            "group": "卫视台",
+            "home_verified": false,
+            "name": "东方卫视",
+            "production_eligible": false,
+            "request_options": "",
+            "source_manifest_sha256": "850c0856b677a1a0e79c5269ecc47f4b78c6481064d5c6aa11a91e8846876e48",
+            "sources": [
+              "https://cdn.jsdelivr.net/gh/XiaoZhang5656/xiaozhang-5656.github.io@main/iptv-live.txt"
+            ],
+            "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
+            "url_sha256": "743de6cbd3b4ef8331efc0bf9cac57e61e50df91e511fb5943bf086c67aa5999"
+          },
+          "last_checked_utc": "2026-09-07T16:04:31Z",
+          "qualification": "UNKNOWN",
+          "result": {
+            "candidate_id": "56563829762f0db17d7667e4536793e1e5a47f3cdef57e34f0cc2b0c9286db02",
+            "channel_key": "东方卫视",
+            "error": "RuntimeError:local_transport_failure",
+            "purpose": "daily-qualification",
+            "qualification": "UNKNOWN",
+            "request_options": "",
+            "switch_reverified": false,
+            "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
+            "verification": {
+              "bitrate_mbps": 0.0,
+              "codec": "",
+              "deep_checked": false,
+              "fps": 0.0,
+              "headroom_ratio": 0.0,
+              "height": 0,
+              "min_download_mbps": 0.0,
+              "sample_count": 0,
+              "startup_s": 0.0,
+              "stream_mbps": 0.0,
+              "width": 0
+            }
+          },
+          "unknown_attempts": 1
         }
-      },
-      "unknown_attempts": 1
+      ],
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "东方卫视",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "东方卫视",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 0.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://120.224.178.16:9901/tsfile/live/0122_1.m3u8",
+        "url_sha256": "743de6cbd3b4ef8331efc0bf9cac57e61e50df91e511fb5943bf086c67aa5999",
+        "width": 0
+      }
     },
     "5657079a528af3344cba8e6bdcbccaf7f428bc52fa926baaa3a496d0a76b9220": {
       "last_checked_utc": "2026-09-28T23:24:45Z",
