@@ -119979,6 +119979,45 @@
         }
       ]
     },
+    "3ddc84499000c7c5db0db81c7d19bc0486c94d92a10b9186a0542f4384110d21": {
+      "batch_id": "3ddc84499000c7c5db0db81c7d19bc0486c94d92a10b9186a0542f4384110d21",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-25T20:03:49Z",
+      "cycle_id": "f4c90b06cba2ab7a61b568617fba193bd48c591d72dac96485e9810d50e358a0",
+      "expires_utc": "2026-10-25T20:33:49Z",
+      "feedback_sha256": "25895ea82118536e281443af2d711f4a28b59c6c812fe14cd76f8ba686c1854a",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b4726e8a96019009a10c62f1d4137ae3b0c94eeb132f4ba4c6df7f35b23228bf",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "42caa6d3d61b4650c1e122170c052c8781e93f3a3816504c6ff9dd9de0c38c43",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "449dde7e4706ab1f046ec3387783eae14f5ef7d4ff88958207eaa1082582cb82",
+          "url": "http://27.12.12.221:1234/631780421",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "3de27783b023125fdad8e772690a64b68fee24bd4875fd02b40a5fa8553a8579": {
       "batch_id": "3de27783b023125fdad8e772690a64b68fee24bd4875fd02b40a5fa8553a8579",
       "candidate_mode": "drain_queue",
@@ -413292,7 +413331,8 @@
       "c822523368a65a42ba04e57f3baa615aa36eec3b4a8f3a60b23601dcf1d46d38",
       "68b25363bf36ea66787f86ff78ea42b36ed8d117a8bb5dbe28afba6c073995f5",
       "100d1cf13143d59674ecc28fac5894da3d91ef3ea9d02a20a26bdbd2dea2f030",
-      "7ee350157e234e9a21497143bd7f76d6058d52a04297285253dd2f195013d5f7"
+      "7ee350157e234e9a21497143bd7f76d6058d52a04297285253dd2f195013d5f7",
+      "3ddc84499000c7c5db0db81c7d19bc0486c94d92a10b9186a0542f4384110d21"
     ],
     "binding": {
       "channel_count": 53,
@@ -413465,7 +413505,7 @@
     "id": "f4c90b06cba2ab7a61b568617fba193bd48c591d72dac96485e9810d50e358a0",
     "kind": "primary-0200",
     "manifest_sha": "fc84a4279384625a91bc0d843ef491f106b5288b29c17b975f336e685320d001",
-    "outstanding": "7ee350157e234e9a21497143bd7f76d6058d52a04297285253dd2f195013d5f7",
+    "outstanding": "3ddc84499000c7c5db0db81c7d19bc0486c94d92a10b9186a0542f4384110d21",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -413745,6 +413785,60 @@
         },
         "started_utc": "2026-10-25T19:34:44Z",
         "task_id": "0b4eb0f97b086b94da8d8dad2549475e0ffd3189938bda95ba24afc71ac597d1"
+      },
+      "0ba10c225705c6782dfc72376d17c70aa152500d69d39efaab92b2cd4557e236": {
+        "finished_utc": "2026-10-25T20:03:07Z",
+        "result": {
+          "avg_download_mbps": 23.106690749063773,
+          "bitrate_mbps": 0,
+          "channel_key": "东方卫视",
+          "codec": "hevc",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 13.282050798422732,
+          "height": 720,
+          "min_download_mbps": 22.958651717871376,
+          "min_height": 1080,
+          "name": "东方卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 2.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 23.25472978025617,
+              "downloaded_bytes": 2176852,
+              "duration_s": 10.0,
+              "elapsed_s": 0.748872,
+              "http_status": 206,
+              "stream_mbps": 1.7414816000000002,
+              "total_bytes": 2176852,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongfanghd265/51/20191230/20260605224101-01-2834346.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20261026011923&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=27.12.12.221&SecurityKey=20261026011923&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eae43fba06c4766b764d1090c7190a6c&sv=10004&ct=android&encrypt=2bda0548914196c06139a99641b3941a&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 22.958651717871376,
+              "downloaded_bytes": 2144516,
+              "duration_s": 10.0,
+              "elapsed_s": 0.747262,
+              "http_status": 206,
+              "stream_mbps": 1.7156128,
+              "total_bytes": 2144516,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongfanghd265/51/20191230/20260605224101-01-2834347.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20261026011923&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=27.12.12.221&SecurityKey=20261026011923&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eae43fba06c4766b764d1090c7190a6c&sv=10004&ct=android&encrypt=f8b6dfc857524457498cd49ba1c05523&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 0.839924,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.7285472,
+          "url": "http://27.12.12.221:1234/651632648",
+          "url_sha256": "717a676180353a7cc4d0c5fba56859bcf780fc24c41361f9bfca2be81f311579",
+          "width": 1280
+        },
+        "started_utc": "2026-10-25T20:03:05Z",
+        "task_id": "0ba10c225705c6782dfc72376d17c70aa152500d69d39efaab92b2cd4557e236"
       },
       "0c08273549de253bbabab94e8c55bb7a94e4241fc85a60a8554043674383a57a": {
         "finished_utc": "2026-10-25T19:59:15Z",
@@ -414368,6 +414462,60 @@
         },
         "started_utc": "2026-10-25T19:20:34Z",
         "task_id": "1ec2a0802f388fc653dd16b828e865b7e92807403c20d73d79d83ad8a3cdd4b8"
+      },
+      "21a487a26fa43efcb9bfa1adeeec15b4567f9fa66fefb997a1ee3eb6d49594ec": {
+        "finished_utc": "2026-10-25T20:03:14Z",
+        "result": {
+          "avg_download_mbps": 23.19680213081413,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv5",
+          "codec": "hevc",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 11.968666453607248,
+          "height": 720,
+          "min_download_mbps": 22.273081857729437,
+          "min_height": 1080,
+          "name": "CCTV-5",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 2.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 22.273081857729437,
+              "downloaded_bytes": 1299832,
+              "duration_s": 6.0,
+              "elapsed_s": 0.466871,
+              "http_status": 206,
+              "stream_mbps": 1.7331093333333332,
+              "total_bytes": 1299832,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv5hd265/51/20191230/20260521152145-01-4557779.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20261026020004&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=27.12.12.221&SecurityKey=20261026020004&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=a2c45485c098cd9e378232bdb4626625&sv=10004&ct=android&encrypt=0e421e717ec69cb77401e8bfc6fef111&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 24.120522403898825,
+              "downloaded_bytes": 1491592,
+              "duration_s": 6.0,
+              "elapsed_s": 0.494713,
+              "http_status": 206,
+              "stream_mbps": 1.9887893333333333,
+              "total_bytes": 1491592,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv5hd265/51/20191230/20260521152145-01-4557780.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20261026020004&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=27.12.12.221&SecurityKey=20261026020004&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=a2c45485c098cd9e378232bdb4626625&sv=10004&ct=android&encrypt=fb2081b12a9c34ebea4fc2193869eb98&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 0.590012,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.8609493333333331,
+          "url": "http://27.12.12.221:1234/641886683",
+          "url_sha256": "34f1ada12d22af8f63b4eb77eeb87a4c0c5029ccd87370784161a847a0d0e037",
+          "width": 1280
+        },
+        "started_utc": "2026-10-25T20:03:12Z",
+        "task_id": "21a487a26fa43efcb9bfa1adeeec15b4567f9fa66fefb997a1ee3eb6d49594ec"
       },
       "25c591d8a661608df0a6f0aa99e10a984e949b5df65b0b22ca01cd31f3691c69": {
         "finished_utc": "2026-10-25T19:37:48Z",
@@ -416130,6 +416278,60 @@
         "started_utc": "2026-10-25T19:33:31Z",
         "task_id": "65fd6dea7ea4ba23906e80d1c2e68b7d4e5340f2d89efac6da18f3828ea2913c"
       },
+      "6651041cb779e34543ea5d1fa7243cf050da7ecdaaf6f3f6025720463c250b42": {
+        "finished_utc": "2026-10-25T20:03:03Z",
+        "result": {
+          "avg_download_mbps": 26.939859177887413,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv8",
+          "codec": "hevc",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 16.500099469455083,
+          "height": 720,
+          "min_download_mbps": 25.91674583691183,
+          "min_height": 1080,
+          "name": "CCTV-8",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 2.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 25.91674583691183,
+              "downloaded_bytes": 1704972,
+              "duration_s": 10.0,
+              "elapsed_s": 0.526292,
+              "http_status": 206,
+              "stream_mbps": 1.3639776000000001,
+              "total_bytes": 1704972,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv8hd265/54/20200407/20251201224930-01-2835765.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20261026011251&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=27.12.12.221&SecurityKey=20261026011251&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=cac538b681ebc4f9f92b9aebc5523f3e&sv=10004&ct=android&encrypt=180a9038b521cea1cd94a27971559f19&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 27.962972518862998,
+              "downloaded_bytes": 2221784,
+              "duration_s": 10.0,
+              "elapsed_s": 0.635636,
+              "http_status": 206,
+              "stream_mbps": 1.7774272,
+              "total_bytes": 2221784,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv8hd265/54/20200407/20251201224930-01-2835766.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20261026011251&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=27.12.12.221&SecurityKey=20261026011251&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=cac538b681ebc4f9f92b9aebc5523f3e&sv=10004&ct=android&encrypt=118e1fcacb6de990059ab3f055a75a59&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 0.634778,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.5707024,
+          "url": "http://27.12.12.221:1234/624878356",
+          "url_sha256": "7d68e38a35a562d6694bae34c986fabe9155f2f63f111b4747c1b13a5fd7af07",
+          "width": 1280
+        },
+        "started_utc": "2026-10-25T20:03:01Z",
+        "task_id": "6651041cb779e34543ea5d1fa7243cf050da7ecdaaf6f3f6025720463c250b42"
+      },
       "6671e7b435ec782955a1e743900a1828e15203a198b38822f8d3024e765c0ccd": {
         "finished_utc": "2026-10-25T19:29:05Z",
         "result": {
@@ -417886,6 +418088,60 @@
         },
         "started_utc": "2026-10-25T19:20:49Z",
         "task_id": "a63e367d737973e8e9de9be64d069b5763da2159493544d54a81dc43c88d48d8"
+      },
+      "a7171c4785c11ad44d58f63f78bfd23cfaeba0cc158d59229a300acabd201f4f": {
+        "finished_utc": "2026-10-25T20:03:10Z",
+        "result": {
+          "avg_download_mbps": 19.542315134110286,
+          "bitrate_mbps": 0,
+          "channel_key": "河南卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 19.544228048424117,
+          "height": 480,
+          "min_download_mbps": 16.967986083993043,
+          "min_height": 1080,
+          "name": "河南卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 16.967986083993043,
+              "downloaded_bytes": 1194928,
+              "duration_s": 10.0,
+              "elapsed_s": 0.56338,
+              "http_status": 206,
+              "stream_mbps": 0.9559424,
+              "total_bytes": 1194928,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/20251221052416-01-2835787.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20261026013127&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=27.12.12.221&SecurityKey=20261026013127&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=6541a7f5f2aa738e0ad0d93589a0c2f9&sv=10004&ct=android&encrypt=7a19d07eb54150b086f41fadf1eb9d18&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 22.11664418422753,
+              "downloaded_bytes": 975532,
+              "duration_s": 10.0,
+              "elapsed_s": 0.352868,
+              "http_status": 206,
+              "stream_mbps": 0.7804255999999999,
+              "total_bytes": 975532,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/20251221052416-01-2835788.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20261026013127&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=27.12.12.221&SecurityKey=20261026013127&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=6541a7f5f2aa738e0ad0d93589a0c2f9&sv=10004&ct=android&encrypt=fd20b4c7b0128179cd23a0a163dda5e6&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 0.599581,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.868184,
+          "url": "http://27.12.12.221:1234/790187291",
+          "url_sha256": "6ef137b3d6a991e1d13c176e73e305c6955bc0b409562e0120ee9f0a75c585c8",
+          "width": 854
+        },
+        "started_utc": "2026-10-25T20:03:09Z",
+        "task_id": "a7171c4785c11ad44d58f63f78bfd23cfaeba0cc158d59229a300acabd201f4f"
       },
       "ab4a6a85022f9c9d0261b88b29f3746109c5f713c26adfb58828c124b3aa2a4a": {
         "finished_utc": "2026-10-25T19:40:53Z",
@@ -419915,6 +420171,22 @@
         "url": "http://222.223.41.27:8888/hls/15/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "0ba10c225705c6782dfc72376d17c70aa152500d69d39efaab92b2cd4557e236": {
+        "attempt": 1,
+        "candidate_id": "07a1457179d7b534aee2b8b393b0870a4b8d323e87ac96538c2f66b7795ed1bc",
+        "channel_key": "东方卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东方卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "0ba10c225705c6782dfc72376d17c70aa152500d69d39efaab92b2cd4557e236",
+        "url": "http://27.12.12.221:1234/651632648",
+        "viewer_accepted_quality": false
+      },
       "0c08273549de253bbabab94e8c55bb7a94e4241fc85a60a8554043674383a57a": {
         "attempt": 1,
         "candidate_id": "6de4abd22d511053d96f28831c3c97367d66bb6877cbab8f66dcc4ede23c7e08",
@@ -420106,6 +420378,22 @@
         "task_id": "1ec2a0802f388fc653dd16b828e865b7e92807403c20d73d79d83ad8a3cdd4b8",
         "url": "http://113.195.172.192:1808/hls/167/index.m3u8",
         "viewer_accepted_quality": true
+      },
+      "21a487a26fa43efcb9bfa1adeeec15b4567f9fa66fefb997a1ee3eb6d49594ec": {
+        "attempt": 1,
+        "candidate_id": "d596d45581a9f40fd8d9113a115dd4094778d04f6f40da38111c006e2fe48968",
+        "channel_key": "cctv5",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-5",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "21a487a26fa43efcb9bfa1adeeec15b4567f9fa66fefb997a1ee3eb6d49594ec",
+        "url": "http://27.12.12.221:1234/641886683",
+        "viewer_accepted_quality": false
       },
       "25c591d8a661608df0a6f0aa99e10a984e949b5df65b0b22ca01cd31f3691c69": {
         "attempt": 2,
@@ -420651,6 +420939,22 @@
         "url": "http://1.24.39.180:808/hls/38/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "6651041cb779e34543ea5d1fa7243cf050da7ecdaaf6f3f6025720463c250b42": {
+        "attempt": 1,
+        "candidate_id": "f7e0c00dc26dbc2e7706422a7e650341cbf0257a46321285dfa0cf507aaa8b9d",
+        "channel_key": "cctv8",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-8",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "6651041cb779e34543ea5d1fa7243cf050da7ecdaaf6f3f6025720463c250b42",
+        "url": "http://27.12.12.221:1234/624878356",
+        "viewer_accepted_quality": false
+      },
       "6671e7b435ec782955a1e743900a1828e15203a198b38822f8d3024e765c0ccd": {
         "attempt": 1,
         "candidate_id": "0194e1c15f8789fde3152842613a71bec5ee1790e97442dcd6e89b096e7fbce8",
@@ -421177,6 +421481,22 @@
         "sample_bytes": 2097152,
         "task_id": "a63e367d737973e8e9de9be64d069b5763da2159493544d54a81dc43c88d48d8",
         "url": "http://106.46.169.202:9000/hls/36/index.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "a7171c4785c11ad44d58f63f78bfd23cfaeba0cc158d59229a300acabd201f4f": {
+        "attempt": 1,
+        "candidate_id": "ce98a42c2b6ea58d624fb5906b566662f0d5fc4acc521c3a23725405340bc8bd",
+        "channel_key": "河南卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "河南卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "a7171c4785c11ad44d58f63f78bfd23cfaeba0cc158d59229a300acabd201f4f",
+        "url": "http://27.12.12.221:1234/790187291",
         "viewer_accepted_quality": false
       },
       "ab4a6a85022f9c9d0261b88b29f3746109c5f713c26adfb58828c124b3aa2a4a": {
@@ -421772,17 +422092,13 @@
     ]
   },
   "daily_intake": {
-    "available": 5,
+    "available": 1,
     "candidate_ids": [
-      "07a1457179d7b534aee2b8b393b0870a4b8d323e87ac96538c2f66b7795ed1bc",
-      "ce98a42c2b6ea58d624fb5906b566662f0d5fc4acc521c3a23725405340bc8bd",
-      "d596d45581a9f40fd8d9113a115dd4094778d04f6f40da38111c006e2fe48968",
-      "f7e0c00dc26dbc2e7706422a7e650341cbf0257a46321285dfa0cf507aaa8b9d",
       "42caa6d3d61b4650c1e122170c052c8781e93f3a3816504c6ff9dd9de0c38c43"
     ],
     "day": "20261026",
     "reason": "insufficient_fresh_unmeasured_candidates",
-    "shortfall": 495,
+    "shortfall": 499,
     "target": 500
   },
   "delivery_receipt": {
@@ -421794,12 +422110,12 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-25T20:01:44Z",
-    "received_utc": "2026-10-25T20:02:30Z",
+    "measured_utc": "2026-10-25T20:03:14Z",
+    "received_utc": "2026-10-25T20:03:49Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 14282577,
+      "downloaded_bytes": 13233750,
       "runtime_s": 13.0
     }
   },
@@ -423427,19 +423743,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 520157850,
-    "candidates": 52,
+    "bytes": 533391600,
+    "candidates": 53,
     "day": "20261026",
-    "discovery_bytes": 249985351,
-    "discovery_seconds": 502.0,
+    "discovery_bytes": 263219101,
+    "discovery_seconds": 515.0,
     "reservations": {
-      "7ee350157e234e9a21497143bd7f76d6058d52a04297285253dd2f195013d5f7": {
+      "3ddc84499000c7c5db0db81c7d19bc0486c94d92a10b9186a0542f4384110d21": {
         "bytes": 67108864,
-        "candidates": 4,
+        "candidates": 1,
         "seconds": 240
       }
     },
-    "seconds": 913.0
+    "seconds": 926.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -426645,6 +426961,7 @@
     "7e942581acb31999c89936f75a4d0acb1eef380869627fbcda7903b08b404d3f": "36cbe2251b3234b7126a451e11591cdcb6bbb684dc44fd26a00e0f162c6a3b68",
     "7eada1aec8a9f8f92a807cbae984e83e3cd744ae4ba9b3685f24512bb016c7e7": "099312607dbc5dbab50a70a19290c17fdce27754a5594a217cb18575b88506a4",
     "7eccc61eee407976b282b616ed3c2f4e81dca88a29e4b4228be38958c2595adc": "54606906b85a8c9d808f121d09e0be6dd6a0b41cc2e5dacd5c94df6ea36ff32f",
+    "7ee350157e234e9a21497143bd7f76d6058d52a04297285253dd2f195013d5f7": "0e0d99c75a6b08c659f5dac1d6c1607354b7174c8122bd735de65aece3c18a36",
     "7eeb09738b79f8520c21d82bdd2fa1ce86c6ea7d501373d9401b68c68002070a": "e55f7b464eeea0d25f1b7ddbcfa8a8c6b649e9cde183754880d8755e0e4dbcac",
     "7efce76f1e98d297b48278301a41ef812ebf974fb1ecec823badd0ffa6a1a1f7": "0b21925264e069604c96c2fe330cc73ca27b9dbbf90b4aaddae2b3f6efefa5db",
     "7f24fa1baa8697ed36e780ee409c625e198d7496115fa76c6fd657a44104cb4d": "0f9ceb1b60b673cd580116d259e00e3200b91ca1f8331a59e60c2347eacbb61d",
@@ -429335,21 +429652,6 @@
       ],
       "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/index.m3u8?msisdn=2026100122030436d0e97cc2b14145888b041816323058&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20261001220304&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=171.8.79.254&SecurityKey=20261001220304&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=4262391034707fe06adbb33de12ab58d",
       "url_sha256": "d75b62251053968c8a8c2105441074d3bea5748c22aaa01764e1dc5cedb5ab70"
-    },
-    "07a1457179d7b534aee2b8b393b0870a4b8d323e87ac96538c2f66b7795ed1bc": {
-      "candidate_id": "07a1457179d7b534aee2b8b393b0870a4b8d323e87ac96538c2f66b7795ed1bc",
-      "channel_key": "东方卫视",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "东方卫视",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/yyyr-otz/iptv-api/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://27.12.12.221:1234/651632648",
-      "url_sha256": "717a676180353a7cc4d0c5fba56859bcf780fc24c41361f9bfca2be81f311579"
     },
     "07c4197fb83aff19b24b0750aa1978e50f76c2ebcb56317572a87a830baa6020": {
       "candidate_id": "07c4197fb83aff19b24b0750aa1978e50f76c2ebcb56317572a87a830baa6020",
@@ -438634,21 +438936,6 @@
       "url": "http://115.29.208.41:29995/180000001002/00000001000000000008000000047448/1.m3u8",
       "url_sha256": "a7ad19836d3b4027ce9ff6e110ab784abc0646803b202dc8deabf51947136e23"
     },
-    "ce98a42c2b6ea58d624fb5906b566662f0d5fc4acc521c3a23725405340bc8bd": {
-      "candidate_id": "ce98a42c2b6ea58d624fb5906b566662f0d5fc4acc521c3a23725405340bc8bd",
-      "channel_key": "河南卫视",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "河南卫视",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/yyyr-otz/iptv-api/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://27.12.12.221:1234/790187291",
-      "url_sha256": "6ef137b3d6a991e1d13c176e73e305c6955bc0b409562e0120ee9f0a75c585c8"
-    },
     "cf3387532cd4d1a9b191d9906d9b3558b3a6f23c89e52318459a7d764a915492": {
       "candidate_id": "cf3387532cd4d1a9b191d9906d9b3558b3a6f23c89e52318459a7d764a915492",
       "channel_key": "浙江卫视",
@@ -439040,21 +439327,6 @@
       ],
       "url": "http://110.72.66.3:808/hls/2/index.m3u8",
       "url_sha256": "1791caef0b16e3f11b6ae95223a827c77b4e2f7ec01ce73ef7c76e69c938a669"
-    },
-    "d596d45581a9f40fd8d9113a115dd4094778d04f6f40da38111c006e2fe48968": {
-      "candidate_id": "d596d45581a9f40fd8d9113a115dd4094778d04f6f40da38111c006e2fe48968",
-      "channel_key": "cctv5",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-5",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/yyyr-otz/iptv-api/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://27.12.12.221:1234/641886683",
-      "url_sha256": "34f1ada12d22af8f63b4eb77eeb87a4c0c5029ccd87370784161a847a0d0e037"
     },
     "d5a6f0a822d1686dd64e3a73eab50446a560a49756db94a7180a2e5b8d8bcebb": {
       "candidate_id": "d5a6f0a822d1686dd64e3a73eab50446a560a49756db94a7180a2e5b8d8bcebb",
@@ -440746,21 +441018,6 @@
       ],
       "url": "http://45.192.97.170:8880/play/887.m3u8",
       "url_sha256": "7f8fb609f1f4dd188fcceac8c3ec8cd410a391a79f319a94f0106a514083c717"
-    },
-    "f7e0c00dc26dbc2e7706422a7e650341cbf0257a46321285dfa0cf507aaa8b9d": {
-      "candidate_id": "f7e0c00dc26dbc2e7706422a7e650341cbf0257a46321285dfa0cf507aaa8b9d",
-      "channel_key": "cctv8",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-8",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/yyyr-otz/iptv-api/master/output/ipv4/result.m3u"
-      ],
-      "url": "http://27.12.12.221:1234/624878356",
-      "url_sha256": "7d68e38a35a562d6694bae34c986fabe9155f2f63f111b4747c1b13a5fd7af07"
     },
     "f82e797445f23bfbd6e9e134a1ce888b1b9a8dece6a6096a62bc8af7a4720765": {
       "candidate_id": "f82e797445f23bfbd6e9e134a1ce888b1b9a8dece6a6096a62bc8af7a4720765",
@@ -544712,6 +544969,59 @@
         "stream_mbps": 0.4195708851283396,
         "url": "http://45.192.97.170:8880/play/869.m3u8",
         "url_sha256": "c26818c6ba1a92ddaad47efa6886f9f01b77ac2ef0515cadb8f9555649046f5e",
+        "width": 1280
+      }
+    },
+    "07a1457179d7b534aee2b8b393b0870a4b8d323e87ac96538c2f66b7795ed1bc": {
+      "last_checked_utc": "2026-10-25T20:03:07Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 23.106690749063773,
+        "bitrate_mbps": 0,
+        "channel_key": "东方卫视",
+        "codec": "hevc",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 13.282050798422732,
+        "height": 720,
+        "min_download_mbps": 22.958651717871376,
+        "min_height": 1080,
+        "name": "东方卫视",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 2.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 23.25472978025617,
+            "downloaded_bytes": 2176852,
+            "duration_s": 10.0,
+            "elapsed_s": 0.748872,
+            "http_status": 206,
+            "stream_mbps": 1.7414816000000002,
+            "total_bytes": 2176852,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongfanghd265/51/20191230/20260605224101-01-2834346.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20261026011923&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=27.12.12.221&SecurityKey=20261026011923&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eae43fba06c4766b764d1090c7190a6c&sv=10004&ct=android&encrypt=2bda0548914196c06139a99641b3941a&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 22.958651717871376,
+            "downloaded_bytes": 2144516,
+            "duration_s": 10.0,
+            "elapsed_s": 0.747262,
+            "http_status": 206,
+            "stream_mbps": 1.7156128,
+            "total_bytes": 2144516,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/dongfanghd265/51/20191230/20260605224101-01-2834347.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600697&netType=0&sid=5910022185&pid=2028597139&timestamp=20261026011923&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=651632648&ParentNodeID=-99&assertID=5910022185&client_ip=27.12.12.221&SecurityKey=20261026011923&promotionId=&mvid=5100043384&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eae43fba06c4766b764d1090c7190a6c&sv=10004&ct=android&encrypt=f8b6dfc857524457498cd49ba1c05523&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 0.839924,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.7285472,
+        "url": "http://27.12.12.221:1234/651632648",
+        "url_sha256": "717a676180353a7cc4d0c5fba56859bcf780fc24c41361f9bfca2be81f311579",
         "width": 1280
       }
     },
@@ -1126170,6 +1126480,59 @@
         "width": 0
       }
     },
+    "ce98a42c2b6ea58d624fb5906b566662f0d5fc4acc521c3a23725405340bc8bd": {
+      "last_checked_utc": "2026-10-25T20:03:10Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 19.542315134110286,
+        "bitrate_mbps": 0,
+        "channel_key": "河南卫视",
+        "codec": "h264",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 19.544228048424117,
+        "height": 480,
+        "min_download_mbps": 16.967986083993043,
+        "min_height": 1080,
+        "name": "河南卫视",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 1.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 16.967986083993043,
+            "downloaded_bytes": 1194928,
+            "duration_s": 10.0,
+            "elapsed_s": 0.56338,
+            "http_status": 206,
+            "stream_mbps": 0.9559424,
+            "total_bytes": 1194928,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/20251221052416-01-2835787.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20261026013127&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=27.12.12.221&SecurityKey=20261026013127&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=6541a7f5f2aa738e0ad0d93589a0c2f9&sv=10004&ct=android&encrypt=7a19d07eb54150b086f41fadf1eb9d18&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 22.11664418422753,
+            "downloaded_bytes": 975532,
+            "duration_s": 10.0,
+            "elapsed_s": 0.352868,
+            "http_status": 206,
+            "stream_mbps": 0.7804255999999999,
+            "total_bytes": 975532,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/wd-henanwssd-600/20251221052416-01-2835788.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=600633&netType=0&sid=5910021585&pid=2028597139&timestamp=20261026013127&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=790187291&ParentNodeID=-99&assertID=5910021585&client_ip=27.12.12.221&SecurityKey=20261026013127&promotionId=&mvid=5900005706&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=6541a7f5f2aa738e0ad0d93589a0c2f9&sv=10004&ct=android&encrypt=fd20b4c7b0128179cd23a0a163dda5e6&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 0.599581,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.868184,
+        "url": "http://27.12.12.221:1234/790187291",
+        "url_sha256": "6ef137b3d6a991e1d13c176e73e305c6955bc0b409562e0120ee9f0a75c585c8",
+        "width": 854
+      }
+    },
     "ce9b8c166183f840192232438d58e8dff87e85e0224466d3f6233ee25ab19694": {
       "candidate": {
         "_queue_priority": 1,
@@ -1145890,6 +1146253,59 @@
         "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/index.m3u8?msisdn=20260913220309397d9014871c46fcbcf91d957b516f46&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20260913220309&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=171.8.79.254&SecurityKey=20260913220309&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=dd71b524dfc5bb1e91f3bd88a8ed31aa",
         "url_sha256": "294cd72b8bab6e5c48c6f4053ef781faa8db69971501998216d8beb32254a66f",
         "width": 0
+      }
+    },
+    "d596d45581a9f40fd8d9113a115dd4094778d04f6f40da38111c006e2fe48968": {
+      "last_checked_utc": "2026-10-25T20:03:14Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 23.19680213081413,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv5",
+        "codec": "hevc",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 11.968666453607248,
+        "height": 720,
+        "min_download_mbps": 22.273081857729437,
+        "min_height": 1080,
+        "name": "CCTV-5",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 2.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 22.273081857729437,
+            "downloaded_bytes": 1299832,
+            "duration_s": 6.0,
+            "elapsed_s": 0.466871,
+            "http_status": 206,
+            "stream_mbps": 1.7331093333333332,
+            "total_bytes": 1299832,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv5hd265/51/20191230/20260521152145-01-4557779.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20261026020004&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=27.12.12.221&SecurityKey=20261026020004&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=a2c45485c098cd9e378232bdb4626625&sv=10004&ct=android&encrypt=0e421e717ec69cb77401e8bfc6fef111&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 24.120522403898825,
+            "downloaded_bytes": 1491592,
+            "duration_s": 6.0,
+            "elapsed_s": 0.494713,
+            "http_status": 206,
+            "stream_mbps": 1.9887893333333333,
+            "total_bytes": 1491592,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv5hd265/51/20191230/20260521152145-01-4557780.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500516171&pid=2028597139&timestamp=20261026020004&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=641886683&ParentNodeID=-99&assertID=5500516171&client_ip=27.12.12.221&SecurityKey=20261026020004&promotionId=&mvid=5102048712&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=a2c45485c098cd9e378232bdb4626625&sv=10004&ct=android&encrypt=fb2081b12a9c34ebea4fc2193869eb98&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 0.590012,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.8609493333333331,
+        "url": "http://27.12.12.221:1234/641886683",
+        "url_sha256": "34f1ada12d22af8f63b4eb77eeb87a4c0c5029ccd87370784161a847a0d0e037",
+        "width": 1280
       }
     },
     "d596e98f076385de07efd0635d6e4ea7a9a1e0878eceda1f0a2ad4571a6b6467": {
@@ -1243556,6 +1243972,59 @@
         "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv11hd/50/20200103/index.m3u8?msisdn=202609132201431f7831a9476a4fbe85f9d6dc5071e7f4&mdspid=&spid=699004&netType=0&sid=5500988610&pid=2028597139&timestamp=20260913220143&Channel_ID=0116_2600000900-99000-201600010010027&ProgramID=667987558&ParentNodeID=-99&assertID=5500988610&client_ip=171.8.79.254&SecurityKey=20260913220143&promotionId=&mvid=5102751362&mcid=500020&playurlVersion=ZQ-A1-9.9.1-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&encrypt=2c0faf8269861243f8c15849bd69ac0c",
         "url_sha256": "4572c1fdc65b67d6dfb6c8bbd7fda80e76078f1303ca2f1c9a971eeee7316b9d",
         "width": 0
+      }
+    },
+    "f7e0c00dc26dbc2e7706422a7e650341cbf0257a46321285dfa0cf507aaa8b9d": {
+      "last_checked_utc": "2026-10-25T20:03:03Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 26.939859177887413,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv8",
+        "codec": "hevc",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 16.500099469455083,
+        "height": 720,
+        "min_download_mbps": 25.91674583691183,
+        "min_height": 1080,
+        "name": "CCTV-8",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 2.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 25.91674583691183,
+            "downloaded_bytes": 1704972,
+            "duration_s": 10.0,
+            "elapsed_s": 0.526292,
+            "http_status": 206,
+            "stream_mbps": 1.3639776000000001,
+            "total_bytes": 1704972,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv8hd265/54/20200407/20251201224930-01-2835765.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20261026011251&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=27.12.12.221&SecurityKey=20261026011251&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=cac538b681ebc4f9f92b9aebc5523f3e&sv=10004&ct=android&encrypt=180a9038b521cea1cd94a27971559f19&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 27.962972518862998,
+            "downloaded_bytes": 2221784,
+            "duration_s": 10.0,
+            "elapsed_s": 0.635636,
+            "http_status": 206,
+            "stream_mbps": 1.7774272,
+            "total_bytes": 2221784,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv8hd265/54/20200407/20251201224930-01-2835766.ts?msisdn=fead59a1bd5e8263c7defd1bc13488a8&mdspid=&spid=699004&netType=0&sid=5500212868&pid=2028597139&timestamp=20261026011251&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=624878356&ParentNodeID=-99&assertID=5500212868&client_ip=27.12.12.221&SecurityKey=20261026011251&promotionId=&mvid=5100001695&mcid=500020&playurlVersion=ZQ-A1-9.10.1-SNAPSHOT&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=cac538b681ebc4f9f92b9aebc5523f3e&sv=10004&ct=android&encrypt=118e1fcacb6de990059ab3f055a75a59&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 0.634778,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.5707024,
+        "url": "http://27.12.12.221:1234/624878356",
+        "url_sha256": "7d68e38a35a562d6694bae34c986fabe9155f2f63f111b4747c1b13a5fd7af07",
+        "width": 1280
       }
     },
     "f7e3adc2582c04863726d9ec0f121da87ec06bc8b4a01712790dd7d91f11ed24": {
