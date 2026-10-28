@@ -53412,6 +53412,45 @@
         }
       ]
     },
+    "11b4fd4b3979b23f511ae61e17d168ac8b3e1a83f299a00d6c42290b6c4a5378": {
+      "batch_id": "11b4fd4b3979b23f511ae61e17d168ac8b3e1a83f299a00d6c42290b6c4a5378",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-10-28T06:29:14Z",
+      "cycle_id": "0cd2c0a4e3fb97cbc11eefdbe3322a9db85ec48193faad2829fc68d45bfb0c26",
+      "expires_utc": "2026-10-28T06:59:14Z",
+      "feedback_sha256": "25895ea82118536e281443af2d711f4a28b59c6c812fe14cd76f8ba686c1854a",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b4726e8a96019009a10c62f1d4137ae3b0c94eeb132f4ba4c6df7f35b23228bf",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "recheck-1300",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "3eebe5f5210e63e24235938099e3655a2450fc53c74ae19d15291c839cf887bf",
+          "channel_key": "黑龙江卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "黑龙江卫视",
+          "role": "current",
+          "sample_bytes": 2097152,
+          "task_id": "7ab7378bab439b9cb6066907826505b2ae664ba8e04a938373851e6048fa7b15",
+          "url": "http://1.24.39.180:808/hls/38/index.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "11bce324e08dc51b767b8edecf7e24dd9544f510012236de9a8e798fb1d510cb": {
       "batch_id": "11bce324e08dc51b767b8edecf7e24dd9544f510012236de9a8e798fb1d510cb",
       "candidate_mode": "drain_queue",
@@ -454016,7 +454055,8 @@
       "7741f1e7f3cd1f88780154b6e04ce5244b5f89fe451c3cc6834e1ac17579e46e",
       "efe585eb26bf6e1aa7e77eb7d7019f3ca106bbc48b0469e7b14403ae0719c4a2",
       "43c8b1bfe1d441a64b8ed09a8eea6e7dcea80c8308b4741961a2831e39bd8a53",
-      "f0ec6e5330bb980fabbca181031f9224d2a9121bfd4e58a63774487152a509f5"
+      "f0ec6e5330bb980fabbca181031f9224d2a9121bfd4e58a63774487152a509f5",
+      "11b4fd4b3979b23f511ae61e17d168ac8b3e1a83f299a00d6c42290b6c4a5378"
     ],
     "binding": {
       "channel_count": 53,
@@ -454189,7 +454229,7 @@
     "id": "0cd2c0a4e3fb97cbc11eefdbe3322a9db85ec48193faad2829fc68d45bfb0c26",
     "kind": "recheck-1300",
     "manifest_sha": "7ed4286e2972c16e547850924f149c1e23cef6be9630dbb615aad638977ce27d",
-    "outstanding": "f0ec6e5330bb980fabbca181031f9224d2a9121bfd4e58a63774487152a509f5",
+    "outstanding": "11b4fd4b3979b23f511ae61e17d168ac8b3e1a83f299a00d6c42290b6c4a5378",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -454469,6 +454509,60 @@
         },
         "started_utc": "2026-10-28T06:17:02Z",
         "task_id": "191acece92a78d1e47c5129006334b85d90154c065e36d716eeaf52e6b01421c"
+      },
+      "1b2caf9cf367fc7a1629ef628a569d2a74d65742439e349beb5c5c8a626f3408": {
+        "finished_utc": "2026-10-28T06:28:31Z",
+        "result": {
+          "avg_download_mbps": 5.937736938395467,
+          "bitrate_mbps": 0,
+          "channel_key": "陕西卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "",
+          "fps": 25.0,
+          "headroom_ratio": 1.5125296329319398,
+          "height": 1080,
+          "min_download_mbps": 5.748202703337012,
+          "min_height": 1080,
+          "name": "陕西卫视",
+          "observed_status": "GOOD",
+          "probe_runtime_s": 9.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 6.127271173453922,
+              "downloaded_bytes": 2097152,
+              "duration_s": 10.76,
+              "elapsed_s": 2.738122,
+              "http_status": 206,
+              "stream_mbps": 3.671660966542751,
+              "total_bytes": 4938384,
+              "url": "http://107.150.39.250:82/live/snws/segment_23123.ts"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 5.748202703337012,
+              "downloaded_bytes": 2097152,
+              "duration_s": 9.32,
+              "elapsed_s": 2.918689,
+              "http_status": 206,
+              "stream_mbps": 3.929119313304721,
+              "total_bytes": 4577424,
+              "url": "http://107.150.39.250:82/live/snws/segment_23124.ts"
+            }
+          ],
+          "startup_s": 5.4531659999999995,
+          "status": "UNKNOWN",
+          "stream_mbps": 3.800390139923736,
+          "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=snwshd",
+          "url_sha256": "f198c590fa3503e7e055dd61c536dcc424a4766c0ffa44e016505d572ec45a78",
+          "width": 1920
+        },
+        "started_utc": "2026-10-28T06:28:22Z",
+        "task_id": "1b2caf9cf367fc7a1629ef628a569d2a74d65742439e349beb5c5c8a626f3408"
       },
       "2400c1df65890f397bcb4537a6926d261c84dc83422513c59e4fc123d9344c3f": {
         "finished_utc": "2026-10-28T06:22:23Z",
@@ -455795,6 +455889,60 @@
         "started_utc": "2026-10-28T06:14:55Z",
         "task_id": "868b4c4a023d7f96ae3b181e91fbefe2dc416da6c8ebcafc6a19e7e824257c35"
       },
+      "986f74fd0618d24bdeef32f0088089e31b26812d1a0f242d58bdc65094204475": {
+        "finished_utc": "2026-10-28T06:28:40Z",
+        "result": {
+          "avg_download_mbps": 2.4053903195174247,
+          "bitrate_mbps": 0,
+          "channel_key": "青海卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 30.0,
+          "headroom_ratio": 4.621661777455301,
+          "height": 720,
+          "min_download_mbps": 2.3876614400759455,
+          "min_height": 1080,
+          "name": "青海卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 7.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 2.4231191989589043,
+              "downloaded_bytes": 704060,
+              "duration_s": 8.333333,
+              "elapsed_s": 2.324475,
+              "http_status": 206,
+              "stream_mbps": 0.6758976270359052,
+              "total_bytes": 704060,
+              "url": "http://173.208.146.10:88/applive/yss/100069.ts"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 2.3876614400759455,
+              "downloaded_bytes": 744480,
+              "duration_s": 16.666667,
+              "elapsed_s": 2.494424,
+              "http_status": 206,
+              "stream_mbps": 0.35735039285299214,
+              "total_bytes": 744480,
+              "url": "http://173.208.146.10:88/applive/yss/100070.ts"
+            }
+          ],
+          "startup_s": 4.434047,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.5166240099444487,
+          "url": "http://198.204.228.26/live/qhws.m3u8",
+          "url_sha256": "00f88db4a5f458f562f9f1bacbd40517cd7ab5da9ecba7be06c6b6d7e47e6050",
+          "width": 1280
+        },
+        "started_utc": "2026-10-28T06:28:33Z",
+        "task_id": "986f74fd0618d24bdeef32f0088089e31b26812d1a0f242d58bdc65094204475"
+      },
       "9a7d628c2a87abfeff640292f808bfd55c8245ce521f005bd3dacefcb7c764a2": {
         "finished_utc": "2026-10-28T06:25:07Z",
         "result": {
@@ -456281,6 +456429,60 @@
         "started_utc": "2026-10-28T06:13:02Z",
         "task_id": "b7b0d57d921c0e0dbfad8ba021d603d7a7ac07c57deffe914c843cdabfa1035e"
       },
+      "be072e3528b1e17be103bc30186f2986226287ee4d1c2ceab7d5b379f79733aa": {
+        "finished_utc": "2026-10-28T06:28:10Z",
+        "result": {
+          "avg_download_mbps": 5.575918326914702,
+          "bitrate_mbps": 0,
+          "channel_key": "辽宁卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "",
+          "fps": 50.0,
+          "headroom_ratio": 1.4420772626493936,
+          "height": 1080,
+          "min_download_mbps": 5.094275216064387,
+          "min_height": 1080,
+          "name": "辽宁卫视",
+          "observed_status": "GOOD",
+          "probe_runtime_s": 9.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 5.094275216064387,
+              "downloaded_bytes": 2097152,
+              "duration_s": 10.0,
+              "elapsed_s": 3.293347,
+              "http_status": 206,
+              "stream_mbps": 3.4092672000000004,
+              "total_bytes": 4261584,
+              "url": "http://69.30.196.146:82/live/lnws/segment_56993.ts"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 6.057561437765017,
+              "downloaded_bytes": 2097152,
+              "duration_s": 10.0,
+              "elapsed_s": 2.769632,
+              "http_status": 206,
+              "stream_mbps": 3.6559232,
+              "total_bytes": 4569904,
+              "url": "http://69.30.196.146:82/live/lnws/segment_56994.ts"
+            }
+          ],
+          "startup_s": 6.1243099999999995,
+          "status": "UNKNOWN",
+          "stream_mbps": 3.5325952000000003,
+          "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=lnwshd",
+          "url_sha256": "23262c056ad97c0c16433d6621a0d15042cf9159ccf1d25911512a51f80dae92",
+          "width": 1920
+        },
+        "started_utc": "2026-10-28T06:28:01Z",
+        "task_id": "be072e3528b1e17be103bc30186f2986226287ee4d1c2ceab7d5b379f79733aa"
+      },
       "c1988ab73895e9eafb1a26aacfbd769305035faa9b1a374ac2858bfefeaf871d": {
         "finished_utc": "2026-10-28T06:10:29Z",
         "result": {
@@ -456334,6 +456536,60 @@
         },
         "started_utc": "2026-10-28T06:10:28Z",
         "task_id": "c1988ab73895e9eafb1a26aacfbd769305035faa9b1a374ac2858bfefeaf871d"
+      },
+      "c904151244682b3cc108504497b814fbbb69100f9e267f38c79719540af2d1e1": {
+        "finished_utc": "2026-10-28T06:28:20Z",
+        "result": {
+          "avg_download_mbps": 1.885012906779484,
+          "bitrate_mbps": 0,
+          "channel_key": "重庆卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 30.0,
+          "headroom_ratio": 2.060353744589142,
+          "height": 720,
+          "min_download_mbps": 1.4290297673747028,
+          "min_height": 1080,
+          "name": "重庆卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 8.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 2.3409960461842654,
+              "downloaded_bytes": 861040,
+              "duration_s": 8.333333,
+              "elapsed_s": 2.942474,
+              "http_status": 206,
+              "stream_mbps": 0.8265984330639373,
+              "total_bytes": 861040,
+              "url": "http://204.12.234.154:88/applive/107/100068.ts"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 1.4290297673747028,
+              "downloaded_bytes": 583928,
+              "duration_s": 8.333333,
+              "elapsed_s": 3.268948,
+              "http_status": 206,
+              "stream_mbps": 0.5605709024228361,
+              "total_bytes": 583928,
+              "url": "http://204.12.234.154:88/applive/107/100069.ts"
+            }
+          ],
+          "startup_s": 5.130108,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.6935846677433868,
+          "url": "http://107.150.60.122/live/cqwshd.m3u8",
+          "url_sha256": "5a86e1a99189baa1310f0e3ce474ef4716c9e031e6cd37e5aebd1cc6bf1a3bdc",
+          "width": 1280
+        },
+        "started_utc": "2026-10-28T06:28:12Z",
+        "task_id": "c904151244682b3cc108504497b814fbbb69100f9e267f38c79719540af2d1e1"
       },
       "c9d8258d3ac09e0506ee43e288243732b266d82ab5d226b17a192c90a82d4c86": {
         "finished_utc": "2026-10-28T06:16:04Z",
@@ -456851,6 +457107,22 @@
         "url": "http://74.91.26.218:82/live/dfwshd.m3u8",
         "viewer_accepted_quality": false
       },
+      "1b2caf9cf367fc7a1629ef628a569d2a74d65742439e349beb5c5c8a626f3408": {
+        "attempt": 1,
+        "candidate_id": "1b4ea408c4f2540f9212293058a7bea3b9beecb82a436b25e4792fe4254970c5",
+        "channel_key": "陕西卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "陕西卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "1b2caf9cf367fc7a1629ef628a569d2a74d65742439e349beb5c5c8a626f3408",
+        "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=snwshd",
+        "viewer_accepted_quality": false
+      },
       "2400c1df65890f397bcb4537a6926d261c84dc83422513c59e4fc123d9344c3f": {
         "attempt": 1,
         "candidate_id": "fa5582c301fb860a491bd0b0306076c2dc20a6b6c5363ad8762e88f735a81e61",
@@ -457251,6 +457523,22 @@
         "url": "http://219.147.245.238:25480/newlive/live/hls/7/live.m3u8",
         "viewer_accepted_quality": false
       },
+      "986f74fd0618d24bdeef32f0088089e31b26812d1a0f242d58bdc65094204475": {
+        "attempt": 1,
+        "candidate_id": "c5dc3209620b25dc31b0a52b557b48fecf63806caa400adba9d24735dadb14e9",
+        "channel_key": "青海卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "青海卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "986f74fd0618d24bdeef32f0088089e31b26812d1a0f242d58bdc65094204475",
+        "url": "http://198.204.228.26/live/qhws.m3u8",
+        "viewer_accepted_quality": false
+      },
       "9a7d628c2a87abfeff640292f808bfd55c8245ce521f005bd3dacefcb7c764a2": {
         "attempt": 1,
         "candidate_id": "0194e1c15f8789fde3152842613a71bec5ee1790e97442dcd6e89b096e7fbce8",
@@ -457395,6 +457683,22 @@
         "url": "http://222.223.41.27:8888/hls/14/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "be072e3528b1e17be103bc30186f2986226287ee4d1c2ceab7d5b379f79733aa": {
+        "attempt": 1,
+        "candidate_id": "dd5fa6e477e71c0827fd01ed218dfc804f2bb5d2b720f8739a54b0d601a326c7",
+        "channel_key": "辽宁卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "辽宁卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "be072e3528b1e17be103bc30186f2986226287ee4d1c2ceab7d5b379f79733aa",
+        "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=lnwshd",
+        "viewer_accepted_quality": true
+      },
       "c1988ab73895e9eafb1a26aacfbd769305035faa9b1a374ac2858bfefeaf871d": {
         "attempt": 1,
         "candidate_id": "00ed6c81279e8630c0feea19aed78778ebed85eff753b9f9173382ac58d3a5d9",
@@ -457409,6 +457713,22 @@
         "sample_bytes": 2097152,
         "task_id": "c1988ab73895e9eafb1a26aacfbd769305035faa9b1a374ac2858bfefeaf871d",
         "url": "http://219.147.245.238:25480/newlive/live/hls/3/live.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "c904151244682b3cc108504497b814fbbb69100f9e267f38c79719540af2d1e1": {
+        "attempt": 1,
+        "candidate_id": "beb24648830fad5230a4fc0e451833b28b69c67a4abefe3f6026ca101d33bad8",
+        "channel_key": "重庆卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "重庆卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "c904151244682b3cc108504497b814fbbb69100f9e267f38c79719540af2d1e1",
+        "url": "http://107.150.60.122/live/cqwshd.m3u8",
         "viewer_accepted_quality": false
       },
       "c9d8258d3ac09e0506ee43e288243732b266d82ab5d226b17a192c90a82d4c86": {
@@ -457570,13 +457890,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-10-28T06:27:01Z",
-    "received_utc": "2026-10-28T06:27:39Z",
+    "measured_utc": "2026-10-28T06:28:40Z",
+    "received_utc": "2026-10-28T06:29:14Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 16778520,
-      "runtime_s": 30.0
+      "downloaded_bytes": 11282868,
+      "runtime_s": 39.0
     }
   },
   "last_report": {
@@ -471879,19 +472199,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 1854485860,
+    "bytes": 1865768728,
     "candidates": 500,
     "day": "20261028",
     "discovery_bytes": 1348649236,
     "discovery_seconds": 4606.0,
     "reservations": {
-      "f0ec6e5330bb980fabbca181031f9224d2a9121bfd4e58a63774487152a509f5": {
+      "11b4fd4b3979b23f511ae61e17d168ac8b3e1a83f299a00d6c42290b6c4a5378": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 5623.0
+    "seconds": 5662.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -477711,6 +478031,7 @@
     "f0d6dd642cad591c9ecbdc9986089b90d5460218a51eb8d86d694c28d6d5629c": "0ac89552d368a6cbe27cf000a76fd3ef746c74ee5de6e87804d8866e93e6872b",
     "f0db31b6423c827627ea38519d455da8a198f0810f9f954fc0ef33e7f2325569": "d5e8908123a6713754f1023449339b9db11262b8d99c7db3be3dffeb646194e7",
     "f0eaa524de94421ee135f84736aee5c49afeac9c57ccf3624ee703eba0411573": "96e188f7e8fd3a73bea87c2407b565c3f33687e9b1ef86a5b0fe5384565b57c4",
+    "f0ec6e5330bb980fabbca181031f9224d2a9121bfd4e58a63774487152a509f5": "eb7c941796cfcade29f0aaee71114fca7c2fca8a477f68b5db33efe7e4ea14fe",
     "f0ee9fddd13b7834c77eb2ff93d5e817b2923fb5ab5cde34a4827b365bb0ee21": "7d95da7dd8572af2ceec68d45d22e9bcece056becb00b9f94b06baf8c0f7075b",
     "f0f18b8810acac555d94e31c6dff796bc7d19224ee3036b7cba036a1816419dd": "33d79a1716ed2202ad87897bc6d13bb767342c115722ec43d17aa58b0a79dc1b",
     "f0f3108e9d15aea46818a9a962254a383222071f8ffc6f9cee050137657d4368": "0339bd69cac932c9bd30bb01358baa8143846cb71669f9d3bd4cf15127bf1ace",
