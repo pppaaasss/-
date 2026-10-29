@@ -27,6 +27,17 @@ notify() {
     --connect-timeout 5 --max-time 10 --header 'Content-Type: application/json' \
     --data '{"event_type":"home-observations-ready"}' "$api/dispatches" -o /dev/null || true
 }
+# Retry a lost cloud wake-up without repeating any stream measurement/upload.
+# Cron may be delayed for hours; one successful notification is not an ACK.
+retry_cloud_ack() {
+  ack_now=$(date +%s)
+  ack_last=$(cat "$data/last-cloud-notify" 2>/dev/null || printf '0')
+  case "$ack_last" in *[!0-9]*|'') ack_last=0;; esac
+  if [ "$ack_now" -ge "$((ack_last + 300))" ]; then
+    printf '%s\n' "$ack_now" > "$data/last-cloud-notify"
+    notify
+  fi
+}
 upload() {
   # An interrupted batch keeps only atomic, completed per-route checkpoints.
   if ! tail -n 1 "$data/outbox.native" | grep -q '^END'; then
@@ -76,8 +87,13 @@ for numeric in "$created" "$expires" "$seconds" "$release"; do
 done
 [ "$seconds" -le 240 ] && [ "$seconds" -gt 0 ] || exit 2
 now=$(date +%s)
+if [ "$(cat "$data/last-uploaded" 2>/dev/null || true)" = "$batch" ]; then
+  # An expired task can still contain durably uploaded results awaiting ingestion.
+  retry_cloud_ack
+  status WAITING_CLOUD_ACK
+  exit 0
+fi
 if [ "$now" -lt "$created" ] || [ "$now" -ge "$expires" ]; then status WAITING_WINDOW; exit 0; fi
-[ "$(cat "$data/last-uploaded" 2>/dev/null || true)" != "$batch" ] || { status WAITING_CLOUD_ACK; exit 0; }
 sed '$d' "$work/task" > "$work/task-body"
 check=$("$native" sha256 "$work/task-body")
 IFS="$tab" read -r check_tag expected <<EOF
