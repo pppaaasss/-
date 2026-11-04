@@ -420452,6 +420452,61 @@
         }
       ]
     },
+    "c7ff87ec60559570919a59cf493f42f1b75e6fc476b483626613412b127a9d7d": {
+      "batch_id": "c7ff87ec60559570919a59cf493f42f1b75e6fc476b483626613412b127a9d7d",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-04T02:24:31Z",
+      "cycle_id": "5a683985ce02ea2f0cc88bdff623c27c525da563dc7308f32d67589e7b058aef",
+      "expires_utc": "2026-11-04T02:54:31Z",
+      "feedback_sha256": "0c4392ee81845ba90e123b1f6305d29715a32c051c76547468ff485109cd853f",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "9fcf182d852722b235a738cd7b6bb34a89d2873ebd3d27e93e8af10c834712ff",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "c32e26e569061eaeffb980fc32ef455b494070b2fc9d8afdc1553082703d5dd3",
+          "channel_key": "cctv4k",
+          "metadata": true,
+          "min_height": 2160,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4K",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "d8d9fe59eaed747a2f4ed62a75442be16f94cf1f08ab6bc70b816b5933c6ff39",
+          "url": "https://live-play-hls.cctvnews.cctv.com/CCTVChannel/channel_cctv4k_mbd.m3u8?auth_key=1788804000-1-b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c-838db07b76af778ded3299641f16f858&yid=b59134a2ead43d7f783f943c8f535e7bb80c5169575b2e8efcd5b3ddea21b41c",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "c96a86530844eb02de7f4e9463365ee2dc3c08022ff263ea8ddf64fe6d4452f4",
+          "channel_key": "cctv5",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-5",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "4e33ff621eec7ae69bfc8cbaf80130cd293096f624a2eae03dce0aeceea45421",
+          "url": "http://51.75.118.151:20299/cctv5p.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "c812f3f434c9f9a2981c2637793a9989901d6f9b182729630b15351f97d138d6": {
       "batch_id": "c812f3f434c9f9a2981c2637793a9989901d6f9b182729630b15351f97d138d6",
       "candidate_mode": "drain_queue",
@@ -535317,7 +535372,8 @@
       "ea4aefdeaf4ba9f259151cf4d10db99eec863fa3bbd00d56552fadbe91da7d04",
       "5a7b3dd2e4e20f9f8fff1a9dcd60ecdad4d251f7c08367f7d71ec22da216322b",
       "decc7c91184a5a9d0bd033690463ddad6329ee53dca3caa89c903c7e007fa958",
-      "4db2920c9711b32722679cd7af3ec24bba5543fd402fe1b3cbc13e86e19c00fd"
+      "4db2920c9711b32722679cd7af3ec24bba5543fd402fe1b3cbc13e86e19c00fd",
+      "c7ff87ec60559570919a59cf493f42f1b75e6fc476b483626613412b127a9d7d"
     ],
     "binding": {
       "channel_count": 53,
@@ -535490,7 +535546,7 @@
     "id": "5a683985ce02ea2f0cc88bdff623c27c525da563dc7308f32d67589e7b058aef",
     "kind": "primary-0200",
     "manifest_sha": "378fc99ff82a64bdaf787742a1096418eb79716d782696a64c1e58dd319f131a",
-    "outstanding": "4db2920c9711b32722679cd7af3ec24bba5543fd402fe1b3cbc13e86e19c00fd",
+    "outstanding": "c7ff87ec60559570919a59cf493f42f1b75e6fc476b483626613412b127a9d7d",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -543247,6 +543303,35 @@
         },
         "started_utc": "2026-11-04T00:02:03Z",
         "task_id": "597a09921523677b0d05d77dad120f0bc3d458f5083e34fd3e954d1f6c057248"
+      },
+      "59d4a5eb2be9a9dc4843d9a0dd07ae81342f2c5b63d9b8cc77c8e8e8b6849a74": {
+        "finished_utc": "2026-11-04T02:24:01Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv9",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-9",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 0.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000",
+          "url_sha256": "698a164390d2e47cf345b3cca097911b93239a56eb61c22df7c837fe10da7013",
+          "width": 0
+        },
+        "started_utc": "2026-11-04T02:24:01Z",
+        "task_id": "59d4a5eb2be9a9dc4843d9a0dd07ae81342f2c5b63d9b8cc77c8e8e8b6849a74"
       },
       "5a1f7e020f4978b234e9f0194bd6f86245705f84270de1485609e9f883468045": {
         "finished_utc": "2026-11-04T02:09:40Z",
@@ -560543,6 +560628,23 @@
         "url": "http://110.72.70.35:808/hls/137/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "59d4a5eb2be9a9dc4843d9a0dd07ae81342f2c5b63d9b8cc77c8e8e8b6849a74": {
+        "attempt": 1,
+        "candidate_id": "68f28ffa0eb99db5f21d68adfebe00982d3a072d0b0a70940947ba13ca288c41",
+        "channel_key": "cctv9",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-9",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "59d4a5eb2be9a9dc4843d9a0dd07ae81342f2c5b63d9b8cc77c8e8e8b6849a74",
+        "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000",
+        "viewer_accepted_quality": false
+      },
       "5a1f7e020f4978b234e9f0194bd6f86245705f84270de1485609e9f883468045": {
         "attempt": 1,
         "candidate_id": "e6d34df244002653c3275805e967e889b5184eae215914673b113c5f44d7df2b",
@@ -566667,13 +566769,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-04T02:22:52Z",
-    "received_utc": "2026-11-04T02:23:26Z",
-    "results": 4,
+    "measured_utc": "2026-11-04T02:24:01Z",
+    "received_utc": "2026-11-04T02:24:31Z",
+    "results": 1,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 153,
-      "runtime_s": 21.0
+      "downloaded_bytes": 0,
+      "runtime_s": 0.0
     }
   },
   "last_report": {
@@ -568304,12 +568406,12 @@
     "bytes": 1182456092,
     "candidates": 500,
     "day": "20261104",
-    "discovery_bytes": 933556188,
-    "discovery_seconds": 2544.0,
+    "discovery_bytes": 866447324,
+    "discovery_seconds": 2304.0,
     "reservations": {
-      "4db2920c9711b32722679cd7af3ec24bba5543fd402fe1b3cbc13e86e19c00fd": {
+      "c7ff87ec60559570919a59cf493f42f1b75e6fc476b483626613412b127a9d7d": {
         "bytes": 67108864,
-        "candidates": 1,
+        "candidates": 0,
         "seconds": 240
       }
     },
@@ -571080,6 +571182,7 @@
     "4d97467a264a9147d77fd557fa1d7005d0a4328721cc204a4df9459aab07d200": "d998bdc13500c96057ac7d61cdc2147bd4d9a9748695889f05907181e76bff2c",
     "4d9d50d43bf2ef2e117bccf2c46ca07d98e4a14e9ec92e579fb4494b2d4311b5": "4d17027f71fe30ec9b0dd2b687ffc955122853f1e645861f154e7e2dfb005012",
     "4da0560aefd9a37fa6b0bef29cf19602c4194d5e3c372c56a243929e417bcd55": "5b4d2f1dfb4e0867506f1e7ee071f81ab9f4d8448a1b3c9b1b5f361ad885a4fb",
+    "4db2920c9711b32722679cd7af3ec24bba5543fd402fe1b3cbc13e86e19c00fd": "ac92bd05ac186c218bab171c1bea2bd84238545c165aebf677c058ed9a1fe11e",
     "4dc02250ff26978a0c70d462bcd08aaf32746a2a1f8bb741520a1805c5f385bf": "1f51ea559d04e814965341f7cf70c6af270ab3931568434fcebc914471991135",
     "4ddc1701ece25b18ce39b308ac50eb3bf37337eaefb55fb88745efd623e85366": "08cd989c737b6a1136db0b38efa002abf6dd24048ecae27c81a3d9b35933eee9",
     "4ddeaeab0878f75091d2b53a70e81950ef1751511a313fc1ce8aa1c42e0700da": "3481ece24170fce0da45343ec2ac4b6fbb5f54649f35331535e49b17a20897b6",
@@ -1027312,52 +1027415,82 @@
       "unknown_attempts": 1
     },
     "68f28ffa0eb99db5f21d68adfebe00982d3a072d0b0a70940947ba13ca288c41": {
-      "last_checked_utc": "2026-09-29T22:20:43Z",
+      "last_checked_utc": "2026-11-04T02:24:01Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "last_checked_utc": "2026-09-29T22:20:43Z",
+          "result": {
+            "avg_download_mbps": 8.74043963097896,
+            "bitrate_mbps": 0.0,
+            "channel_key": "cctv9",
+            "codec": "",
+            "deep_checked": false,
+            "error": "quality_metadata_unavailable",
+            "fps": 0.0,
+            "headroom_ratio": 0.0,
+            "height": 0,
+            "min_download_mbps": 8.466324626912744,
+            "min_height": 1080,
+            "name": "CCTV-9",
+            "observed_status": "UNKNOWN",
+            "probe_runtime_s": 12.0,
+            "sample_count": 2,
+            "segment_samples": [
+              {
+                "complete": false,
+                "curl_code": 0,
+                "download_mbps": 8.466324626912744,
+                "downloaded_bytes": 6291456,
+                "duration_s": 0.0,
+                "elapsed_s": 5.944923,
+                "http_status": 200,
+                "stream_mbps": 0,
+                "total_bytes": 0,
+                "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000"
+              },
+              {
+                "complete": false,
+                "curl_code": 0,
+                "download_mbps": 9.014554635045176,
+                "downloaded_bytes": 6291456,
+                "duration_s": 0.0,
+                "elapsed_s": 5.583376,
+                "http_status": 200,
+                "stream_mbps": 0,
+                "total_bytes": 0,
+                "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000"
+              }
+            ],
+            "startup_s": 6.066611,
+            "status": "UNKNOWN",
+            "stream_mbps": 0,
+            "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000",
+            "url_sha256": "698a164390d2e47cf345b3cca097911b93239a56eb61c22df7c837fe10da7013",
+            "width": 0
+          }
+        }
+      ],
       "result": {
-        "avg_download_mbps": 8.74043963097896,
+        "avg_download_mbps": 0.0,
         "bitrate_mbps": 0.0,
         "channel_key": "cctv9",
         "codec": "",
         "deep_checked": false,
-        "error": "quality_metadata_unavailable",
+        "error": "native_transfer_error",
         "fps": 0.0,
         "headroom_ratio": 0.0,
         "height": 0,
-        "min_download_mbps": 8.466324626912744,
+        "min_download_mbps": 0.0,
         "min_height": 1080,
         "name": "CCTV-9",
-        "observed_status": "UNKNOWN",
-        "probe_runtime_s": 12.0,
-        "sample_count": 2,
-        "segment_samples": [
-          {
-            "complete": false,
-            "curl_code": 0,
-            "download_mbps": 8.466324626912744,
-            "downloaded_bytes": 6291456,
-            "duration_s": 0.0,
-            "elapsed_s": 5.944923,
-            "http_status": 200,
-            "stream_mbps": 0,
-            "total_bytes": 0,
-            "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000"
-          },
-          {
-            "complete": false,
-            "curl_code": 0,
-            "download_mbps": 9.014554635045176,
-            "downloaded_bytes": 6291456,
-            "duration_s": 0.0,
-            "elapsed_s": 5.583376,
-            "http_status": 200,
-            "stream_mbps": 0,
-            "total_bytes": 0,
-            "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000"
-          }
-        ],
-        "startup_s": 6.066611,
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 0.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
         "status": "UNKNOWN",
-        "stream_mbps": 0,
+        "stream_mbps": 0.0,
         "url": "http://118.248.155.220:8889/udp/239.76.253.159:9000",
         "url_sha256": "698a164390d2e47cf345b3cca097911b93239a56eb61c22df7c837fe10da7013",
         "width": 0
