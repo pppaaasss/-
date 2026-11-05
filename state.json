@@ -553648,7 +553648,6 @@
     }
   },
   "completed_slots": [
-    "20261010-primary-0200",
     "20261011-primary-0200",
     "20261012-primary-0200",
     "20261013-primary-0200",
@@ -553689,7 +553688,8 @@
     "20261104-primary-0200",
     "20261104-peak-2000",
     "20261105-primary-0200",
-    "20261105-recheck-1300"
+    "20261105-recheck-1300",
+    "20261105-peak-2000"
   ],
   "cycle": {
     "batch_ids": [
@@ -553885,7 +553885,6 @@
     "id": "6f105d9616f7b0e0677b408bb4deabf77b5b14fb7e0511d4505403d6168daa6a",
     "kind": "peak-2000",
     "manifest_sha": "dbfcc618b1bcf1a8065bd91d874ecbdfd6c65a33cdb93c8d41b805d44f03fdbd",
-    "outstanding": "9fc409460718f329467e3632c102cf7c80969ded5bbea9655ef9ef520a229cb1",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -556841,6 +556840,60 @@
         "started_utc": "2026-11-05T13:31:05Z",
         "task_id": "bfee278baf6e918007b238a69526096a94053fda66c539a7b3db67b0fdc73511"
       },
+      "c16ffb3859c78c908131bda83e1ef5d6965780a6aa6d3325ffea610f49feb075": {
+        "finished_utc": "2026-11-05T13:49:13Z",
+        "result": {
+          "avg_download_mbps": 33.8313136729422,
+          "bitrate_mbps": 0.0,
+          "channel_key": "西藏卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "quality_metadata_unavailable",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 31.75464237923,
+          "min_height": 1080,
+          "name": "西藏卫视",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 35.907984966654396,
+              "downloaded_bytes": 2097152,
+              "duration_s": 5.0,
+              "elapsed_s": 0.467228,
+              "http_status": 206,
+              "stream_mbps": 8.8666816,
+              "total_bytes": 5541676,
+              "url": "http://222.71.55.147:9901/tsfile/live/live_111_1_1785525.ts?key=txiptv&key2=1785525"
+            },
+            {
+              "complete": false,
+              "curl_code": 0,
+              "download_mbps": 31.75464237923,
+              "downloaded_bytes": 2097152,
+              "duration_s": 5.0,
+              "elapsed_s": 0.528339,
+              "http_status": 206,
+              "stream_mbps": 9.0940864,
+              "total_bytes": 5683804,
+              "url": "http://222.71.55.147:9901/tsfile/live/live_111_1_1785526.ts?key=txiptv&key2=1785526"
+            }
+          ],
+          "startup_s": 0.5273329999999999,
+          "status": "UNKNOWN",
+          "stream_mbps": 8.980384,
+          "url": "http://222.71.55.147:9901/tsfile/live/0111_1.m3u8?key=txiptv&playlive=0&authid=0",
+          "url_sha256": "0ca11e24cf7294c2e0849e5cb8b96737e90d8df54d7361ceeb1ffd379df0c382",
+          "width": 0
+        },
+        "started_utc": "2026-11-05T13:49:12Z",
+        "task_id": "c16ffb3859c78c908131bda83e1ef5d6965780a6aa6d3325ffea610f49feb075"
+      },
       "c28e6455c1a704d9f8f077509ce29cc4f0842f12c8ee36318ad4dd9fe92b0b4a": {
         "finished_utc": "2026-11-05T13:46:09Z",
         "result": {
@@ -557517,6 +557570,60 @@
         },
         "started_utc": "2026-11-05T13:38:50Z",
         "task_id": "dac085c00b5e808d3b63a0db1ac9f4b86daee726b92f68c2ab582bb1b584e773"
+      },
+      "e27c27680f3427314a4db47147241d2f8c2f93ea1faeec800c4dd4b0cb7a5073": {
+        "finished_utc": "2026-11-05T13:49:09Z",
+        "result": {
+          "avg_download_mbps": 1.1299769553482844,
+          "bitrate_mbps": 0,
+          "channel_key": "海峡卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 2.1071070029284944,
+          "height": 360,
+          "min_download_mbps": 0.779595877371496,
+          "min_height": 1080,
+          "name": "海峡卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 7.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 1.4803580333250725,
+              "downloaded_bytes": 368856,
+              "duration_s": 8.0,
+              "elapsed_s": 1.993334,
+              "http_status": 206,
+              "stream_mbps": 0.368856,
+              "total_bytes": 368856,
+              "url": "https://10.fast.hidns.vip/163189/hxws/video/15252036.jpeg"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 0.779595877371496,
+              "downloaded_bytes": 185556,
+              "duration_s": 4.0,
+              "elapsed_s": 1.904125,
+              "http_status": 206,
+              "stream_mbps": 0.371112,
+              "total_bytes": 185556,
+              "url": "https://10.fast.hidns.vip/163189/hxws/video/15252037.jpeg"
+            }
+          ],
+          "startup_s": 4.416322,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.369984,
+          "url": "https://10.fast.hidns.vip/163189/hxws/",
+          "url_sha256": "0df0f5c1396702c926540caa0b564d89307ff8f94217ae0bcb10000fc5de1579",
+          "width": 640
+        },
+        "started_utc": "2026-11-05T13:49:02Z",
+        "task_id": "e27c27680f3427314a4db47147241d2f8c2f93ea1faeec800c4dd4b0cb7a5073"
       },
       "e29b96991554dc19d1715ae15453160f8d02d71b5eb653a984cc468d31e49b8f": {
         "finished_utc": "2026-11-05T13:31:03Z",
@@ -558672,6 +558779,22 @@
         "url": "https://liveout.xntv.tv/a65jur/96iln2.m3u8",
         "viewer_accepted_quality": false
       },
+      "c16ffb3859c78c908131bda83e1ef5d6965780a6aa6d3325ffea610f49feb075": {
+        "attempt": 2,
+        "candidate_id": "a1545b378eb306262b66363ec1ca0e1fafcf99b645abc69f268fd8caee39452f",
+        "channel_key": "西藏卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "西藏卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "c16ffb3859c78c908131bda83e1ef5d6965780a6aa6d3325ffea610f49feb075",
+        "url": "http://222.71.55.147:9901/tsfile/live/0111_1.m3u8?key=txiptv&playlive=0&authid=0",
+        "viewer_accepted_quality": false
+      },
       "c28e6455c1a704d9f8f077509ce29cc4f0842f12c8ee36318ad4dd9fe92b0b4a": {
         "attempt": 2,
         "candidate_id": "30a5485555c17e48f747cbb94e68020f330cfcfd14f637d1baa1c93b34cd0645",
@@ -558878,6 +559001,22 @@
         "sample_bytes": 2097152,
         "task_id": "dac085c00b5e808d3b63a0db1ac9f4b86daee726b92f68c2ab582bb1b584e773",
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=snwshd",
+        "viewer_accepted_quality": false
+      },
+      "e27c27680f3427314a4db47147241d2f8c2f93ea1faeec800c4dd4b0cb7a5073": {
+        "attempt": 2,
+        "candidate_id": "39f285ab7f8e4e7efc741c42c6a56d5dbff69752f85bbf0dc83db520d5c291ba",
+        "channel_key": "海峡卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "海峡卫视",
+        "role": "current",
+        "sample_bytes": 2097152,
+        "task_id": "e27c27680f3427314a4db47147241d2f8c2f93ea1faeec800c4dd4b0cb7a5073",
+        "url": "https://10.fast.hidns.vip/163189/hxws/",
         "viewer_accepted_quality": false
       },
       "e29b96991554dc19d1715ae15453160f8d02d71b5eb653a984cc468d31e49b8f": {
@@ -559367,43 +559506,43 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-05T13:47:43Z",
-    "received_utc": "2026-11-05T13:48:38Z",
-    "results": 4,
+    "measured_utc": "2026-11-05T13:49:13Z",
+    "received_utc": "2026-11-05T13:50:05Z",
+    "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 12583785,
-      "runtime_s": 10.0
+      "downloaded_bytes": 4749717,
+      "runtime_s": 12.0
     }
   },
   "last_report": {
     "actionable": true,
     "aggregation": {
       "batch_ids": [
-        "05b5174fb4df2726931947a248836be36f775be766902c8c0f5a60d8047e0297",
-        "14925fb0b9e6e02585c0ccf56db8ab3c66b35ec98b5aee59101844ebadc2c8e9",
-        "1a0bb2b3092528d6d01cb5603d664ad9d3267d857e9f2ec0dc30d1ca10989f4f",
-        "2b11ce8b877383f6fd45b315869af04e867d205830b8140590076abc982d8ab0",
-        "2b22ef3f4bd30367c7bf5b9519bddaaf7803f203f140e38f77c0417284334a06",
-        "2e4d487f30aa173ef2c52ff9bc00e18d6b90d603a9e02d47e8ca4c6bd05326d4",
-        "3692e01dfaad51eac4cc658e19253ed3322f2808c4401418e35e7b05d96e30a4",
-        "423f79ea930591ff005b1a1e5a39af7819370ee97a5e5e3c78fc6540fe7a5af2",
-        "46fb6c78db54ffa8c9e143d82081c5e0246ce114f3e25e568db37704949c940b",
-        "69a82ccfdc1f7cad59bca8e1b64b91566cdc2a0fdd2344feb7df4ff1e62b6d9a",
-        "75d9f4337c43a7802565ae8303a60a842612596a90c2e67df1273071f4b94b93",
-        "7de6bc1458aaf51c037df6f045f4532d0c62e95ede959f7ee58459cc039fb04f",
-        "9186227f4e679de8f39fcbbbb57802e879c83972b2284ab9c8a97d0573370443",
-        "abe950a0aa9bcc276eb5e360edd3c23cfdafcd184b8ed2c3a9d35f3b313a902c",
-        "b02132c3abfb4531b787733e83706605ad0d9e6faaba2cd926dfa5e973fa59e0",
-        "d8420122ac22489456a372ec0c731ae3c9360199281bf54f78f84c851400ca88",
-        "de140653cb36d8af789f4843cfc300b68f30c29f4f7ad73e6eeb7a2f2205df78",
-        "e12b7215fcfd644e9321475ea7fa63c4cac7bb3297bbfa2b181e90bbb477a795",
-        "e6ac710a77c3bfb613ef07e19dc2cac2486974e92ccf89e34ce6f1c653700d86",
-        "fce3a0b07c08969ae8386ed37db93096c52ba9fbcfa7d75c61cefb5e7cc92e86"
+        "079dbfe2067c0f2bccdbfe3fbf5ad934cb3c8e3d55764ab377a1768e4ded599c",
+        "40e158ba06c40741effd07085a0c8674451c1cadd5ccc739ff7289ca289d96b2",
+        "42bb73c957b92db9fd6533793f127e12b5b7b320d82f69f2b73796e575de563b",
+        "4dabcd75ee71090d4738c4eadb7756dd7a5a8d94ca3e8f92e48ed3c20ce7b5e7",
+        "5b73626f1c7ff2d33b7315056f4e0d2ca499d2b608486f6884bf4dc2407f427e",
+        "5ba2d4ce9065bee035fb5a9a143465f7f03f2f8ad061d3cfc9eabc0f439740c4",
+        "68af0c8b4c7a94f7fb82593f9b71851ea3430014ff5c42c7df635ae3c48db922",
+        "7d052ddc1d49aa83a2b61614f0c84f944262b737a1e4b7aafa9213f8550232a7",
+        "81d5d942115ca26817133f8568f236928fbca86456f6c4b538ea474965caa5b4",
+        "8d64514a48bd09ca58ee6718ceb0634223725b527a59d06d633f3a1c06622523",
+        "96bcca55e9768e84ba5b1d9a7dec0d94e7afae4215234c8aa662a5b72910b76f",
+        "9fc409460718f329467e3632c102cf7c80969ded5bbea9655ef9ef520a229cb1",
+        "a9ce92b124a9a1af829c241f13936da3b7f64656725efa3d3ea80b5dfd35dad8",
+        "bc0364adbdaa971c1c7a3da47561e232698da05b2ed9dd12e0a55364f7e77eae",
+        "c7725f1053b3606d2984b3f951139eea83f0b2c7c3fefad06ffd20ecbaa37861",
+        "ca25e3f66da18883388e4e4a889ca603930af92b467b61486d08e8a07c048622",
+        "ce16f63fda3ab6048db034e1d19768a8128ce677b8d9c3dafde3319df66fce4c",
+        "d6adb99f2d672b9b2ae3f6f2cd310d0dc9538d441fc644a6d6d328b28b503196",
+        "d6b1ae4ec00ada3c2dc7f9d2c4d11d6cd62faa0d06e0dd670876e909045f3095",
+        "f4117424cdccfe040dda0340e2a1364fedb55230c55b8255c9b446c26a6e368e"
       ],
-      "cycle_id": "97ad7ae30d7efba155a23ff19ba8997e627957867df009c3cd0c0257ff87deca",
-      "newest_measurement_utc": "2026-11-05T06:52:27Z",
-      "oldest_measurement_utc": "2026-11-05T06:23:31Z"
+      "cycle_id": "6f105d9616f7b0e0677b408bb4deabf77b5b14fb7e0511d4505403d6168daa6a",
+      "newest_measurement_utc": "2026-11-05T13:49:13Z",
+      "oldest_measurement_utc": "2026-11-05T13:19:32Z"
     },
     "baseline": {
       "github_reachable": true,
@@ -559411,134 +559550,29 @@
       "mass_failure_circuit_breaker": false,
       "route_verified": true
     },
-    "candidate_results": [
-      {
-        "candidate_id": "c96a86530844eb02de7f4e9463365ee2dc3c08022ff263ea8ddf64fe6d4452f4",
-        "channel_key": "cctv5",
-        "error": "",
-        "expires_utc": "2026-11-05T14:25:04Z",
-        "last_verified_utc": "2026-11-04T02:25:04Z",
-        "purpose": "primary-cache",
-        "qualification": "QUALIFIED",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://51.75.118.151:20299/cctv5p.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 39.50029875551704,
-          "height": 1080,
-          "min_download_mbps": 140.34954527481216,
-          "sample_count": 2,
-          "startup_s": 0.770519,
-          "stream_mbps": 3.5531261711079947,
-          "width": 1920
-        },
-        "verified_run_kind": "primary-0200"
-      },
-      {
-        "candidate_id": "bdd3006074cb55a939a48f636ce69e076209450c4d7f377504d6de31c8d20571",
-        "channel_key": "cctv5plus",
-        "error": "",
-        "expires_utc": "2026-11-05T14:26:03Z",
-        "last_verified_utc": "2026-11-04T02:26:03Z",
-        "purpose": "primary-cache",
-        "qualification": "QUALIFIED",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://101.42.10.147:226/cct/ys.php?id=cctv5p",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 13.032178882624363,
-          "height": 1080,
-          "min_download_mbps": 62.18120454343599,
-          "sample_count": 2,
-          "startup_s": 0.56215,
-          "stream_mbps": 4.771359041605958,
-          "width": 1920
-        },
-        "verified_run_kind": "primary-0200"
-      },
-      {
-        "candidate_id": "62bec4fdd4ede87f3cf140e4e9f362e687a61420c7d7affdfa8a3a6d41dd02bc",
-        "channel_key": "东南卫视",
-        "error": "",
-        "expires_utc": "2026-11-06T09:51:16Z",
-        "last_verified_utc": "2026-11-04T21:51:16Z",
-        "purpose": "primary-cache",
-        "qualification": "QUALIFIED",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://183.250.156.180:9999/newlive/live/hls/20/live.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.139127045422465,
-          "height": 1080,
-          "min_download_mbps": 9.947219603029406,
-          "sample_count": 2,
-          "startup_s": 2.461511,
-          "stream_mbps": 8.732318,
-          "width": 1920
-        },
-        "verified_run_kind": "primary-0200"
-      },
-      {
-        "candidate_id": "a1d870581b51d6e1df30539dce600e820829d7dbc82f69ed4ead8adc21e2773c",
-        "channel_key": "山西卫视",
-        "error": "",
-        "expires_utc": "2026-11-05T12:27:28Z",
-        "last_verified_utc": "2026-11-04T00:27:28Z",
-        "purpose": "primary-cache",
-        "qualification": "QUALIFIED",
-        "request_options": "",
-        "switch_reverified": false,
-        "url": "http://192.151.150.154/live/sxwshd.m3u8",
-        "verification": {
-          "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.1308125953219048,
-          "height": 1080,
-          "min_download_mbps": 3.7229807370556345,
-          "sample_count": 2,
-          "startup_s": 9.922921,
-          "stream_mbps": 3.292305685714285,
-          "width": 1920
-        },
-        "verified_run_kind": "primary-0200"
-      }
-    ],
+    "candidate_results": [],
     "current_results": [
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "cctv1",
-        "error": "",
-        "failure_confirmed": false,
+        "error": "home_quality_threshold",
+        "failure_confirmed": true,
         "name": "CCTV-1",
-        "status": "GOOD",
+        "status": "BAD",
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv1hd",
         "url_sha256": "85836eb411678f9414c88099397ce1fd6405f1a5ffac4ed5750b9c7145be5739",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 2.081858741990384,
-          "height": 1080,
-          "min_download_mbps": 6.5492662277383635,
+          "fps": 25.0,
+          "headroom_ratio": 5.817202587834881,
+          "height": 720,
+          "min_download_mbps": 2.3040682934654995,
           "sample_count": 2,
-          "startup_s": 5.101261,
-          "stream_mbps": 3.1458744513457555,
-          "width": 1920
+          "startup_s": 4.564537,
+          "stream_mbps": 0.39607840000000005,
+          "width": 1280
         }
       },
       {
@@ -559555,12 +559589,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 5.013728231022857,
+          "headroom_ratio": 4.674233121739956,
           "height": 1080,
-          "min_download_mbps": 40.984614783292706,
+          "min_download_mbps": 37.82255617401263,
           "sample_count": 2,
-          "startup_s": 0.474397,
-          "stream_mbps": 8.17447873015873,
+          "startup_s": 0.52556,
+          "stream_mbps": 8.091713696969698,
           "width": 1920
         }
       },
@@ -559578,22 +559612,22 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 3.909394712574499,
+          "headroom_ratio": 2.457681062196763,
           "height": 1080,
-          "min_download_mbps": 40.23969376301171,
+          "min_download_mbps": 25.559906640584533,
           "sample_count": 2,
-          "startup_s": 0.455666,
-          "stream_mbps": 10.2930752,
+          "startup_s": 0.743306,
+          "stream_mbps": 10.4000096,
           "width": 1920
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "cctv12",
-        "error": "",
-        "failure_confirmed": false,
+        "error": "home_quality_threshold",
+        "failure_confirmed": true,
         "name": "CCTV-12",
-        "status": "GOOD",
+        "status": "BAD",
         "url": "http://222.223.41.27:8888/hls/12/index.m3u8",
         "url_sha256": "c2a3dfca42146946b77e8a8491842d8c9e8545e6864036add53897f7424b19a5",
         "verification": {
@@ -559601,35 +559635,35 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 3.56042790342386,
+          "headroom_ratio": 0.6498523649590414,
           "height": 1080,
-          "min_download_mbps": 28.857374815956405,
+          "min_download_mbps": 5.3374920504938,
           "sample_count": 2,
-          "startup_s": 0.475385,
-          "stream_mbps": 8.105029956709956,
+          "startup_s": 3.29265,
+          "stream_mbps": 8.213391746031746,
           "width": 1920
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "cctv13",
-        "error": "",
-        "failure_confirmed": false,
+        "error": "home_quality_threshold",
+        "failure_confirmed": true,
         "name": "CCTV-13",
-        "status": "GOOD",
+        "status": "BAD",
         "url": "http://222.223.41.27:8888/hls/13/index.m3u8",
         "url_sha256": "d2edf175b993705b44696acd692b3d5cca67621fb224fbea72248faa69215dd6",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 2.8859547760124946,
+          "fps": 25.0,
+          "headroom_ratio": 0.9700495432409001,
           "height": 1080,
-          "min_download_mbps": 23.706577476709864,
+          "min_download_mbps": 7.970870612918184,
           "sample_count": 2,
-          "startup_s": 0.445575,
-          "stream_mbps": 8.214466031746031,
+          "startup_s": 2.147672,
+          "stream_mbps": 8.216972698412699,
           "width": 1920
         }
       },
@@ -559646,23 +559680,23 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 2.8222005802643135,
+          "fps": 50.0,
+          "headroom_ratio": 5.942762014898649,
           "height": 1080,
-          "min_download_mbps": 23.263046384062033,
+          "min_download_mbps": 49.16774904461585,
           "sample_count": 2,
-          "startup_s": 0.790396,
-          "stream_mbps": 8.242874920634922,
+          "startup_s": 0.449322,
+          "stream_mbps": 8.273551746031746,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "cctv15",
         "error": "",
         "failure_confirmed": false,
         "name": "CCTV-15",
-        "status": "UNKNOWN",
+        "status": "GOOD",
         "url": "http://222.223.41.27:8888/hls/15/index.m3u8",
         "url_sha256": "48f16f48b64efc93f9d5ea0c424f4d86ffd40a4aae4959bd96ea0e806c097b4a",
         "verification": {
@@ -559670,22 +559704,22 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 4.7976007886051795,
+          "headroom_ratio": 5.955576038067203,
           "height": 1080,
-          "min_download_mbps": 39.47329463775243,
+          "min_download_mbps": 48.82377454689374,
           "sample_count": 2,
-          "startup_s": 0.497953,
-          "stream_mbps": 8.227715555555555,
+          "startup_s": 0.37459,
+          "stream_mbps": 8.19799365079365,
           "width": 1920
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "cctv16",
-        "error": "",
-        "failure_confirmed": false,
+        "error": "home_quality_threshold",
+        "failure_confirmed": true,
         "name": "CCTV-16",
-        "status": "GOOD",
+        "status": "BAD",
         "url": "http://219.147.245.238:25480/newlive/live/hls/17/live.m3u8",
         "url_sha256": "aab7b17f41989ae5ef45135e617d45700c52bdbe53545a85ff39165286dab919",
         "verification": {
@@ -559693,12 +559727,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 1.2096366403975631,
+          "headroom_ratio": 0.6978434325349991,
           "height": 1080,
-          "min_download_mbps": 5.399845058595465,
+          "min_download_mbps": 3.1163957045300377,
           "sample_count": 2,
-          "startup_s": 3.5850940000000002,
-          "stream_mbps": 4.464022399999999,
+          "startup_s": 3.761519,
+          "stream_mbps": 4.465752,
           "width": 1920
         }
       },
@@ -559715,13 +559749,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.9074511826484881,
+          "fps": 25.0,
+          "headroom_ratio": 2.2892903705076435,
           "height": 1080,
-          "min_download_mbps": 6.183384354105041,
+          "min_download_mbps": 7.664479475841691,
           "sample_count": 2,
-          "startup_s": 4.54877,
-          "stream_mbps": 3.2416999241466495,
+          "startup_s": 4.012311,
+          "stream_mbps": 3.347971744686156,
           "width": 1920
         }
       },
@@ -559739,35 +559773,35 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 0.8540868225667994,
+          "headroom_ratio": 0.7285166487613182,
           "height": 1080,
-          "min_download_mbps": 9.064884654785628,
+          "min_download_mbps": 7.560117413055488,
           "sample_count": 2,
-          "startup_s": 1.870071,
-          "stream_mbps": 10.61354,
+          "startup_s": 2.2544180000000003,
+          "stream_mbps": 10.377412,
           "width": 1920
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "cctv3",
-        "error": "",
-        "failure_confirmed": false,
+        "error": "home_quality_threshold",
+        "failure_confirmed": true,
         "name": "CCTV-3",
-        "status": "GOOD",
+        "status": "BAD",
         "url": "http://219.147.245.238:25480/newlive/live/hls/3/live.m3u8",
         "url_sha256": "87f97dc00170118740fbe34a35e04eba0618214de02ca718f330d8802d46d6a6",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 7.808985767663838,
+          "fps": 50.0,
+          "headroom_ratio": 0.2895097997984618,
           "height": 1080,
-          "min_download_mbps": 34.4184733551066,
+          "min_download_mbps": 1.2853679252236092,
           "sample_count": 2,
-          "startup_s": 0.477876,
-          "stream_mbps": 4.4075472,
+          "startup_s": 7.031036,
+          "stream_mbps": 4.439808,
           "width": 1920
         }
       },
@@ -559784,13 +559818,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 2.151067869432302,
+          "fps": 50.0,
+          "headroom_ratio": 1.4073556072638704,
           "height": 1080,
-          "min_download_mbps": 6.65524324229978,
+          "min_download_mbps": 4.619828300014842,
           "sample_count": 2,
-          "startup_s": 4.132523,
-          "stream_mbps": 3.093925271663416,
+          "startup_s": 5.859586999999999,
+          "stream_mbps": 3.2826304000000004,
           "width": 1920
         }
       },
@@ -559807,23 +559841,23 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.8714237719779188,
+          "fps": 25.0,
+          "headroom_ratio": 2.2818129231975917,
           "height": 1080,
-          "min_download_mbps": 5.95570957299564,
+          "min_download_mbps": 8.01237109069427,
           "sample_count": 2,
-          "startup_s": 6.272421,
-          "stream_mbps": 3.1824483915265303,
+          "startup_s": 4.922949,
+          "stream_mbps": 3.5114057814460216,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "cctv5",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "CCTV-5",
-        "status": "BAD",
+        "status": "GOOD",
         "url": "http://120.40.39.246:352/newlive/live/hls/5/live.m3u8",
         "url_sha256": "731843a2bb28a6a3f85021b579505e472170527df00c7bf96a353eca82c471ab",
         "verification": {
@@ -559831,22 +559865,22 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 0.2600013640541965,
+          "headroom_ratio": 2.256623170700114,
           "height": 1080,
-          "min_download_mbps": 2.246653898698465,
+          "min_download_mbps": 19.543956152766373,
           "sample_count": 2,
-          "startup_s": 5.5385480000000005,
-          "stream_mbps": 8.6409312,
+          "startup_s": 0.911068,
+          "stream_mbps": 8.660708799999998,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "cctv5plus",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "CCTV-5+",
-        "status": "BAD",
+        "status": "GOOD",
         "url": "http://120.40.39.246:352/newlive/live/hls/6/live.m3u8",
         "url_sha256": "52d3c7f5a69cf956ff4b313848fdc01b60ab758414765eea1718243d4fa66055",
         "verification": {
@@ -559854,12 +559888,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 0.2852233419118717,
+          "headroom_ratio": 3.0003151733675857,
           "height": 1080,
-          "min_download_mbps": 2.580761949503121,
+          "min_download_mbps": 27.17930789804934,
           "sample_count": 2,
-          "startup_s": 6.919398,
-          "stream_mbps": 9.048214399999999,
+          "startup_s": 0.5150399999999999,
+          "stream_mbps": 9.058817600000001,
           "width": 1920
         }
       },
@@ -559877,12 +559911,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 0.5450599694311485,
+          "headroom_ratio": 0.3493703193747291,
           "height": 1080,
-          "min_download_mbps": 2.401270852336411,
+          "min_download_mbps": 1.555419580549245,
           "sample_count": 2,
-          "startup_s": 7.149951,
-          "stream_mbps": 4.405516799999999,
+          "startup_s": 11.194538,
+          "stream_mbps": 4.4520656,
           "width": 1920
         }
       },
@@ -559900,12 +559934,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 6.595694841311959,
+          "headroom_ratio": 1.857888761053508,
           "height": 1080,
-          "min_download_mbps": 53.5134507549902,
+          "min_download_mbps": 15.247371027914227,
           "sample_count": 2,
-          "startup_s": 0.396305,
-          "stream_mbps": 8.113390937950939,
+          "startup_s": 2.252364,
+          "stream_mbps": 8.206826666666668,
           "width": 1920
         }
       },
@@ -559923,22 +559957,22 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 1.1217785405929788,
+          "headroom_ratio": 1.1031604306020069,
           "height": 1080,
-          "min_download_mbps": 11.81177163028793,
+          "min_download_mbps": 11.433847487509617,
           "sample_count": 2,
-          "startup_s": 1.2767249999999999,
-          "stream_mbps": 10.529504,
+          "startup_s": 1.462609,
+          "stream_mbps": 10.364628,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "cctv9",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "CCTV-9",
-        "status": "BAD",
+        "status": "GOOD",
         "url": "http://60.10.50.14:808/hls/9/index.m3u8",
         "url_sha256": "924b460d692ffc4f27848c4096957a724f0572e29e0a7009a693903868d4a147",
         "verification": {
@@ -559946,59 +559980,59 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 0.6559330593642417,
+          "headroom_ratio": 4.040444048742619,
           "height": 1080,
-          "min_download_mbps": 7.1118466231350554,
+          "min_download_mbps": 43.71593994444705,
           "sample_count": 2,
-          "startup_s": 1.838035,
-          "stream_mbps": 10.842336,
+          "startup_s": 0.435598,
+          "stream_mbps": 10.819588,
           "width": 1920
         }
       },
       {
         "attempt_count": 2,
         "channel_key": "东南卫视",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "东南卫视",
-        "status": "BAD",
+        "status": "UNKNOWN",
         "url": "http://106.46.169.202:9000/hls/36/index.m3u8",
         "url_sha256": "f7727e682bad623cdce737e51f4601d7461bbaa552757d3a2b7f44957a1ee81c",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 0.34292927398275685,
+          "fps": 25.0,
+          "headroom_ratio": 3.9794754378593895,
           "height": 1080,
-          "min_download_mbps": 3.511899738091889,
+          "min_download_mbps": 40.232649488615245,
           "sample_count": 2,
-          "startup_s": 4.829948,
-          "stream_mbps": 10.2408864,
+          "startup_s": 0.470607,
+          "stream_mbps": 10.1100384,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "东方卫视",
-        "error": "native_transfer_error",
+        "error": "",
         "failure_confirmed": false,
         "name": "东方卫视",
-        "status": "UNKNOWN",
+        "status": "GOOD",
         "url": "http://74.91.26.218:82/live/dfwshd.m3u8",
         "url_sha256": "8c2bec815fbe0a8f5f21ef33e02bd89898eec8f32c6c96361570c205ef99078e",
         "verification": {
           "bitrate_mbps": 0.0,
-          "codec": "",
-          "deep_checked": false,
-          "fps": 0.0,
-          "headroom_ratio": 0.0,
-          "height": 0,
-          "min_download_mbps": 0.0,
-          "sample_count": 0,
-          "startup_s": 0.0,
-          "stream_mbps": 0.0,
-          "width": 0
+          "codec": "h264",
+          "deep_checked": true,
+          "fps": 50.0,
+          "headroom_ratio": 2.520745012227348,
+          "height": 1080,
+          "min_download_mbps": 8.06141917975143,
+          "sample_count": 2,
+          "startup_s": 4.194523,
+          "stream_mbps": 3.1980304,
+          "width": 1920
         }
       },
       {
@@ -560014,13 +560048,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.2660754518995185,
+          "fps": 25.0,
+          "headroom_ratio": 3.235902873101473,
           "height": 1080,
-          "min_download_mbps": 13.015814744446608,
+          "min_download_mbps": 32.92826805467235,
           "sample_count": 2,
-          "startup_s": 0.689761,
-          "stream_mbps": 10.2804416,
+          "startup_s": 0.517072,
+          "stream_mbps": 10.1759136,
           "width": 1920
         }
       },
@@ -560040,10 +560074,10 @@
           "fps": 0.0,
           "headroom_ratio": 0.0,
           "height": 0,
-          "min_download_mbps": 68.39691469758492,
+          "min_download_mbps": 52.365797400003125,
           "sample_count": 2,
-          "startup_s": 0.268007,
-          "stream_mbps": 9.0056512,
+          "startup_s": 0.287833,
+          "stream_mbps": 8.951958399999999,
           "width": 0
         }
       },
@@ -560061,12 +560095,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 6.077898768681145,
+          "headroom_ratio": 6.117087860754548,
           "height": 1080,
-          "min_download_mbps": 29.929308950032752,
+          "min_download_mbps": 27.89058029680635,
           "sample_count": 2,
-          "startup_s": 0.692227,
-          "stream_mbps": 4.924285528455284,
+          "startup_s": 0.459859,
+          "stream_mbps": 4.559453931623931,
           "width": 1920
         }
       },
@@ -560084,12 +560118,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 1.0682304316707087,
+          "headroom_ratio": 2.117434610003452,
           "height": 1080,
-          "min_download_mbps": 3.736600349935679,
+          "min_download_mbps": 7.4736700963051765,
           "sample_count": 2,
-          "startup_s": 6.579674000000001,
-          "stream_mbps": 3.497934751860279,
+          "startup_s": 6.08381,
+          "stream_mbps": 3.5295872,
           "width": 1920
         }
       },
@@ -560106,14 +560140,14 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 30.0,
-          "headroom_ratio": 2.791468621602966,
-          "height": 720,
-          "min_download_mbps": 1.3091354137301248,
+          "fps": 50.0,
+          "headroom_ratio": 2.3344744485401185,
+          "height": 1080,
+          "min_download_mbps": 7.898717681327544,
           "sample_count": 2,
-          "startup_s": 4.497138,
-          "stream_mbps": 0.46897729875909194,
-          "width": 1280
+          "startup_s": 4.928312999999999,
+          "stream_mbps": 3.383510017112018,
+          "width": 1920
         }
       },
       {
@@ -560129,43 +560163,43 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 3.6337060480634995,
+          "fps": 25.0,
+          "headroom_ratio": 1.3110911926657145,
           "height": 1080,
-          "min_download_mbps": 37.51185799472779,
+          "min_download_mbps": 13.814013422730374,
           "sample_count": 2,
-          "startup_s": 0.513914,
-          "stream_mbps": 10.3233056,
+          "startup_s": 0.843699,
+          "stream_mbps": 10.536272,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "天津卫视",
         "error": "",
         "failure_confirmed": false,
         "name": "天津卫视",
-        "status": "UNKNOWN",
+        "status": "GOOD",
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=tjwshd",
         "url_sha256": "f447f8af6714c49756baf9b9d9a6e1d56808eaaae990f7610ab75e42e45c10dd",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 1.4307730976683075,
+          "fps": 25.0,
+          "headroom_ratio": 2.5764316062267585,
           "height": 1080,
-          "min_download_mbps": 4.590154318251709,
+          "min_download_mbps": 7.864863167112479,
           "sample_count": 2,
-          "startup_s": 9.084445,
-          "stream_mbps": 3.2081637023593466,
+          "startup_s": 5.189756,
+          "stream_mbps": 3.052618648251543,
           "width": 1920
         }
       },
       {
         "attempt_count": 2,
         "channel_key": "宁夏卫视",
-        "error": "quality_metadata_unavailable",
+        "error": "",
         "failure_confirmed": false,
         "name": "宁夏卫视",
         "status": "UNKNOWN",
@@ -560173,16 +560207,16 @@
         "url_sha256": "a0475d03cc033645e84ff2f44d16c1d71c020796ca81c1ae15d5f53ff9a87b19",
         "verification": {
           "bitrate_mbps": 0.0,
-          "codec": "",
-          "deep_checked": false,
-          "fps": 0.0,
-          "headroom_ratio": 0.0,
-          "height": 0,
-          "min_download_mbps": 68.88471187206176,
+          "codec": "h264",
+          "deep_checked": true,
+          "fps": 50.0,
+          "headroom_ratio": 3.222116157562339,
+          "height": 1080,
+          "min_download_mbps": 29.047784435906802,
           "sample_count": 2,
-          "startup_s": 0.300543,
-          "stream_mbps": 8.937219200000001,
-          "width": 0
+          "startup_s": 0.554735,
+          "stream_mbps": 9.0151264,
+          "width": 1920
         }
       },
       {
@@ -560199,12 +560233,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 3.8708840796375252,
+          "headroom_ratio": 3.520087012389267,
           "height": 1080,
-          "min_download_mbps": 8.932111464372545,
+          "min_download_mbps": 8.126613680282357,
           "sample_count": 2,
-          "startup_s": 0.729247,
-          "stream_mbps": 2.307512,
+          "startup_s": 0.752902,
+          "stream_mbps": 2.30864,
           "width": 1920
         }
       },
@@ -560224,9 +560258,9 @@
           "fps": 0.0,
           "headroom_ratio": 0.0,
           "height": 0,
-          "min_download_mbps": 25.816940138769844,
+          "min_download_mbps": 17.076064199556438,
           "sample_count": 2,
-          "startup_s": 0.723177,
+          "startup_s": 1.057428,
           "stream_mbps": 6.8000352,
           "width": 0
         }
@@ -560247,20 +560281,20 @@
           "fps": 0.0,
           "headroom_ratio": 0.0,
           "height": 0,
-          "min_download_mbps": 124.3079020486793,
+          "min_download_mbps": 14.20974282703924,
           "sample_count": 2,
-          "startup_s": 0.177021,
-          "stream_mbps": 8.5782144,
+          "startup_s": 0.919021,
+          "stream_mbps": 8.6361184,
           "width": 0
         }
       },
       {
         "attempt_count": 2,
         "channel_key": "山西卫视",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "山西卫视",
-        "status": "BAD",
+        "status": "UNKNOWN",
         "url": "http://106.46.169.202:9000/hls/39/index.m3u8",
         "url_sha256": "e694f7b7c6d75421937707ac8008531937e4cda8473406492acb2312c807362d",
         "verification": {
@@ -560268,12 +560302,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 0.3893510605582073,
+          "headroom_ratio": 6.080175319527772,
           "height": 1080,
-          "min_download_mbps": 3.9543901603726512,
+          "min_download_mbps": 61.685703675651425,
           "sample_count": 2,
-          "startup_s": 4.292068,
-          "stream_mbps": 10.1563616,
+          "startup_s": 0.25917,
+          "stream_mbps": 10.145382399999999,
           "width": 1920
         }
       },
@@ -560290,13 +560324,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 2.0038742920210946,
+          "fps": 50.0,
+          "headroom_ratio": 2.4031385482073766,
           "height": 1080,
-          "min_download_mbps": 6.307890420003016,
+          "min_download_mbps": 8.173756717794415,
           "sample_count": 2,
-          "startup_s": 4.358122,
-          "stream_mbps": 3.147847370026849,
+          "startup_s": 4.044304,
+          "stream_mbps": 3.4012840099842085,
           "width": 1920
         }
       },
@@ -560313,60 +560347,60 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 1.7149033643787934,
+          "fps": 50.0,
+          "headroom_ratio": 2.4253994197876696,
           "height": 1080,
-          "min_download_mbps": 6.001707801404232,
+          "min_download_mbps": 8.080455778653171,
           "sample_count": 2,
-          "startup_s": 7.475519,
-          "stream_mbps": 3.4997352772576145,
+          "startup_s": 4.194614,
+          "stream_mbps": 3.3315979680413093,
           "width": 1920
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "新疆卫视",
-        "error": "",
+        "error": "quality_metadata_unavailable",
         "failure_confirmed": false,
         "name": "新疆卫视",
-        "status": "GOOD",
+        "status": "UNKNOWN",
         "url": "http://222.71.55.147:9901/tsfile/live/0110_1.m3u8?key=txiptv&playlive=0&authid=0",
         "url_sha256": "01cf1838cb5820305602ce04f6b39bba473f4ae91fd8f08c3708c60399d0072f",
         "verification": {
           "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 9.255113613092496,
-          "height": 1080,
-          "min_download_mbps": 82.42266557275572,
+          "codec": "",
+          "deep_checked": false,
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 24.439909799145774,
           "sample_count": 2,
-          "startup_s": 0.2541,
-          "stream_mbps": 8.9056352,
-          "width": 1920
+          "startup_s": 0.269285,
+          "stream_mbps": 8.9256384,
+          "width": 0
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "江苏卫视",
-        "error": "",
+        "error": "quality_metadata_unavailable",
         "failure_confirmed": false,
         "name": "江苏卫视",
-        "status": "GOOD",
+        "status": "UNKNOWN",
         "url": "http://183.94.146.79:9901/tsfile/live/0127_2.m3u8?key=txiptv&playlive=1&authid=0",
         "url_sha256": "4fcaec50afef8d8baab3c73b08dc9613e7d4a2fe9995df09c2b01af1376bd41a",
         "verification": {
           "bitrate_mbps": 0.0,
-          "codec": "h264",
-          "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 4.194173113426118,
-          "height": 1080,
-          "min_download_mbps": 36.19929747037551,
+          "codec": "",
+          "deep_checked": false,
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 36.568399485603436,
           "sample_count": 2,
-          "startup_s": 0.190611,
-          "stream_mbps": 8.6308544,
-          "width": 1920
+          "startup_s": 0.507891,
+          "stream_mbps": 8.5771616,
+          "width": 0
         }
       },
       {
@@ -560383,35 +560417,35 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 30.0,
-          "headroom_ratio": 3.6320893502893834,
+          "headroom_ratio": 4.411052578559498,
           "height": 720,
-          "min_download_mbps": 2.0003177913593175,
+          "min_download_mbps": 1.4525723846261096,
           "sample_count": 2,
-          "startup_s": 6.946733,
-          "stream_mbps": 0.5507347420293898,
+          "startup_s": 7.879583,
+          "stream_mbps": 0.3293028951154491,
           "width": 1280
         }
       },
       {
-        "attempt_count": 1,
+        "attempt_count": 2,
         "channel_key": "河北卫视",
         "error": "",
         "failure_confirmed": false,
         "name": "河北卫视",
-        "status": "GOOD",
+        "status": "UNKNOWN",
         "url": "http://222.223.41.27:8888/hls/16/index.m3u8",
         "url_sha256": "cb477634376aae3807a463ba23c7405bcafcb578f44a9b8e0f5703df4f74f121",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 1.4911336769990564,
+          "fps": 50.0,
+          "headroom_ratio": 2.4254559086008207,
           "height": 1080,
-          "min_download_mbps": 12.389380583254134,
+          "min_download_mbps": 19.86534319581977,
           "sample_count": 2,
-          "startup_s": 0.764096,
-          "stream_mbps": 8.308698793650795,
+          "startup_s": 0.5253639999999999,
+          "stream_mbps": 8.190354285714285,
           "width": 1920
         }
       },
@@ -560452,12 +560486,12 @@
           "codec": "hevc",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 2.7363896460786257,
+          "headroom_ratio": 5.777201245495779,
           "height": 2160,
-          "min_download_mbps": 20.60440108369133,
+          "min_download_mbps": 42.57204191935852,
           "sample_count": 2,
-          "startup_s": 0.717498,
-          "stream_mbps": 7.529776,
+          "startup_s": 0.572403,
+          "stream_mbps": 7.368973333333334,
           "width": 3840
         }
       },
@@ -560474,13 +560508,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 1.135525165073235,
+          "fps": 50.0,
+          "headroom_ratio": 3.135113027651923,
           "height": 1080,
-          "min_download_mbps": 11.78710004679089,
+          "min_download_mbps": 32.00024414248766,
           "sample_count": 2,
-          "startup_s": 1.2564089999999999,
-          "stream_mbps": 10.3803072,
+          "startup_s": 0.500074,
+          "stream_mbps": 10.2070464,
           "width": 1920
         }
       },
@@ -560498,11 +560532,11 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 5.423886274194696,
+          "headroom_ratio": 2.1071070029284944,
           "height": 360,
-          "min_download_mbps": 2.00675113927165,
+          "min_download_mbps": 0.779595877371496,
           "sample_count": 2,
-          "startup_s": 2.58596,
+          "startup_s": 4.416322,
           "stream_mbps": 0.369984,
           "width": 640
         }
@@ -560520,23 +560554,23 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 50.0,
-          "headroom_ratio": 2.5047523328492725,
+          "fps": 25.0,
+          "headroom_ratio": 2.503001882684687,
           "height": 1080,
-          "min_download_mbps": 20.591048894060005,
+          "min_download_mbps": 20.191570124996687,
           "sample_count": 2,
-          "startup_s": 0.852834,
-          "stream_mbps": 8.220792380952382,
+          "startup_s": 0.929495,
+          "stream_mbps": 8.066941645021647,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "湖北卫视",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "湖北卫视",
-        "status": "BAD",
+        "status": "GOOD",
         "url": "http://222.223.41.27:8888/hls/41/index.m3u8",
         "url_sha256": "286d2ff6873f53f3d062d9c3b65dc978efaed26b4fbb9e452280b6216b7a96ff",
         "verification": {
@@ -560544,22 +560578,22 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 0.46360528682377944,
+          "headroom_ratio": 1.1943716121551917,
           "height": 1080,
-          "min_download_mbps": 3.7325369266557145,
+          "min_download_mbps": 9.833365374245671,
           "sample_count": 2,
-          "startup_s": 0.718253,
-          "stream_mbps": 8.051109494949495,
+          "startup_s": 0.43611099999999997,
+          "stream_mbps": 8.233086984126984,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "湖南卫视",
         "error": "",
         "failure_confirmed": false,
         "name": "湖南卫视",
-        "status": "UNKNOWN",
+        "status": "GOOD",
         "url": "http://bztv.tvbus.cc:8081/cdnlive/hnws.m3u8",
         "url_sha256": "c3e1f4fdb4c67e87e1a9a14aa29f3ddc767dedb214ddd2dd2a255c475b38d424",
         "verification": {
@@ -560567,12 +560601,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 1.9392787697680915,
+          "headroom_ratio": 2.3544399557509745,
           "height": 1080,
-          "min_download_mbps": 6.602120427233582,
+          "min_download_mbps": 8.538214596153807,
           "sample_count": 2,
-          "startup_s": 5.471074,
-          "stream_mbps": 3.404420514551962,
+          "startup_s": 5.8270610000000005,
+          "stream_mbps": 3.6264312348668284,
           "width": 1920
         }
       },
@@ -560592,10 +560626,10 @@
           "fps": 0.0,
           "headroom_ratio": 0.0,
           "height": 0,
-          "min_download_mbps": 70.56039634774636,
+          "min_download_mbps": 23.12472054141225,
           "sample_count": 2,
-          "startup_s": 0.295123,
-          "stream_mbps": 8.9214272,
+          "startup_s": 0.329584,
+          "stream_mbps": 8.927744,
           "width": 0
         }
       },
@@ -560613,12 +560647,12 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 1.2904629354108588,
+          "headroom_ratio": 2.2469693334039302,
           "height": 1080,
-          "min_download_mbps": 4.72889626496135,
+          "min_download_mbps": 7.9135235692800565,
           "sample_count": 2,
-          "startup_s": 4.323581,
-          "stream_mbps": 3.6644959999999998,
+          "startup_s": 3.9104829999999997,
+          "stream_mbps": 3.5218654085019807,
           "width": 1920
         }
       },
@@ -560635,14 +560669,14 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 30.0,
-          "headroom_ratio": 3.2691465934181685,
-          "height": 720,
-          "min_download_mbps": 1.09152886144436,
+          "fps": 50.0,
+          "headroom_ratio": 2.025502805883018,
+          "height": 1080,
+          "min_download_mbps": 7.4194005739270485,
           "sample_count": 2,
-          "startup_s": 6.841946999999999,
-          "stream_mbps": 0.33388801335552054,
-          "width": 1280
+          "startup_s": 5.536963999999999,
+          "stream_mbps": 3.662992,
+          "width": 1920
         }
       },
       {
@@ -560659,36 +560693,36 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 50.0,
-          "headroom_ratio": 1.3582504105855129,
+          "headroom_ratio": 2.371693411488949,
           "height": 1080,
-          "min_download_mbps": 4.721417178003889,
+          "min_download_mbps": 7.438690892387555,
           "sample_count": 2,
-          "startup_s": 5.11142,
-          "stream_mbps": 3.4761021540708286,
+          "startup_s": 4.635457000000001,
+          "stream_mbps": 3.13644708728079,
           "width": 1920
         }
       },
       {
-        "attempt_count": 2,
+        "attempt_count": 1,
         "channel_key": "陕西卫视",
-        "error": "home_quality_threshold",
-        "failure_confirmed": true,
+        "error": "",
+        "failure_confirmed": false,
         "name": "陕西卫视",
-        "status": "BAD",
+        "status": "GOOD",
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=snwshd",
         "url_sha256": "f198c590fa3503e7e055dd61c536dcc424a4766c0ffa44e016505d572ec45a78",
         "verification": {
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 30.0,
-          "headroom_ratio": 3.2844837749239044,
-          "height": 720,
-          "min_download_mbps": 1.9236453606142208,
+          "fps": 50.0,
+          "headroom_ratio": 2.598821272202989,
+          "height": 1080,
+          "min_download_mbps": 8.257418267278611,
           "sample_count": 2,
-          "startup_s": 5.702794,
-          "stream_mbps": 0.5856766214833222,
-          "width": 1280
+          "startup_s": 5.056204,
+          "stream_mbps": 3.177370585503519,
+          "width": 1920
         }
       },
       {
@@ -560704,13 +560738,13 @@
           "bitrate_mbps": 0.0,
           "codec": "h264",
           "deep_checked": true,
-          "fps": 25.0,
-          "headroom_ratio": 1.3012156881345105,
+          "fps": 50.0,
+          "headroom_ratio": 2.430541815375208,
           "height": 1080,
-          "min_download_mbps": 4.7278035342109686,
+          "min_download_mbps": 7.896829024109095,
           "sample_count": 2,
-          "startup_s": 5.169086,
-          "stream_mbps": 3.6333742186808324,
+          "startup_s": 4.116453,
+          "stream_mbps": 3.2489994511326863,
           "width": 1920
         }
       },
@@ -560728,19 +560762,19 @@
           "codec": "h264",
           "deep_checked": true,
           "fps": 25.0,
-          "headroom_ratio": 2.6953036346874493,
+          "headroom_ratio": 3.792567159566988,
           "height": 1080,
-          "min_download_mbps": 28.249274708325828,
+          "min_download_mbps": 39.2436645349626,
           "sample_count": 2,
-          "startup_s": 0.587137,
-          "stream_mbps": 10.4809248,
+          "startup_s": 0.555125,
+          "stream_mbps": 10.34752,
           "width": 1920
         }
       }
     ],
     "decisions": [
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "cctv1",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560758,13 +560792,13 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "cctv12",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "cctv13",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560776,13 +560810,13 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "cctv15",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "cctv16",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560800,7 +560834,7 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "cctv3",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560818,16 +560852,16 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "REPLACE",
+        "action": "KEEP",
         "channel_key": "cctv5",
         "reason": "home_measurements_aggregated_in_cloud",
-        "replacement_candidate_id": "c96a86530844eb02de7f4e9463365ee2dc3c08022ff263ea8ddf64fe6d4452f4"
+        "replacement_candidate_id": null
       },
       {
-        "action": "REPLACE",
+        "action": "KEEP",
         "channel_key": "cctv5plus",
         "reason": "home_measurements_aggregated_in_cloud",
-        "replacement_candidate_id": "bdd3006074cb55a939a48f636ce69e076209450c4d7f377504d6de31c8d20571"
+        "replacement_candidate_id": null
       },
       {
         "action": "UNRESOLVED",
@@ -560848,19 +560882,19 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "cctv9",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
       },
       {
-        "action": "REPLACE",
+        "action": "UNRESOLVED",
         "channel_key": "东南卫视",
         "reason": "home_measurements_aggregated_in_cloud",
-        "replacement_candidate_id": "62bec4fdd4ede87f3cf140e4e9f362e687a61420c7d7affdfa8a3a6d41dd02bc"
+        "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "东方卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560902,7 +560936,7 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "天津卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560932,10 +560966,10 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "REPLACE",
+        "action": "UNRESOLVED",
         "channel_key": "山西卫视",
         "reason": "home_measurements_aggregated_in_cloud",
-        "replacement_candidate_id": "a1d870581b51d6e1df30539dce600e820829d7dbc82f69ed4ead8adc21e2773c"
+        "replacement_candidate_id": null
       },
       {
         "action": "KEEP",
@@ -560950,13 +560984,13 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "新疆卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "江苏卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -560968,7 +561002,7 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "KEEP",
+        "action": "UNRESOLVED",
         "channel_key": "河北卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -561004,13 +561038,13 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "湖北卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "湖南卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -561040,7 +561074,7 @@
         "replacement_candidate_id": null
       },
       {
-        "action": "UNRESOLVED",
+        "action": "KEEP",
         "channel_key": "陕西卫视",
         "reason": "home_measurements_aggregated_in_cloud",
         "replacement_candidate_id": null
@@ -561063,7 +561097,7 @@
       "sha256": "f11f94d7f4b7dbc946f1fd2240c6542be3ec275aa0978854325154cc29deeec6",
       "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
     },
-    "generated_utc": "2026-11-05T06:23:31Z",
+    "generated_utc": "2026-11-05T13:19:32Z",
     "home_feedback_sha256": "6599f957619785f43b96f0a0c580522fe947e56f0fa7fa2883ad856d13f35bcc",
     "policy": {
       "batch_complete": true,
@@ -561077,16 +561111,16 @@
     "probe_id": "home-ac86u-8f8908f0fba9",
     "production_modified": false,
     "route_context": "living-room-path-equivalent",
-    "run_kind": "recheck-1300",
+    "run_kind": "peak-2000",
     "run_status": "COMPLETED",
     "schema": "iptv-home-report/v2",
     "summary": {
-      "bad": 12,
+      "bad": 10,
       "candidate_queue_remaining": 858,
       "channels": 53,
-      "good": 30,
-      "replacements": 4,
-      "unknown": 11
+      "good": 31,
+      "replacements": 0,
+      "unknown": 12
     }
   },
   "manual_resumes": {
@@ -561103,19 +561137,13 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 1572086521,
+    "bytes": 1509727374,
     "candidates": 500,
     "day": "20261105",
     "discovery_bytes": 710525747,
     "discovery_seconds": 2687.0,
-    "reservations": {
-      "9fc409460718f329467e3632c102cf7c80969ded5bbea9655ef9ef520a229cb1": {
-        "bytes": 67108864,
-        "candidates": 0,
-        "seconds": 240
-      }
-    },
-    "seconds": 4202.0
+    "reservations": {},
+    "seconds": 3974.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -561511,7 +561539,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-1",
-      "peak_failed_epoch": 1793710414.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv1hd",
       "url_sha256": "85836eb411678f9414c88099397ce1fd6405f1a5ffac4ed5750b9c7145be5739",
@@ -561520,12 +561548,12 @@
         "codec": "h264",
         "deep_checked": true,
         "fps": 25.0,
-        "headroom_ratio": 3.772047440913348,
+        "headroom_ratio": 5.817202587834881,
         "height": 720,
-        "min_download_mbps": 4.062833069314382,
+        "min_download_mbps": 2.3040682934654995,
         "sample_count": 2,
-        "startup_s": 5.918338,
-        "stream_mbps": 1.0770896,
+        "startup_s": 4.564537,
+        "stream_mbps": 0.39607840000000005,
         "width": 1280
       }
     },
@@ -561535,21 +561563,45 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-12",
-      "peak_failed_epoch": 1790514271.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
-      "url": "http://183.129.255.66:8480/hls/13/index.m3u8",
-      "url_sha256": "744d0bed3519b312bfa5be5eb059654f44f9d573a2b61825ef3a2f8e679ae623",
+      "url": "http://222.223.41.27:8888/hls/12/index.m3u8",
+      "url_sha256": "c2a3dfca42146946b77e8a8491842d8c9e8545e6864036add53897f7424b19a5",
       "verification": {
         "bitrate_mbps": 0.0,
         "codec": "h264",
         "deep_checked": true,
-        "fps": 50.0,
-        "headroom_ratio": 0.48326034436708065,
+        "fps": 25.0,
+        "headroom_ratio": 0.6498523649590414,
         "height": 1080,
-        "min_download_mbps": 3.845231042076971,
+        "min_download_mbps": 5.3374920504938,
         "sample_count": 2,
-        "startup_s": 4.445024,
-        "stream_mbps": 7.956852009268454,
+        "startup_s": 3.29265,
+        "stream_mbps": 8.213391746031746,
+        "width": 1920
+      }
+    },
+    "cctv13": {
+      "attempt_count": 2,
+      "channel_key": "cctv13",
+      "error": "home_quality_threshold",
+      "failure_confirmed": true,
+      "name": "CCTV-13",
+      "peak_failed_epoch": 1793884772.0,
+      "status": "BAD",
+      "url": "http://222.223.41.27:8888/hls/13/index.m3u8",
+      "url_sha256": "d2edf175b993705b44696acd692b3d5cca67621fb224fbea72248faa69215dd6",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.9700495432409001,
+        "height": 1080,
+        "min_download_mbps": 7.970870612918184,
+        "sample_count": 2,
+        "startup_s": 2.147672,
+        "stream_mbps": 8.216972698412699,
         "width": 1920
       }
     },
@@ -561583,7 +561635,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-16",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "http://219.147.245.238:25480/newlive/live/hls/17/live.m3u8",
       "url_sha256": "aab7b17f41989ae5ef45135e617d45700c52bdbe53545a85ff39165286dab919",
@@ -561591,13 +561643,13 @@
         "bitrate_mbps": 0.0,
         "codec": "h264",
         "deep_checked": true,
-        "fps": 50.0,
-        "headroom_ratio": 0.8640095644080611,
+        "fps": 25.0,
+        "headroom_ratio": 0.6978434325349991,
         "height": 1080,
-        "min_download_mbps": 3.82700525696058,
+        "min_download_mbps": 3.1163957045300377,
         "sample_count": 2,
-        "startup_s": 4.551419,
-        "stream_mbps": 4.4293552,
+        "startup_s": 3.761519,
+        "stream_mbps": 4.465752,
         "width": 1920
       }
     },
@@ -561625,13 +561677,37 @@
         "width": 1920
       }
     },
+    "cctv2": {
+      "attempt_count": 2,
+      "channel_key": "cctv2",
+      "error": "home_quality_threshold",
+      "failure_confirmed": true,
+      "name": "CCTV-2",
+      "peak_failed_epoch": 1793884772.0,
+      "status": "BAD",
+      "url": "http://113.195.172.192:1808/hls/159/index.m3u8",
+      "url_sha256": "646ad83621cd5c54a539d7b42ce8df78ed7c75481c787d3645aa285981c02aeb",
+      "verification": {
+        "bitrate_mbps": 0.0,
+        "codec": "h264",
+        "deep_checked": true,
+        "fps": 25.0,
+        "headroom_ratio": 0.7285166487613182,
+        "height": 1080,
+        "min_download_mbps": 7.560117413055488,
+        "sample_count": 2,
+        "startup_s": 2.2544180000000003,
+        "stream_mbps": 10.377412,
+        "width": 1920
+      }
+    },
     "cctv3": {
       "attempt_count": 2,
       "channel_key": "cctv3",
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-3",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "http://219.147.245.238:25480/newlive/live/hls/3/live.m3u8",
       "url_sha256": "87f97dc00170118740fbe34a35e04eba0618214de02ca718f330d8802d46d6a6",
@@ -561639,13 +561715,13 @@
         "bitrate_mbps": 0.0,
         "codec": "h264",
         "deep_checked": true,
-        "fps": 25.0,
-        "headroom_ratio": 0.5298833272338628,
+        "fps": 50.0,
+        "headroom_ratio": 0.2895097997984618,
         "height": 1080,
-        "min_download_mbps": 2.3445310956255083,
+        "min_download_mbps": 1.2853679252236092,
         "sample_count": 2,
-        "startup_s": 7.408483,
-        "stream_mbps": 4.4246175999999995,
+        "startup_s": 7.031036,
+        "stream_mbps": 4.439808,
         "width": 1920
       }
     },
@@ -561655,7 +561731,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-4K",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv4k",
       "url_sha256": "99a3b2040a93de6b76f57376e1bda533f99f211a7597ad465f5f97c884856887",
@@ -561663,13 +561739,13 @@
         "bitrate_mbps": 0.0,
         "codec": "h264",
         "deep_checked": true,
-        "fps": 50.0,
-        "headroom_ratio": 2.261820263871306,
+        "fps": 25.0,
+        "headroom_ratio": 2.2818129231975917,
         "height": 1080,
-        "min_download_mbps": 7.81422350152072,
+        "min_download_mbps": 8.01237109069427,
         "sample_count": 2,
-        "startup_s": 5.643314,
-        "stream_mbps": 3.4548384,
+        "startup_s": 4.922949,
+        "stream_mbps": 3.5114057814460216,
         "width": 1920
       }
     },
@@ -561703,7 +561779,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "CCTV-6",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "http://219.147.245.238:25480/newlive/live/hls/7/live.m3u8",
       "url_sha256": "35de720b713a4c84e13fcf264c6d6c0b805891d08ed949c9f56b317a5ca73ce2",
@@ -561712,60 +561788,12 @@
         "codec": "h264",
         "deep_checked": true,
         "fps": 25.0,
-        "headroom_ratio": 0.31707484282594867,
+        "headroom_ratio": 0.3493703193747291,
         "height": 1080,
-        "min_download_mbps": 1.396163226081661,
+        "min_download_mbps": 1.555419580549245,
         "sample_count": 2,
-        "startup_s": 12.56845,
-        "stream_mbps": 4.4032608,
-        "width": 1920
-      }
-    },
-    "cctv8": {
-      "attempt_count": 2,
-      "channel_key": "cctv8",
-      "error": "home_quality_threshold",
-      "failure_confirmed": true,
-      "name": "CCTV-8",
-      "peak_failed_epoch": 1793710414.0,
-      "status": "BAD",
-      "url": "http://113.195.172.192:1808/hls/167/index.m3u8",
-      "url_sha256": "012d6c4afd50dd90ce1b1c4df1b3b5df1cc8eb5730cd4d5e5bc1c80bf9e58010",
-      "verification": {
-        "bitrate_mbps": 0.0,
-        "codec": "h264",
-        "deep_checked": true,
-        "fps": 25.0,
-        "headroom_ratio": 0.755896440755075,
-        "height": 1080,
-        "min_download_mbps": 7.893418346727241,
-        "sample_count": 2,
-        "startup_s": 1.5434139999999998,
-        "stream_mbps": 10.44246,
-        "width": 1920
-      }
-    },
-    "cctv9": {
-      "attempt_count": 2,
-      "channel_key": "cctv9",
-      "error": "home_quality_threshold",
-      "failure_confirmed": true,
-      "name": "CCTV-9",
-      "peak_failed_epoch": 1793797591.0,
-      "status": "BAD",
-      "url": "http://60.10.50.14:808/hls/9/index.m3u8",
-      "url_sha256": "924b460d692ffc4f27848c4096957a724f0572e29e0a7009a693903868d4a147",
-      "verification": {
-        "bitrate_mbps": 0.0,
-        "codec": "h264",
-        "deep_checked": true,
-        "fps": 25.0,
-        "headroom_ratio": 0.565819776408948,
-        "height": 1080,
-        "min_download_mbps": 6.043432763938854,
-        "sample_count": 2,
-        "startup_s": 2.848657,
-        "stream_mbps": 10.680844,
+        "startup_s": 11.194538,
+        "stream_mbps": 4.4520656,
         "width": 1920
       }
     },
@@ -561896,7 +561924,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "安多卫视",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "https://liveout.xntv.tv/a65jur/96iln2.m3u8",
       "url_sha256": "75195251fede266a859dadf62c8d01c4fa25c2656dd5a1bf35f24a1f1bbc407e",
@@ -561905,12 +561933,12 @@
         "codec": "h264",
         "deep_checked": true,
         "fps": 25.0,
-        "headroom_ratio": 2.698704528277742,
+        "headroom_ratio": 3.520087012389267,
         "height": 1080,
-        "min_download_mbps": 6.036527057760332,
+        "min_download_mbps": 8.126613680282357,
         "sample_count": 2,
-        "startup_s": 0.915498,
-        "stream_mbps": 2.236824,
+        "startup_s": 0.752902,
+        "stream_mbps": 2.30864,
         "width": 1920
       }
     },
@@ -562090,7 +562118,7 @@
       "error": "home_quality_threshold",
       "failure_confirmed": true,
       "name": "海峡卫视",
-      "peak_failed_epoch": 1793797591.0,
+      "peak_failed_epoch": 1793884772.0,
       "status": "BAD",
       "url": "https://10.fast.hidns.vip/163189/hxws/",
       "url_sha256": "0df0f5c1396702c926540caa0b564d89307ff8f94217ae0bcb10000fc5de1579",
@@ -562099,11 +562127,11 @@
         "codec": "h264",
         "deep_checked": true,
         "fps": 25.0,
-        "headroom_ratio": 2.1708005395092567,
+        "headroom_ratio": 2.1071070029284944,
         "height": 360,
-        "min_download_mbps": 0.8031614668097927,
+        "min_download_mbps": 0.779595877371496,
         "sample_count": 2,
-        "startup_s": 5.642455,
+        "startup_s": 4.416322,
         "stream_mbps": 0.369984,
         "width": 640
       }
@@ -562131,30 +562159,6 @@
         "startup_s": 2.411,
         "stream_mbps": 9.3,
         "width": 1920
-      }
-    },
-    "湖南卫视": {
-      "attempt_count": 2,
-      "channel_key": "湖南卫视",
-      "error": "home_quality_threshold",
-      "failure_confirmed": true,
-      "name": "湖南卫视",
-      "peak_failed_epoch": 1793710414.0,
-      "status": "BAD",
-      "url": "http://bztv.tvbus.cc:8081/cdnlive/hnws.m3u8",
-      "url_sha256": "c3e1f4fdb4c67e87e1a9a14aa29f3ddc767dedb214ddd2dd2a255c475b38d424",
-      "verification": {
-        "bitrate_mbps": 0.0,
-        "codec": "h264",
-        "deep_checked": true,
-        "fps": 25.0,
-        "headroom_ratio": 3.9364621453780817,
-        "height": 720,
-        "min_download_mbps": 5.087137268017839,
-        "sample_count": 2,
-        "startup_s": 6.050887,
-        "stream_mbps": 1.292312,
-        "width": 1280
       }
     },
     "贵州卫视": {
@@ -566071,6 +566075,7 @@
     "9f8c04b4952eee12aaea7ce3c124bb3df52e38c52db48580d0b9d2eff93518e7": "31fe8a263128138f2efe94589922b2fc2b310a7264f94c644e36cef9a8d43c25",
     "9fb236112d122c623802d858e30277223d65985ad6efbefce29d709f083f4a60": "762ea19d7a511ee31bd730fab13f5c8b51671a8acaf847f743024032949b29e5",
     "9fbfaa5d377b3c91fd1dbff0aa99800f1bdaa62668763efbd5d493b0b7306662": "9fee79f5f8fbe49e5d1ec08cc44b6186f4bc7713fe723f862f0155400b0dd685",
+    "9fc409460718f329467e3632c102cf7c80969ded5bbea9655ef9ef520a229cb1": "bb3a6c698d4956473da1cf5612fb383aecb8b4c517cf38d5178dae12eee7f752",
     "9fc9413c8fe012f4b4a38144241d0f5d91c70ad8f80b534935e2dd37740e1496": "a9008080cf1627b96ae8a384116ce0d43f171553989637c3371a58e165beb131",
     "9fc9c9dc61763d95bfd7b4341d29495d3876c64df79fae395383d5ba9f8b2f35": "b295d9f1fb9c29309779b211a7b1c589e7cfa0d47c19e64cfe98508a1c7353a0",
     "9fca949faa7c39f8e0fe59beba76795fb220e43991763ceb34adf1f03933946b": "8292873bd5d2906b6ae33d34041d23cacd22f05000c6509928ef2e6301b57ffc",
