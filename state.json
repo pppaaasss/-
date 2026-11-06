@@ -13205,11 +13205,13 @@
       "candidate_id": "898b45e3177ded588d92d71c847c523c43e5fbb4ccb6351e75be00b7976d94f7",
       "channel_key": "北京卫视",
       "expires_utc": "2026-10-26T08:49:02Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-24T20:49:02Z",
       "name": "北京卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-24T20:49:02Z",
       "request_options": "",
+      "retry_after_epoch": 1793931607.0,
       "source_manifest_sha256": "01c81d8c7a253d4d86c23cf700fc08f1d50465ae58179c7c8784efd7b99a06cc",
       "url": "http://47.100.209.208:8767/bjws.m3u8",
       "url_sha256": "9dc82bed499ca03c7a68f452c5742fb31c911c8598898fe72a9b11dbfb0b8e34",
@@ -15649,11 +15651,13 @@
       "candidate_id": "a71fb9c7ab09c22b425f40094027b8b61da010f149cfdb42af1bc9ec455a05cf",
       "channel_key": "山西卫视",
       "expires_utc": "2026-10-26T07:31:38Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-24T19:31:38Z",
       "name": "山西卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-24T19:31:38Z",
       "request_options": "",
+      "retry_after_epoch": 1793931623.0,
       "source_manifest_sha256": "01c81d8c7a253d4d86c23cf700fc08f1d50465ae58179c7c8784efd7b99a06cc",
       "url": "http://xymm.1000s.dpdns.org:8767/shanxiws.m3u8",
       "url_sha256": "c7440c8ab4fa12436be40ae1352d41cd6c3dc8732b8f54f31de6e86b5be44d2c",
@@ -168714,6 +168718,61 @@
           "sample_bytes": 6291456,
           "task_id": "4e47e8fe9c66dcd4f0be9741b9b18271121637abf771d6f02b5b3eaf767e1ad5",
           "url": "http://101.35.240.114:88/live.php?id=CCTV4K",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "43ab31067084f611161843e81fc5362498a27467f4c1b8ba68a3e3ee8453ecef": {
+      "batch_id": "43ab31067084f611161843e81fc5362498a27467f4c1b8ba68a3e3ee8453ecef",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-06T01:20:59Z",
+      "cycle_id": "93b3072001b1e93e5882aeb483586b2d4079e57036e74128b7c6fb36e6bdb118",
+      "expires_utc": "2026-11-06T01:50:59Z",
+      "feedback_sha256": "6599f957619785f43b96f0a0c580522fe947e56f0fa7fa2883ad856d13f35bcc",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "f11f94d7f4b7dbc946f1fd2240c6542be3ec275aa0978854325154cc29deeec6",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "329d5c6304d34dbcf7a7c3d052a0249a477e762225f095fa9cea7b56cf65b441",
+          "channel_key": "北京卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "北京卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "bc22a7f083accdfb895bdc0e0b36da0b3a2be581341ef8737538f4bcf7b0a640",
+          "url": "http://120.76.248.139/live/bfgd/4200000083.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "271f3d2a346d0066fa3f7537d9b257ba45353c460c8352f903d1a28f7fabbf15",
+          "channel_key": "山西卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "山西卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "060dfd4a23f3a454043d63ebabd6fb2b0ed96ae45d2190c2adebe2943729c3a7",
+          "url": "http://51.75.118.151:20299/shanxiws.m3u8",
           "viewer_accepted_quality": false
         }
       ]
@@ -567623,7 +567682,8 @@
       "66477dda43920ae1063fce756f8a69135c71aaff4b4c0ecc5f2fd8b561a6cf66",
       "ba6311db81505661a868db4940265d1cbc90f662283038b8a6ecda0bc5075d14",
       "fc57a4a98cd98588e3d8bf942da10b4c6cafe775c63751f5335d57e993078d21",
-      "8331ccfa99394e3cdf0658f1ee003b6ac1f99dfe1c81079ac19feee4db65f933"
+      "8331ccfa99394e3cdf0658f1ee003b6ac1f99dfe1c81079ac19feee4db65f933",
+      "43ab31067084f611161843e81fc5362498a27467f4c1b8ba68a3e3ee8453ecef"
     ],
     "binding": {
       "channel_count": 53,
@@ -567796,7 +567856,7 @@
     "id": "93b3072001b1e93e5882aeb483586b2d4079e57036e74128b7c6fb36e6bdb118",
     "kind": "primary-0200",
     "manifest_sha": "dbfcc618b1bcf1a8065bd91d874ecbdfd6c65a33cdb93c8d41b805d44f03fdbd",
-    "outstanding": "8331ccfa99394e3cdf0658f1ee003b6ac1f99dfe1c81079ac19feee4db65f933",
+    "outstanding": "43ab31067084f611161843e81fc5362498a27467f4c1b8ba68a3e3ee8453ecef",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -575554,6 +575614,35 @@
         },
         "started_utc": "2026-11-06T00:21:35Z",
         "task_id": "52beb393340e27aa1ee244850843a4441123d10491340797e9357123b413236a"
+      },
+      "52e15ee5accd7dead4f3e37d064947e3a6cbe90a8ca1c78069b5042545d8d21b": {
+        "finished_utc": "2026-11-06T01:20:23Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "山西卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "山西卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://xymm.1000s.dpdns.org:8767/shanxiws.m3u8",
+          "url_sha256": "c7440c8ab4fa12436be40ae1352d41cd6c3dc8732b8f54f31de6e86b5be44d2c",
+          "width": 0
+        },
+        "started_utc": "2026-11-06T01:20:09Z",
+        "task_id": "52e15ee5accd7dead4f3e37d064947e3a6cbe90a8ca1c78069b5042545d8d21b"
       },
       "532ed4c86c11cc295d0a224f8b2c4be79abcbbb6ab68a92e8d4d25a2f0dbdf62": {
         "finished_utc": "2026-11-05T21:25:32Z",
@@ -584375,6 +584464,35 @@
         },
         "started_utc": "2026-11-05T23:08:04Z",
         "task_id": "a42fee6f4eb16fbb950a76969695d028c890feef333af2099512ab7aaefa0043"
+      },
+      "a5608a30a5e939112ce47fbf9ecda9997038e83961e0fad6e1a373db823ac723": {
+        "finished_utc": "2026-11-06T01:20:07Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "北京卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "北京卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://47.100.209.208:8767/bjws.m3u8",
+          "url_sha256": "9dc82bed499ca03c7a68f452c5742fb31c911c8598898fe72a9b11dbfb0b8e34",
+          "width": 0
+        },
+        "started_utc": "2026-11-06T01:20:02Z",
+        "task_id": "a5608a30a5e939112ce47fbf9ecda9997038e83961e0fad6e1a373db823ac723"
       },
       "a587098e7c5b87a53f29fa14f4a2c219f201b914fbd21206bd1c864451c94231": {
         "finished_utc": "2026-11-06T00:59:39Z",
@@ -596484,6 +596602,22 @@
         "url": "http://110.72.84.243:808/hls/38/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "52e15ee5accd7dead4f3e37d064947e3a6cbe90a8ca1c78069b5042545d8d21b": {
+        "attempt": 1,
+        "candidate_id": "a71fb9c7ab09c22b425f40094027b8b61da010f149cfdb42af1bc9ec455a05cf",
+        "channel_key": "山西卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "山西卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "52e15ee5accd7dead4f3e37d064947e3a6cbe90a8ca1c78069b5042545d8d21b",
+        "url": "http://xymm.1000s.dpdns.org:8767/shanxiws.m3u8",
+        "viewer_accepted_quality": false
+      },
       "532ed4c86c11cc295d0a224f8b2c4be79abcbbb6ab68a92e8d4d25a2f0dbdf62": {
         "attempt": 1,
         "candidate_id": "903ec600e7dc91730e9700e89fdcc34c4f41eea21ef68c08f410caeff5d41095",
@@ -599817,6 +599951,22 @@
         "sample_bytes": 6291456,
         "task_id": "a42fee6f4eb16fbb950a76969695d028c890feef333af2099512ab7aaefa0043",
         "url": "http://123.53.42.5:5678/631780532",
+        "viewer_accepted_quality": false
+      },
+      "a5608a30a5e939112ce47fbf9ecda9997038e83961e0fad6e1a373db823ac723": {
+        "attempt": 1,
+        "candidate_id": "898b45e3177ded588d92d71c847c523c43e5fbb4ccb6351e75be00b7976d94f7",
+        "channel_key": "北京卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "北京卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "a5608a30a5e939112ce47fbf9ecda9997038e83961e0fad6e1a373db823ac723",
+        "url": "http://47.100.209.208:8767/bjws.m3u8",
         "viewer_accepted_quality": false
       },
       "a587098e7c5b87a53f29fa14f4a2c219f201b914fbd21206bd1c864451c94231": {
@@ -603176,13 +603326,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-06T01:18:43Z",
-    "received_utc": "2026-11-06T01:19:27Z",
+    "measured_utc": "2026-11-06T01:20:23Z",
+    "received_utc": "2026-11-06T01:20:59Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
       "downloaded_bytes": 0,
-      "runtime_s": 12.0
+      "runtime_s": 22.0
     }
   },
   "last_report": {
@@ -604813,13 +604963,13 @@
     "discovery_bytes": 1561648620,
     "discovery_seconds": 2153.0,
     "reservations": {
-      "8331ccfa99394e3cdf0658f1ee003b6ac1f99dfe1c81079ac19feee4db65f933": {
+      "43ab31067084f611161843e81fc5362498a27467f4c1b8ba68a3e3ee8453ecef": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 3059.0
+    "seconds": 3081.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -609125,6 +609275,7 @@
     "82fb785ea3b7050d221c41a133ad15f7e693f6233be5424e627492b085c10555": "ef499b4c0ea75ede41eeb33b32eac7b2a81c1d92d33d6a311c54c6603ecb647c",
     "83093e8d90b5e157cb6cb1f5791e5b73a5649cd486590e12c0082e58ecddf1f9": "a3b724188a01360e36ec372c53c63027c74d315cdfdec7b923a4bca618438e12",
     "832a9c215d2b181be19beb56041defa589b4cfceb5055652a0f1272b570a1c66": "67669db8435607b5e5dd31d2f86fdd072cd588b3f993755134e80d01f5a764b5",
+    "8331ccfa99394e3cdf0658f1ee003b6ac1f99dfe1c81079ac19feee4db65f933": "fee39513664caea193f72fb1c6b996d14ee72f03005205462e72a8895c4ec3c3",
     "8332e5af42f65bdaf3c2b4a0cb46f21dbc9fb7529598dcf9d8a0ea42d2b585d5": "0b8742743acbe4b0404a041a2cb5b7c5f67d5a744c8d3fbecc88b6e1039c93c8",
     "8334d4e551dbaf8257c0b728451f60bddd6a7bfff3015246e7537bcff11d019c": "74afbf3859abdebffe6e792960f6126ca61202136ad8cf4b4cfa93acecc05ad2",
     "835c2699610dd455dad2cc2e63576981316e6752ea49e49883f3cb8481b0cfdf": "c511970f104286afd1c958ec732b34293e4d9db5ff39e923c7aec8c1c85b0334",
