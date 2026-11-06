@@ -59,6 +59,7 @@ def safe_url(value):
 def eligible_rows(rows, state, formal, feedback):
     """Recheck history, vetoes and cross-channel identities without altering them."""
     from scripts.home_thin_control import allowed
+    from router.ac86u.regional_channels import CHANNELS, route_equivalence_key
     current = unique_core_routes(formal)
     owners = defaultdict(set)
     history_urls = set()
@@ -90,14 +91,21 @@ def eligible_rows(rows, state, formal, feedback):
         owners[row['url']].add(row['channel_key'])
     merged = dict(state, queue={**state['queue'], **normalized})
     check = allowed(merged, current, feedback)
-    keys = set(current) | set(SATELLITES) | {'cctv'+str(n) for n in range(1,18)} | {'cctv4k','cctv5plus'}
+    keys = set(current) | set(SATELLITES) | set(CHANNELS) | {'cctv'+str(n) for n in range(1,18)} | {'cctv4k','cctv5plus'}
+    regional_history = {route_equivalence_key(r['channel_key'], r['url'])
+        for r in known_rows if r.get('url') and r.get('channel_key') in CHANNELS}
     accepted, excluded = {}, {}
+    regional_selected = set()
     for identity, row in normalized.items():
         reason = None
         if not safe_url(row['url']) or row['request_options']:
             reason = 'unsafe_address_or_request_options'
         elif row['url'] in history_urls or any(candidate_id(k,row['url'],row['request_options']) in known for k in keys):
             reason = 'formal_queue_archive_or_tested_history'
+        elif row['channel_key'] in CHANNELS and route_equivalence_key(row['channel_key'], row['url']) in regional_history:
+            reason = 'equivalent_regional_route_history'
+        elif row['channel_key'] in CHANNELS and route_equivalence_key(row['channel_key'], row['url']) in regional_selected:
+            reason = 'equivalent_regional_route_in_batch'
         elif len(owners[row['url']]) > 1:
             reason = 'conflicting_channel_identity'
         elif not check(row):
@@ -106,6 +114,8 @@ def eligible_rows(rows, state, formal, feedback):
             excluded[identity] = reason
         else:
             accepted[identity] = row
+            if row['channel_key'] in CHANNELS:
+                regional_selected.add(route_equivalence_key(row['channel_key'], row['url']))
     return accepted, excluded
 
 

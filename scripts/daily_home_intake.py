@@ -156,11 +156,23 @@ def build_daily(rows, state, formal, feedback, now, evidence):
     return manifest, summary
 
 
-def collect_daily(sources, state, formal, feedback, now, read=None):
+def collect_daily(sources, state, formal, feedback, now, read=None, regional_rows=None):
     from scripts.home_source_expansion import (ReadBudget, IntakeBudgetExceeded,
         discover_files, MAX_FILES, MAX_REQUESTS, MAX_SECONDS)
     budget = ReadBudget(read or read_url)
     raw_rows, evidence, failures, seen = [], [], [], set()
+    if regional_rows:
+        from router.ac86u.regional_channels import CHANNELS
+        from router.ac86u.home_contract import station_key
+        if any(station_key(r.get('name')) not in CHANNELS for r in regional_rows):
+            raise ValueError('curated input must belong to the explicit regional catalog')
+        # User-requested frozen research inputs are explicitly distinguished
+        # from automatically discovered GitHub files. Neither grants health.
+        source = 'curated:regional-sources'
+        raw_rows.extend(dict(r, sources=sorted(set(r.get('sources', [])) | {source})) for r in regional_rows)
+        evidence.append(dict(source=source, origin='curated_regional_catalog',
+            entries=len(regional_rows), content_sha256=object_sha256(regional_rows),
+            evidence='user_requested_unverified_research_pool', priority_refresh=False))
     audit = dict(attempted=False, queries=[], repositories_examined=0,
         rejected_repository_metadata=0, truncated_trees=0, errors=[],
         stop_reason='registry_sufficient', max_files=MAX_FILES,
@@ -252,7 +264,9 @@ def main():
     sources = list({r['url']: r for r in sources}.values())[:48]
     manifest, summary, evidence, failures, expansion = collect_daily(
         sources, state, (root/'tv-core.m3u').read_bytes(),
-        root/'config/home-route-feedback.json', now)
+        root/'config/home-route-feedback.json', now,
+        regional_rows=json.loads((root/'config/regional-sources.json').read_bytes())['candidates']
+            if (root/'config/regional-sources.json').exists() else None)
     report = dict(generated_utc=timestamp(now), day=manifest['daily_intake_day'], summary=summary,
         sources=evidence, failures=failures, expansion=expansion, stream_probe_performed=False, production_modified=False,
         policy={'home_probe_is_the_only_health_authority': True, 'hong_kong_evidence_consulted': False,

@@ -23,7 +23,7 @@ from router.ac86u.home_contract import (  # noqa: E402
     ContractError,
     PROBE_ID_RE,
     canonical_name,
-    station_key,
+    core_station_key as station_key,
     validate_candidate_manifest,
     validate_home_report_v2,
 )

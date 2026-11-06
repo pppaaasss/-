@@ -1,0 +1,47 @@
+{
+  "schema": "iptv-regional-identity-veto/v1",
+  "routes": [
+    {
+      "channel_key": "PTS.tw",
+      "url": "http://74.91.26.218:82/live/pts.m3u8",
+      "reason": "公視标签下实际为金马卫视推销画面",
+      "evidence": "BERO实际解码截图，2026-11-06"
+    },
+    {
+      "channel_key": "EBCNews.tw",
+      "url": "http://211.72.174.95:8138/0.ts",
+      "reason": "東森新聞标签下为静止播放器设置教程",
+      "evidence": "BERO实际解码截图，2026-11-06"
+    },
+    {
+      "channel_key": "TVBSEntertainmentChannel.tw",
+      "url": "http://4gtv.cnlive.club/channel/498f035d/index.m3u8?q=1782639885837",
+      "reason": "TVBS歡樂标签下为下载App二维码广告",
+      "evidence": "BERO实际解码截图，2026-11-06"
+    },
+    {
+      "channel_key": "MomoKids.tw",
+      "url": "http://4gtv.cnlive.club/channel/n33a56e39/index.m3u8?q=1782639885837",
+      "reason": "momo标签下为同一下载App二维码广告",
+      "evidence": "BERO实际解码截图，2026-11-06"
+    },
+    {
+      "channel_key": "TaiwanIndigenousTV.tw",
+      "url": "http://4gtv.cnlive.club/channel/4f20dc68/index.m3u8?q=1782639885837",
+      "reason": "原民标签下为同一下载App二维码广告",
+      "evidence": "BERO实际解码截图，2026-11-06"
+    },
+    {
+      "channel_key": "NipponTV.jp",
+      "url": "https://cdn4.skygo.mn/live/disk1/NTVHD/HLSv3-FTA/NTVHD.m3u8",
+      "reason": "实际为蒙古NTV：蒙古文新闻字幕和NTV台标，非日本テレビ",
+      "evidence": "BERO实际解码截图 github-expansion/thumbs/github-second/ae9934ec89f14fe572a4.jpg，2026-11-06"
+    },
+    {
+      "channel_key": "TVBSNews.tw",
+      "url": "http://125.227.210.55:3047/VideoInput/play.ts",
+      "reason": "实际为TVBS歡樂台HD，不能作为TVBS新聞；已按实际频道重新建档",
+      "evidence": "github-expansion/thumbs/github-fourth及github-fifth/b7d9bee83851b1f47489.jpg"
+    }
+  ]
+}

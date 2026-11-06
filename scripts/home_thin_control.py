@@ -187,6 +187,7 @@ def task_row(cycle, key, url, role, attempt=1):
 
 
 def allowed(state, current, feedback):
+    from router.ac86u.regional_channels import CHANNELS, rejected_regional_route
     urls = rejected_urls(feedback)
     hosts = rejected_hosts(feedback, 2)
     identities = {}
@@ -196,7 +197,9 @@ def allowed(state, current, feedback):
         identities.setdefault(row['url'], set()).add(row['channel_key'])
     conflicts = {url for url, keys in identities.items() if len(keys) > 1}
     def check(row):
-        return (row['channel_key'] in current and row['url'] != current[row['channel_key']].url
+        return ((row['channel_key'] in current or row['channel_key'] in CHANNELS)
+                and not rejected_regional_route(row['channel_key'], row['url'])
+                and (row['channel_key'] not in current or row['url'] != current[row['channel_key']].url)
                 and row['url'] not in urls | conflicts and (urlsplit(row['url']).hostname or '').lower() not in hosts
                 and not row.get('request_options'))
     return check

@@ -30,6 +30,7 @@ from router.ac86u.home_contract import (  # noqa: E402
 )
 from scripts.home_route_policy import rejected_hosts as feedback_rejected_hosts  # noqa: E402
 from scripts.home_route_policy import rejected_urls as feedback_rejected_urls  # noqa: E402
+from router.ac86u.regional_channels import CHANNELS as REGIONAL_CHANNELS, route_equivalence_key, rejected_regional_route
 
 
 DEFAULT_FORMAL_URL = "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
@@ -101,6 +102,7 @@ def build_manifest(
         "home_feedback": 0,
     }
     identity_merges = 0
+    equivalent = {}
     for source in discovery_rows:
         try:
             row = make_candidate(source)
@@ -111,17 +113,22 @@ def build_manifest(
                 rejected["invalid"] += 1
             continue
         key = str(row["channel_key"])
-        if key not in current:
+        if key not in current and key not in REGIONAL_CHANNELS:
             rejected["outside_scope"] += 1
             continue
-        if row["url"] == current[key]:
+        if row["url"] == current.get(key):
             rejected["current_route"] += 1
             continue
         host = (urlsplit(str(row["url"])).hostname or "").casefold()
         if row["url"] in rejected_urls or (host and host in rejected_hosts):
             rejected["home_feedback"] += 1
             continue
+        if rejected_regional_route(key, row['url']):
+            rejected['regional_identity_veto'] = rejected.get('regional_identity_veto', 0) + 1
+            continue
         identity = str(row["candidate_id"])
+        route_key = (key, route_equivalence_key(key, row['url']), row['request_options'])
+        identity = equivalent.setdefault(route_key, identity)
         previous = candidates.get(identity)
         if previous is None:
             candidates[identity] = row
@@ -148,7 +155,7 @@ def build_manifest(
         "schema": CANDIDATE_SCHEMA,
         "generated_utc": generated_utc,
         "source_revision": source_revision,
-        "scope": ["cctv", "provincial_satellite"],
+        "scope": ["cctv", "provincial_satellite", "taiwan", "japan"] if any(r['channel_key'] in REGIONAL_CHANNELS for r in ordered) else ["cctv", "provincial_satellite"],
         "formal_playlist": {
             "url": formal_url,
             "sha256": hashlib.sha256(formal_bytes).hexdigest(),
@@ -250,6 +257,8 @@ def retain_delivery(delta, index, previous_index, previous_manifest=None, receip
                   candidate_set_sha256=object_sha256(ordered),
                   delivery_batches=[dict(id=k, candidate_ids=[r['candidate_id'] for r in v])
                                     for k, v in sorted(pending.items())])
+    if any(row['channel_key'] in REGIONAL_CHANNELS for row in ordered):
+        output['scope'] = ['cctv', 'provincial_satellite', 'taiwan', 'japan']
     index = dict(index, pending_batches=pending)
     validate_candidate_manifest(output)
     return output, index

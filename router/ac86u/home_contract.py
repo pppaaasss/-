@@ -19,6 +19,15 @@ import unicodedata
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
+if __package__:
+    from .regional_channels import CHANNELS as REGIONAL_CHANNELS, regional_key, regional_group
+else:  # Older standalone Entware bundles remain core-only; native tasks are data-only.
+    REGIONAL_CHANNELS = {}
+    def regional_key(name):
+        return None
+    def regional_group(key):
+        return '卫视台'
+
 
 CANDIDATE_SCHEMA = "iptv-home-candidates/v1"
 BACKUP_SCHEMA = "iptv-home-qualified-backups/v1"
@@ -101,7 +110,15 @@ def _normal_text(value: object) -> str:
 
 
 def station_key(name: object) -> str | None:
-    """Return a stable key only for CCTV and mainland provincial satellites."""
+    """Return a stable key for core stations or the explicit TW/JP catalog."""
+    regional = regional_key(name)
+    if regional:
+        return regional
+    return core_station_key(name)
+
+
+def core_station_key(name: object) -> str | None:
+    """Retain the existing current-route patrol and publisher scope."""
     text = _normal_text(name)
     low = text.casefold().replace("＋", "+")
     compact = re.sub(r"[\s_-]+", "", text).casefold().replace("＋", "+")
@@ -125,6 +142,8 @@ def station_key(name: object) -> str | None:
 
 
 def canonical_name(channel_key: str) -> str:
+    if channel_key in REGIONAL_CHANNELS:
+        return REGIONAL_CHANNELS[channel_key]['name']
     if channel_key == "cctv4k":
         return "CCTV-4K"
     if channel_key == "cctv5plus":
@@ -188,7 +207,7 @@ def _url(value: object, label: str) -> str:
 
 def _channel_key(value: object, label: str) -> str:
     text = _text(value, label, 40)
-    if not CHANNEL_KEY_RE.fullmatch(text):
+    if not CHANNEL_KEY_RE.fullmatch(text) and text not in REGIONAL_CHANNELS:
         raise ContractError(f"{label} is not a supported CCTV/satellite key")
     return text
 
@@ -232,7 +251,7 @@ def make_candidate(row: dict) -> dict:
         "candidate_id": candidate_id(key, url, options),
         "channel_key": key,
         "name": canonical_name(key),
-        "group": "卫视台",
+        "group": regional_group(key),
         "url": url,
         "url_sha256": url_sha256(url),
         "request_options": options,
@@ -255,8 +274,9 @@ def validate_candidate_manifest(
     _freshness(manifest.get("generated_utc"), "candidate manifest.generated_utc", now_epoch=now_epoch, max_age_hours=max_age_hours)
     _text(manifest.get("source_revision"), "candidate manifest.source_revision", 128)
     _playlist_binding(manifest.get("formal_playlist"), "candidate manifest.formal_playlist")
-    if manifest.get("scope") != ["cctv", "provincial_satellite"]:
-        raise ContractError("candidate manifest scope is not home-core-only")
+    scope = manifest.get("scope")
+    if scope not in (["cctv", "provincial_satellite"], ["cctv", "provincial_satellite", "taiwan", "japan"]):
+        raise ContractError("candidate manifest scope is unsupported")
     if manifest.get("cloud_stream_probe_performed") is not False:
         raise ContractError("GitHub candidate manifest must not claim stream verification")
     if manifest.get("home_verified") is not False or manifest.get("production_eligible") is not False:
@@ -271,7 +291,9 @@ def validate_candidate_manifest(
         name = _text(row.get("name"), f"candidate[{index}].name", 128)
         if station_key(name) != key or canonical_name(key) != name:
             raise ContractError(f"candidate[{index}] name and channel key disagree")
-        if row.get("group") != "卫视台":
+        if key in REGIONAL_CHANNELS and 'taiwan' not in scope:
+            raise ContractError(f"candidate[{index}] regional channel outside manifest scope")
+        if row.get("group") != regional_group(key):
             raise ContractError(f"candidate[{index}] group is invalid")
         url = _url(row.get("url"), f"candidate[{index}].url")
         if _sha(row.get("url_sha256"), f"candidate[{index}].url_sha256") != url_sha256(url):

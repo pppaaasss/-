@@ -113,8 +113,12 @@ def parse_source(text: str, configured_group: str, source_url: str) -> list[dict
             gm = GROUP_RE.search(raw)
             group = clean_name(gm.group(1)) if gm else configured_group
             j = i + 1
+            regional_options = []
+            regional = configured_group in ('台湾', '日本') or bp.regional_key(name)
             while j < len(lines):
                 nxt = lines[j].strip()
+                if regional and nxt.startswith(('#EXTVLCOPT:', '#KODIPROP:', '#EXTHTTP:')):
+                    regional_options.append(nxt)
                 if not nxt or nxt.startswith("#"):
                     j += 1
                     continue
@@ -125,7 +129,7 @@ def parse_source(text: str, configured_group: str, source_url: str) -> list[dict
                             "name": name,
                             "group": group or configured_group,
                             "url": url,
-                            "options": options,
+                            "options": '\n'.join([*regional_options, options]).strip() if regional else options,
                             "source": source_url,
                         })
                 break

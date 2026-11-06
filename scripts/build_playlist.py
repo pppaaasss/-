@@ -18,6 +18,7 @@ import os
 import re
 import socket
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -26,6 +27,9 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Iterable
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from router.ac86u.regional_channels import CHANNELS as REGIONAL_CHANNELS, regional_key
 
 try:
     from channel_regions import (
@@ -1015,6 +1019,9 @@ def cctv_url_conflicts_with_label(channel: Channel) -> bool:
 
 def channel_key(channel: Channel) -> str:
     """Canonical key used only after alternate URLs have been speed-tested."""
+    regional = regional_key(channel.name)
+    if regional:
+        return regional
     visible_name = normalized_name(channel.name)
     # CCTV-4 (Chinese International) and CCTV-4K are separate channels, while
     # spelling variants such as CCTV4K / CCTV-4K HD are one channel.
@@ -2443,6 +2450,9 @@ def display_group(channel: Channel) -> str:
 
 
 def canonical_display_name(channel: Channel) -> str:
+    regional = regional_key(channel.name)
+    if regional:
+        return REGIONAL_CHANNELS[regional]['name']
     if channel.display_override:
         return channel.display_override
     key = channel_key(channel)
@@ -2502,6 +2512,17 @@ def cleaned_extinf(channel: Channel) -> str:
     display_name = canonical_display_name(channel)
     if "," in extinf and display_name != channel.name:
         extinf = extinf.rsplit(",", 1)[0] + "," + display_name
+    regional = regional_key(channel.name)
+    if regional:
+        meta = REGIONAL_CHANNELS[regional]
+        # IDs must exist in the actual configured XMLTV file. Leave unmapped
+        # channels blank rather than accidentally using WORLD/BS/news guides.
+        extinf = set_extinf_attribute(extinf, 'tvg-id', meta.get('epg_id', ''))
+        extinf = set_extinf_attribute(extinf, 'tvg-name', meta['name'])
+        extinf = set_extinf_attribute(extinf, 'group-title', meta['group'])
+        if meta.get('logo'):
+            extinf = set_extinf_attribute(extinf, 'tvg-logo', meta['logo'])
+        return extinf
     metadata_name = fanmingming_logo_name(channel)
     if metadata_name:
         logo_name = urllib.parse.quote(metadata_name, safe="+")
@@ -2545,8 +2566,14 @@ def sort_channels(channels: list[Channel]) -> list[Channel]:
 
 
 def write_playlist(path: Path, channels: list[Channel], description: str) -> None:
+    epg_urls = [EPG_URL]
+    for channel in channels:
+        key = regional_key(channel.name)
+        url = REGIONAL_CHANNELS.get(key, {}).get('epg_url')
+        if url and url not in epg_urls:
+            epg_urls.append(url)
     lines = [
-        f'#EXTM3U x-tvg-url="{EPG_URL}"',
+        f'#EXTM3U x-tvg-url="{",".join(epg_urls)}"',
         f"# {description}",
         f"# generated_utc={GENERATED_AT}",
         f"# channels={len(channels)}",
