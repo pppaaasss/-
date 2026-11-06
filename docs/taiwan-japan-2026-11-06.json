@@ -2,16 +2,16 @@
   "summary": {
     "research_candidates_before_followup": 500,
     "new_research_candidates": 513,
-    "research_candidates": 1013,
-    "tested_addresses": 350,
-    "media_attempts": 422,
-    "downloaded_bytes": 1042132002,
+    "research_candidates": 1161,
+    "tested_addresses": 728,
+    "media_attempts": 815,
+    "downloaded_bytes": 1259606820,
     "media_bytes_scope": "记录到sample_bytes的媒体样本量下限；不含失败零碎下载及HTTP开销",
-    "accepted_primary": 31,
+    "accepted_primary": 37,
     "independent_backups": 6,
     "epg_mapped": 48,
-    "epg_selected_mapped": 29,
-    "curated_inputs": 945,
+    "epg_selected_mapped": 35,
+    "curated_inputs": 1082,
     "home_qualified": 0,
     "followup": {
       "repositories": 38,
@@ -22,6 +22,67 @@
       "added_confirmed_channels": 20,
       "source_label_correction": "TVBS新聞台标签下的125.227.210.55:3047实际为TVBS歡樂台",
       "epg_time_axis": "日本EPG上游部分节目时段与实际画面不一致，未猜测统一时移"
+    },
+    "pending": 17,
+    "groups": {
+      "台湾": 17,
+      "日本": 20
+    },
+    "distinct_url_count": 728,
+    "post_push_followup": {
+      "repositories": 14,
+      "source_files": 15,
+      "additional_research_candidates": 160,
+      "media_attempts": 393,
+      "tested_addresses": 383,
+      "local_tool_failures_excluded": 6,
+      "added_confirmed_channels": 6,
+      "official_derived_proxy": "CTS官网当前直播编号+GitHub已公开yt.php代理；两轮20秒、台标和节目核对"
+    },
+    "publication": {
+      "initial_commit": "8323df60f2351b2234dcfe6595ebae97fd88b777",
+      "initial_primary_count": 31,
+      "current_primary_count": 37,
+      "current_update": "本次更新包含37台并与逐台报告同步；实际发布版本以master提交为准",
+      "playlist": "https://raw.githubusercontent.com/pppaaasss/-/master/tv.m3u"
+    },
+    "tests": {
+      "related_passed": 126,
+      "failed": 0,
+      "diff_check": "passed"
+    },
+    "current_daily_preview": {
+      "state_revision": "6813005be5ac7f3734036b72dabda151e9d97f2b",
+      "local_preview_only": true,
+      "summary": {
+        "formal_channels": 53,
+        "discovery_rows": 1082,
+        "identity_merges": 0,
+        "candidate_count": 500,
+        "rejected": {
+          "outside_scope": 0,
+          "current_route": 0,
+          "invalid": 0,
+          "home_feedback": 0,
+          "identity_conflict": 6
+        },
+        "eligible_count": 1050,
+        "selected_count": 500,
+        "target": 500,
+        "shortfall": 0,
+        "reason": "ready",
+        "history_and_safety_exclusions": {
+          "unsafe_address_or_request_options": 22,
+          "scope_or_manual_veto": 4
+        }
+      },
+      "regional_groups": [
+        "台湾",
+        "日本"
+      ],
+      "existing_state_untouched": true,
+      "home_tasks_published": false,
+      "target_day": "20261107"
     }
   },
   "channels": [
@@ -231,7 +292,7 @@
       "backups": [],
       "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 18,
+      "tested_addresses": 19,
       "epg_id": "456556",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -276,12 +337,37 @@
       "name": "三立新聞台",
       "group": "台湾",
       "priority": "优先",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "http://125.227.210.55:3022/VideoInput/play.ts",
+        "request_options": "",
+        "source": "https://raw.githubusercontent.com/uttumtt-creator/Iptv/HEAD/utok2.txt",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "af270bc4daff4754dacf",
+        "successful_rounds": [
+          "post-push-remaining",
+          "post-push-confirm"
+        ],
+        "checked_utc": "2026-11-06T12:16:04Z",
+        "height": 720,
+        "decoded_seconds": [
+          10.0,
+          20.0
+        ],
+        "media_content_changed": true,
+        "identity_review": "右上SET三立新聞水印、台灣ON AIR新闻；20:04画面时钟对应当前台湾时间，跨轮持续变化",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup",
+        "review_sample_rounds": [
+          "post-push-last-first"
+        ]
+      },
       "backups": [],
-      "reason": "拉媒体超时、媒体/解码失败",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验；720p低于现有家庭1080p门槛，未放宽标准",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 15,
+      "tested_addresses": 44,
       "epg_id": "456555",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -376,12 +462,37 @@
       "name": "華視新聞資訊台",
       "group": "台湾",
       "priority": "优先",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "http://103.39.109.80/yt.php?id=wM0g8EoUZ_E",
+        "request_options": "",
+        "source": "derived:https://news.cts.com.tw/live + public proxy documented at https://raw.githubusercontent.com/jj00780078/jj00780078.github.io/HEAD/tw.txt",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "e6bef0dbc2da082a8936",
+        "successful_rounds": [
+          "post-push-official-proxy",
+          "post-push-official-confirm"
+        ],
+        "checked_utc": "2026-11-06T12:38:48Z",
+        "height": 1080,
+        "decoded_seconds": [
+          20.0,
+          20.0
+        ],
+        "media_content_changed": true,
+        "identity_review": "華視官网当前直播嵌入编号wM0g8EoUZ_E，经GitHub已公开的yt.php代理拉到1080p媒体；两次20秒解码通过，CTS華視新聞資訊水印、CTS采访话筒和20:35→20:38时钟对应本轮时间，节目持续推进；非華視主台或App广告",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup",
+        "review_sample_rounds": [
+          "post-push-new-hosts"
+        ]
+      },
       "backups": [],
-      "reason": "未解出视频；官方只有网页/YouTube线索，未用華視主台替代",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 5,
+      "tested_addresses": 30,
       "epg_id": "457338",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -429,9 +540,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：失效/拒绝连接、超时；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 6,
+      "tested_addresses": 24,
       "epg_id": "456530",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -443,9 +554,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时、静态点播清单",
+      "reason": "新增公开候选仍未通过：失效/拒绝连接、超时；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 6,
+      "tested_addresses": 37,
       "epg_id": "456528",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -457,9 +568,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 2,
+      "tested_addresses": 28,
       "epg_id": "456532",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -496,7 +607,7 @@
       "backups": [],
       "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验；低于现有家庭1080p门槛，未放宽标准",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 19,
+      "tested_addresses": 18,
       "epg_id": "456543",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -508,9 +619,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：失效/拒绝连接、超时；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 5,
+      "tested_addresses": 45,
       "epg_id": "456575",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -522,9 +633,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "媒体/解码失败",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 3,
+      "tested_addresses": 31,
       "epg_id": "456551",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -536,9 +647,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：失效/拒绝连接、超时；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 4,
+      "tested_addresses": 20,
       "epg_id": "456550",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -550,9 +661,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时、静态点播清单",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 6,
+      "tested_addresses": 25,
       "epg_id": "456542",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -564,9 +675,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 4,
+      "tested_addresses": 23,
       "epg_id": "456541",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -578,9 +689,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 1,
+      "tested_addresses": 20,
       "epg_id": "456544",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -592,9 +703,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "HTTP 404、HTTP 403；未使用登录/订阅或账号地址",
+      "reason": "旧公开源403/404，新增台湾DAZN体育地址拉媒体超时；未使用账号、订阅或其他国家同名频道",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 3,
+      "tested_addresses": 4,
       "epg_id": "456576",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -606,9 +717,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "HTTP 404、HTTP 403；未使用登录/订阅或账号地址",
+      "reason": "旧公开源403/404，新增台湾DAZN体育地址拉媒体超时；未使用账号、订阅或其他国家同名频道",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 3,
+      "tested_addresses": 4,
       "epg_id": "456577",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -747,12 +858,34 @@
       "name": "東森幼幼台",
       "group": "台湾",
       "priority": "补充",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "http://125.227.210.55:4052/VideoInput/play.ts",
+        "request_options": "",
+        "source": "https://raw.githubusercontent.com/uttumtt-creator/Iptv/HEAD/utok2.txt",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "ad5d180ada46ad02e1cb",
+        "successful_rounds": [
+          "post-push-remaining",
+          "post-push-confirm"
+        ],
+        "checked_utc": "2026-11-06T12:16:04Z",
+        "height": 720,
+        "decoded_seconds": [
+          10.0,
+          12.353016
+        ],
+        "media_content_changed": true,
+        "identity_review": "右上EBC YOYO HD台标、妙妙犬布麗动画；小角落为本台YOYOTV APP宣传，主体为实际节目",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup"
+      },
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验；720p低于现有家庭1080p门槛，未放宽标准",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 2,
+      "tested_addresses": 17,
       "epg_id": "456525",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -764,9 +897,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时；二维码广告假源已否决",
+      "reason": "新增公开候选仍未通过：超时、失效/拒绝连接；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 9,
+      "tested_addresses": 15,
       "epg_id": "456524",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -775,12 +908,34 @@
       "name": "緯來日本台",
       "group": "台湾",
       "priority": "补充",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "http://125.227.210.55:1083/VideoInput/play.ts",
+        "request_options": "",
+        "source": "https://raw.githubusercontent.com/uttumtt-creator/Iptv/HEAD/utok2.txt",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "a799f9fa293c91c11f26",
+        "successful_rounds": [
+          "post-push-remaining",
+          "post-push-confirm"
+        ],
+        "checked_utc": "2026-11-06T12:16:37Z",
+        "height": 720,
+        "decoded_seconds": [
+          10.0,
+          16.904127
+        ],
+        "media_content_changed": true,
+        "identity_review": "右上緯來日本台水印、繁体中文字幕日本综艺，跨轮题目从2/6推进至4/6；非日本国内频道",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup"
+      },
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验；720p低于现有家庭1080p门槛，未放宽标准",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 5,
+      "tested_addresses": 27,
       "epg_id": "456579",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -792,9 +947,9 @@
       "status": "待补",
       "primary": null,
       "backups": [],
-      "reason": "拉媒体超时",
+      "reason": "新增公开候选仍未通过：失效/拒绝连接、超时；未创建占位播放项",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 1,
+      "tested_addresses": 10,
       "epg_id": "456580",
       "epg_status": "已核对实际频道名与节目范围；区分主台、新闻、BS、地方及国际版"
     },
@@ -867,12 +1022,34 @@
       "name": "NHK Eテレ（東京）",
       "group": "日本",
       "priority": "优先",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "https://ri.shinori.my.id/pxx.php?shk_cid=hdgd02",
+        "request_options": "",
+        "source": "public ri proxy CID mapping; upstream Tokyo JOAB hdgd02 in Free-TV/IPTV japan.md",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "e4a07d6e5579fe6ca378",
+        "successful_rounds": [
+          "post-push-identity-fixed",
+          "post-push-confirm"
+        ],
+        "checked_utc": "2026-11-06T12:16:39Z",
+        "height": 1080,
+        "decoded_seconds": [
+          20.0,
+          20.0
+        ],
+        "media_content_changed": true,
+        "identity_review": "NHK E水印与手話新闻，随后转日本文化访谈；Free-TV/IPTV与kkmeman上游明确JOAB东京/hdgd02，对应已公开ri代理CID，并已实播核验，非WORLD或其他地区NHK G",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup"
+      },
       "backups": [],
-      "reason": "未找到可准确对应东京JOAB的合格媒体；旧泛NHK E候选超时/DNS失败，未冒用东京身份",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 7,
+      "tested_addresses": 12,
       "epg_id": "10810",
       "epg_status": "频道编号和名称已核对；现有上游部分节目时段与实播不一致，时间轴待验"
     },
@@ -1181,12 +1358,40 @@
       "name": "BS日テレ",
       "group": "日本",
       "priority": "补充",
-      "status": "待补",
-      "primary": null,
+      "status": "已收录（Codex实测可播）",
+      "primary": {
+        "url": "https://ri.shinori.my.id/pxx.php?shk_cid=bs02",
+        "request_options": "",
+        "source": "https://github.com/david13xa/-/blob/main/irl.m3u",
+        "verification": "CODEX_VERIFIED",
+        "environment": "BERO Germany / 本主机89.106.76.73",
+        "household_status": "UNVERIFIED",
+        "local_sample_id": "44ea5667cf2e0b507707",
+        "successful_rounds": [
+          "github-fourth",
+          "post-push-identity-fixed",
+          "post-push-second"
+        ],
+        "checked_utc": "2026-11-06T11:55:15Z",
+        "height": 1080,
+        "decoded_seconds": [
+          10.0,
+          20.0,
+          20.0
+        ],
+        "media_content_changed": true,
+        "identity_review": "深層NEWS实际节目、片尾明确BS日テレ企画制作标识；两次20秒解码通过，既有冻结记录保留",
+        "household_admission": "unverified_candidate_only",
+        "evidence_directory": "post-push-followup",
+        "review_sample_rounds": [
+          "github-fifth",
+          "github-sixth"
+        ]
+      },
       "backups": [],
-      "reason": "取得1080p实际媒体，一轮通过、后两轮触发冻结检测；尚未达到跨轮合格标准",
+      "reason": "本机跨轮解码及人工身份复核通过；家庭线路待验；早前冻结样本保留，本轮两次20秒通过",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 3,
+      "tested_addresses": 21,
       "epg_id": "10832",
       "epg_status": "频道编号和名称已核对；现有上游部分节目时段与实播不一致，时间轴待验"
     },
@@ -1526,7 +1731,7 @@
       "backups": [],
       "reason": "取得1080p且多轮可解码；样本为联播/购物/宣传，尚未唯一核实大阪本台身份，未与东京同网台合并",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 10,
+      "tested_addresses": 16,
       "epg_id": "",
       "epg_status": "地区或主副台未唯一确认，留空"
     },
@@ -1576,7 +1781,7 @@
       "backups": [],
       "reason": "取得1080p且多轮可解码；样本为联播/购物/宣传，尚未唯一核实大阪本台身份，未与东京同网台合并",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 3,
+      "tested_addresses": 14,
       "epg_id": "",
       "epg_status": "地区或主副台未唯一确认，留空"
     },
@@ -1590,7 +1795,7 @@
       "backups": [],
       "reason": "取得1080p且多轮可解码；样本为联播/购物/宣传，尚未唯一核实大阪本台身份，未与东京同网台合并",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 4,
+      "tested_addresses": 13,
       "epg_id": "",
       "epg_status": "地区或主副台未唯一确认，留空"
     },
@@ -1604,7 +1809,7 @@
       "backups": [],
       "reason": "取得1080p且多轮可解码；样本为联播/购物/宣传，尚未唯一核实大阪本台身份，未与东京同网台合并",
       "test_environment": "BERO Germany / Codex本主机；家庭线路待验",
-      "tested_addresses": 10,
+      "tested_addresses": 15,
       "epg_id": "",
       "epg_status": "地区或主副台未唯一确认，留空"
     }
