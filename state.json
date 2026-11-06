@@ -13860,11 +13860,13 @@
       "candidate_id": "90c67edd6a77a83fe0c11bda525ac1928f1d51e04dcd72b3d40d8534846dec0a",
       "channel_key": "云南卫视",
       "expires_utc": "2026-10-26T07:37:37Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-24T19:37:37Z",
       "name": "云南卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-24T19:37:37Z",
       "request_options": "",
+      "retry_after_epoch": 1793931211.0,
       "source_manifest_sha256": "01c81d8c7a253d4d86c23cf700fc08f1d50465ae58179c7c8784efd7b99a06cc",
       "url": "http://xymm.1000s.dpdns.org:8767/ynws.m3u8",
       "url_sha256": "76069cf8e4af05b6cd2e608d2b7c6201815b8cbc331bc5d5e0ac5dee5856d53c",
@@ -20535,11 +20537,13 @@
       "candidate_id": "da9b719c7add9c99db0e0664e3ff7c3b78106bc2f972b8b1b46aa9611a07911b",
       "channel_key": "东南卫视",
       "expires_utc": "2026-10-26T07:58:06Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-24T19:58:06Z",
       "name": "东南卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-24T19:58:06Z",
       "request_options": "",
+      "retry_after_epoch": 1793931195.0,
       "source_manifest_sha256": "01c81d8c7a253d4d86c23cf700fc08f1d50465ae58179c7c8784efd7b99a06cc",
       "url": "http://145.239.65.119:20345/dnws.m3u8",
       "url_sha256": "57b1270a6f41c86fab82802dc33821c22c3682c52b8e418536b33b06d11dd84c",
@@ -547089,6 +547093,61 @@
         }
       ]
     },
+    "f6b16a068777a2ff226c3bc4109709fa1e7a74ac1107881c18c19e588d260615": {
+      "batch_id": "f6b16a068777a2ff226c3bc4109709fa1e7a74ac1107881c18c19e588d260615",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-06T01:14:11Z",
+      "cycle_id": "93b3072001b1e93e5882aeb483586b2d4079e57036e74128b7c6fb36e6bdb118",
+      "expires_utc": "2026-11-06T01:44:11Z",
+      "feedback_sha256": "6599f957619785f43b96f0a0c580522fe947e56f0fa7fa2883ad856d13f35bcc",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "f11f94d7f4b7dbc946f1fd2240c6542be3ec275aa0978854325154cc29deeec6",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "faee555ea17630a3e04caa8c24f292fcc7d1a2f843935bd39113434d97b759be",
+          "channel_key": "东南卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "东南卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "e8e28c4fdd375277c11eba0189c5c405d5972334fb1c6f35ba4224bfed484be4",
+          "url": "http://live.zohi.tv/video/s10001-fztv-3/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "15ba76e3d27a95495cb88fdfb7efc58a19f72823f26ee67962706fa7fefbdf0e",
+          "channel_key": "云南卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "云南卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "f1a33a622d3f03dc2dc3cc9be12111026a1121c42cc5c58e5e501e194b989497",
+          "url": "http://51.75.118.151:20299/ynws.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "f6bb26e6803267dcf1fc2eb0126985fb126946ab86cd2c4844a9f42208cbd20a": {
       "batch_id": "f6bb26e6803267dcf1fc2eb0126985fb126946ab86cd2c4844a9f42208cbd20a",
       "candidate_mode": "drain_queue",
@@ -567327,7 +567386,8 @@
       "51eae573dce520c51ded1e6e06ea7aea7d75d322ec2fc56e471f5c56f4ad6dd6",
       "67189772c4dca4158070ab84484b923ff8edcc082eedf4028db637a87cd42017",
       "fafcdc6be8671fcd1b9724cb4d0dcca090c0a3241bc0d9e67a7679e49a19db0e",
-      "da579235703678d640ae68fb89f497ce288eb72bab7e44dbbce8767827b8950e"
+      "da579235703678d640ae68fb89f497ce288eb72bab7e44dbbce8767827b8950e",
+      "f6b16a068777a2ff226c3bc4109709fa1e7a74ac1107881c18c19e588d260615"
     ],
     "binding": {
       "channel_count": 53,
@@ -567500,7 +567560,7 @@
     "id": "93b3072001b1e93e5882aeb483586b2d4079e57036e74128b7c6fb36e6bdb118",
     "kind": "primary-0200",
     "manifest_sha": "dbfcc618b1bcf1a8065bd91d874ecbdfd6c65a33cdb93c8d41b805d44f03fdbd",
-    "outstanding": "da579235703678d640ae68fb89f497ce288eb72bab7e44dbbce8767827b8950e",
+    "outstanding": "f6b16a068777a2ff226c3bc4109709fa1e7a74ac1107881c18c19e588d260615",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -569303,6 +569363,35 @@
         },
         "started_utc": "2026-11-06T00:08:32Z",
         "task_id": "122498f8190c3bbb267cf1b60b9f75f7ec94a46768323e2172672f7c6c8f3d8f"
+      },
+      "1235c2778b62d91d2b5c113d03bc3921eabb49f9db8b750c7ee5b76b01ef920e": {
+        "finished_utc": "2026-11-06T01:13:15Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "东南卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "东南卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://145.239.65.119:20345/dnws.m3u8",
+          "url_sha256": "57b1270a6f41c86fab82802dc33821c22c3682c52b8e418536b33b06d11dd84c",
+          "width": 0
+        },
+        "started_utc": "2026-11-06T01:13:01Z",
+        "task_id": "1235c2778b62d91d2b5c113d03bc3921eabb49f9db8b750c7ee5b76b01ef920e"
       },
       "131d0fb332b651e1688791b8417eb19ad5c52d6791587c413ffac0aa18dce6bd": {
         "finished_utc": "2026-11-05T22:23:06Z",
@@ -585301,6 +585390,35 @@
         "started_utc": "2026-11-06T00:45:40Z",
         "task_id": "b5defac8c71ac8d6763a409c14c4a0d802d884141e304ae8cde5197002c35a28"
       },
+      "b60947938a4d838c7b26d827ab1157f227accb0ee1a9f875114b520d8538c7e7": {
+        "finished_utc": "2026-11-06T01:13:31Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "云南卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "云南卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://xymm.1000s.dpdns.org:8767/ynws.m3u8",
+          "url_sha256": "76069cf8e4af05b6cd2e608d2b7c6201815b8cbc331bc5d5e0ac5dee5856d53c",
+          "width": 0
+        },
+        "started_utc": "2026-11-06T01:13:17Z",
+        "task_id": "b60947938a4d838c7b26d827ab1157f227accb0ee1a9f875114b520d8538c7e7"
+      },
       "b6554720d61615ac170e9dfcb152b04e1189e52c6803940f239d89664f9f35eb": {
         "finished_utc": "2026-11-06T00:51:45Z",
         "result": {
@@ -593460,6 +593578,22 @@
         "url": "http://42.94.209.140:7788/790187291",
         "viewer_accepted_quality": false
       },
+      "1235c2778b62d91d2b5c113d03bc3921eabb49f9db8b750c7ee5b76b01ef920e": {
+        "attempt": 1,
+        "candidate_id": "da9b719c7add9c99db0e0664e3ff7c3b78106bc2f972b8b1b46aa9611a07911b",
+        "channel_key": "东南卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东南卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "1235c2778b62d91d2b5c113d03bc3921eabb49f9db8b750c7ee5b76b01ef920e",
+        "url": "http://145.239.65.119:20345/dnws.m3u8",
+        "viewer_accepted_quality": false
+      },
       "131d0fb332b651e1688791b8417eb19ad5c52d6791587c413ffac0aa18dce6bd": {
         "attempt": 1,
         "candidate_id": "2c4f38dbd89f1c3bdb313e36487513e18e2a450c26287fc84b6545068a20200d",
@@ -599547,6 +599681,22 @@
         "url": "http://182.46.8.235:7788/624878356",
         "viewer_accepted_quality": false
       },
+      "b60947938a4d838c7b26d827ab1157f227accb0ee1a9f875114b520d8538c7e7": {
+        "attempt": 1,
+        "candidate_id": "90c67edd6a77a83fe0c11bda525ac1928f1d51e04dcd72b3d40d8534846dec0a",
+        "channel_key": "云南卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "云南卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "b60947938a4d838c7b26d827ab1157f227accb0ee1a9f875114b520d8538c7e7",
+        "url": "http://xymm.1000s.dpdns.org:8767/ynws.m3u8",
+        "viewer_accepted_quality": false
+      },
       "b6554720d61615ac170e9dfcb152b04e1189e52c6803940f239d89664f9f35eb": {
         "attempt": 1,
         "candidate_id": "44d2330f8f194f586ada45ba47ac8b2fcba3d5a2778b5e061ee8650d81b5067a",
@@ -602355,13 +602505,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-06T01:11:52Z",
-    "received_utc": "2026-11-06T01:12:31Z",
+    "measured_utc": "2026-11-06T01:13:31Z",
+    "received_utc": "2026-11-06T01:14:11Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
       "downloaded_bytes": 0,
-      "runtime_s": 21.0
+      "runtime_s": 30.0
     }
   },
   "last_report": {
@@ -603992,13 +604142,13 @@
     "discovery_bytes": 1561648620,
     "discovery_seconds": 2153.0,
     "reservations": {
-      "da579235703678d640ae68fb89f497ce288eb72bab7e44dbbce8767827b8950e": {
+      "f6b16a068777a2ff226c3bc4109709fa1e7a74ac1107881c18c19e588d260615": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 2975.0
+    "seconds": 3005.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -610404,6 +610554,7 @@
     "da4bf9d647bada83eb1e4d7a4c1660b172c96bc085739118b11ecc9232b8e7f0": "f23dfc73a34c8b8fc90634ee2e62b1c287d5e5f663c601aa7aa975042dff3d96",
     "da536c74a5a808d8360377d727a3b8bcea98c294a47a619bdc4bfe43462d9ad6": "60afc1b23a2222933c881ae071f607bd28a0bfeda233143ee148b83116464b6a",
     "da56518eb58c12817d81f4e04e237db47f8b8ae1d9441a28109aa57be9abb697": "8c7c1ab3e465d50d4849812a6059d48751a0df0194bbdb4dbdb1f73cd71fd2b9",
+    "da579235703678d640ae68fb89f497ce288eb72bab7e44dbbce8767827b8950e": "5aefd6e4a94e7348f1ce37e2ca22776328eea1bd286ff4370383d703c68f9ae7",
     "da62db93a28492486c72902304a0d926aead072c2962a7904492d94991cecbca": "959c40b3f9e756cd4d20d0a131e1e2a979e3c0d3df1c55a2160c1a7c3673e7d2",
     "da686e4b9f4d68f4489291d344089b8cef7adc6d6061231ae65a1bfb3be97aa8": "82bb7b8b9e43cadc3287444ffd7b3f510bc833c9e5256f2447f5e9be6393c199",
     "da6a4da6aa053645670901fa5572cd194d0cc70f3d5db5b172a592ed1c24cb86": "4f705864a38af04bd9b1a1aa1e78859a80be102036ac70cfbe5f5ac3c0ea45df",
