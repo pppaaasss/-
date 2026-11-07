@@ -2605,11 +2605,13 @@
       "candidate_id": "1a57a23ee2693ec6af119da9e8f46fb18393a2ba9c8c3a57c49740caa4d2f256",
       "channel_key": "cctv8",
       "expires_utc": "2026-11-01T10:37:32Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-30T22:37:32Z",
       "name": "CCTV-8",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-30T22:37:32Z",
       "request_options": "",
+      "retry_after_epoch": 1794095467.0,
       "source_manifest_sha256": "13a0856702c767331ea049ad5022f6cbc967bb630d48fe44c04c86a95aa80acc",
       "url": "http://47.100.209.208:8767/cctv8.m3u8",
       "url_sha256": "bc9af6341d0b42fbc4a9ef56617c6fbe50b714d61f87b11a4191ec2ed0e9caf7",
@@ -24340,7 +24342,7 @@
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-17T01:57:13Z",
       "request_options": "",
-      "retry_after_epoch": 1793931272.0,
+      "retry_after_epoch": 1794095470.0,
       "source_manifest_sha256": "28a8988f651f834954c03b81aeb5d444a83b1c4f357291acd421268fc9a12776",
       "url": "http://live.zohi.tv/video/s10001-fztv-3/index.m3u8",
       "url_sha256": "7ef7d7b1b5ce1a28c6fb44462a58d23cbc38abcf41150db2a5b0802e9b721329",
@@ -498688,6 +498690,61 @@
         }
       ]
     },
+    "d43f444eae7fb2bf13d901f7e3c4e771fb4c1402b8fa0415364ad582b1f4290d": {
+      "batch_id": "d43f444eae7fb2bf13d901f7e3c4e771fb4c1402b8fa0415364ad582b1f4290d",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-07T22:51:44Z",
+      "cycle_id": "0b77a4e92b70e6b3ecc75c4b477b701a4b5edf780ae0843e335b5d4ddd9b2c23",
+      "expires_utc": "2026-11-07T23:21:44Z",
+      "feedback_sha256": "6d244aea4cc79dfbfe9298ce02ffe09cbc1c0ce71bb3c4d3064e6474198f4c13",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b52727773de48c2d474dbbe6a5148885544a8a4217b580af5cce554a61ae7832",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "306471518f978334d63ba0d1d6396505345df140932a2bf5c72077bcaba01255",
+          "channel_key": "cctv8",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-8",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "606f61c3361c56c18118e6f717fd81bc4169ed3612c6d9057398eb97af51d780",
+          "url": "http://110.72.64.246:808/hls/40/index.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "703f7e304e62b2f706fbb63320d0324dbf9ba2037c1e143d893b6339ccb5e546",
+          "channel_key": "东南卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "东南卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "a6245a2d1e32d5703c19b0141d3e8a1ba73bc87e6aab613e41413f239dd04577",
+          "url": "http://51.75.118.151:20299/dnws.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "d447a95a93f1059b0d1466c53bd10a9243491d8a14d58e8f8ea11c1864b952a1": {
       "batch_id": "d447a95a93f1059b0d1466c53bd10a9243491d8a14d58e8f8ea11c1864b952a1",
       "candidate_mode": "drain_queue",
@@ -600068,7 +600125,8 @@
       "afb67be7491f2580f8b72f4edad28c3d61880af937585dc28aed9651a9498978",
       "a1e6a68f02412f75ba3cb2bae5d90af1965befa37a93a461d0e27cac2de58cf8",
       "4f8a7d67c72781d55f74ccb60b46b2825866c5eba86bbfbdc1e27bc1929c121c",
-      "43fec70b33a6a1efd7ee02214210aeeb597c26572c04d4494140bf61cc5ee5e5"
+      "43fec70b33a6a1efd7ee02214210aeeb597c26572c04d4494140bf61cc5ee5e5",
+      "d43f444eae7fb2bf13d901f7e3c4e771fb4c1402b8fa0415364ad582b1f4290d"
     ],
     "binding": {
       "channel_count": 53,
@@ -600241,7 +600299,7 @@
     "id": "0b77a4e92b70e6b3ecc75c4b477b701a4b5edf780ae0843e335b5d4ddd9b2c23",
     "kind": "primary-0200",
     "manifest_sha": "50b1d1743838555c83a872b11d6fbc9d53efd85bd8f5ff63f8e6928dc1e6ea08",
-    "outstanding": "43fec70b33a6a1efd7ee02214210aeeb597c26572c04d4494140bf61cc5ee5e5",
+    "outstanding": "d43f444eae7fb2bf13d901f7e3c4e771fb4c1402b8fa0415364ad582b1f4290d",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -604732,6 +604790,35 @@
         },
         "started_utc": "2026-11-07T21:29:22Z",
         "task_id": "36fed0c9c111cbe30c04699f5fad9d82d34809b6f189ac2b2238ccb6bac730d3"
+      },
+      "3737480abfa522a4849a2e336649317d7cd2e7e2f8580aee53484aa825ef7ce3": {
+        "finished_utc": "2026-11-07T22:51:07Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv8",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-8",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://47.100.209.208:8767/cctv8.m3u8",
+          "url_sha256": "bc9af6341d0b42fbc4a9ef56617c6fbe50b714d61f87b11a4191ec2ed0e9caf7",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T22:51:02Z",
+        "task_id": "3737480abfa522a4849a2e336649317d7cd2e7e2f8580aee53484aa825ef7ce3"
       },
       "374cebbe051c08ab27765bfc1590f97ff0a4f3af43d0a91df0513df6c4e3bcc8": {
         "finished_utc": "2026-11-07T20:17:09Z",
@@ -618983,6 +619070,60 @@
         "started_utc": "2026-11-07T21:15:24Z",
         "task_id": "dcc912fd543fd170e59c4c92b29d720f43167f0caf7ab9f5a359a6c787ddda59"
       },
+      "ddbac5e26040a917fbd996c5e3ab0f10cb9a54f9cce4e68a50cb6c2e78693b21": {
+        "finished_utc": "2026-11-07T22:51:10Z",
+        "result": {
+          "avg_download_mbps": 11.26033707127873,
+          "bitrate_mbps": 0,
+          "channel_key": "东南卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 14.471584658694606,
+          "height": 1080,
+          "min_download_mbps": 6.344949493729881,
+          "min_height": 1080,
+          "name": "东南卫视",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 16.17572464882758,
+              "downloaded_bytes": 328624,
+              "duration_s": 5.997,
+              "elapsed_s": 0.162527,
+              "http_status": 206,
+              "stream_mbps": 0.4383845255961314,
+              "total_bytes": 328624,
+              "url": "https://live.zohi.tv/video/s10001-fztv-3/20261108/ts/0650/1794091857387@[duration].ts"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 6.344949493729881,
+              "downloaded_bytes": 328436,
+              "duration_s": 5.992,
+              "elapsed_s": 0.414107,
+              "http_status": 206,
+              "stream_mbps": 0.43849933244325767,
+              "total_bytes": 328436,
+              "url": "https://live.zohi.tv/video/s10001-fztv-3/20261108/ts/0651/1794091863387@[duration].ts"
+            }
+          ],
+          "startup_s": 0.543247,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.43844192901969453,
+          "url": "http://live.zohi.tv/video/s10001-fztv-3/index.m3u8",
+          "url_sha256": "7ef7d7b1b5ce1a28c6fb44462a58d23cbc38abcf41150db2a5b0802e9b721329",
+          "width": 1920
+        },
+        "started_utc": "2026-11-07T22:51:09Z",
+        "task_id": "ddbac5e26040a917fbd996c5e3ab0f10cb9a54f9cce4e68a50cb6c2e78693b21"
+      },
       "ddda1fe23cfd9a2e7e62b3559d8b201cf48e704dd1cac24073b9a5399957e832": {
         "finished_utc": "2026-11-07T19:44:36Z",
         "result": {
@@ -623765,6 +623906,22 @@
         "sample_bytes": 6291456,
         "task_id": "36fed0c9c111cbe30c04699f5fad9d82d34809b6f189ac2b2238ccb6bac730d3",
         "url": "http://47.242.38.45:9999/twjd678-2.php?id=11",
+        "viewer_accepted_quality": false
+      },
+      "3737480abfa522a4849a2e336649317d7cd2e7e2f8580aee53484aa825ef7ce3": {
+        "attempt": 1,
+        "candidate_id": "1a57a23ee2693ec6af119da9e8f46fb18393a2ba9c8c3a57c49740caa4d2f256",
+        "channel_key": "cctv8",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-8",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "3737480abfa522a4849a2e336649317d7cd2e7e2f8580aee53484aa825ef7ce3",
+        "url": "http://47.100.209.208:8767/cctv8.m3u8",
         "viewer_accepted_quality": false
       },
       "374cebbe051c08ab27765bfc1590f97ff0a4f3af43d0a91df0513df6c4e3bcc8": {
@@ -630093,6 +630250,22 @@
         "url": "http://xtvantsc.xyz/litv_ts.php?id=4gtv-4gtv152",
         "viewer_accepted_quality": false
       },
+      "ddbac5e26040a917fbd996c5e3ab0f10cb9a54f9cce4e68a50cb6c2e78693b21": {
+        "attempt": 1,
+        "candidate_id": "faee555ea17630a3e04caa8c24f292fcc7d1a2f843935bd39113434d97b759be",
+        "channel_key": "东南卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "东南卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "ddbac5e26040a917fbd996c5e3ab0f10cb9a54f9cce4e68a50cb6c2e78693b21",
+        "url": "http://live.zohi.tv/video/s10001-fztv-3/index.m3u8",
+        "viewer_accepted_quality": false
+      },
       "ddda1fe23cfd9a2e7e62b3559d8b201cf48e704dd1cac24073b9a5399957e832": {
         "attempt": 1,
         "candidate_id": "9c67aa6529c967938c2007b698a147c994adb884e6ab8fd01851392741104376",
@@ -631516,13 +631689,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-07T22:49:18Z",
-    "received_utc": "2026-11-07T22:50:34Z",
+    "measured_utc": "2026-11-07T22:51:10Z",
+    "received_utc": "2026-11-07T22:51:44Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 0,
-      "runtime_s": 17.0
+      "downloaded_bytes": 657570,
+      "runtime_s": 8.0
     }
   },
   "last_report": {
@@ -633148,19 +633321,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 1027296133,
+    "bytes": 1027953703,
     "candidates": 500,
     "day": "20261108",
     "discovery_bytes": 656819560,
     "discovery_seconds": 3647.0,
     "reservations": {
-      "43fec70b33a6a1efd7ee02214210aeeb597c26572c04d4494140bf61cc5ee5e5": {
+      "d43f444eae7fb2bf13d901f7e3c4e771fb4c1402b8fa0415364ad582b1f4290d": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 4400.0
+    "seconds": 4408.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -636136,6 +636309,7 @@
     "43e9252a33960924c3a13af219aa19088f701a7054163452b9b319ccb5ef9c67": "45aca53886ba443e7774693b4d7a708f7f1084a97dbcf9e383ec9d4cfffff6e4",
     "43ecc95c48fccebb17e6d79aab7021a20c46cdca2bf576dfa26d303d3e3066cb": "ebb93603c5d10fe1919b7a54a282b3beea32765fd3d961f6cf2a1a9015730cd4",
     "43f9a89fa1465e9fb8dfb59a383184abd8b6cbb63e83d8a855fc68c29ffbcc92": "2d8e1115bb0d441c4c15f2e50c9a23173b8a3fc0c2b44a985f21d65f8e917143",
+    "43fec70b33a6a1efd7ee02214210aeeb597c26572c04d4494140bf61cc5ee5e5": "d1c90b57daf10926f85abb2f3afdfae5409d205a2446ea7174a7070c8a9c524a",
     "440254317f78d5a46d99e5e245406ca177a2f978ee9399791fc16013d3032f0b": "e21f1a0cc8ef5f63549e411aa191e84e72582071863952126bc13b64535f19f8",
     "440f3577b1d5d77350d79e9089cf2ece39b76a90a1c22b931b48b955d1dc14de": "0c32a57eb31c3d72137ea15f98cf1a2089a024e2f843816d698135c2d51acff6",
     "44114b5abf4e0c4843a73bf7b823c4e6bc23222d94e045e788fab731c17a26d9": "722cdea4a5ccd010d89866b35a3077bc9e221a4c5001e0eeccbb6c92748b4ed4",
