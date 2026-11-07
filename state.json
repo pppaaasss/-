@@ -1620,11 +1620,13 @@
       "candidate_id": "1172447dba866d6b39c5e57d4c9ec10e1246984dd3901bbd036de3ad94ab19c1",
       "channel_key": "cctv4",
       "expires_utc": "2026-10-18T08:04:04Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-16T20:04:04Z",
       "name": "CCTV-4",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-16T20:04:04Z",
       "request_options": "",
+      "retry_after_epoch": 1794019995.0,
       "source_manifest_sha256": "28a8988f651f834954c03b81aeb5d444a83b1c4f357291acd421268fc9a12776",
       "url": "http://145.239.65.118:20178/cctv4.m3u8",
       "url_sha256": "a29f339ee4afccd87221888252866027b831c45bef3924da6b582f71ec10821b",
@@ -4800,7 +4802,7 @@
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-20T20:05:39Z",
       "request_options": "",
-      "retry_after_epoch": 1793931706.0,
+      "retry_after_epoch": 1794020002.0,
       "source_manifest_sha256": "6637429cd8ba51650e24746ba7148c8c2d2cdadd831fd8603b22ca478ae08ac3",
       "url": "http://120.76.248.139/live/bfgd/4200000083.m3u8",
       "url_sha256": "108cc7874b9ae6fdf433125fbf132123d7c309632e379a54263dc0b6ba646fd6",
@@ -104538,6 +104540,61 @@
           "sample_bytes": 6291456,
           "task_id": "cd246e1cc6967597b21886ba7825b3230912759ad3bf50c6694d19802cf9134b",
           "url": "http://106.59.2.53:55555/udp/239.200.200.106:8112",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "239bcc2e12fe0f76424e920c75daa4870e665b5cfa47392c8ae2a6013844b258": {
+      "batch_id": "239bcc2e12fe0f76424e920c75daa4870e665b5cfa47392c8ae2a6013844b258",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-07T01:53:58Z",
+      "cycle_id": "af83cb8aaab5f96440936ede716043d08c104e04b44818279c810d3460d5b629",
+      "expires_utc": "2026-11-07T02:23:58Z",
+      "feedback_sha256": "6599f957619785f43b96f0a0c580522fe947e56f0fa7fa2883ad856d13f35bcc",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "f11f94d7f4b7dbc946f1fd2240c6542be3ec275aa0978854325154cc29deeec6",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "7cb0f90f31631b912e6ea7b211f7a4b7358ffa7556e740ec48ad816753941117",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "a8777660145ee585019ec910c5c58a4e3c775e5649032d91bf8010c66c78f999",
+          "url": "http://101.42.10.147:226/cct/ys.php?id=cctv4",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "778a104d4253d5be37aee798f95f62a3aa4ccd5ca339c4ecbf8e542ee461f119",
+          "channel_key": "北京卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "北京卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "bdf2d552aa4d8434d3fbe31537fef0dab5fdc37c412b98d2452ca326d9575ecd",
+          "url": "http://tsl76.vfoo.cc:2096/bjws.m3u8",
           "viewer_accepted_quality": false
         }
       ]
@@ -583441,7 +583498,8 @@
       "5a9cf16a18b133362ee76c612f8e9031c985630531c357790adff4e158d7b9c2",
       "24d64caaf917f2feebc3e8969b56e65495456baca476e550efd68d6c1976de1e",
       "99970fa7e67f521c57423f12f6cb4e4bbcfba9fa5adf62dfaeb44f89ec0a81e3",
-      "371e72456a61289e209520899707f884728501d5f6ca50435c86bf235c2b10b1"
+      "371e72456a61289e209520899707f884728501d5f6ca50435c86bf235c2b10b1",
+      "239bcc2e12fe0f76424e920c75daa4870e665b5cfa47392c8ae2a6013844b258"
     ],
     "binding": {
       "channel_count": 53,
@@ -583614,7 +583672,7 @@
     "id": "af83cb8aaab5f96440936ede716043d08c104e04b44818279c810d3460d5b629",
     "kind": "primary-0200",
     "manifest_sha": "50b1d1743838555c83a872b11d6fbc9d53efd85bd8f5ff63f8e6928dc1e6ea08",
-    "outstanding": "371e72456a61289e209520899707f884728501d5f6ca50435c86bf235c2b10b1",
+    "outstanding": "239bcc2e12fe0f76424e920c75daa4870e665b5cfa47392c8ae2a6013844b258",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -591251,6 +591309,48 @@
         },
         "started_utc": "2026-11-07T00:57:01Z",
         "task_id": "5a446ca6c50b57575709e4e3b320517a29d9ddf67377ddce1253b8936b9cf085"
+      },
+      "5b6c814382ba6d89deaf4c8d3183fd39b653eba68105ae170603db92bbf3451f": {
+        "finished_utc": "2026-11-07T01:53:22Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "北京卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "北京卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 28,
+              "download_mbps": 0.0,
+              "downloaded_bytes": 0,
+              "duration_s": 5.52,
+              "elapsed_s": 5.037546,
+              "http_status": 0,
+              "stream_mbps": 0,
+              "total_bytes": 0,
+              "url": "http://httplive.slave.bfgd.com.cn:14311/playurl?playtype=live&protocol=hls&accesstoken=R5F2408FEU3198804BK78052214IE73560DFP2BF4M340CE68V0Z339CBW1626D4D261E46FEA&playtoken=ABCDEFGH&programid=4200000083&redirect=1&hls_segment=4_0_1_2_3_4_7586.ts"
+            }
+          ],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://120.76.248.139/live/bfgd/4200000083.m3u8",
+          "url_sha256": "108cc7874b9ae6fdf433125fbf132123d7c309632e379a54263dc0b6ba646fd6",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:53:17Z",
+        "task_id": "5b6c814382ba6d89deaf4c8d3183fd39b653eba68105ae170603db92bbf3451f"
       },
       "5c014b296675d4563a28a489d9ec4705638e8bece05e8d7f2edd47c1514ca34e": {
         "finished_utc": "2026-11-06T23:43:06Z",
@@ -599177,6 +599277,35 @@
         },
         "started_utc": "2026-11-06T22:35:06Z",
         "task_id": "ad2ec96108ff3135922bcbba23424d7d4b25e309af5dde8f053c7e840a23b72e"
+      },
+      "ad49c2c1b3a4e50274af35f8b7fc538ba7d0e652c6faeaa079a06872fe2ae1c0": {
+        "finished_utc": "2026-11-07T01:53:15Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv4",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://145.239.65.118:20178/cctv4.m3u8",
+          "url_sha256": "a29f339ee4afccd87221888252866027b831c45bef3924da6b582f71ec10821b",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:53:01Z",
+        "task_id": "ad49c2c1b3a4e50274af35f8b7fc538ba7d0e652c6faeaa079a06872fe2ae1c0"
       },
       "ad6898adf76f25d9591af089d17e03856478c3ba00e4811e4339e2737b12f4bb": {
         "finished_utc": "2026-11-07T00:49:57Z",
@@ -609067,6 +609196,22 @@
         "url": "http://seb.sason.top/sc/msxw_fhd.m3u8",
         "viewer_accepted_quality": false
       },
+      "5b6c814382ba6d89deaf4c8d3183fd39b653eba68105ae170603db92bbf3451f": {
+        "attempt": 1,
+        "candidate_id": "329d5c6304d34dbcf7a7c3d052a0249a477e762225f095fa9cea7b56cf65b441",
+        "channel_key": "北京卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "北京卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "5b6c814382ba6d89deaf4c8d3183fd39b653eba68105ae170603db92bbf3451f",
+        "url": "http://120.76.248.139/live/bfgd/4200000083.m3u8",
+        "viewer_accepted_quality": false
+      },
       "5c014b296675d4563a28a489d9ec4705638e8bece05e8d7f2edd47c1514ca34e": {
         "attempt": 1,
         "candidate_id": "105587207ed08a2c5f381e27d331f562e45fd4c3530a5304d475ca309e41e65d",
@@ -612507,6 +612652,22 @@
         "url": "https://yeslivetv.com/channels/eleven-sports-2/",
         "viewer_accepted_quality": false
       },
+      "ad49c2c1b3a4e50274af35f8b7fc538ba7d0e652c6faeaa079a06872fe2ae1c0": {
+        "attempt": 1,
+        "candidate_id": "1172447dba866d6b39c5e57d4c9ec10e1246984dd3901bbd036de3ad94ab19c1",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "ad49c2c1b3a4e50274af35f8b7fc538ba7d0e652c6faeaa079a06872fe2ae1c0",
+        "url": "http://145.239.65.118:20178/cctv4.m3u8",
+        "viewer_accepted_quality": false
+      },
       "ad6898adf76f25d9591af089d17e03856478c3ba00e4811e4339e2737b12f4bb": {
         "attempt": 1,
         "candidate_id": "a4d6189614924315e1834a389608c0dc93a761c546c8d110e7c515574f52dbfc",
@@ -615402,13 +615563,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-07T01:52:08Z",
-    "received_utc": "2026-11-07T01:52:34Z",
+    "measured_utc": "2026-11-07T01:53:22Z",
+    "received_utc": "2026-11-07T01:53:58Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 238,
-      "runtime_s": 7.0
+      "downloaded_bytes": 880,
+      "runtime_s": 21.0
     }
   },
   "last_report": {
@@ -617034,19 +617195,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 903536374,
+    "bytes": 903537254,
     "candidates": 500,
     "day": "20261107",
     "discovery_bytes": 540621486,
     "discovery_seconds": 4023.0,
     "reservations": {
-      "371e72456a61289e209520899707f884728501d5f6ca50435c86bf235c2b10b1": {
+      "239bcc2e12fe0f76424e920c75daa4870e665b5cfa47392c8ae2a6013844b258": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 4952.0
+    "seconds": 4973.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -619621,6 +619782,7 @@
     "371052d1ceaf88b77fa8b59941a64854bb4aecb28085643d8d57a957d585c6be": "f54dc9c8a5feb88bbfcad9a024319710b3eeb599a9f0db24621917be122b0aee",
     "3711df7ed05113deba2d1af5fad5c28e8da7c0791d94aaf8d92ee7ac83ab3552": "a0880d6498d74b88e81efebe528b6652f356f3f137fee8d31ebdf6ed23102b99",
     "3719172c593c6d67cb347cccc6f4c4113cee784868890f9e768188ddcb06aa70": "d18aa70683a61f17efbecd9af4157366522b0fc5b6181cc3f6611084db0d7e38",
+    "371e72456a61289e209520899707f884728501d5f6ca50435c86bf235c2b10b1": "8ce2935685f8811a2a67e9ae5d5de4a4321803afb2ad3775414b7cc2906f1ff6",
     "373865668f7fb101016204822c55f7f3abc833011a570cb0fb90c84717a20eb2": "b8126b359642da60275e172f5633eb2d326e042d7117838784807ea59972f160",
     "3739636caaf3483063264aad1acdf408f5a2d63970301b0207421e32cbfcf692": "ca669db6e5113c44cce112227a0ffea5518d50dbf341cbc481e79a889d08286a",
     "373a8999f1bf55c2c44cd1f1adf2a5a6f4d92a2dd0898413ba6abcc9523a823d": "7ca9b2d4dc745c032ded4533d538ff3a5ebec41617d45763c45447d5529ce44a",
