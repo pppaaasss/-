@@ -68517,6 +68517,61 @@
         }
       ]
     },
+    "1393feb6b5b6eb7ad3d120e4105cf732df423284510662b60729c90bd5978136": {
+      "batch_id": "1393feb6b5b6eb7ad3d120e4105cf732df423284510662b60729c90bd5978136",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-07T01:34:53Z",
+      "cycle_id": "af83cb8aaab5f96440936ede716043d08c104e04b44818279c810d3460d5b629",
+      "expires_utc": "2026-11-07T02:04:53Z",
+      "feedback_sha256": "6599f957619785f43b96f0a0c580522fe947e56f0fa7fa2883ad856d13f35bcc",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "f11f94d7f4b7dbc946f1fd2240c6542be3ec275aa0978854325154cc29deeec6",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "ecce3e379b72fac588d3bad2138ee123f8d5cbec918d700e2d74b949833d6534",
+          "channel_key": "cctv3",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-3",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "7a8e8f27d2ad2028b5886fd14c779c3f799b53dff0646b80b43b05db21ec99c5",
+          "url": "http://xymm.1000s.dpdns.org:8767/cctv3.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "d121e5252de22a562dddd0b6ba7c43aa382666c5e187dcc3608a085dde29a78c",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "2a83ecd270c501c57ee56462f80c4197dd457a9d580b3847936c5e39f2871694",
+          "url": "http://xymm.1000s.dpdns.org:8767/cctv4.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "1397e2cabc081af63c22296402a91677816a53c85f5c930cedd11d0ba446ac41": {
       "batch_id": "1397e2cabc081af63c22296402a91677816a53c85f5c930cedd11d0ba446ac41",
       "candidate_mode": "drain_queue",
@@ -582593,7 +582648,8 @@
       "0dff34b0308a5dcf73972c31035132377c29816b5cfa3ee068bd2c86b40dedb0",
       "2cb06411042cc6ec3073e44330840eec1746bece9259e532f5ca2d447c99753f",
       "cf06199dde49eb1e73b742328da4d7374425041ac5bfc0a3c3ac3484df34bb04",
-      "369eb5f4cda1931d774e2c6d145396ef345154766b73193f7a1004ee78259654"
+      "369eb5f4cda1931d774e2c6d145396ef345154766b73193f7a1004ee78259654",
+      "1393feb6b5b6eb7ad3d120e4105cf732df423284510662b60729c90bd5978136"
     ],
     "binding": {
       "channel_count": 53,
@@ -582766,7 +582822,7 @@
     "id": "af83cb8aaab5f96440936ede716043d08c104e04b44818279c810d3460d5b629",
     "kind": "primary-0200",
     "manifest_sha": "50b1d1743838555c83a872b11d6fbc9d53efd85bd8f5ff63f8e6928dc1e6ea08",
-    "outstanding": "369eb5f4cda1931d774e2c6d145396ef345154766b73193f7a1004ee78259654",
+    "outstanding": "1393feb6b5b6eb7ad3d120e4105cf732df423284510662b60729c90bd5978136",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -584956,6 +585012,35 @@
         "started_utc": "2026-11-07T01:29:20Z",
         "task_id": "190881c96f1acb311c826893fc6c8591b5b90e6cdbe414acc87f92e32a310217"
       },
+      "195167796c1229af181a68b138e1092804c00648e43b9669a32c03aa025e847c": {
+        "finished_utc": "2026-11-07T01:33:33Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "TTV.tw",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_local_policy_or_transport_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "台視",
+          "observed_status": "UNKNOWN",
+          "probe_runtime_s": 2.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://php.jdshipin.com:8880/xsj.php?id=ttv",
+          "url_sha256": "602e651502660229e6b9e73b7d94f0a923a213de0354bea2618332deda44ba30",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:33:31Z",
+        "task_id": "195167796c1229af181a68b138e1092804c00648e43b9669a32c03aa025e847c"
+      },
       "1aa67fb3986fc6e9030ff7361a735309d62ed8ed5ef4aa5ddd45a4b3d39424e7": {
         "finished_utc": "2026-11-07T00:08:15Z",
         "result": {
@@ -586582,6 +586667,35 @@
         },
         "started_utc": "2026-11-07T00:37:04Z",
         "task_id": "2cc4f11559d6fb8ff85938ac4438b6a453ff1243625a53e72eae95c77b1332e7"
+      },
+      "2da84e1cc2b56d89d8e2201f1ee76d69259823b407c1e48700bb9ca5b14d5268": {
+        "finished_utc": "2026-11-07T01:34:22Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "TVBSNews.tw",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "TVBS新聞台",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 15.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://stream1.freetv.fun/tvbsya-zhou-11.m3u8",
+          "url_sha256": "4c1ec2155d28d4900d9facdc64417f1f62e8f4dc157b60c6d09a10404cbc870f",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:34:07Z",
+        "task_id": "2da84e1cc2b56d89d8e2201f1ee76d69259823b407c1e48700bb9ca5b14d5268"
       },
       "2dba48bfca24679eb3e815b31d9d2aea22d3f1a95df527bad2d59a3557c79215": {
         "finished_utc": "2026-11-07T01:30:42Z",
@@ -595591,6 +595705,35 @@
         "started_utc": "2026-11-06T22:45:06Z",
         "task_id": "986269b2e22b55e86a51e866781c3a507e0475a80159fe0dee87d707456e8b4c"
       },
+      "98975346dd198494e1782199745f8606b5c179f7845b0abf028338b2cc585b2e": {
+        "finished_utc": "2026-11-07T01:34:05Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "CTSNews.tw",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "華視新聞資訊台",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://stream1.freetv.fun/hua-shi-xin-wen-4.m3u8",
+          "url_sha256": "06727c73cbb617b5bd82911d73cf07d6892f24d7ac433bb57af8a04823da5341",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:33:51Z",
+        "task_id": "98975346dd198494e1782199745f8606b5c179f7845b0abf028338b2cc585b2e"
+      },
       "99b38bd256ad295ca2b68818d9f87fec57ccc4e90aa864894d88dedf3f930705": {
         "finished_utc": "2026-11-06T21:51:19Z",
         "result": {
@@ -597109,6 +597252,35 @@
         },
         "started_utc": "2026-11-07T00:15:31Z",
         "task_id": "a907deb1a18e6c554b330a5cd73bdad8bf07dd051c5fcd18cd62abddc2aa60f9"
+      },
+      "a9095bdabc483a39e2a1bffb4977d0f49035a82c7c22cc9870d15aa13a5134bf": {
+        "finished_utc": "2026-11-07T01:33:49Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "GTVDrama.tw",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "八大戲劇台",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://stream1.freetv.fun/ba-da-xi-ju-1.m3u8",
+          "url_sha256": "8ae85f126a60b5bd367a78124b6514ffa047f39198691064042646f5c11ce358",
+          "width": 0
+        },
+        "started_utc": "2026-11-07T01:33:35Z",
+        "task_id": "a9095bdabc483a39e2a1bffb4977d0f49035a82c7c22cc9870d15aa13a5134bf"
       },
       "a92d55313ff1d5fd3a208667fe5a135ae43a132492de224f33a8a876963ca1a1": {
         "finished_utc": "2026-11-06T23:16:01Z",
@@ -604782,6 +604954,22 @@
         "url": "http://php.jdshipin.com:8880/xsj.php?id=eleven-sport2",
         "viewer_accepted_quality": false
       },
+      "195167796c1229af181a68b138e1092804c00648e43b9669a32c03aa025e847c": {
+        "attempt": 1,
+        "candidate_id": "04bf232d01c6a7b4736366af29cad1d7f622ddeb549b7f0154c7e5a61105a425",
+        "channel_key": "TTV.tw",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "台視",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "195167796c1229af181a68b138e1092804c00648e43b9669a32c03aa025e847c",
+        "url": "http://php.jdshipin.com:8880/xsj.php?id=ttv",
+        "viewer_accepted_quality": false
+      },
       "1aa67fb3986fc6e9030ff7361a735309d62ed8ed5ef4aa5ddd45a4b3d39424e7": {
         "attempt": 1,
         "candidate_id": "30639f4e2521d0089a3a1734c4393df21a32d62f286bcd8880f7cabcfb7f8b06",
@@ -605484,6 +605672,22 @@
         "sample_bytes": 6291456,
         "task_id": "2cc4f11559d6fb8ff85938ac4438b6a453ff1243625a53e72eae95c77b1332e7",
         "url": "http://vthanh.utako.moe/TV_Tokyo/index.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "2da84e1cc2b56d89d8e2201f1ee76d69259823b407c1e48700bb9ca5b14d5268": {
+        "attempt": 1,
+        "candidate_id": "06872c9c5cc566c531c9daf9a2dd2ae0dd104359089122bce53bf1cced9b4940",
+        "channel_key": "TVBSNews.tw",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "TVBS新聞台",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "2da84e1cc2b56d89d8e2201f1ee76d69259823b407c1e48700bb9ca5b14d5268",
+        "url": "https://stream1.freetv.fun/tvbsya-zhou-11.m3u8",
         "viewer_accepted_quality": false
       },
       "2dba48bfca24679eb3e815b31d9d2aea22d3f1a95df527bad2d59a3557c79215": {
@@ -609406,6 +609610,22 @@
         "url": "https://ha.msbot.dpdns.org/4gtv_api.php?id=231",
         "viewer_accepted_quality": false
       },
+      "98975346dd198494e1782199745f8606b5c179f7845b0abf028338b2cc585b2e": {
+        "attempt": 1,
+        "candidate_id": "64a9166a58e948f64608366726661f8b4bc945edd5c264df98374f4b4a2751b3",
+        "channel_key": "CTSNews.tw",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "華視新聞資訊台",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "98975346dd198494e1782199745f8606b5c179f7845b0abf028338b2cc585b2e",
+        "url": "https://stream1.freetv.fun/hua-shi-xin-wen-4.m3u8",
+        "viewer_accepted_quality": false
+      },
       "99b38bd256ad295ca2b68818d9f87fec57ccc4e90aa864894d88dedf3f930705": {
         "attempt": 1,
         "candidate_id": "9d17da1a036d69355685758a8f4f1aa6df6b07035c698e3ea036d93e0cc27d8c",
@@ -610028,6 +610248,22 @@
         "sample_bytes": 6291456,
         "task_id": "a907deb1a18e6c554b330a5cd73bdad8bf07dd051c5fcd18cd62abddc2aa60f9",
         "url": "http://fm1077.serv00.net/Smart.php?id=badadrama",
+        "viewer_accepted_quality": false
+      },
+      "a9095bdabc483a39e2a1bffb4977d0f49035a82c7c22cc9870d15aa13a5134bf": {
+        "attempt": 1,
+        "candidate_id": "ab0b1e3fdf0e861624fd54ae9905df4e6a477f06de8b42300eec46c098ad45c6",
+        "channel_key": "GTVDrama.tw",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "八大戲劇台",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "a9095bdabc483a39e2a1bffb4977d0f49035a82c7c22cc9870d15aa13a5134bf",
+        "url": "https://stream1.freetv.fun/ba-da-xi-ju-1.m3u8",
         "viewer_accepted_quality": false
       },
       "a92d55313ff1d5fd3a208667fe5a135ae43a132492de224f33a8a876963ca1a1": {
@@ -612975,34 +613211,27 @@
     ]
   },
   "daily_intake": {
-    "available": 4,
-    "candidate_ids": [
-      "04bf232d01c6a7b4736366af29cad1d7f622ddeb549b7f0154c7e5a61105a425",
-      "06872c9c5cc566c531c9daf9a2dd2ae0dd104359089122bce53bf1cced9b4940",
-      "64a9166a58e948f64608366726661f8b4bc945edd5c264df98374f4b4a2751b3",
-      "ab0b1e3fdf0e861624fd54ae9905df4e6a477f06de8b42300eec46c098ad45c6"
-    ],
+    "available": 0,
+    "candidate_ids": [],
     "day": "20261107",
     "reason": "insufficient_fresh_unmeasured_candidates",
-    "shortfall": 496,
+    "shortfall": 500,
     "target": 500
   },
   "delivery_receipt": {
     "meaning": "cloud_queue_persisted_not_tested",
     "probe_id": "home-ac86u-8f8908f0fba9",
-    "received_batches": [
-      "1c1d47b5c9ca95475fab7658813b9e4b122b65d05b5a6f0f0691b08a30f01fae"
-    ],
+    "received_batches": [],
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-07T01:32:30Z",
-    "received_utc": "2026-11-07T01:33:05Z",
+    "measured_utc": "2026-11-07T01:34:22Z",
+    "received_utc": "2026-11-07T01:34:53Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 2380097,
-      "runtime_s": 29.0
+      "downloaded_bytes": 0,
+      "runtime_s": 51.0
     }
   },
   "last_report": {
@@ -614631,16 +614860,16 @@
     "bytes": 883788571,
     "candidates": 500,
     "day": "20261107",
-    "discovery_bytes": 607730350,
-    "discovery_seconds": 4212.0,
+    "discovery_bytes": 540621486,
+    "discovery_seconds": 4023.0,
     "reservations": {
-      "369eb5f4cda1931d774e2c6d145396ef345154766b73193f7a1004ee78259654": {
+      "1393feb6b5b6eb7ad3d120e4105cf732df423284510662b60729c90bd5978136": {
         "bytes": 67108864,
-        "candidates": 4,
+        "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 4743.0
+    "seconds": 4794.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -617198,6 +617427,7 @@
     "3669223d86427c6ecd883f9412aae53c9bfe214e6408410b46e618e355c08032": "a97abacb425b6584846b6987c36f3f406152bda6d0ef9ef80cf66eabe3844408",
     "3692e01dfaad51eac4cc658e19253ed3322f2808c4401418e35e7b05d96e30a4": "e0cae6bb4ea2815e3db743b603ec10da382f8abc26a645708af3e6dff6cc8e54",
     "3693c793a3a0e76dca5626ae331bbb02d20923a49f5f315f9135b0e3e6b3cd1d": "d85804afabf9cb6d069a2c63dd61c9af9bcf843a1844ae2379dda2e0ae5b99f1",
+    "369eb5f4cda1931d774e2c6d145396ef345154766b73193f7a1004ee78259654": "f5fddcdb7c10b8af715764b304ea044d9d48b61245e70103ac8942bc9d33aefa",
     "36c671df0443ef3a4f27e66b0916df095ac808c44fdc6117731e1ac7e87b23a0": "fe4322d379c660d1aa65f7b1dff62400d295324d411c84a28ecf71315a85fc31",
     "36d35801441875405d1d0d101c74d5c44cbcda528af56db32ac451519491ff6e": "97e49c63344eaf326c600f399205a2a7637ed8b5123236882d67052ffdd6d8e0",
     "36e0cba3755fff4d00ab8b6d3dca74663b638c23181e4128067bdd19e8d97beb": "c652a780011f12c1b52df750aa281d095355deb42503b63042de85135e79027c",
@@ -622685,21 +622915,6 @@
       "url": "http://118.248.155.220:8889/udp/239.76.253.100:9000",
       "url_sha256": "56ead84a11bf0ffa82aaf703bc221b42590c099d7ca6c645681ff1897c197a30"
     },
-    "04bf232d01c6a7b4736366af29cad1d7f622ddeb549b7f0154c7e5a61105a425": {
-      "candidate_id": "04bf232d01c6a7b4736366af29cad1d7f622ddeb549b7f0154c7e5a61105a425",
-      "channel_key": "TTV.tw",
-      "cloud_stream_probe_performed": false,
-      "group": "台湾",
-      "home_verified": false,
-      "name": "台視",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "curated:regional-sources"
-      ],
-      "url": "http://php.jdshipin.com:8880/xsj.php?id=ttv",
-      "url_sha256": "602e651502660229e6b9e73b7d94f0a923a213de0354bea2618332deda44ba30"
-    },
     "0523aa612e1d8c252ff254772a958e0461025ad10e4549170cfd367c46112420": {
       "candidate_id": "0523aa612e1d8c252ff254772a958e0461025ad10e4549170cfd367c46112420",
       "channel_key": "cctv7",
@@ -622744,21 +622959,6 @@
       ],
       "url": "http://[2409:8087:8:21::18]:6610/otttv.bj.chinamobile.com/PLTV/88888888/224/3221226448/1.m3u8",
       "url_sha256": "eb4222aac7085f084fec5ecaf9aaa300a2d091bce53bcc31cb2c9d1c41ceab2f"
-    },
-    "06872c9c5cc566c531c9daf9a2dd2ae0dd104359089122bce53bf1cced9b4940": {
-      "candidate_id": "06872c9c5cc566c531c9daf9a2dd2ae0dd104359089122bce53bf1cced9b4940",
-      "channel_key": "TVBSNews.tw",
-      "cloud_stream_probe_performed": false,
-      "group": "台湾",
-      "home_verified": false,
-      "name": "TVBS新聞台",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/xiaolong-nihao/IPTV-api/master/output/ipv6/result.m3u"
-      ],
-      "url": "https://stream1.freetv.fun/tvbsya-zhou-11.m3u8",
-      "url_sha256": "4c1ec2155d28d4900d9facdc64417f1f62e8f4dc157b60c6d09a10404cbc870f"
     },
     "0710941c7818ee3718c4d82c29fcfd73c850c59020b3da5effb8ab7e07ac5f74": {
       "candidate_id": "0710941c7818ee3718c4d82c29fcfd73c850c59020b3da5effb8ab7e07ac5f74",
@@ -627683,21 +627883,6 @@
       "url": "http://124.112.241.5:4022/rtp/238.1.78.160:7152",
       "url_sha256": "048278d3b4e5a7ea0c005dcc9ab784b0393f83e5dfc64a39b29e95320309255f"
     },
-    "64a9166a58e948f64608366726661f8b4bc945edd5c264df98374f4b4a2751b3": {
-      "candidate_id": "64a9166a58e948f64608366726661f8b4bc945edd5c264df98374f4b4a2751b3",
-      "channel_key": "CTSNews.tw",
-      "cloud_stream_probe_performed": false,
-      "group": "台湾",
-      "home_verified": false,
-      "name": "華視新聞資訊台",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "curated:regional-sources"
-      ],
-      "url": "https://stream1.freetv.fun/hua-shi-xin-wen-4.m3u8",
-      "url_sha256": "06727c73cbb617b5bd82911d73cf07d6892f24d7ac433bb57af8a04823da5341"
-    },
     "64a960515f04f93068e5c901cbae1f2e647f6ba1a3449f398a6fe6eb1945506a": {
       "candidate_id": "64a960515f04f93068e5c901cbae1f2e647f6ba1a3449f398a6fe6eb1945506a",
       "channel_key": "cctv11",
@@ -632164,21 +632349,6 @@
       ],
       "url": "http://45.192.97.170:8880/play/781.m3u8",
       "url_sha256": "aacb3d0c0b1b061581911971cb09e9f6d5cae70c0717f5d4eb11fa12e8df178f"
-    },
-    "ab0b1e3fdf0e861624fd54ae9905df4e6a477f06de8b42300eec46c098ad45c6": {
-      "candidate_id": "ab0b1e3fdf0e861624fd54ae9905df4e6a477f06de8b42300eec46c098ad45c6",
-      "channel_key": "GTVDrama.tw",
-      "cloud_stream_probe_performed": false,
-      "group": "台湾",
-      "home_verified": false,
-      "name": "八大戲劇台",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "curated:regional-sources"
-      ],
-      "url": "https://stream1.freetv.fun/ba-da-xi-ju-1.m3u8",
-      "url_sha256": "8ae85f126a60b5bd367a78124b6514ffa047f39198691064042646f5c11ce358"
     },
     "ab19033f26ab2f77f3d673fc2c2ccc1bbb33d08367253edceedf9d945f1868f6": {
       "candidate_id": "ab19033f26ab2f77f3d673fc2c2ccc1bbb33d08367253edceedf9d945f1868f6",
@@ -736372,6 +736542,34 @@
         "width": 0
       }
     },
+    "04bf232d01c6a7b4736366af29cad1d7f622ddeb549b7f0154c7e5a61105a425": {
+      "last_checked_utc": "2026-11-07T01:33:33Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "TTV.tw",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_local_policy_or_transport_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "台視",
+        "observed_status": "UNKNOWN",
+        "probe_runtime_s": 2.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "http://php.jdshipin.com:8880/xsj.php?id=ttv",
+        "url_sha256": "602e651502660229e6b9e73b7d94f0a923a213de0354bea2618332deda44ba30",
+        "width": 0
+      }
+    },
     "04c0c29b462631716e02e0e47a2ecf77746f587dca9c19382f253de706b70f8e": {
       "last_checked_utc": "2026-10-18T23:57:45Z",
       "measurement_origin": "historical_recheck",
@@ -743218,6 +743416,34 @@
         "stream_mbps": 0.0,
         "url": "http://cdns.jp-primehome.com:8000/zhongying/live/playlist.m3u8?cid=gd04",
         "url_sha256": "a81f0bd7c05aac3b9819c8b096acc15c29a9e0e1c1ef8fb5201aa0739ef71d6a",
+        "width": 0
+      }
+    },
+    "06872c9c5cc566c531c9daf9a2dd2ae0dd104359089122bce53bf1cced9b4940": {
+      "last_checked_utc": "2026-11-07T01:34:22Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "TVBSNews.tw",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "TVBS新聞台",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 15.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://stream1.freetv.fun/tvbsya-zhou-11.m3u8",
+        "url_sha256": "4c1ec2155d28d4900d9facdc64417f1f62e8f4dc157b60c6d09a10404cbc870f",
         "width": 0
       }
     },
@@ -1086019,6 +1086245,34 @@
         "width": 0
       }
     },
+    "64a9166a58e948f64608366726661f8b4bc945edd5c264df98374f4b4a2751b3": {
+      "last_checked_utc": "2026-11-07T01:34:05Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "CTSNews.tw",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "華視新聞資訊台",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://stream1.freetv.fun/hua-shi-xin-wen-4.m3u8",
+        "url_sha256": "06727c73cbb617b5bd82911d73cf07d6892f24d7ac433bb57af8a04823da5341",
+        "width": 0
+      }
+    },
     "64addae982cddc4b832bc865afcbbc9185a5e3df00e12e5fdf8357027a8e5265": {
       "candidate": {
         "_queue_priority": 1,
@@ -1346455,6 +1346709,34 @@
         "url": "http://110.72.79.65:808/hls/106/index.m3u8",
         "url_sha256": "127bb62e747b009f0a64fe86c284e6fd5e578880e8a57905f972a1d39a65009a",
         "width": 720
+      }
+    },
+    "ab0b1e3fdf0e861624fd54ae9905df4e6a477f06de8b42300eec46c098ad45c6": {
+      "last_checked_utc": "2026-11-07T01:33:49Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
+        "channel_key": "GTVDrama.tw",
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
+        "min_height": 1080,
+        "name": "八大戲劇台",
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 14.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
+        "status": "UNKNOWN",
+        "stream_mbps": 0.0,
+        "url": "https://stream1.freetv.fun/ba-da-xi-ju-1.m3u8",
+        "url_sha256": "8ae85f126a60b5bd367a78124b6514ffa047f39198691064042646f5c11ce358",
+        "width": 0
       }
     },
     "ab12476e911895fe3d80345eda1ea4c5ea5f3e4c726b15cf4424c2f07ab36e47": {
