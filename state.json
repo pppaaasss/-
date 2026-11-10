@@ -19231,13 +19231,13 @@
     "c6a599a005bb5d83b95907ec612f5cc3ec85e8a83b910db1abf64d2e78e753eb": {
       "candidate_id": "c6a599a005bb5d83b95907ec612f5cc3ec85e8a83b910db1abf64d2e78e753eb",
       "channel_key": "广东卫视",
-      "expires_utc": "2026-11-08T13:57:13Z",
-      "last_verified_utc": "2026-11-07T01:57:13Z",
+      "expires_utc": "2026-11-11T13:51:28Z",
+      "last_verified_utc": "2026-11-10T01:51:28Z",
       "name": "广东卫视",
       "qualification": "QUALIFIED",
-      "qualified_utc": "2026-11-07T01:57:13Z",
+      "qualified_utc": "2026-11-10T01:51:28Z",
       "request_options": "",
-      "source_manifest_sha256": "50b1d1743838555c83a872b11d6fbc9d53efd85bd8f5ff63f8e6928dc1e6ea08",
+      "source_manifest_sha256": "7ad5c20ac2ecac4d62f8b46db221cff8cd487c137fbd054da7d9a4db5e6c2570",
       "url": "http://51.75.118.151:20299/gdws.m3u8",
       "url_sha256": "9f95dc67215514c3b3c55127ad3c1f4febbe386c6b68d0a97c3f01448923e8e9",
       "verification": {
@@ -19245,12 +19245,12 @@
         "codec": "h264",
         "deep_checked": true,
         "fps": 50.0,
-        "headroom_ratio": 7.543454651119026,
+        "headroom_ratio": 4.735336923906313,
         "height": 1080,
-        "min_download_mbps": 25.00276986070411,
+        "min_download_mbps": 14.740049966013927,
         "sample_count": 2,
-        "startup_s": 1.807485,
-        "stream_mbps": 3.314498597402597,
+        "startup_s": 0.824751,
+        "stream_mbps": 3.1127774439024387,
         "width": 1920
       },
       "verified_run_kind": "primary-0200"
@@ -21568,11 +21568,13 @@
       "candidate_id": "de159db2bf1aa6c8979b49428e77fe2e6c7ac963cadab8137fde9e0aadeb54b3",
       "channel_key": "cctv4",
       "expires_utc": "2026-11-09T08:25:48Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-11-07T20:25:48Z",
       "name": "CCTV-4",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-11-07T20:25:48Z",
       "request_options": "",
+      "retry_after_epoch": 1794279084.0,
       "source_manifest_sha256": "50b1d1743838555c83a872b11d6fbc9d53efd85bd8f5ff63f8e6928dc1e6ea08",
       "url": "http://bztv.tvbus.cc:8081/cdnlive/cctv4.m3u8",
       "url_sha256": "c5637370f43368243ee7729742ae5fba1f714cfd8ef473ece8b8fbd3ef4190fd",
@@ -93902,6 +93904,61 @@
           "sample_bytes": 2097152,
           "task_id": "43e59fe0d77ec8f26ca5a64d95e983994e4bbfaa93a39dbb284719b12e3e7f6f",
           "url": "http://198.204.228.26/live/qhws.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "1d2e68046eef29b3a7490519a2cbe6d7f9aa8d920401a147e63877369d692948": {
+      "batch_id": "1d2e68046eef29b3a7490519a2cbe6d7f9aa8d920401a147e63877369d692948",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-10T01:52:05Z",
+      "cycle_id": "a65570329beaf5a082abbc9d05f845be4274ff9c433fbfc58c4cf871d2666cba",
+      "expires_utc": "2026-11-10T02:22:05Z",
+      "feedback_sha256": "6d244aea4cc79dfbfe9298ce02ffe09cbc1c0ce71bb3c4d3064e6474198f4c13",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b52727773de48c2d474dbbe6a5148885544a8a4217b580af5cce554a61ae7832",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "d6cbac0003df48091b6c705d4ad18b0d0cbc5f9d147d8543e962a1704bf1f44e",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "82725c1d68964949b7628049f4b65f250e1abe39f93b4dffb9dc234bbc4d5940",
+          "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv4o",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "243aeb008d5054a0e04850c8ceec0d390389160c123356bfee2b90064a890140",
+          "channel_key": "广西卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "广西卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "75714f36d1c454349286c65185c2f41efbde9d3b99ec283e3bd2fb93e4b85ecd",
+          "url": "http://t.061899.xyz/tl/tl.php?id=gxws",
           "viewer_accepted_quality": false
         }
       ]
@@ -630638,7 +630695,8 @@
       "297b329c6bb18168b8dd16a5b5ad1b09478b88a5509fe96ef995e2a84c06fc7b",
       "f3425b202ecc5d042a610e710d833fe393958d4bcaa5ec57265c2cb8d1f02413",
       "2d805fa385b1389f8635794413b78c838e14e8e2d6027db44cd9ee0e3e58a360",
-      "2be5e5d583141cd1333f4ba29a5aa6977a2ed039665802c9592d76972721b408"
+      "2be5e5d583141cd1333f4ba29a5aa6977a2ed039665802c9592d76972721b408",
+      "1d2e68046eef29b3a7490519a2cbe6d7f9aa8d920401a147e63877369d692948"
     ],
     "binding": {
       "channel_count": 53,
@@ -630811,7 +630869,7 @@
     "id": "a65570329beaf5a082abbc9d05f845be4274ff9c433fbfc58c4cf871d2666cba",
     "kind": "primary-0200",
     "manifest_sha": "7ad5c20ac2ecac4d62f8b46db221cff8cd487c137fbd054da7d9a4db5e6c2570",
-    "outstanding": "2be5e5d583141cd1333f4ba29a5aa6977a2ed039665802c9592d76972721b408",
+    "outstanding": "1d2e68046eef29b3a7490519a2cbe6d7f9aa8d920401a147e63877369d692948",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -636468,6 +636526,60 @@
         },
         "started_utc": "2026-11-09T23:59:58Z",
         "task_id": "376a292fbbcaaabbaa5b13924115d4c90250aae25cfd79bc2643fd655a1a78fd"
+      },
+      "377a61f475f8bebde31985a63a4706ffa94233ff8d6aa8bca03bf92035b136d0": {
+        "finished_utc": "2026-11-10T01:51:28Z",
+        "result": {
+          "avg_download_mbps": 56.97390470187506,
+          "bitrate_mbps": 0,
+          "channel_key": "广东卫视",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "",
+          "fps": 50.0,
+          "headroom_ratio": 4.735336923906313,
+          "height": 1080,
+          "min_download_mbps": 14.740049966013927,
+          "min_height": 1080,
+          "name": "广东卫视",
+          "observed_status": "GOOD",
+          "probe_runtime_s": 1.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 99.20775943773619,
+              "downloaded_bytes": 2014984,
+              "duration_s": 5.0,
+              "elapsed_s": 0.162486,
+              "http_status": 206,
+              "stream_mbps": 3.2239744,
+              "total_bytes": 2014984,
+              "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/4CC3AB0F71C3CFF7C6ABD9D352233ED6BD1879C155D01934A2B0D32C4CBEB287BF6FDADB37FFCA8686C8347691014A3F9D072AABCADBABB0B09F57AFE8DC9757064FDBF569B9A099E41A454DAC3A85EDCE175B155C60BCF4C8E57AD7B120D39F/83c7d203vodcq1300029864/d485b75f5001834826805964203/0-358-1786844693.ts?timeshift=1&endtime=1794275480&sid=2024060903&starttime=1794275180&svrtime=1794275485"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 14.740049966013927,
+              "downloaded_bytes": 1845972,
+              "duration_s": 4.92,
+              "elapsed_s": 1.001881,
+              "http_status": 206,
+              "stream_mbps": 3.001580487804878,
+              "total_bytes": 1845972,
+              "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/4CC3AB0F71C3CFF7C6ABD9D352233ED6BD1879C155D01934A2B0D32C4CBEB287BF6FDADB37FFCA8686C8347691014A3F9D072AABCADBABB0B09F57AFE8DC9757064FDBF569B9A099E41A454DAC3A85EDCE175B155C60BCF4C8E57AD7B120D39F/83c7d203vodcq1300029864/d485b75f5001834826805964203/0-358-1786844694.ts?timeshift=1&endtime=1794275480&sid=2024060903&starttime=1794275180&svrtime=1794275485"
+            }
+          ],
+          "startup_s": 0.824751,
+          "status": "UNKNOWN",
+          "stream_mbps": 3.1127774439024387,
+          "url": "http://51.75.118.151:20299/gdws.m3u8",
+          "url_sha256": "9f95dc67215514c3b3c55127ad3c1f4febbe386c6b68d0a97c3f01448923e8e9",
+          "width": 1920
+        },
+        "started_utc": "2026-11-10T01:51:27Z",
+        "task_id": "377a61f475f8bebde31985a63a4706ffa94233ff8d6aa8bca03bf92035b136d0"
       },
       "37b03daebf14dc028765a979ec26de471c16eb969efaabf6dd23bd62a5528499": {
         "finished_utc": "2026-11-09T22:41:50Z",
@@ -655657,6 +655769,60 @@
         "started_utc": "2026-11-10T01:43:04Z",
         "task_id": "fdea90fb78fa8f568ce14a313f1265a644734027e6dddd76add96b511bf89d80"
       },
+      "fef1fef8605c0d67b5d5230ddfe9e72a33c3af002d034a7d5cdabc25d8707e95": {
+        "finished_utc": "2026-11-10T01:51:24Z",
+        "result": {
+          "avg_download_mbps": 3.7893030584538034,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv4",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 50.0,
+          "headroom_ratio": 1.0195098838569918,
+          "height": 1080,
+          "min_download_mbps": 3.6969789030055398,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 23.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 3.881627213902067,
+              "downloaded_bytes": 6260776,
+              "duration_s": 14.24,
+              "elapsed_s": 12.903405,
+              "http_status": 206,
+              "stream_mbps": 3.517289887640449,
+              "total_bytes": 6260776,
+              "url": "http://204.12.242.162:82/live/cctv4/segment_173712.ts"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 3.6969789030055398,
+              "downloaded_bytes": 3903256,
+              "duration_s": 8.36,
+              "elapsed_s": 8.446369,
+              "http_status": 206,
+              "stream_mbps": 3.735173205741627,
+              "total_bytes": 3903256,
+              "url": "http://204.12.242.162:82/live/cctv4/segment_173713.ts"
+            }
+          ],
+          "startup_s": 15.068000999999999,
+          "status": "UNKNOWN",
+          "stream_mbps": 3.626231546691038,
+          "url": "http://bztv.tvbus.cc:8081/cdnlive/cctv4.m3u8",
+          "url_sha256": "c5637370f43368243ee7729742ae5fba1f714cfd8ef473ece8b8fbd3ef4190fd",
+          "width": 1920
+        },
+        "started_utc": "2026-11-10T01:51:01Z",
+        "task_id": "fef1fef8605c0d67b5d5230ddfe9e72a33c3af002d034a7d5cdabc25d8707e95"
+      },
       "ff5801347de5a78984f8ab0d69c1e9fb814b7303fc9fd68d627927e8d45bad2e": {
         "finished_utc": "2026-11-09T21:46:08Z",
         "result": {
@@ -657971,6 +658137,22 @@
         "sample_bytes": 6291456,
         "task_id": "376a292fbbcaaabbaa5b13924115d4c90250aae25cfd79bc2643fd655a1a78fd",
         "url": "https://hlsbkmgsplive.miguvideo.com/wd-hunanhd-2500/01.m3u8?&HlsSubType=&encrypt=",
+        "viewer_accepted_quality": false
+      },
+      "377a61f475f8bebde31985a63a4706ffa94233ff8d6aa8bca03bf92035b136d0": {
+        "attempt": 1,
+        "candidate_id": "c6a599a005bb5d83b95907ec612f5cc3ec85e8a83b910db1abf64d2e78e753eb",
+        "channel_key": "广东卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "广东卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "377a61f475f8bebde31985a63a4706ffa94233ff8d6aa8bca03bf92035b136d0",
+        "url": "http://51.75.118.151:20299/gdws.m3u8",
         "viewer_accepted_quality": false
       },
       "37b03daebf14dc028765a979ec26de471c16eb969efaabf6dd23bd62a5528499": {
@@ -665783,6 +665965,22 @@
         "url": "http://xymm.1000s.dpdns.org:8767/gdws.m3u8",
         "viewer_accepted_quality": false
       },
+      "fef1fef8605c0d67b5d5230ddfe9e72a33c3af002d034a7d5cdabc25d8707e95": {
+        "attempt": 1,
+        "candidate_id": "de159db2bf1aa6c8979b49428e77fe2e6c7ac963cadab8137fde9e0aadeb54b3",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "fef1fef8605c0d67b5d5230ddfe9e72a33c3af002d034a7d5cdabc25d8707e95",
+        "url": "http://bztv.tvbus.cc:8081/cdnlive/cctv4.m3u8",
+        "viewer_accepted_quality": false
+      },
       "ff5801347de5a78984f8ab0d69c1e9fb814b7303fc9fd68d627927e8d45bad2e": {
         "attempt": 1,
         "candidate_id": "25f10d3da32695106d4c3a3ea7aae55ad13bbd5d4b5d01757af0940a504b3fb2",
@@ -666189,13 +666387,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-10T01:49:39Z",
-    "received_utc": "2026-11-10T01:50:21Z",
+    "measured_utc": "2026-11-10T01:51:28Z",
+    "received_utc": "2026-11-10T01:52:05Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 0,
-      "runtime_s": 8.0
+      "downloaded_bytes": 14032408,
+      "runtime_s": 27.0
     }
   },
   "last_report": {
@@ -681087,19 +681285,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 1616315611,
+    "bytes": 1630348019,
     "candidates": 500,
     "day": "20261110",
     "discovery_bytes": 1246109435,
     "discovery_seconds": 3457.0,
     "reservations": {
-      "2be5e5d583141cd1333f4ba29a5aa6977a2ed039665802c9592d76972721b408": {
+      "1d2e68046eef29b3a7490519a2cbe6d7f9aa8d920401a147e63877369d692948": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 4288.0
+    "seconds": 4315.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -683610,6 +683808,7 @@
     "2bcf31525f58467d2310667aac4e57f1586156d1be9124a58b39467988f24b76": "8279ee149d24639d6a6c6773411342907a1992d6c2d800884bb666a1ce24d49c",
     "2bd442c028a71897ab9cd0cb65a44fb109147e4880197a443bb3be9152427a77": "a9011e5886736adf2c3319aa4e4c19a50405688e5915d1ac6698b3f062531011",
     "2bdcfea25fca17dcc42749bfebb5c61ba7ee3db466b71ae41e1a4dd4989b7737": "20cc0fc59ecb8716349fb728507ec5d8164ae67ad02098c5a7d447d2883b97e6",
+    "2be5e5d583141cd1333f4ba29a5aa6977a2ed039665802c9592d76972721b408": "3167e84bfc1a4525088fc51ca172af12cb75f0eb2217da6856e379de7608365d",
     "2be9d3b4d032f9b4d1987f8f2f5bf64e972e3e176b148e3398c886a8938edb52": "9745f8955a54d13e1669068f8c252ba598c53b0a8711c9e2cd43f8f7a2a05233",
     "2bec96fe570b0ea2b193757c8680582c1bf4823367114e6505a9450b218b0006": "b06022ead566ea032273210225b9721a07c2d830ed3c5138656e1fe3e72038d1",
     "2bf46ae519ef55152c63c5baad6b981258277a38253c59a8857bb43f46d82888": "c6e786b7aba13fe01e11a9a68b2a0a143097b379d617d1ee1b352ccc90fe2546",
