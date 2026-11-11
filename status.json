@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 1986611715,
+    "bytes": 2053720579,
     "candidates": 500,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 500,
@@ -9,7 +9,7 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 4728.0
+    "seconds": 4968.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -21,7 +21,7 @@
     "day": "20261111",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 29,
+    "formal_or_backup_batches": 30,
     "historical_rechecks_measured": 242,
     "historical_rechecks_qualified": 1,
     "historical_rechecks_reserved": 242,
@@ -31,7 +31,7 @@
     "new_qualified": 0,
     "observed_batch_spacing_seconds": 101.304,
     "qualified": 1,
-    "reason": "SLOT_COMPLETE",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
@@ -44,7 +44,7 @@
     "day": "20261111",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 29,
+    "formal_or_backup_batches": 30,
     "historical_rechecks_measured": 242,
     "historical_rechecks_qualified": 1,
     "historical_rechecks_reserved": 242,
@@ -54,16 +54,22 @@
     "new_qualified": 0,
     "observed_batch_spacing_seconds": 101.304,
     "qualified": 1,
-    "reason": "SLOT_COMPLETE",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
     "target": 500,
     "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-11-11T00:29:40Z",
+  "generated_utc": "2026-11-11T07:00:09Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "26219a7a8feabbad15f75760e0cceec248d26dd1ce8b21670b267142bc86a6fb",
+    "created_utc": "2026-11-11T07:00:09Z",
+    "expires_utc": "2026-11-11T07:30:09Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-11-11T00:08:32Z",
     "received_utc": "2026-11-11T00:09:09Z",
@@ -85,25 +91,25 @@
     "scope": "new_candidates_only"
   },
   "progress": {
-    "backup_checks_completed": 17,
+    "backup_checks_completed": 0,
     "belongs_to_active_window": true,
-    "candidate_checks_completed": 500,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 19,
-    "current_rechecks_required": 19,
+    "candidate_checks_completed": 0,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
-    "report_complete": true,
-    "slot": "20261111-primary-0200"
+    "report_complete": false,
+    "slot": "20261111-recheck-1300"
   },
   "queue": 1234,
   "router_enabled": null,
-  "state": "SLOT_COMPLETE",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 18369,
   "window": {
     "active": true,
-    "ends_utc": "2026-11-11T03:00:00Z",
-    "next_starts_utc": "2026-11-11T05:00:00Z",
-    "run_kind": "primary-0200",
+    "ends_utc": "2026-11-11T08:00:00Z",
+    "next_starts_utc": "2026-11-11T12:00:00Z",
+    "run_kind": "recheck-1300",
     "timezone": "Asia/Shanghai"
   }
 }
