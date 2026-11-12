@@ -11925,11 +11925,13 @@
       "candidate_id": "70f33b8976a1e83ce194869a4a9a98e646f7a349a7bef5a4a52056a7c8a8ec75",
       "channel_key": "cctv3",
       "expires_utc": "2026-10-12T08:45:57Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-10-10T20:45:57Z",
       "name": "CCTV-3",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-10T20:45:57Z",
       "request_options": "",
+      "retry_after_epoch": 1794523567.0,
       "source_manifest_sha256": "af3697642765eb175766c33ea62f5abfab916c28fd596189fc350000b55e35f9",
       "url": "http://121.17.146.84:50003/hls/3/index.m3u8",
       "url_sha256": "8a8409e0699165fd507f49ccc505dca71df5c2efe51a6b6265d654ea10ed3910",
@@ -99324,6 +99326,97 @@
           "sample_bytes": 2097152,
           "task_id": "6e1b3d1cbc1fe3121e6e47daf705f09e221b2e22944cabaed2f90ef9bd98fe7f",
           "url": "http://1.24.39.180:808/hls/38/index.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "1d0a7a1a33301a6ab070885443d6942096df2ff7f07dbb6294a4ec2d30b50607": {
+      "batch_id": "1d0a7a1a33301a6ab070885443d6942096df2ff7f07dbb6294a4ec2d30b50607",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-12T21:46:44Z",
+      "cycle_id": "16ccc184c5ad5060f5edd54c33afa0ffab3507cba5aec992f21f1b13524196dc",
+      "expires_utc": "2026-11-12T22:16:44Z",
+      "feedback_sha256": "87eecfa20cb7c5d7d90c22b61ee6bbe5c93b99bd2ac567835730ce5465f7ccf1",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "b52727773de48c2d474dbbe6a5148885544a8a4217b580af5cce554a61ae7832",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "3204b4b721ada087bbea27a7bc67db4767acbb43dd1378bacb25b12ffc285643",
+          "channel_key": "广东卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "广东卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "2f9b35eb35996596170995b4ab80b6d4143e4d2313a9632f40e2e4919b35607a",
+          "url": "https://t.freetv.fun/live/yan-dong-wei-shi-19.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "454e20da88987602904704c95c9023561ff5ddbe3c576053c44647f1a4cc25d2",
+          "channel_key": "新疆卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "新疆卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "826ebe5791b57e3d5ea676f820e2abdaada506a50d03e8e1ca9fa21aaedb7456",
+          "url": "http://183.222.15.202:4321/rtp/239.11.0.58:5140",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "e7a9fa8e181bf36edd410b3ac00f4f6a2f9c7d27951e6e538bde2064a5bed14e",
+          "channel_key": "cctv16",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-16",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "b6a2df1398af5fc1093b0bd809ecc295db54a70d4c9c0a0849dd582c5f63c984",
+          "url": "http://171.119.206.9:6000/rtp/226.0.2.169:9264",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "a6512315512c08e119dc2c1dff9e19e81de9726c41a7d2b793a1e64874ef50e9",
+          "channel_key": "天津卫视",
+          "measurement_origin": "historical_recheck",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "天津卫视",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "64f0e7abc999034c71c1f97bc7eff63c03b90998deacbc748c4723ce7f57bca7",
+          "url": "http://124.112.188.154:4022/rtp/238.1.78.20:6088",
           "viewer_accepted_quality": false
         }
       ]
@@ -673487,7 +673580,8 @@
       "72e3c2807f5ce6354cfeb152fdbbdad526bf12de3eed27a369975ce020b8a764",
       "522edea1a3f36fd0ac7120aa033944899a2c1b4fa2d657d2568397773cf3e19d",
       "c450ed5b04456dbc54f4a41a7818b3920b1ca874bfec1f2401b2d1843d39d258",
-      "5e4ebc1aec14c10c01b7876c933d2eb1f70b476675a566f4a327e0345e2ecf05"
+      "5e4ebc1aec14c10c01b7876c933d2eb1f70b476675a566f4a327e0345e2ecf05",
+      "1d0a7a1a33301a6ab070885443d6942096df2ff7f07dbb6294a4ec2d30b50607"
     ],
     "binding": {
       "channel_count": 53,
@@ -673660,7 +673754,7 @@
     "id": "16ccc184c5ad5060f5edd54c33afa0ffab3507cba5aec992f21f1b13524196dc",
     "kind": "primary-0200",
     "manifest_sha": "7e57cec114b7c6f7f8b471eeb71ebb8bb361f781b41113bc69e39589873a4a0c",
-    "outstanding": "5e4ebc1aec14c10c01b7876c933d2eb1f70b476675a566f4a327e0345e2ecf05",
+    "outstanding": "1d0a7a1a33301a6ab070885443d6942096df2ff7f07dbb6294a4ec2d30b50607",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -677912,6 +678006,35 @@
         "started_utc": "2026-11-12T20:08:04Z",
         "task_id": "42f228e10a760d6b5e63537f8618d4ab1803fb3cbaa972257313ab2a41cb348c"
       },
+      "4341045432682c0fa2475228f4e906308cfd71106f0a5e6a20a060214f8bc8e8": {
+        "finished_utc": "2026-11-12T21:46:07Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv3",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-3",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://121.17.146.84:50003/hls/3/index.m3u8",
+          "url_sha256": "8a8409e0699165fd507f49ccc505dca71df5c2efe51a6b6265d654ea10ed3910",
+          "width": 0
+        },
+        "started_utc": "2026-11-12T21:46:02Z",
+        "task_id": "4341045432682c0fa2475228f4e906308cfd71106f0a5e6a20a060214f8bc8e8"
+      },
       "452b20fa6e78da90c6bda7a9f141f7f65d351e22360650b2eab10d377b9adc8c": {
         "finished_utc": "2026-11-12T19:48:24Z",
         "result": {
@@ -679741,6 +679864,35 @@
         "started_utc": "2026-11-12T19:44:45Z",
         "task_id": "6a4b00162f25f419d4e610a6c6d971ea627b59f9f3948ab039b0bd52492a4e23"
       },
+      "6b87babfbe3acbadfae114bd294c98f4ee4abc0f6808fbd8d71da960003c658f": {
+        "finished_utc": "2026-11-12T21:46:00Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "青海卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "青海卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 5.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://118.113.40.5:1234/947472506",
+          "url_sha256": "8d522436d464a7f3d007fecbd35171dd4c5696f937b2918b96c47746e2bdd056",
+          "width": 0
+        },
+        "started_utc": "2026-11-12T21:45:55Z",
+        "task_id": "6b87babfbe3acbadfae114bd294c98f4ee4abc0f6808fbd8d71da960003c658f"
+      },
       "6e515f46d1d4e5ae77d8f2a5225833e91354fac4bce1b55dbc715576d334a097": {
         "finished_utc": "2026-11-12T21:04:55Z",
         "result": {
@@ -680018,6 +680170,35 @@
         },
         "started_utc": "2026-11-12T21:04:17Z",
         "task_id": "7185d20b894d86ec8ac46adb17cd01788499751dffd89ff82d71eff1f00a8316"
+      },
+      "72074d3fb54f2bf2451d144f31a6b2f6550d927a3416a9a916bd99ea7e62c035": {
+        "finished_utc": "2026-11-12T21:45:53Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "贵州卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "贵州卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 6.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://60.9.238.11:50003/hls/51/index.m3u8",
+          "url_sha256": "7a3adc2979c8b0f9aa9207b710f6407c062a1c1f1a7c3301bce8b9e5f9697bd7",
+          "width": 0
+        },
+        "started_utc": "2026-11-12T21:45:47Z",
+        "task_id": "72074d3fb54f2bf2451d144f31a6b2f6550d927a3416a9a916bd99ea7e62c035"
       },
       "721a7ba8ad846bf8a7d5a0d93236f3b15f1dccc9a77fb8e5e7f6ae406650da75": {
         "finished_utc": "2026-11-12T18:55:14Z",
@@ -680670,6 +680851,35 @@
         },
         "started_utc": "2026-11-12T20:09:58Z",
         "task_id": "7c8557b6c9edb60422ddbcac976b75e36a1dbbdff35f0b39ddf56a874a3d55da"
+      },
+      "7d9ebedbea014b87bc9bfd86f9436185a35255483f3111d9059d562c59cdb07d": {
+        "finished_utc": "2026-11-12T21:45:45Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "广东卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "广东卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "https://t.freetv.fun/live/yan-dong-wei-shi-5.php",
+          "url_sha256": "2555fce53b248978f9c9cf4b122ee18d832b6959a121c0ee02f39411ad789f92",
+          "width": 0
+        },
+        "started_utc": "2026-11-12T21:45:31Z",
+        "task_id": "7d9ebedbea014b87bc9bfd86f9436185a35255483f3111d9059d562c59cdb07d"
       },
       "7dbf6fcbd8850c077c9df41fcf83eb1b9b1720c3c52aecb3606daf83a7a35b2d": {
         "finished_utc": "2026-11-12T20:31:29Z",
@@ -691025,6 +691235,23 @@
         "url": "https://live.chinacert.cftest5.cn/cnmg/live/673168223",
         "viewer_accepted_quality": false
       },
+      "4341045432682c0fa2475228f4e906308cfd71106f0a5e6a20a060214f8bc8e8": {
+        "attempt": 1,
+        "candidate_id": "70f33b8976a1e83ce194869a4a9a98e646f7a349a7bef5a4a52056a7c8a8ec75",
+        "channel_key": "cctv3",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-3",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "4341045432682c0fa2475228f4e906308cfd71106f0a5e6a20a060214f8bc8e8",
+        "url": "http://121.17.146.84:50003/hls/3/index.m3u8",
+        "viewer_accepted_quality": false
+      },
       "452b20fa6e78da90c6bda7a9f141f7f65d351e22360650b2eab10d377b9adc8c": {
         "attempt": 1,
         "candidate_id": "c1f85c9a37a991f1cdaf88fb8edc71ceb7c934f874e2f81ad4b549bb5fc7cfca",
@@ -691886,6 +692113,23 @@
         "url": "http://fn.gcl.de5.net:5908/gsh950428/630287636",
         "viewer_accepted_quality": false
       },
+      "6b87babfbe3acbadfae114bd294c98f4ee4abc0f6808fbd8d71da960003c658f": {
+        "attempt": 1,
+        "candidate_id": "2385ca55cd54d4b44bb24473bec87363d406c0eee8b167dddf108e8c82d9ed11",
+        "channel_key": "青海卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "青海卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "6b87babfbe3acbadfae114bd294c98f4ee4abc0f6808fbd8d71da960003c658f",
+        "url": "http://118.113.40.5:1234/947472506",
+        "viewer_accepted_quality": false
+      },
       "6e515f46d1d4e5ae77d8f2a5225833e91354fac4bce1b55dbc715576d334a097": {
         "attempt": 1,
         "candidate_id": "d2bb785d394c1497311e5c6f71ee367f824d236d66c63e06ddbe13f262629364",
@@ -692002,6 +692246,23 @@
         "sample_bytes": 6291456,
         "task_id": "7185d20b894d86ec8ac46adb17cd01788499751dffd89ff82d71eff1f00a8316",
         "url": "http://bztv.tvbus.cc:8081/cdnlive/gdws.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "72074d3fb54f2bf2451d144f31a6b2f6550d927a3416a9a916bd99ea7e62c035": {
+        "attempt": 1,
+        "candidate_id": "d15acc538a63506b95cce793b63413581e1757f09fc103ab10c5d663efda2011",
+        "channel_key": "贵州卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "贵州卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "72074d3fb54f2bf2451d144f31a6b2f6550d927a3416a9a916bd99ea7e62c035",
+        "url": "http://60.9.238.11:50003/hls/51/index.m3u8",
         "viewer_accepted_quality": false
       },
       "721a7ba8ad846bf8a7d5a0d93236f3b15f1dccc9a77fb8e5e7f6ae406650da75": {
@@ -692270,6 +692531,23 @@
         "sample_bytes": 6291456,
         "task_id": "7c8557b6c9edb60422ddbcac976b75e36a1dbbdff35f0b39ddf56a874a3d55da",
         "url": "https://t.freetv.fun/live/hu-nan-wei-shi-5.m3u8",
+        "viewer_accepted_quality": false
+      },
+      "7d9ebedbea014b87bc9bfd86f9436185a35255483f3111d9059d562c59cdb07d": {
+        "attempt": 1,
+        "candidate_id": "1fc06394b98470b08a0eb3faf77f515c57bdc2ef65d5f90a19a7728df97fb47d",
+        "channel_key": "广东卫视",
+        "measurement_origin": "historical_recheck",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "广东卫视",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "7d9ebedbea014b87bc9bfd86f9436185a35255483f3111d9059d562c59cdb07d",
+        "url": "https://t.freetv.fun/live/yan-dong-wei-shi-5.php",
         "viewer_accepted_quality": false
       },
       "7dbf6fcbd8850c077c9df41fcf83eb1b9b1720c3c52aecb3606daf83a7a35b2d": {
@@ -696249,8 +696527,8 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-12T21:43:37Z",
-    "received_utc": "2026-11-12T21:44:23Z",
+    "measured_utc": "2026-11-12T21:46:07Z",
+    "received_utc": "2026-11-12T21:46:44Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
@@ -710609,18 +710887,18 @@
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
     "bytes": 626132182,
-    "candidates": 340,
+    "candidates": 344,
     "day": "20261113",
     "discovery_bytes": 401462546,
-    "discovery_seconds": 2994.0,
+    "discovery_seconds": 3030.0,
     "reservations": {
-      "5e4ebc1aec14c10c01b7876c933d2eb1f70b476675a566f4a327e0345e2ecf05": {
+      "1d0a7a1a33301a6ab070885443d6942096df2ff7f07dbb6294a4ec2d30b50607": {
         "bytes": 67108864,
         "candidates": 4,
         "seconds": 240
       }
     },
-    "seconds": 3521.0
+    "seconds": 3557.0
   },
   "night_plan": {
     "candidate_ids": [],
@@ -714114,6 +714392,7 @@
     "5e3c364ffa636993fd4f9ed0635f988ebccb4c7d2cae4905ca27ba91e877d4f0": "1f7d3c1bccedfdba56aada8383408fe9742e628ca3a0e8fbdfdbdb3974288af6",
     "5e4b6c98b28ce4d0f8e7e742c725af1b7425d3ea3448f827822dda15749abdb0": "6ae10d64f0a478a1b68e4ce5b4ebf922ca859c9b0f0178e6af59a85b8cad4ee3",
     "5e4e403234b61b5048d78ae0aa7c278837b993cd7fdf4f165dbf471d4941d825": "5729995a0fcfa4b1422f781c436af4d1d6579d1daba6c9551b2cdbc97fa6819a",
+    "5e4ebc1aec14c10c01b7876c933d2eb1f70b476675a566f4a327e0345e2ecf05": "c44d69c0155322a05dd55e474a088d92cb6e1fe438fdd6892b35f5b01150bafa",
     "5e4ec5dfc699cc032a53fd84365899a8446a085b11ddf4f3c325afd79e92173a": "f94f2cd04923f0410971bfc2dd43c95903ad067fe11fe59e3a2df9b35589525f",
     "5e5308bb83d65b6960ad65a3a28acf659e3017f748cc778fd917e4c42af5e585": "ae7576cd21452b29e6c08e70bc1adac300a7c1e6d19554722789c5b945d211bc",
     "5e561ffe0f420acc926c21b23d297feb5053a8774d95309f9b8f13ca989e126c": "a6bff666c5afda402bf4e33da20fca0bb71ccc332f174cbc939d320f5ab535af",
@@ -946517,7 +946796,37 @@
       }
     },
     "1fc06394b98470b08a0eb3faf77f515c57bdc2ef65d5f90a19a7728df97fb47d": {
-      "last_checked_utc": "2026-10-10T00:34:46Z",
+      "last_checked_utc": "2026-11-12T21:45:45Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "last_checked_utc": "2026-10-10T00:34:46Z",
+          "result": {
+            "avg_download_mbps": 0.0,
+            "bitrate_mbps": 0.0,
+            "channel_key": "广东卫视",
+            "codec": "",
+            "deep_checked": false,
+            "error": "native_transfer_error",
+            "fps": 0.0,
+            "headroom_ratio": 0.0,
+            "height": 0,
+            "min_download_mbps": 0.0,
+            "min_height": 1080,
+            "name": "广东卫视",
+            "observed_status": "UNAVAILABLE",
+            "probe_runtime_s": 15.0,
+            "sample_count": 0,
+            "segment_samples": [],
+            "startup_s": 0.0,
+            "status": "UNKNOWN",
+            "stream_mbps": 0.0,
+            "url": "https://t.freetv.fun/live/yan-dong-wei-shi-5.php",
+            "url_sha256": "2555fce53b248978f9c9cf4b122ee18d832b6959a121c0ee02f39411ad789f92",
+            "width": 0
+          }
+        }
+      ],
       "result": {
         "avg_download_mbps": 0.0,
         "bitrate_mbps": 0.0,
@@ -946532,7 +946841,7 @@
         "min_height": 1080,
         "name": "广东卫视",
         "observed_status": "UNAVAILABLE",
-        "probe_runtime_s": 15.0,
+        "probe_runtime_s": 14.0,
         "sample_count": 0,
         "segment_samples": [],
         "startup_s": 0.0,
@@ -961319,55 +961628,85 @@
       "unknown_attempts": 2
     },
     "2385ca55cd54d4b44bb24473bec87363d406c0eee8b167dddf108e8c82d9ed11": {
-      "last_checked_utc": "2026-10-10T20:45:53Z",
+      "last_checked_utc": "2026-11-12T21:46:00Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "last_checked_utc": "2026-10-10T20:45:53Z",
+          "result": {
+            "avg_download_mbps": 18.741369972000676,
+            "bitrate_mbps": 0,
+            "channel_key": "青海卫视",
+            "codec": "h264",
+            "deep_checked": true,
+            "error": "home_quality_threshold",
+            "fps": 25.0,
+            "headroom_ratio": 23.260850841978147,
+            "height": 480,
+            "min_download_mbps": 16.72425401649151,
+            "min_height": 1080,
+            "name": "青海卫视",
+            "observed_status": "DEGRADED",
+            "probe_runtime_s": 1.0,
+            "sample_count": 2,
+            "segment_samples": [
+              {
+                "complete": true,
+                "curl_code": 0,
+                "download_mbps": 20.75848592750984,
+                "downloaded_bytes": 859160,
+                "duration_s": 10.0,
+                "elapsed_s": 0.331107,
+                "http_status": 206,
+                "stream_mbps": 0.687328,
+                "total_bytes": 859160,
+                "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/20251221052416-01-2706443.ts?msisdn=02ab55e05ba6811748c3955af32b9794&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20261011024424&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=118.113.40.5&SecurityKey=20261011024424&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=d46a00c3175769e848e4fbe6e84e8826&sv=10004&ct=android&encrypt=c69d864af5fd88550c014088b7cdde95&HlsSubType=2&HlsProfileId=1"
+              },
+              {
+                "complete": true,
+                "curl_code": 0,
+                "download_mbps": 16.72425401649151,
+                "downloaded_bytes": 938308,
+                "duration_s": 10.0,
+                "elapsed_s": 0.448837,
+                "http_status": 206,
+                "stream_mbps": 0.7506464,
+                "total_bytes": 938308,
+                "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/20251221052416-01-2706444.ts?msisdn=02ab55e05ba6811748c3955af32b9794&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20261011024424&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=118.113.40.5&SecurityKey=20261011024424&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=d46a00c3175769e848e4fbe6e84e8826&sv=10004&ct=android&encrypt=691be8574dcc024135a513a9bfc691fb&HlsSubType=2&HlsProfileId=1"
+              }
+            ],
+            "startup_s": 0.45406799999999997,
+            "status": "UNKNOWN",
+            "stream_mbps": 0.7189872,
+            "url": "http://118.113.40.5:1234/947472506",
+            "url_sha256": "8d522436d464a7f3d007fecbd35171dd4c5696f937b2918b96c47746e2bdd056",
+            "width": 854
+          }
+        }
+      ],
       "result": {
-        "avg_download_mbps": 18.741369972000676,
-        "bitrate_mbps": 0,
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
         "channel_key": "青海卫视",
-        "codec": "h264",
-        "deep_checked": true,
-        "error": "home_quality_threshold",
-        "fps": 25.0,
-        "headroom_ratio": 23.260850841978147,
-        "height": 480,
-        "min_download_mbps": 16.72425401649151,
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
         "min_height": 1080,
         "name": "青海卫视",
-        "observed_status": "DEGRADED",
-        "probe_runtime_s": 1.0,
-        "sample_count": 2,
-        "segment_samples": [
-          {
-            "complete": true,
-            "curl_code": 0,
-            "download_mbps": 20.75848592750984,
-            "downloaded_bytes": 859160,
-            "duration_s": 10.0,
-            "elapsed_s": 0.331107,
-            "http_status": 206,
-            "stream_mbps": 0.687328,
-            "total_bytes": 859160,
-            "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/20251221052416-01-2706443.ts?msisdn=02ab55e05ba6811748c3955af32b9794&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20261011024424&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=118.113.40.5&SecurityKey=20261011024424&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=d46a00c3175769e848e4fbe6e84e8826&sv=10004&ct=android&encrypt=c69d864af5fd88550c014088b7cdde95&HlsSubType=2&HlsProfileId=1"
-          },
-          {
-            "complete": true,
-            "curl_code": 0,
-            "download_mbps": 16.72425401649151,
-            "downloaded_bytes": 938308,
-            "duration_s": 10.0,
-            "elapsed_s": 0.448837,
-            "http_status": 206,
-            "stream_mbps": 0.7506464,
-            "total_bytes": 938308,
-            "url": "http://hlsztemgsplive.miguvideo.com:8080/envivo_w/2018/SD/qinghai/1000/20251221052416-01-2706444.ts?msisdn=02ab55e05ba6811748c3955af32b9794&mdspid=&spid=600633&netType=0&sid=5910022166&pid=2028597139&timestamp=20261011024424&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=947472506&ParentNodeID=-99&assertID=5910022166&client_ip=118.113.40.5&SecurityKey=20261011024424&promotionId=&mvid=5900004353&mcid=500020&playurlVersion=WX-A1-9.9.2-SNAPSHOT&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=d46a00c3175769e848e4fbe6e84e8826&sv=10004&ct=android&encrypt=691be8574dcc024135a513a9bfc691fb&HlsSubType=2&HlsProfileId=1"
-          }
-        ],
-        "startup_s": 0.45406799999999997,
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 5.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
         "status": "UNKNOWN",
-        "stream_mbps": 0.7189872,
+        "stream_mbps": 0.0,
         "url": "http://118.113.40.5:1234/947472506",
         "url_sha256": "8d522436d464a7f3d007fecbd35171dd4c5696f937b2918b96c47746e2bdd056",
-        "width": 854
+        "width": 0
       }
     },
     "2387f13398877414260b20d848a90ea2c460fe1c69f0d69e7f90baba6cce30b0": {
@@ -1277396,55 +1277735,85 @@
       }
     },
     "70f33b8976a1e83ce194869a4a9a98e646f7a349a7bef5a4a52056a7c8a8ec75": {
-      "last_checked_utc": "2026-10-10T20:45:57Z",
+      "last_checked_utc": "2026-11-12T21:46:07Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "last_checked_utc": "2026-10-10T20:45:57Z",
+          "result": {
+            "avg_download_mbps": 50.441305344577536,
+            "bitrate_mbps": 0,
+            "channel_key": "cctv3",
+            "codec": "h264",
+            "deep_checked": true,
+            "error": "",
+            "fps": 25.0,
+            "headroom_ratio": 4.28124041181184,
+            "height": 1080,
+            "min_download_mbps": 44.913534162465766,
+            "min_height": 1080,
+            "name": "CCTV-3",
+            "observed_status": "GOOD",
+            "probe_runtime_s": 2.0,
+            "sample_count": 2,
+            "segment_samples": [
+              {
+                "complete": true,
+                "curl_code": 0,
+                "download_mbps": 55.96907652668931,
+                "downloaded_bytes": 5341080,
+                "duration_s": 4.0,
+                "elapsed_s": 0.763433,
+                "http_status": 206,
+                "stream_mbps": 10.68216,
+                "total_bytes": 5341080,
+                "url": "http://121.17.146.84:50003/hls/3/8528129736579.ts"
+              },
+              {
+                "complete": true,
+                "curl_code": 0,
+                "download_mbps": 44.913534162465766,
+                "downloaded_bytes": 5149696,
+                "duration_s": 4.0,
+                "elapsed_s": 0.917264,
+                "http_status": 206,
+                "stream_mbps": 10.299392,
+                "total_bytes": 5149696,
+                "url": "http://121.17.146.84:50003/hls/3/8528134611799.ts"
+              }
+            ],
+            "startup_s": 0.851766,
+            "status": "UNKNOWN",
+            "stream_mbps": 10.490776,
+            "url": "http://121.17.146.84:50003/hls/3/index.m3u8",
+            "url_sha256": "8a8409e0699165fd507f49ccc505dca71df5c2efe51a6b6265d654ea10ed3910",
+            "width": 1920
+          }
+        }
+      ],
       "result": {
-        "avg_download_mbps": 50.441305344577536,
-        "bitrate_mbps": 0,
+        "avg_download_mbps": 0.0,
+        "bitrate_mbps": 0.0,
         "channel_key": "cctv3",
-        "codec": "h264",
-        "deep_checked": true,
-        "error": "",
-        "fps": 25.0,
-        "headroom_ratio": 4.28124041181184,
-        "height": 1080,
-        "min_download_mbps": 44.913534162465766,
+        "codec": "",
+        "deep_checked": false,
+        "error": "native_transfer_error",
+        "fps": 0.0,
+        "headroom_ratio": 0.0,
+        "height": 0,
+        "min_download_mbps": 0.0,
         "min_height": 1080,
         "name": "CCTV-3",
-        "observed_status": "GOOD",
-        "probe_runtime_s": 2.0,
-        "sample_count": 2,
-        "segment_samples": [
-          {
-            "complete": true,
-            "curl_code": 0,
-            "download_mbps": 55.96907652668931,
-            "downloaded_bytes": 5341080,
-            "duration_s": 4.0,
-            "elapsed_s": 0.763433,
-            "http_status": 206,
-            "stream_mbps": 10.68216,
-            "total_bytes": 5341080,
-            "url": "http://121.17.146.84:50003/hls/3/8528129736579.ts"
-          },
-          {
-            "complete": true,
-            "curl_code": 0,
-            "download_mbps": 44.913534162465766,
-            "downloaded_bytes": 5149696,
-            "duration_s": 4.0,
-            "elapsed_s": 0.917264,
-            "http_status": 206,
-            "stream_mbps": 10.299392,
-            "total_bytes": 5149696,
-            "url": "http://121.17.146.84:50003/hls/3/8528134611799.ts"
-          }
-        ],
-        "startup_s": 0.851766,
+        "observed_status": "UNAVAILABLE",
+        "probe_runtime_s": 5.0,
+        "sample_count": 0,
+        "segment_samples": [],
+        "startup_s": 0.0,
         "status": "UNKNOWN",
-        "stream_mbps": 10.490776,
+        "stream_mbps": 0.0,
         "url": "http://121.17.146.84:50003/hls/3/index.m3u8",
         "url_sha256": "8a8409e0699165fd507f49ccc505dca71df5c2efe51a6b6265d654ea10ed3910",
-        "width": 1920
+        "width": 0
       }
     },
     "70f3430d92caa4634440ae183b62f236a68573f60cf3afa1ecd8c600429e1c13": {
@@ -1672416,7 +1672785,50 @@
       }
     },
     "d15acc538a63506b95cce793b63413581e1757f09fc103ab10c5d663efda2011": {
-      "last_checked_utc": "2026-10-10T20:45:45Z",
+      "last_checked_utc": "2026-11-12T21:45:53Z",
+      "measurement_origin": "historical_recheck",
+      "previous_checks": [
+        {
+          "last_checked_utc": "2026-10-10T20:45:45Z",
+          "result": {
+            "avg_download_mbps": 0.0,
+            "bitrate_mbps": 0.0,
+            "channel_key": "贵州卫视",
+            "codec": "",
+            "deep_checked": false,
+            "error": "native_transfer_error",
+            "fps": 0.0,
+            "headroom_ratio": 0.0,
+            "height": 0,
+            "min_download_mbps": 0.0,
+            "min_height": 1080,
+            "name": "贵州卫视",
+            "observed_status": "UNAVAILABLE",
+            "probe_runtime_s": 14.0,
+            "sample_count": 0,
+            "segment_samples": [
+              {
+                "complete": false,
+                "curl_code": 28,
+                "download_mbps": 0.47066691221878065,
+                "downloaded_bytes": 824850,
+                "duration_s": 4.0,
+                "elapsed_s": 14.020106,
+                "http_status": 206,
+                "stream_mbps": 11.05252,
+                "total_bytes": 5526260,
+                "url": "http://60.9.238.11:50003/hls/51/8528105660391.ts"
+              }
+            ],
+            "startup_s": 0.0,
+            "status": "UNKNOWN",
+            "stream_mbps": 0.0,
+            "url": "http://60.9.238.11:50003/hls/51/index.m3u8",
+            "url_sha256": "7a3adc2979c8b0f9aa9207b710f6407c062a1c1f1a7c3301bce8b9e5f9697bd7",
+            "width": 0
+          }
+        }
+      ],
       "result": {
         "avg_download_mbps": 0.0,
         "bitrate_mbps": 0.0,
@@ -1672431,22 +1672843,9 @@
         "min_height": 1080,
         "name": "贵州卫视",
         "observed_status": "UNAVAILABLE",
-        "probe_runtime_s": 14.0,
+        "probe_runtime_s": 6.0,
         "sample_count": 0,
-        "segment_samples": [
-          {
-            "complete": false,
-            "curl_code": 28,
-            "download_mbps": 0.47066691221878065,
-            "downloaded_bytes": 824850,
-            "duration_s": 4.0,
-            "elapsed_s": 14.020106,
-            "http_status": 206,
-            "stream_mbps": 11.05252,
-            "total_bytes": 5526260,
-            "url": "http://60.9.238.11:50003/hls/51/8528105660391.ts"
-          }
-        ],
+        "segment_samples": [],
         "startup_s": 0.0,
         "status": "UNKNOWN",
         "stream_mbps": 0.0,
