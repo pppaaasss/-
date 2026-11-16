@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 2614058012,
+    "bytes": 2681166876,
     "candidates": 500,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 500,
@@ -9,7 +9,7 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 2792.0
+    "seconds": 3032.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -21,7 +21,7 @@
     "day": "20261116",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 33,
+    "formal_or_backup_batches": 34,
     "historical_rechecks_measured": 0,
     "historical_rechecks_qualified": 0,
     "historical_rechecks_reserved": 0,
@@ -31,7 +31,7 @@
     "new_qualified": 329,
     "observed_batch_spacing_seconds": 90.60483870967742,
     "qualified": 329,
-    "reason": "WAITING_WINDOW",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 125,
     "shortfall": 0,
@@ -44,7 +44,7 @@
     "day": "20261116",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 33,
+    "formal_or_backup_batches": 34,
     "historical_rechecks_measured": 0,
     "historical_rechecks_qualified": 0,
     "historical_rechecks_reserved": 0,
@@ -54,16 +54,22 @@
     "new_qualified": 329,
     "observed_batch_spacing_seconds": 90.60483870967742,
     "qualified": 329,
-    "reason": "WAITING_WINDOW",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 125,
     "shortfall": 0,
     "target": 500,
     "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-11-16T09:48:39Z",
+  "generated_utc": "2026-11-16T13:48:17Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "9041062d4b20ad1815239d798120e07b923a8d994c9339963c4b4b6f1dc29e9e",
+    "created_utc": "2026-11-16T13:48:17Z",
+    "expires_utc": "2026-11-16T14:18:17Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-11-16T02:01:15Z",
     "received_utc": "2026-11-16T02:01:55Z",
@@ -85,25 +91,25 @@
     "scope": "new_candidates_only"
   },
   "progress": {
-    "backup_checks_completed": 15,
-    "belongs_to_active_window": false,
-    "candidate_checks_completed": 500,
-    "current_first_pass_completed": 53,
-    "current_rechecks_completed": 27,
-    "current_rechecks_required": 27,
+    "backup_checks_completed": 0,
+    "belongs_to_active_window": true,
+    "candidate_checks_completed": 0,
+    "current_first_pass_completed": 0,
+    "current_rechecks_completed": 0,
+    "current_rechecks_required": 0,
     "current_total": 53,
-    "report_complete": true,
-    "slot": "20261116-primary-0200"
+    "report_complete": false,
+    "slot": "20261116-peak-2000"
   },
   "queue": 1228,
   "router_enabled": null,
-  "state": "WAITING_WINDOW",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 20074,
   "window": {
-    "active": false,
-    "ends_utc": null,
-    "next_starts_utc": "2026-11-16T12:00:00Z",
-    "run_kind": null,
+    "active": true,
+    "ends_utc": "2026-11-16T15:00:00Z",
+    "next_starts_utc": "2026-11-16T18:00:00Z",
+    "run_kind": "peak-2000",
     "timezone": "Asia/Shanghai"
   }
 }
