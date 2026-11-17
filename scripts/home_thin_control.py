@@ -411,6 +411,7 @@ def next_tasks(state, cycle, config, current, feedback, now):
         if pending:
             return pending
     if (config.get('daily_old_source_topup') and config.get('daily_verified_intake')
+            and config.get('_daily_manifest_ready')
             and cycle['kind'] == KINDS[0] and not cycle.get('discovery_closed')
             and not config.get('_skip_regular_candidates')):
         from scripts.home_old_source_topup import historical_candidates
@@ -540,10 +541,12 @@ def production_step(state, config, root, reports, now):
     manifest = validate_candidate_manifest(json.loads(manifest_raw))
     intake_current = manifest['formal_playlist']['sha256'] == formal_sha
     if config.get('daily_verified_intake'):
-        from scripts.daily_home_intake import LIMIT, admitted_daily_ids
+        from scripts.daily_home_intake import LIMIT, admitted_daily_ids, daily_manifest_ready
+        daily_ready = intake_current and daily_manifest_ready(manifest, now)
         ids = admitted_daily_ids(manifest, state, formal_raw, feedback, now) if intake_current else []
         intake_current = bool(ids)
-        config = dict(config, _daily_ids=ids, daily_candidates=min(LIMIT, config['daily_candidates']))
+        config = dict(config, _daily_ids=ids, _daily_manifest_ready=daily_ready,
+                      daily_candidates=min(LIMIT, config['daily_candidates']))
         state['daily_intake'] = {'day': datetime_day(now), 'candidate_ids': ids,
             'available': len(ids), 'target': LIMIT, 'shortfall': max(0, LIMIT-len(ids)),
             'reason': 'ready' if len(ids) >= LIMIT else 'insufficient_fresh_unmeasured_candidates'}
@@ -628,6 +631,9 @@ def production_step(state, config, root, reports, now):
     if now < cycle.get('retry_after', 0):
         return state, dict(idle, state='WAITING_HOME_RESOURCES', last_heartbeat=state.get('last_heartbeat')), closing_report
     tasks = next_tasks(state, cycle, config, current, feedback, now)
+    if (not tasks and kind == KINDS[0] and config.get('daily_verified_intake')
+            and not config.get('_daily_manifest_ready') and deadline - now >= 60):
+        return state, dict(idle, state='WAITING_DAILY_INTAKE'), closing_report
     if not tasks:
         report = complete_report(state, cycle, current, feedback, now)
         state['completed_slots'] = (state['completed_slots'] + [slot_id])[-42:]

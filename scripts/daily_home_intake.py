@@ -281,16 +281,23 @@ def main():
 
 
 
-def admitted_daily_ids(manifest, state, formal, feedback, now):
+def daily_manifest_ready(manifest, now):
     day = datetime.fromtimestamp(now, ZONE).strftime('%Y%m%d')
     if manifest.get('daily_intake_day') != day or manifest.get('daily_target') not in (LIMIT, 800):
-        return []
+        return False
     if not 0 <= now - epoch(manifest['generated_utc']) <= 24*3600:
-        return []
+        return False
     rows = manifest['candidates']
     # Accept the previous 800 manifest during deployment; dispatch still caps at 500.
     if len(rows) > manifest['daily_target'] or not re.fullmatch('[0-9a-f]{64}', manifest.get('source_evidence_sha256', '')):
+        return False
+    return True
+
+
+def admitted_daily_ids(manifest, state, formal, feedback, now):
+    if not daily_manifest_ready(manifest, now):
         return []
+    rows = manifest['candidates']
     # Recheck latest user vetoes and *all* measured trial/normal history.
     accepted, _ = eligible_rows(rows, dict(state, queue={}), formal, feedback)
     return list(accepted)
