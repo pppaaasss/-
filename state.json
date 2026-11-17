@@ -25499,11 +25499,13 @@
       "candidate_id": "a8ef8fd009b2090d76c2622f2141d961aef64d4a1e02e2ac3e9da48703c08fbc",
       "channel_key": "北京卫视",
       "expires_utc": "2026-11-17T13:02:10Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-11-16T01:02:10Z",
       "name": "北京卫视",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-11-16T01:02:10Z",
       "request_options": "",
+      "retry_after_epoch": 1794953055.0,
       "source_manifest_sha256": "b4aabc19819ef49f8667a4e3c3d005d2137a051b77207d2fca1666a5b97b3bc8",
       "url": "http://106.55.35.189:8001/bjws.m3u8",
       "url_sha256": "28f3991df662325a54ac19643663b5d7258e607d9683d35807d2404c57e0ec20",
@@ -116625,6 +116627,45 @@
           "sample_bytes": 6291456,
           "task_id": "82850704eb5a9665856158d8deb870361e819d7b7ed4494bbb6d949e53a3004c",
           "url": "http://115.29.208.41:29995/180000001002/00000001000000000064000000308822/1.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "1b301b18ed1f8d34eab0fc4b95ce59351aaeb4c89eafe83c3c400dc52aabd601": {
+      "batch_id": "1b301b18ed1f8d34eab0fc4b95ce59351aaeb4c89eafe83c3c400dc52aabd601",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-17T21:04:52Z",
+      "cycle_id": "3bf573d9d437bd6c959c9b57d5c38b2200b479c0c725e6d0b44113e49025b27a",
+      "expires_utc": "2026-11-17T21:34:52Z",
+      "feedback_sha256": "b0f8cc1bc68770b724c7c1aca1ab8d0bc0532c4f7ad4738b5c9d245f39dd1781",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "24545c8dac371910fe26a98380f6b3d00d246bb5638f6ff8760a0538608c2e95",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "329d5c6304d34dbcf7a7c3d052a0249a477e762225f095fa9cea7b56cf65b441",
+          "channel_key": "北京卫视",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "北京卫视",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "e739803470215eb32044778ab6c2d5fb40b5fe5e3d5db267fabee5de98b4a5b1",
+          "url": "http://120.76.248.139/live/bfgd/4200000083.m3u8",
           "viewer_accepted_quality": false
         }
       ]
@@ -757708,7 +757749,8 @@
       "3be5d96a13880f784668c5c7aba2f205222217044446818e0660989c00aa913d",
       "25598a17d8ec4ec4cd619bd673f665763f51a3461e1140eeca307cac2f7483e9",
       "84505c1658fc2b1389a813e0f7a90faf066a529780fae74c3ecd936fe320ba8f",
-      "f52449ed7a1eb50465aee446893a09a7e57892e986d7cffb84735719b0d92057"
+      "f52449ed7a1eb50465aee446893a09a7e57892e986d7cffb84735719b0d92057",
+      "1b301b18ed1f8d34eab0fc4b95ce59351aaeb4c89eafe83c3c400dc52aabd601"
     ],
     "binding": {
       "channel_count": 53,
@@ -757881,7 +757923,7 @@
     "id": "3bf573d9d437bd6c959c9b57d5c38b2200b479c0c725e6d0b44113e49025b27a",
     "kind": "primary-0200",
     "manifest_sha": "a67df9e25a3e1ca64fc352e1a18991ec23ad90edefc2fc098d62e2f85032c36c",
-    "outstanding": "f52449ed7a1eb50465aee446893a09a7e57892e986d7cffb84735719b0d92057",
+    "outstanding": "1b301b18ed1f8d34eab0fc4b95ce59351aaeb4c89eafe83c3c400dc52aabd601",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -762060,6 +762102,48 @@
         "started_utc": "2026-11-17T20:36:01Z",
         "task_id": "c6a948c00a18134af82423b1da8091d2ec1f0a287e16d4df0a1d18eccd86ed87"
       },
+      "c8775b5de837f3cb20339bb556dde656d7fb8992c6df6677bf5e4857fbca983f": {
+        "finished_utc": "2026-11-17T21:04:15Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "北京卫视",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "北京卫视",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 14.0,
+          "sample_count": 0,
+          "segment_samples": [
+            {
+              "complete": false,
+              "curl_code": 28,
+              "download_mbps": 0.0982469325674544,
+              "downloaded_bytes": 172032,
+              "duration_s": 4.32,
+              "elapsed_s": 14.008132,
+              "http_status": 206,
+              "stream_mbps": 3.5378814814814814,
+              "total_bytes": 1910456,
+              "url": "http://tlivecloud-playback-cdn.ysp.cctv.cn/tcloud.cctv.com/A69E5F5DA756539ADAF5D9A3CD7C36200A91DC503FBB9239635D66934D492DA7C7CF9936C012BAAD69F1E837F5F4A98D7E54763169F264CB4A7E62BB8F3FA83EA57DFFE135022D86FCBF976137DFE86F27A1C244EBF9BC08BE7AD1860B2E310EDABEC0FCA0944B13B4F7FA8E7E671EE1/83c7d203vodcq1300029864/3912a7eb5001834827756028479/0-7-1793028053.ts?timeshift=1&endtime=1794949441&sid=2024052703&starttime=1794949141&svrtime=1794949441"
+            }
+          ],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://106.55.35.189:8001/bjws.m3u8",
+          "url_sha256": "28f3991df662325a54ac19643663b5d7258e607d9683d35807d2404c57e0ec20",
+          "width": 0
+        },
+        "started_utc": "2026-11-17T21:04:01Z",
+        "task_id": "c8775b5de837f3cb20339bb556dde656d7fb8992c6df6677bf5e4857fbca983f"
+      },
       "d1d3f1d41fcf14d862c2db4a7cdee6cb9ad88f9223dab5a3df2098762ebecaeb": {
         "finished_utc": "2026-11-17T20:31:05Z",
         "result": {
@@ -764560,6 +764644,22 @@
         "url": "http://106.55.35.189:8001/cctv1.m3u8",
         "viewer_accepted_quality": false
       },
+      "c8775b5de837f3cb20339bb556dde656d7fb8992c6df6677bf5e4857fbca983f": {
+        "attempt": 1,
+        "candidate_id": "a8ef8fd009b2090d76c2622f2141d961aef64d4a1e02e2ac3e9da48703c08fbc",
+        "channel_key": "北京卫视",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "北京卫视",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "c8775b5de837f3cb20339bb556dde656d7fb8992c6df6677bf5e4857fbca983f",
+        "url": "http://106.55.35.189:8001/bjws.m3u8",
+        "viewer_accepted_quality": false
+      },
       "d1d3f1d41fcf14d862c2db4a7cdee6cb9ad88f9223dab5a3df2098762ebecaeb": {
         "attempt": 2,
         "candidate_id": "837ed0075b70acb04c5d447d03a7946949671d5f5081496ef283cc50b57b20b6",
@@ -764944,13 +765044,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-17T21:02:36Z",
-    "received_utc": "2026-11-17T21:03:27Z",
+    "measured_utc": "2026-11-17T21:04:15Z",
+    "received_utc": "2026-11-17T21:04:52Z",
     "results": 1,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 0,
-      "runtime_s": 5.0
+      "downloaded_bytes": 179191,
+      "runtime_s": 14.0
     }
   },
   "last_report": {
@@ -766576,19 +766676,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 428725937,
+    "bytes": 428905128,
     "candidates": 0,
     "day": "20261118",
     "discovery_bytes": 0,
     "discovery_seconds": 0,
     "reservations": {
-      "f52449ed7a1eb50465aee446893a09a7e57892e986d7cffb84735719b0d92057": {
+      "1b301b18ed1f8d34eab0fc4b95ce59351aaeb4c89eafe83c3c400dc52aabd601": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 895.0
+    "seconds": 909.0
   },
   "night_plan": {
     "candidate_ids": [],
@@ -775300,6 +775400,7 @@
     "f5158bac45c2f173d359f65006ae7125ccc522365629a950c25321617815d1e1": "5a263d9e16157e1c4db20e818ba823db694993731828bc3cfae2cf222ed04cdd",
     "f51cf5b294901b9509cef3202bc6443a0bb8ad71147c694b18687daac8e0f30d": "e2a90b2033ace6f199da6831b24e8c0935eca9f165e15e66110d7ebeb5a8894c",
     "f51db543df0ac803108458db37909c78504f37a0df053af71b2f75b9789d4c14": "071c5beea6ea23899c1b8e513d834d8897c16abbac7bce0267123511cd1c35f3",
+    "f52449ed7a1eb50465aee446893a09a7e57892e986d7cffb84735719b0d92057": "e885bab4dc8c0778380ee403ad08f5f275661cfce741b91a5035079d87a9bdc1",
     "f528075fbfbb3c9fa710eb0158e320826f1d0bfc999b8ddd6696545145a9b159": "f67d78ee68d0662583741dd5ccb0f3e2f2046133dceef2120e636ee0abdd0715",
     "f529b98103f8a4074fbf8cf43175379d4c1e6c5dad169bfb27764f90a62d3fcf": "8d23e2d6a261d3d8d0267d5de24f44c799dc219aa8916491d444cd553a0680b5",
     "f52c2b779688261e03dea53b85284aca4b99e59fdb0ae619117449a3bdb21b87": "b27053a805ab51b812e666222e6bd4fb5ebbf76c201bd91718b9407b48a6b929",
