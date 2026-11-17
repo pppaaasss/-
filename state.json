@@ -11709,7 +11709,7 @@
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-10-24T20:16:04Z",
       "request_options": "",
-      "retry_after_epoch": 1794622322.0,
+      "retry_after_epoch": 1794878881.0,
       "source_manifest_sha256": "01c81d8c7a253d4d86c23cf700fc08f1d50465ae58179c7c8784efd7b99a06cc",
       "url": "http://101.42.10.147:226/cct/ys.php?id=cctv17",
       "url_sha256": "1b60fd79930900aadbc3d686e9bbeb45648ed8ab6a7357cbf3ed7e29d173a925",
@@ -21291,11 +21291,13 @@
       "candidate_id": "8984fe930a8dc9087f7d84f85dab22dfa361f586ac5452e6b3ddfecede59bb0e",
       "channel_key": "cctv2",
       "expires_utc": "2026-11-17T11:46:17Z",
+      "last_recheck_result": "failed_or_unknown",
       "last_verified_utc": "2026-11-15T23:46:17Z",
       "name": "CCTV-2",
       "qualification": "QUALIFIED",
       "qualified_utc": "2026-11-15T23:46:17Z",
       "request_options": "",
+      "retry_after_epoch": 1794878885.0,
       "source_manifest_sha256": "b4aabc19819ef49f8667a4e3c3d005d2137a051b77207d2fca1666a5b97b3bc8",
       "url": "http://binxihi3.serv00.net:4403/cctv2.m3u8",
       "url_sha256": "c17a4227c23465ca804d64cf964a56cb31f8a2939d99724aa1753bf142a3df4d",
@@ -276088,6 +276090,61 @@
           "sample_bytes": 6291456,
           "task_id": "98ac0f800724a66ee1fe86a19594e493c8b7d902227b9e8c5e16b01d85d18249",
           "url": "http://222.240.44.42:12810/newlive/live/hls/1/live.m3u8",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
+    "53dc83df72d47babbba078f3ca9eeb6e967375b5884dd5a1981dcc9ca58a49f7": {
+      "batch_id": "53dc83df72d47babbba078f3ca9eeb6e967375b5884dd5a1981dcc9ca58a49f7",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-17T00:28:40Z",
+      "cycle_id": "df77375722af4febd053b8b34aafaece4773205d9e3295ca7e7ec489a5ec8d9f",
+      "expires_utc": "2026-11-17T00:58:40Z",
+      "feedback_sha256": "b0f8cc1bc68770b724c7c1aca1ab8d0bc0532c4f7ad4738b5c9d245f39dd1781",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "24545c8dac371910fe26a98380f6b3d00d246bb5638f6ff8760a0538608c2e95",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "19dcf5e2991966e00bad5b4cd6c68c86dbac3abaabe610f8d9227f2aacb8ae0e",
+          "channel_key": "cctv17",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-17",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "d031c3162fe565c8d4a42a27604795e0291e95d7686ccf5f1e80db4db41ab1ed",
+          "url": "http://106.55.35.189:8001/cctv17.m3u8",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "dec1a0306e4200be257a1f6f7ffdf15d5613cc8983f41ee812a00a107ef5ed43",
+          "channel_key": "cctv2",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-2",
+          "role": "backup",
+          "sample_bytes": 6291456,
+          "task_id": "d736f88e7475509fe94f48a203b410d8a6f23f8051d626d5ba4377fcb1bf8e0b",
+          "url": "http://106.55.35.189:8001/cctv2.m3u8",
           "viewer_accepted_quality": false
         }
       ]
@@ -752769,7 +752826,8 @@
       "cfec114259fef52b20358c589d27fb48089fdbe185c6dbaa0150c794c2634c8b",
       "04a76d78fe9433eb43625320f032a72607dfb32890f307130b6818de408483b4",
       "9de29bf29d48a897cfe28bf9a4c27741e1f3c6a1975679a5a39dca00de7959a1",
-      "14219a11d8117dac0ef00582c8a27d025c624b302ef42dd04a20034c69b7261d"
+      "14219a11d8117dac0ef00582c8a27d025c624b302ef42dd04a20034c69b7261d",
+      "53dc83df72d47babbba078f3ca9eeb6e967375b5884dd5a1981dcc9ca58a49f7"
     ],
     "binding": {
       "channel_count": 53,
@@ -752942,7 +753000,7 @@
     "id": "df77375722af4febd053b8b34aafaece4773205d9e3295ca7e7ec489a5ec8d9f",
     "kind": "primary-0200",
     "manifest_sha": "b4aabc19819ef49f8667a4e3c3d005d2137a051b77207d2fca1666a5b97b3bc8",
-    "outstanding": "14219a11d8117dac0ef00582c8a27d025c624b302ef42dd04a20034c69b7261d",
+    "outstanding": "53dc83df72d47babbba078f3ca9eeb6e967375b5884dd5a1981dcc9ca58a49f7",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -753139,6 +753197,35 @@
         },
         "started_utc": "2026-11-16T22:59:53Z",
         "task_id": "023906ab522a217aea80f564bc53ffa968bcb585082ce3f9340cb7e8bab41e8a"
+      },
+      "02399d646631c3f96246f29b56dbd40b2477c24b3df8500d670f1c20b57b77ca": {
+        "finished_utc": "2026-11-17T00:28:01Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv17",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-17",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 0.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://101.42.10.147:226/cct/ys.php?id=cctv17",
+          "url_sha256": "1b60fd79930900aadbc3d686e9bbeb45648ed8ab6a7357cbf3ed7e29d173a925",
+          "width": 0
+        },
+        "started_utc": "2026-11-17T00:28:01Z",
+        "task_id": "02399d646631c3f96246f29b56dbd40b2477c24b3df8500d670f1c20b57b77ca"
       },
       "02d2fcc66ac5e7ed9c502b58f58485cd76ec7cb09c343094f5719549448222b4": {
         "finished_utc": "2026-11-16T22:29:31Z",
@@ -770296,6 +770383,35 @@
         "started_utc": "2026-11-16T20:13:01Z",
         "task_id": "df1ca7e10d836623fbdedc02d14082f7cd1b93297b0bee37e2f69f913bdab031"
       },
+      "df8159c251e97d54e2960d5f06bf4edeb8c1bfb2034ac58256b034e6aa7ea6c7": {
+        "finished_utc": "2026-11-17T00:28:05Z",
+        "result": {
+          "avg_download_mbps": 0.0,
+          "bitrate_mbps": 0.0,
+          "channel_key": "cctv2",
+          "codec": "",
+          "deep_checked": false,
+          "error": "native_transfer_error",
+          "fps": 0.0,
+          "headroom_ratio": 0.0,
+          "height": 0,
+          "min_download_mbps": 0.0,
+          "min_height": 1080,
+          "name": "CCTV-2",
+          "observed_status": "UNAVAILABLE",
+          "probe_runtime_s": 2.0,
+          "sample_count": 0,
+          "segment_samples": [],
+          "startup_s": 0.0,
+          "status": "UNKNOWN",
+          "stream_mbps": 0.0,
+          "url": "http://binxihi3.serv00.net:4403/cctv2.m3u8",
+          "url_sha256": "c17a4227c23465ca804d64cf964a56cb31f8a2939d99724aa1753bf142a3df4d",
+          "width": 0
+        },
+        "started_utc": "2026-11-17T00:28:03Z",
+        "task_id": "df8159c251e97d54e2960d5f06bf4edeb8c1bfb2034ac58256b034e6aa7ea6c7"
+      },
       "df818cfd27a9358f4fb0152bdf6a043686f442daa1e54b05b3f75f3296822a60": {
         "finished_utc": "2026-11-16T23:13:52Z",
         "result": {
@@ -772448,6 +772564,22 @@
         "sample_bytes": 6291456,
         "task_id": "023906ab522a217aea80f564bc53ffa968bcb585082ce3f9340cb7e8bab41e8a",
         "url": "http://z.b.bkpcp.top/m.php?id=nxws",
+        "viewer_accepted_quality": false
+      },
+      "02399d646631c3f96246f29b56dbd40b2477c24b3df8500d670f1c20b57b77ca": {
+        "attempt": 1,
+        "candidate_id": "49b4b963ffd532e00eb52b78dbe352f570d8a904eb66c44d2579e09127c84664",
+        "channel_key": "cctv17",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-17",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "02399d646631c3f96246f29b56dbd40b2477c24b3df8500d670f1c20b57b77ca",
+        "url": "http://101.42.10.147:226/cct/ys.php?id=cctv17",
         "viewer_accepted_quality": false
       },
       "02d2fcc66ac5e7ed9c502b58f58485cd76ec7cb09c343094f5719549448222b4": {
@@ -781097,6 +781229,22 @@
         "url": "http://222.223.41.27:8888/hls/7/index.m3u8",
         "viewer_accepted_quality": false
       },
+      "df8159c251e97d54e2960d5f06bf4edeb8c1bfb2034ac58256b034e6aa7ea6c7": {
+        "attempt": 1,
+        "candidate_id": "8984fe930a8dc9087f7d84f85dab22dfa361f586ac5452e6b3ddfecede59bb0e",
+        "channel_key": "cctv2",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-2",
+        "role": "backup",
+        "sample_bytes": 6291456,
+        "task_id": "df8159c251e97d54e2960d5f06bf4edeb8c1bfb2034ac58256b034e6aa7ea6c7",
+        "url": "http://binxihi3.serv00.net:4403/cctv2.m3u8",
+        "viewer_accepted_quality": false
+      },
       "df818cfd27a9358f4fb0152bdf6a043686f442daa1e54b05b3f75f3296822a60": {
         "attempt": 1,
         "candidate_id": "7ecfaeccceb16e0df1a04cc5802b295f24224dc26ec17dce533e14b09ca9ff4d",
@@ -782382,13 +782530,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-17T00:27:09Z",
-    "received_utc": "2026-11-17T00:27:46Z",
+    "measured_utc": "2026-11-17T00:28:05Z",
+    "received_utc": "2026-11-17T00:28:40Z",
     "results": 2,
     "stop_reason": "",
     "usage": {
       "downloaded_bytes": 110,
-      "runtime_s": 9.0
+      "runtime_s": 4.0
     }
   },
   "last_report": {
@@ -784013,19 +784161,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 453604547,
+    "bytes": 453604657,
     "candidates": 500,
     "day": "20261117",
     "discovery_bytes": 123442569,
     "discovery_seconds": 3923.0,
     "reservations": {
-      "14219a11d8117dac0ef00582c8a27d025c624b302ef42dd04a20034c69b7261d": {
+      "53dc83df72d47babbba078f3ca9eeb6e967375b5884dd5a1981dcc9ca58a49f7": {
         "bytes": 67108864,
         "candidates": 0,
         "seconds": 240
       }
     },
-    "seconds": 4621.0
+    "seconds": 4625.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -785484,6 +785632,7 @@
     "1405374d68e9bf5e743d32d483ff29fadfa24c0d1952cd995829a657141f363b": "27b8695f807eeedfa69d71033f245e751a6c168caa1baedad1b00705061a55ca",
     "140abbbb860ea7337e45231259b9058fe1b7443219a316750811a7fccd7b3994": "14cbc9cced1964a4cac233008a2d9a9d74d0892d34da8adf598ab160079144b0",
     "141de673ba5fcc62b5fb7f093a1b4e9a5b1e34073246d3bedb8a68b9257b49e7": "ee869d28fead8cae8b8612d8c31815dee3b6eff960a5a1d7e8b16eb2b6d13b88",
+    "14219a11d8117dac0ef00582c8a27d025c624b302ef42dd04a20034c69b7261d": "17d5c4c24dcbf90c138e498d0076ad4f4e46df2b920b4337271ff93a9177424e",
     "1428942580557dc421ba87d05adfe1f25fec6487cec48e6538417b42509665fc": "ec9af4fee527c37e9761a4abdb8d05b9e1258fbfffc153791f35537e53b83378",
     "142a0bd1ba2f3f9228e24c6692b4d05614695830789f09dc51f7451fedcb8726": "d83f210cc95355f5493dd7b79d26e82a79b5a13fea9116df6385eae112844d38",
     "143b68d6c26cb1a8589392d8c3b60e26482fd609581f6ad7bdfa3d0fe8ee06a0": "ff2d3ddf8e634525df4202ccf8415d516b6ebd767886ae63944524d3d773a4f3",
