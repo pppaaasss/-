@@ -510738,6 +510738,61 @@
         }
       ]
     },
+    "a6a63a5819564ad9b01645ffd9906c2444e5913ada8a7fc24a3318f85783ebee": {
+      "batch_id": "a6a63a5819564ad9b01645ffd9906c2444e5913ada8a7fc24a3318f85783ebee",
+      "candidate_mode": "drain_queue",
+      "created_utc": "2026-11-18T02:19:45Z",
+      "cycle_id": "3bf573d9d437bd6c959c9b57d5c38b2200b479c0c725e6d0b44113e49025b27a",
+      "expires_utc": "2026-11-18T02:49:45Z",
+      "feedback_sha256": "b0f8cc1bc68770b724c7c1aca1ab8d0bc0532c4f7ad4738b5c9d245f39dd1781",
+      "formal_playlist": {
+        "channel_count": 53,
+        "sha256": "24545c8dac371910fe26a98380f6b3d00d246bb5638f6ff8760a0538608c2e95",
+        "url": "https://raw.githubusercontent.com/pppaaasss/-/master/tv-core.m3u"
+      },
+      "limits": {
+        "bytes": 67108864,
+        "seconds": 240
+      },
+      "probe_id": "home-ac86u-8f8908f0fba9",
+      "route_context": "living-room-path-equivalent",
+      "run_kind": "primary-0200",
+      "schema": "iptv-home-task/v1",
+      "tasks": [
+        {
+          "attempt": 1,
+          "candidate_id": "c68e6e6c65fad7f10313242709555850425d2fee61ffe7a2adc6054e444711c2",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "9834ba08056e3d8870eb30f29f9d7afce05d09cb455383d3425f446345df5010",
+          "url": "http://116.52.173.186:1234/608807419",
+          "viewer_accepted_quality": false
+        },
+        {
+          "attempt": 1,
+          "candidate_id": "84d0f76fe73a050bb00b94b88a383564b9c367bda62b6da1a97bba17a5c4bdb9",
+          "channel_key": "cctv4",
+          "metadata": true,
+          "min_height": 1080,
+          "minimum_h264_stream_mbps": 3.0,
+          "minimum_hevc_stream_mbps": 2.5,
+          "minimum_other_stream_mbps": 3.0,
+          "name": "CCTV-4",
+          "role": "candidate",
+          "sample_bytes": 6291456,
+          "task_id": "8e3aaa6cfed4e2552cc56c3867756304be21196409406a7cd50e12b1f2d1cea8",
+          "url": "http://27.12.12.40:1234/608807416",
+          "viewer_accepted_quality": false
+        }
+      ]
+    },
     "a6a9ec0071047fc342b3f922c3ce415ce9ec5648c19fa71ad29c8a85e56e5300": {
       "batch_id": "a6a9ec0071047fc342b3f922c3ce415ce9ec5648c19fa71ad29c8a85e56e5300",
       "candidate_mode": "drain_queue",
@@ -761594,7 +761649,8 @@
       "88fe501fe343861e5244529cdc1632cc0c067abc91fd69d115a9b6f613d8e21a",
       "c1fadeb2428482513729c2e2fa55d0c2fc8fba735a8fd6f357a91ddd1343810d",
       "c5b4569006e53ef08a9a462cd0663f395ca58dc61d7b8d05f15d9c0c34557de4",
-      "3e1efc1375e3de2d977d972bb78fff9986055f57ed8c93ac72d27d55d2548065"
+      "3e1efc1375e3de2d977d972bb78fff9986055f57ed8c93ac72d27d55d2548065",
+      "a6a63a5819564ad9b01645ffd9906c2444e5913ada8a7fc24a3318f85783ebee"
     ],
     "binding": {
       "channel_count": 53,
@@ -761767,7 +761823,7 @@
     "id": "3bf573d9d437bd6c959c9b57d5c38b2200b479c0c725e6d0b44113e49025b27a",
     "kind": "primary-0200",
     "manifest_sha": "a67df9e25a3e1ca64fc352e1a18991ec23ad90edefc2fc098d62e2f85032c36c",
-    "outstanding": "3e1efc1375e3de2d977d972bb78fff9986055f57ed8c93ac72d27d55d2548065",
+    "outstanding": "a6a63a5819564ad9b01645ffd9906c2444e5913ada8a7fc24a3318f85783ebee",
     "quality_policy": {
       "minimum_h264_stream_mbps": 3.0,
       "minimum_height_default": 1080,
@@ -762699,6 +762755,60 @@
         },
         "started_utc": "2026-11-17T20:25:02Z",
         "task_id": "0beddcbdaee21e7e981b15297619692481f2327136630d9c5740c36deb8de43d"
+      },
+      "0cbc56dac942201c830292e276c325c96e589da5fd421afccca8b9cd38b7f0c0": {
+        "finished_utc": "2026-11-18T02:18:49Z",
+        "result": {
+          "avg_download_mbps": 8.768334852837642,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv4",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 3.123696046510778,
+          "height": 720,
+          "min_download_mbps": 6.371245391787289,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 5.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 11.165424313887995,
+              "downloaded_bytes": 2856096,
+              "duration_s": 10.0,
+              "elapsed_s": 2.046386,
+              "http_status": 206,
+              "stream_mbps": 2.2848767999999997,
+              "total_bytes": 2856096,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/51/20251221052411-01-3036716.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20261118085904&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=116.52.173.186&SecurityKey=20261118085904&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=b4a6d95473ca2d025cbd52a3609b772b&sv=10004&ct=android&encrypt=e29a7254a8ff13a1ed8f4538bdcfd595&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 6.371245391787289,
+              "downloaded_bytes": 2243028,
+              "duration_s": 10.0,
+              "elapsed_s": 2.816439,
+              "http_status": 206,
+              "stream_mbps": 1.7944224,
+              "total_bytes": 2243028,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/51/20251221052411-01-3036717.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20261118085904&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=116.52.173.186&SecurityKey=20261118085904&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=b4a6d95473ca2d025cbd52a3609b772b&sv=10004&ct=android&encrypt=ab993de350e042d0dbc8ad50912636d9&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 2.138541,
+          "status": "UNKNOWN",
+          "stream_mbps": 2.0396495999999997,
+          "url": "http://116.52.173.186:1234/608807416",
+          "url_sha256": "1b89e5243ec198bea0944edef10ffc3c660e661739a38e3cacaa5ea6acc976c5",
+          "width": 1280
+        },
+        "started_utc": "2026-11-18T02:18:44Z",
+        "task_id": "0cbc56dac942201c830292e276c325c96e589da5fd421afccca8b9cd38b7f0c0"
       },
       "0cddc149de7bc7d3ab276fd02969b884dfcf062d51522ad5094176b4a1467eab": {
         "finished_utc": "2026-11-18T01:16:36Z",
@@ -768599,6 +768709,60 @@
         "started_utc": "2026-11-17T20:40:32Z",
         "task_id": "7b01390026897835a7066161ac2655d8f8691ae12bc878e53efaac41f4421a13"
       },
+      "7cdd44e4ab9deb10e9f60fa28447e246ed61b82d3c9974327dffe8864867f86b": {
+        "finished_utc": "2026-11-18T02:18:35Z",
+        "result": {
+          "avg_download_mbps": 14.761494371922247,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv4",
+          "codec": "hevc",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 5.377095598697923,
+          "height": 720,
+          "min_download_mbps": 9.925361380136069,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 3.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 9.925361380136069,
+              "downloaded_bytes": 2364664,
+              "duration_s": 10.0,
+              "elapsed_s": 1.905957,
+              "http_status": 206,
+              "stream_mbps": 1.8917312,
+              "total_bytes": 2364664,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036682.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118085652&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=116.52.173.186&SecurityKey=20261118085652&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=27904944c730d7b2d0e219447a4208a3&sv=10004&ct=android&encrypt=033e531fd97356cc956dacca177e6963&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 19.597627363708423,
+              "downloaded_bytes": 2249984,
+              "duration_s": 10.0,
+              "elapsed_s": 0.918472,
+              "http_status": 206,
+              "stream_mbps": 1.7999872,
+              "total_bytes": 2249984,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036683.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118085652&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=116.52.173.186&SecurityKey=20261118085652&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=27904944c730d7b2d0e219447a4208a3&sv=10004&ct=android&encrypt=809baf72da920cf3770d684273a5f12a&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 1.944853,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.8458592,
+          "url": "http://116.52.173.186:1234/631780421",
+          "url_sha256": "8b3a99c62221c1bdaa64635a299bf40d7d02f4b7bc2cbcab504da040f5669486",
+          "width": 1280
+        },
+        "started_utc": "2026-11-18T02:18:32Z",
+        "task_id": "7cdd44e4ab9deb10e9f60fa28447e246ed61b82d3c9974327dffe8864867f86b"
+      },
       "7e2afb75799ad3dd76206076e16d66342a543411f3a285d589a5291a7a5b964a": {
         "finished_utc": "2026-11-18T01:19:52Z",
         "result": {
@@ -771479,6 +771643,60 @@
         "started_utc": "2026-11-18T01:37:32Z",
         "task_id": "aecf7074e223df35de2dee7afd961374afb116adc835a9c04acb20476865b8c0"
       },
+      "af38662df9ca26b72fcd256ec877914ce5d3678bad897257f1d6e1e13374b008": {
+        "finished_utc": "2026-11-18T02:18:55Z",
+        "result": {
+          "avg_download_mbps": 13.808622984684122,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv4",
+          "codec": "hevc",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 7.496189526205098,
+          "height": 720,
+          "min_download_mbps": 12.75007086571876,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 3.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 12.75007086571876,
+              "downloaded_bytes": 1928504,
+              "duration_s": 10.0,
+              "elapsed_s": 1.210035,
+              "http_status": 206,
+              "stream_mbps": 1.5428032,
+              "total_bytes": 1928504,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036684.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118081945&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=27.12.12.40&SecurityKey=20261118081945&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=932e426cebdf103d5b8a34ea18bd3f66&sv=10004&ct=android&encrypt=5712307c8b4469788dc096892bf1b0d8&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 14.867175103649485,
+              "downloaded_bytes": 2323680,
+              "duration_s": 10.0,
+              "elapsed_s": 1.250368,
+              "http_status": 206,
+              "stream_mbps": 1.858944,
+              "total_bytes": 2323680,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036685.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118081945&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=27.12.12.40&SecurityKey=20261118081945&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=932e426cebdf103d5b8a34ea18bd3f66&sv=10004&ct=android&encrypt=ea19b242fa8231d553710c561cf022b3&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 1.30667,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.7008736,
+          "url": "http://27.12.12.40:1234/631780421",
+          "url_sha256": "50588beed255b3ea9095dbb39314fef864ef24ffcc1e2bf2a7b8fae8fa853616",
+          "width": 1280
+        },
+        "started_utc": "2026-11-18T02:18:52Z",
+        "task_id": "af38662df9ca26b72fcd256ec877914ce5d3678bad897257f1d6e1e13374b008"
+      },
       "b0a5d428dbc07051d29387bd848ba754f71a7a292c4143789fba576e44694533": {
         "finished_utc": "2026-11-17T20:42:47Z",
         "result": {
@@ -772310,6 +772528,60 @@
         },
         "started_utc": "2026-11-18T01:40:02Z",
         "task_id": "be09842b0afcf56584027bf9a5aa97e46f9fc33c897b09ca603e10330e4ac781"
+      },
+      "bee1749c0a339cc93d11e1a54b555552253ec136429b94bebcc49e1bfebcb2e7": {
+        "finished_utc": "2026-11-18T02:18:41Z",
+        "result": {
+          "avg_download_mbps": 14.704390912343442,
+          "bitrate_mbps": 0,
+          "channel_key": "cctv4",
+          "codec": "h264",
+          "deep_checked": true,
+          "error": "home_quality_threshold",
+          "fps": 25.0,
+          "headroom_ratio": 7.884953919517396,
+          "height": 720,
+          "min_download_mbps": 14.597799976953828,
+          "min_height": 1080,
+          "name": "CCTV-4",
+          "observed_status": "DEGRADED",
+          "probe_runtime_s": 3.0,
+          "sample_count": 2,
+          "segment_samples": [
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 14.810981847733057,
+              "downloaded_bytes": 2569772,
+              "duration_s": 10.0,
+              "elapsed_s": 1.388036,
+              "http_status": 206,
+              "stream_mbps": 2.0558176,
+              "total_bytes": 2569772,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/51/20251221052411-01-3036722.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20261118082217&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=27.12.12.40&SecurityKey=20261118082217&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eca091e0537ef4ad5d197dcef3463a93&sv=10004&ct=android&encrypt=9805231aeae4453b88e570ca808b8c16&HlsSubType=2&HlsProfileId=1"
+            },
+            {
+              "complete": true,
+              "curl_code": 0,
+              "download_mbps": 14.597799976953828,
+              "downloaded_bytes": 2058600,
+              "duration_s": 10.0,
+              "elapsed_s": 1.12817,
+              "http_status": 206,
+              "stream_mbps": 1.64688,
+              "total_bytes": 2058600,
+              "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/51/20251221052411-01-3036723.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20261118082217&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=27.12.12.40&SecurityKey=20261118082217&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eca091e0537ef4ad5d197dcef3463a93&sv=10004&ct=android&encrypt=a2c930f168f12773c7b9e4c8fc485d3f&HlsSubType=2&HlsProfileId=1"
+            }
+          ],
+          "startup_s": 1.5145140000000001,
+          "status": "UNKNOWN",
+          "stream_mbps": 1.8513488,
+          "url": "http://27.12.12.40:1234/608807419",
+          "url_sha256": "875d680111ba30687448d8136e3610e2e0989e2683efc404b8998153ddcf6251",
+          "width": 1280
+        },
+        "started_utc": "2026-11-18T02:18:38Z",
+        "task_id": "bee1749c0a339cc93d11e1a54b555552253ec136429b94bebcc49e1bfebcb2e7"
       },
       "bf0076fc14b4f111f9568dddc12a07c44d7604fb45af480731ca4c02c6ba90f3": {
         "finished_utc": "2026-11-17T20:45:32Z",
@@ -776127,6 +776399,22 @@
         "url": "http://63.141.230.178:82/gslb/zbdq5.m3u8?id=cctv1hd",
         "viewer_accepted_quality": false
       },
+      "0cbc56dac942201c830292e276c325c96e589da5fd421afccca8b9cd38b7f0c0": {
+        "attempt": 1,
+        "candidate_id": "431a2ec6d53865b36d5a0484ad3c95790c9243bee5cb4ee73699ca068ee6cff8",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "0cbc56dac942201c830292e276c325c96e589da5fd421afccca8b9cd38b7f0c0",
+        "url": "http://116.52.173.186:1234/608807416",
+        "viewer_accepted_quality": false
+      },
       "0cddc149de7bc7d3ab276fd02969b884dfcf062d51522ad5094176b4a1467eab": {
         "attempt": 1,
         "candidate_id": "428a92532ebf7bf13e4d25dfa462fed4fd313b549bd207f1e7959ca6bdea6cf7",
@@ -777999,6 +778287,22 @@
         "url": "http://145.239.65.118:20178/cctv2.m3u8",
         "viewer_accepted_quality": false
       },
+      "7cdd44e4ab9deb10e9f60fa28447e246ed61b82d3c9974327dffe8864867f86b": {
+        "attempt": 1,
+        "candidate_id": "316ba8c14f9b1c634cfbd73d743bd51f664336923d30e0c458f9ebab42f9ace7",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "7cdd44e4ab9deb10e9f60fa28447e246ed61b82d3c9974327dffe8864867f86b",
+        "url": "http://116.52.173.186:1234/631780421",
+        "viewer_accepted_quality": false
+      },
       "7e2afb75799ad3dd76206076e16d66342a543411f3a285d589a5291a7a5b964a": {
         "attempt": 1,
         "candidate_id": "9a15720167adf6508818e767d62b5a5fe9bdc442f9f07e505dc31462e649da7e",
@@ -778911,6 +779215,22 @@
         "url": "http://116.52.173.186:1234/738910838",
         "viewer_accepted_quality": false
       },
+      "af38662df9ca26b72fcd256ec877914ce5d3678bad897257f1d6e1e13374b008": {
+        "attempt": 1,
+        "candidate_id": "66077162493f6bd2f2ba34ec52efdf96756f682079a3bce87b96121b84e7dfe8",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "af38662df9ca26b72fcd256ec877914ce5d3678bad897257f1d6e1e13374b008",
+        "url": "http://27.12.12.40:1234/631780421",
+        "viewer_accepted_quality": false
+      },
       "b0a5d428dbc07051d29387bd848ba754f71a7a292c4143789fba576e44694533": {
         "attempt": 1,
         "candidate_id": "634caf3fe50405c3b9b302502f4754cb0fbdb5845ed85d09a1076f8ea811b6f6",
@@ -779181,6 +779501,22 @@
         "sample_bytes": 6291456,
         "task_id": "be09842b0afcf56584027bf9a5aa97e46f9fc33c897b09ca603e10330e4ac781",
         "url": "http://116.52.173.186:1234/783847495",
+        "viewer_accepted_quality": false
+      },
+      "bee1749c0a339cc93d11e1a54b555552253ec136429b94bebcc49e1bfebcb2e7": {
+        "attempt": 1,
+        "candidate_id": "492a05492590ce1a43eeb3fea52f5ec521b2b0bb02c723d2a6d8b2743097e2f9",
+        "channel_key": "cctv4",
+        "metadata": true,
+        "min_height": 1080,
+        "minimum_h264_stream_mbps": 3.0,
+        "minimum_hevc_stream_mbps": 2.5,
+        "minimum_other_stream_mbps": 3.0,
+        "name": "CCTV-4",
+        "role": "candidate",
+        "sample_bytes": 6291456,
+        "task_id": "bee1749c0a339cc93d11e1a54b555552253ec136429b94bebcc49e1bfebcb2e7",
+        "url": "http://27.12.12.40:1234/608807419",
         "viewer_accepted_quality": false
       },
       "bf0076fc14b4f111f9568dddc12a07c44d7604fb45af480731ca4c02c6ba90f3": {
@@ -780289,18 +780625,14 @@
     ]
   },
   "daily_intake": {
-    "available": 6,
+    "available": 2,
     "candidate_ids": [
-      "492a05492590ce1a43eeb3fea52f5ec521b2b0bb02c723d2a6d8b2743097e2f9",
-      "316ba8c14f9b1c634cfbd73d743bd51f664336923d30e0c458f9ebab42f9ace7",
-      "431a2ec6d53865b36d5a0484ad3c95790c9243bee5cb4ee73699ca068ee6cff8",
-      "66077162493f6bd2f2ba34ec52efdf96756f682079a3bce87b96121b84e7dfe8",
       "84d0f76fe73a050bb00b94b88a383564b9c367bda62b6da1a97bba17a5c4bdb9",
       "c68e6e6c65fad7f10313242709555850425d2fee61ffe7a2adc6054e444711c2"
     ],
     "day": "20261118",
     "reason": "insufficient_fresh_unmeasured_candidates",
-    "shortfall": 494,
+    "shortfall": 498,
     "target": 500
   },
   "delivery_receipt": {
@@ -780312,13 +780644,13 @@
     "schema": "iptv-cloud-delivery-receipt/v1"
   },
   "last_heartbeat": {
-    "measured_utc": "2026-11-18T02:17:18Z",
-    "received_utc": "2026-11-18T02:18:07Z",
+    "measured_utc": "2026-11-18T02:18:55Z",
+    "received_utc": "2026-11-18T02:19:45Z",
     "results": 4,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 15080557,
-      "runtime_s": 17.0
+      "downloaded_bytes": 18622462,
+      "runtime_s": 24.0
     }
   },
   "last_report": {
@@ -781944,19 +782276,19 @@
   },
   "migration_id": "be7988331036126c13c14f1a8dab1d58adc58c10717ca5105d5843c9de35d94e",
   "native_budget": {
-    "bytes": 1563998063,
-    "candidates": 168,
+    "bytes": 1582620525,
+    "candidates": 170,
     "day": "20261118",
-    "discovery_bytes": 1197884664,
-    "discovery_seconds": 1800.0,
+    "discovery_bytes": 1216507126,
+    "discovery_seconds": 1824.0,
     "reservations": {
-      "3e1efc1375e3de2d977d972bb78fff9986055f57ed8c93ac72d27d55d2548065": {
+      "a6a63a5819564ad9b01645ffd9906c2444e5913ada8a7fc24a3318f85783ebee": {
         "bytes": 67108864,
-        "candidates": 4,
+        "candidates": 2,
         "seconds": 240
       }
     },
-    "seconds": 2476.0
+    "seconds": 2500.0
   },
   "night_plan": {
     "candidate_ids": [
@@ -784869,6 +785201,7 @@
     "3e03897606788a8e068b6218548c9906a77979d6299e13a0da95bfb33f011211": "0d9e9cfbb570f7e490246d04fb3152f8cbd51613790f8256318a8fa41b367413",
     "3e0ce2d64daa8a1ac9a35489a906ee0314ffcb39f776cd591ecf497720ddfc48": "dc6fe8eda832c552824eec58c6485b23bf270634a0cd629bf2bd048d9a1e95c9",
     "3e11ce34dec53fe3008d9f4507a56294d7b276fe672f0bc029d7fb4eb1e7c557": "e0fa307518b71cd0535f011aa59f0820765e9a78e678ee5fb14e19f6b6421c38",
+    "3e1efc1375e3de2d977d972bb78fff9986055f57ed8c93ac72d27d55d2548065": "e78cf350328b6b199de3e109d947f63156cfaf4feb0ef9c8d1de1177322f8dcc",
     "3e20f08090a660bc5a2797ab2468519d83e7b8392d23eafc17606cdc19b8e00a": "690fea9d98a0c16983ffa96cd5a1714e793f7368788199983618a97226c7a677",
     "3e23ddc984256767a0865ff7d3bb4bffbc70c9841ae56f43c1af745973038dd3": "d51999d43ba18531ef241f88a36efa6549796e0496a4f3d4abaec3d8488df993",
     "3e27f6045404500f6b70d6f07b9660d7da2bd9266e3c562c73d9b31b85130444": "22881b2875c05ec1fd3fe9996ff4ea57a4264a9f6ec7983f13ce1005bd7a02bb",
@@ -795159,21 +795492,6 @@
       "url": "http://120.197.104.10:808/zjhs/2/10152/index.m3u8?virtualDomain=zjhs.live_hls.zte.com",
       "url_sha256": "4b4674203694239f116d87222f2bf9ba00d304d301c544a1140dad7df39246a1"
     },
-    "316ba8c14f9b1c634cfbd73d743bd51f664336923d30e0c458f9ebab42f9ace7": {
-      "candidate_id": "316ba8c14f9b1c634cfbd73d743bd51f664336923d30e0c458f9ebab42f9ace7",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/kakaxi-1/IPTV/main/ipv4.txt"
-      ],
-      "url": "http://116.52.173.186:1234/631780421",
-      "url_sha256": "8b3a99c62221c1bdaa64635a299bf40d7d02f4b7bc2cbcab504da040f5669486"
-    },
     "31a485078b9d74d316936e3a1987e6664fb191ddb07b75ee8d03f4289109549b": {
       "candidate_id": "31a485078b9d74d316936e3a1987e6664fb191ddb07b75ee8d03f4289109549b",
       "channel_key": "吉林卫视",
@@ -796189,21 +796507,6 @@
       "url": "http://111.196.135.80:20000/rtp/239.3.1.39:8300",
       "url_sha256": "3c946f5ec237eb337e3f0ce0d13db9ed288ffadc9d18ddbd0690d876bfe74860"
     },
-    "431a2ec6d53865b36d5a0484ad3c95790c9243bee5cb4ee73699ca068ee6cff8": {
-      "candidate_id": "431a2ec6d53865b36d5a0484ad3c95790c9243bee5cb4ee73699ca068ee6cff8",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/kakaxi-1/IPTV/main/ipv4.txt"
-      ],
-      "url": "http://116.52.173.186:1234/608807416",
-      "url_sha256": "1b89e5243ec198bea0944edef10ffc3c660e661739a38e3cacaa5ea6acc976c5"
-    },
     "433a6428747efc14091a308835f9d8b5ab3b645635ecba7e0ffa5bdd73c9efe0": {
       "candidate_id": "433a6428747efc14091a308835f9d8b5ab3b645635ecba7e0ffa5bdd73c9efe0",
       "channel_key": "安徽卫视",
@@ -796610,21 +796913,6 @@
       ],
       "url": "http://110.72.71.15:808/hls/49/index.m3u8",
       "url_sha256": "5e9418228b05918bf6c002283c54fdeb451202fa176c697b8cff22849354b253"
-    },
-    "492a05492590ce1a43eeb3fea52f5ec521b2b0bb02c723d2a6d8b2743097e2f9": {
-      "candidate_id": "492a05492590ce1a43eeb3fea52f5ec521b2b0bb02c723d2a6d8b2743097e2f9",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/kakaxi-1/IPTV/main/ipv4.txt"
-      ],
-      "url": "http://27.12.12.40:1234/608807419",
-      "url_sha256": "875d680111ba30687448d8136e3610e2e0989e2683efc404b8998153ddcf6251"
     },
     "4936a153dbd2499b4400b3901aedccb68da3db58a306f5b3baf7f8defb862e52": {
       "candidate_id": "4936a153dbd2499b4400b3901aedccb68da3db58a306f5b3baf7f8defb862e52",
@@ -798705,21 +798993,6 @@
       ],
       "url": "http://110.72.77.157:808/hls/14/index.m3u8",
       "url_sha256": "65de872ab3036fbe62f66d9d72fee168efbcc6b282ecdb3736a21b37a163ad4d"
-    },
-    "66077162493f6bd2f2ba34ec52efdf96756f682079a3bce87b96121b84e7dfe8": {
-      "candidate_id": "66077162493f6bd2f2ba34ec52efdf96756f682079a3bce87b96121b84e7dfe8",
-      "channel_key": "cctv4",
-      "cloud_stream_probe_performed": false,
-      "group": "卫视台",
-      "home_verified": false,
-      "name": "CCTV-4",
-      "production_eligible": false,
-      "request_options": "",
-      "sources": [
-        "https://raw.githubusercontent.com/kakaxi-1/IPTV/main/ipv4.txt"
-      ],
-      "url": "http://27.12.12.40:1234/631780421",
-      "url_sha256": "50588beed255b3ea9095dbb39314fef864ef24ffcc1e2bf2a7b8fae8fa853616"
     },
     "662d626954b2d2dbad911c8921db36776015aa55afac27e8cc274334cf42a26b": {
       "candidate_id": "662d626954b2d2dbad911c8921db36776015aa55afac27e8cc274334cf42a26b",
@@ -1113306,6 +1113579,59 @@
       },
       "unknown_attempts": 2
     },
+    "316ba8c14f9b1c634cfbd73d743bd51f664336923d30e0c458f9ebab42f9ace7": {
+      "last_checked_utc": "2026-11-18T02:18:35Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 14.761494371922247,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv4",
+        "codec": "hevc",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 5.377095598697923,
+        "height": 720,
+        "min_download_mbps": 9.925361380136069,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 3.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 9.925361380136069,
+            "downloaded_bytes": 2364664,
+            "duration_s": 10.0,
+            "elapsed_s": 1.905957,
+            "http_status": 206,
+            "stream_mbps": 1.8917312,
+            "total_bytes": 2364664,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036682.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118085652&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=116.52.173.186&SecurityKey=20261118085652&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=27904944c730d7b2d0e219447a4208a3&sv=10004&ct=android&encrypt=033e531fd97356cc956dacca177e6963&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 19.597627363708423,
+            "downloaded_bytes": 2249984,
+            "duration_s": 10.0,
+            "elapsed_s": 0.918472,
+            "http_status": 206,
+            "stream_mbps": 1.7999872,
+            "total_bytes": 2249984,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036683.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118085652&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=116.52.173.186&SecurityKey=20261118085652&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=27904944c730d7b2d0e219447a4208a3&sv=10004&ct=android&encrypt=809baf72da920cf3770d684273a5f12a&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 1.944853,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.8458592,
+        "url": "http://116.52.173.186:1234/631780421",
+        "url_sha256": "8b3a99c62221c1bdaa64635a299bf40d7d02f4b7bc2cbcab504da040f5669486",
+        "width": 1280
+      }
+    },
     "316d3295ba6f4c8c1e576ecbb2463be4fd2af8f9cdb39c12220565bd114c9415": {
       "last_checked_utc": "2026-11-14T23:18:02Z",
       "measurement_origin": "new_candidate",
@@ -1194487,6 +1194813,59 @@
         "width": 0
       }
     },
+    "431a2ec6d53865b36d5a0484ad3c95790c9243bee5cb4ee73699ca068ee6cff8": {
+      "last_checked_utc": "2026-11-18T02:18:49Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 8.768334852837642,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv4",
+        "codec": "h264",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 3.123696046510778,
+        "height": 720,
+        "min_download_mbps": 6.371245391787289,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 5.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 11.165424313887995,
+            "downloaded_bytes": 2856096,
+            "duration_s": 10.0,
+            "elapsed_s": 2.046386,
+            "http_status": 206,
+            "stream_mbps": 2.2848767999999997,
+            "total_bytes": 2856096,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/51/20251221052411-01-3036716.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20261118085904&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=116.52.173.186&SecurityKey=20261118085904&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=b4a6d95473ca2d025cbd52a3609b772b&sv=10004&ct=android&encrypt=e29a7254a8ff13a1ed8f4538bdcfd595&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 6.371245391787289,
+            "downloaded_bytes": 2243028,
+            "duration_s": 10.0,
+            "elapsed_s": 2.816439,
+            "http_status": 206,
+            "stream_mbps": 1.7944224,
+            "total_bytes": 2243028,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4meihd/51/20251221052411-01-3036717.ts?msisdn=35fd2d620c95f33da9b0d846fa2aa6a9&mdspid=&spid=699004&netType=0&sid=2200179344&pid=2028597139&timestamp=20261118085904&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807416&ParentNodeID=-99&assertID=2200179344&client_ip=116.52.173.186&SecurityKey=20261118085904&promotionId=&mvid=2200179344&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=b4a6d95473ca2d025cbd52a3609b772b&sv=10004&ct=android&encrypt=ab993de350e042d0dbc8ad50912636d9&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 2.138541,
+        "status": "UNKNOWN",
+        "stream_mbps": 2.0396495999999997,
+        "url": "http://116.52.173.186:1234/608807416",
+        "url_sha256": "1b89e5243ec198bea0944edef10ffc3c660e661739a38e3cacaa5ea6acc976c5",
+        "width": 1280
+      }
+    },
     "431e1982d69c1c1d9d5ba1453d374ed30ead978ede37c13f2a1e5e2163669cf5": {
       "candidate": {
         "_queue_priority": 1,
@@ -1220890,6 +1221269,59 @@
         "url": "http://58.48.37.158:1111/tsfile/live/0006_1.m3u8",
         "url_sha256": "2093e3ed069ff1746c90b11dedeb0ee7108b7e915c3fcae35b99f07b29afaeac",
         "width": 0
+      }
+    },
+    "492a05492590ce1a43eeb3fea52f5ec521b2b0bb02c723d2a6d8b2743097e2f9": {
+      "last_checked_utc": "2026-11-18T02:18:41Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 14.704390912343442,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv4",
+        "codec": "h264",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 7.884953919517396,
+        "height": 720,
+        "min_download_mbps": 14.597799976953828,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 3.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 14.810981847733057,
+            "downloaded_bytes": 2569772,
+            "duration_s": 10.0,
+            "elapsed_s": 1.388036,
+            "http_status": 206,
+            "stream_mbps": 2.0558176,
+            "total_bytes": 2569772,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/51/20251221052411-01-3036722.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20261118082217&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=27.12.12.40&SecurityKey=20261118082217&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eca091e0537ef4ad5d197dcef3463a93&sv=10004&ct=android&encrypt=9805231aeae4453b88e570ca808b8c16&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 14.597799976953828,
+            "downloaded_bytes": 2058600,
+            "duration_s": 10.0,
+            "elapsed_s": 1.12817,
+            "http_status": 206,
+            "stream_mbps": 1.64688,
+            "total_bytes": 2058600,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/20200324/cctv4ouhd/51/20251221052411-01-3036723.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=2200179315&pid=2028597139&timestamp=20261118082217&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=608807419&ParentNodeID=-99&assertID=2200179315&client_ip=27.12.12.40&SecurityKey=20261118082217&promotionId=&mvid=2200179315&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h264&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=eca091e0537ef4ad5d197dcef3463a93&sv=10004&ct=android&encrypt=a2c930f168f12773c7b9e4c8fc485d3f&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 1.5145140000000001,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.8513488,
+        "url": "http://27.12.12.40:1234/608807419",
+        "url_sha256": "875d680111ba30687448d8136e3610e2e0989e2683efc404b8998153ddcf6251",
+        "width": 1280
       }
     },
     "492bc38807f1fb8745540f39801c55669ecd482792d245b5e6b4526a846775d0": {
@@ -1344562,6 +1344994,59 @@
         "url": "http://110.72.73.41:808/hls/40/index.m3u8",
         "url_sha256": "f34b8641a2aa40730b5b787245afe08b2d5c3b3c3cf40266ba0f732621f384f0",
         "width": 0
+      }
+    },
+    "66077162493f6bd2f2ba34ec52efdf96756f682079a3bce87b96121b84e7dfe8": {
+      "last_checked_utc": "2026-11-18T02:18:55Z",
+      "measurement_origin": "new_candidate",
+      "result": {
+        "avg_download_mbps": 13.808622984684122,
+        "bitrate_mbps": 0,
+        "channel_key": "cctv4",
+        "codec": "hevc",
+        "deep_checked": true,
+        "error": "home_quality_threshold",
+        "fps": 25.0,
+        "headroom_ratio": 7.496189526205098,
+        "height": 720,
+        "min_download_mbps": 12.75007086571876,
+        "min_height": 1080,
+        "name": "CCTV-4",
+        "observed_status": "DEGRADED",
+        "probe_runtime_s": 3.0,
+        "sample_count": 2,
+        "segment_samples": [
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 12.75007086571876,
+            "downloaded_bytes": 1928504,
+            "duration_s": 10.0,
+            "elapsed_s": 1.210035,
+            "http_status": 206,
+            "stream_mbps": 1.5428032,
+            "total_bytes": 1928504,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036684.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118081945&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=27.12.12.40&SecurityKey=20261118081945&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=932e426cebdf103d5b8a34ea18bd3f66&sv=10004&ct=android&encrypt=5712307c8b4469788dc096892bf1b0d8&HlsSubType=2&HlsProfileId=1"
+          },
+          {
+            "complete": true,
+            "curl_code": 0,
+            "download_mbps": 14.867175103649485,
+            "downloaded_bytes": 2323680,
+            "duration_s": 10.0,
+            "elapsed_s": 1.250368,
+            "http_status": 206,
+            "stream_mbps": 1.858944,
+            "total_bytes": 2323680,
+            "url": "http://hlsztemgsplive.miguvideo.com:8080/migu/kailu/cctv4hd265/51/20191230/20251201225425-01-3036685.ts?msisdn=6234c67248915e599e081f9c14a474b0&mdspid=&spid=699004&netType=0&sid=5500346947&pid=2028597139&timestamp=20261118081945&Channel_ID=0116_2600034600-99000-201600010010028&ProgramID=631780421&ParentNodeID=-99&assertID=5500346947&client_ip=27.12.12.40&SecurityKey=20261118081945&promotionId=&mvid=5101064235&mcid=500020&playurlVersion=WX-A1-9.11.1-RELEASE&userid=&jmhm=&videocodec=h265&appCode=miguvideo_android&bean=mgspad&tid=android&conFee=0&mtv_session=932e426cebdf103d5b8a34ea18bd3f66&sv=10004&ct=android&encrypt=ea19b242fa8231d553710c561cf022b3&HlsSubType=2&HlsProfileId=1"
+          }
+        ],
+        "startup_s": 1.30667,
+        "status": "UNKNOWN",
+        "stream_mbps": 1.7008736,
+        "url": "http://27.12.12.40:1234/631780421",
+        "url_sha256": "50588beed255b3ea9095dbb39314fef864ef24ffcc1e2bf2a7b8fae8fa853616",
+        "width": 1280
       }
     },
     "660d25ebbe5d41310b307ebff77211edbd96edd885c2cef94338bf4dc38bf7b4": {
