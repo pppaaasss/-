@@ -598,5 +598,61 @@ class ThinOperationalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             split_services('# BEGIN IPTV_HOME_PROBE\nincomplete')
 
+    def test_compact_state_prunes_old_settled_batches_and_segment_samples(self):
+        now = epoch('2026-11-19T12:00:00Z')
+        old_ts = '2026-11-10T01:00:00Z'
+        recent_ts = '2026-11-18T12:00:00Z'
+        state = {
+            'schema': cloud.STATE_SCHEMA,
+            'probe_id': 'home-ac86u-test',
+            'processed': {
+                'old-settled': 'digest-old-settled',
+                'recent-settled': 'digest-recent-settled',
+                'cycle-batch': 'digest-cycle',
+                'campaign-uncollected': 'digest-camp',
+            },
+            'batches': {
+                'old-settled': {'batch_id': 'old-settled', 'created_utc': old_ts, 'expires_utc': old_ts, 'tasks': []},
+                'old-unsettled': {'batch_id': 'old-unsettled', 'created_utc': old_ts, 'expires_utc': old_ts, 'tasks': []},
+                'recent-settled': {'batch_id': 'recent-settled', 'created_utc': recent_ts, 'expires_utc': recent_ts, 'tasks': []},
+                'cycle-batch': {'batch_id': 'cycle-batch', 'created_utc': old_ts, 'expires_utc': old_ts, 'tasks': []},
+                'reserved-batch': {'batch_id': 'reserved-batch', 'created_utc': old_ts, 'expires_utc': old_ts, 'tasks': []},
+                'campaign-uncollected': {'batch_id': 'campaign-uncollected', 'created_utc': old_ts, 'expires_utc': old_ts, 'tasks': []},
+            },
+            'cycle': {'batch_ids': ['cycle-batch']},
+            'native_budget': {'reservations': {'reserved-batch': {'bytes': 1, 'seconds': 1, 'candidates': 1}}},
+            'temporary_campaigns': {'camp-1': {'batch_ids': ['campaign-uncollected'], 'collected_batches': []}},
+            'tested': {
+                'cand-1': {
+                    'last_checked_utc': recent_ts,
+                    'result': {'url': 'https://a.example/1.m3u8', 'channel_key': 'cctv1', 'observed_status': 'GOOD',
+                               'sample_count': 2, 'deep_checked': True, 'height': 1080, 'min_height': 1080,
+                               'segment_samples': [{'downloaded_bytes': 1024, 'elapsed_s': 0.5}] * 2},
+                    'previous_checks': [
+                        {'last_checked_utc': f'2026-10-0{i}T00:00:00Z',
+                         'result': {'observed_status': 'BAD', 'segment_samples': [{'downloaded_bytes': 1}]}}
+                        for i in range(1, 8)
+                    ],
+                }
+            },
+        }
+        cloud.compact_state(state, now)
+        self.assertNotIn('old-settled', state['batches'])
+        for keep in ('old-unsettled', 'recent-settled', 'cycle-batch', 'reserved-batch', 'campaign-uncollected'):
+            self.assertIn(keep, state['batches'])
+        # Processed observation digests stay intact for tamper detection.
+        self.assertIn('old-settled', state['processed'])
+        rec = state['tested']['cand-1']
+        self.assertNotIn('segment_samples', rec['result'])
+        self.assertEqual('https://a.example/1.m3u8', rec['result']['url'])
+        self.assertEqual(cloud.MAX_PREVIOUS_CHECKS, len(rec['previous_checks']))
+        self.assertTrue(all('segment_samples' not in p['result'] for p in rec['previous_checks']))
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'state.json'
+            cloud.compact_json(target, state)
+            raw = target.read_text(encoding='utf-8')
+            self.assertEqual(1, len(raw.splitlines()))
+            self.assertEqual(state, json.loads(raw))
+
 if __name__ == '__main__':
     unittest.main()
