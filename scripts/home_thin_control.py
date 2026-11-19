@@ -35,6 +35,83 @@ from scripts.home_route_policy import rejected_urls, rejected_hosts, load_feedba
 from urllib.parse import urlsplit
 
 STATE_SCHEMA = 'iptv-home-cloud-state/v1'
+COMPACT_BATCH_RETENTION_SECONDS = 48 * 3600
+MAX_PREVIOUS_CHECKS = 5
+
+
+def compact_json(path, payload):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + '.tmp')
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(',', ':')) + '\n', encoding='utf-8')
+    tmp.replace(path)
+
+
+def _strip_tested_result(result):
+    if not isinstance(result, dict):
+        return result
+    if 'segment_samples' not in result:
+        return result
+    return {k: v for k, v in result.items() if k != 'segment_samples'}
+
+
+def _compact_tested_record(record):
+    if not isinstance(record, dict):
+        return record
+    result = record.get('result')
+    if isinstance(result, dict) and 'segment_samples' in result:
+        record['result'] = _strip_tested_result(result)
+    previous = record.get('previous_checks')
+    if isinstance(previous, list):
+        trimmed = previous[-MAX_PREVIOUS_CHECKS:]
+        for item in trimmed:
+            if isinstance(item, dict) and isinstance(item.get('result'), dict) and 'segment_samples' in item['result']:
+                item['result'] = _strip_tested_result(item['result'])
+        record['previous_checks'] = trimmed
+    return record
+
+
+def compact_state(state, now):
+    """Prune settled historical batch envelopes and redundant per-segment samples.
+
+    Preserves permanent tested deduplication, backup archive, processed observation
+    digests, active cycles, reservations, recent 48h batches, and campaign history.
+    """
+    processed = state.get('processed') or {}
+    keep_batches = set()
+    cycle = state.get('cycle') or {}
+    keep_batches.update(cycle.get('batch_ids') or ())
+    if cycle.get('outstanding'):
+        keep_batches.add(cycle['outstanding'])
+    keep_batches.update((state.get('native_budget') or {}).get('reservations', {}).keys())
+    for campaign in (state.get('temporary_campaigns') or {}).values():
+        if campaign.get('outstanding'):
+            keep_batches.add(campaign['outstanding'])
+        collected = set(campaign.get('collected_batches') or ())
+        for batch_id in campaign.get('batch_ids') or ():
+            if batch_id not in collected:
+                keep_batches.add(batch_id)
+    cutoff = now - COMPACT_BATCH_RETENTION_SECONDS
+    batches = state.get('batches')
+    if isinstance(batches, dict):
+        pruned = {}
+        for batch_id, task in batches.items():
+            if batch_id in keep_batches or batch_id not in processed:
+                pruned[batch_id] = task
+                continue
+            created = task.get('created_utc')
+            expires = task.get('expires_utc')
+            try:
+                recent = (created and epoch(created) >= cutoff) or (expires and epoch(expires) >= cutoff)
+            except (TypeError, ValueError):
+                recent = True
+            if recent:
+                pruned[batch_id] = task
+        state['batches'] = pruned
+    tested = state.get('tested')
+    if isinstance(tested, dict):
+        for record in tested.values():
+            _compact_tested_record(record)
+    return state
 
 
 def datetime_day(now):
@@ -246,11 +323,13 @@ def backup_record(state, task, observation, cycle):
         state['archive'][identity].update(last_recheck_result='failed_or_unknown', retry_after_epoch=measured + 3600)
     if task['role'] == 'candidate':
         previous = state['tested'].get(identity)
-        record = {'last_checked_utc': observation['finished_utc'], 'result': raw,
+        record = {'last_checked_utc': observation['finished_utc'], 'result': _strip_tested_result(raw),
                   'measurement_origin': task.get('measurement_origin', 'new_candidate')}
         if previous:
-            record['previous_checks'] = list(previous.get('previous_checks', [])) + [
-                {k: v for k, v in previous.items() if k != 'previous_checks'}]
+            prev_entry = {k: v for k, v in previous.items() if k != 'previous_checks'}
+            if isinstance(prev_entry.get('result'), dict) and 'segment_samples' in prev_entry['result']:
+                prev_entry['result'] = _strip_tested_result(prev_entry['result'])
+            record['previous_checks'] = (list(previous.get('previous_checks', [])) + [prev_entry])[-MAX_PREVIOUS_CHECKS:]
         state['tested'][identity] = record
         state['queue'].pop(identity, None)
 
@@ -773,7 +852,8 @@ def main():
         native_done = prepare_assets(state, os.environ['IPTV_NATIVE_INBOX'], args.reports, time.time())
     now = time.time()
     state, task, report = step(state, config, args.repo_root, args.reports, now)
-    atomic_json(state_path, state)
+    compact_state(state, now)
+    compact_json(state_path, state)
     atomic_json(args.control / 'tasks' / (config['probe_id'] + '.json'), task)
     if config.get('router_runtime') == 'native-v1':
         from scripts.home_native_evidence import task_wire

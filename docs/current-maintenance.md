@@ -99,3 +99,5 @@ CCTV-5+（2026-10-09）：用户选定219.147.245.238:25480/newlive/live/hls/6/l
 北京时间 2026-11-10 用户反馈 CCTV-10 试播源 http://110.72.39.159:808/hls/10/index.m3u8 无法观看，四份正式清单恢复为 http://222.223.41.27:8888/hls/10/index.m3u8。故障反馈只绑定试播地址，保留既有技术历史；自动换源仍关闭。
 
 2026-11-13 按用户指令将湖南卫视换为 http://60.10.50.14:808/hls/19/index.m3u8，四份正式清单同步。家庭实测北京时间 11 月 13 日 07:10:32 合格，1080p，资格至 11 月 14 日 19:10:32。实际观看待反馈，自动换源保持关闭。
+
+2026-11-19 按用户优化要求治理 `home-control` 分支 `state.json` 膨胀问题（原 84.03 MiB，逼近 GitHub 100 MiB 单文件上限）：`scripts/home_thin_control.py` 新增 `compact_state` 与紧凑原子写入，自动裁剪超过 48 小时且已结算的非活跃旧 `batches`，剥离 `tested` 中冗余的 `segment_samples`（原始样本保留在 `home-reports/observations/`）并将 `previous_checks` 限制保留最近 5 条；完整保留全部永久去重记录、备用池、防篡改 `processed` 摘要及当前周期状态。正式清单与自动换源关闭策略不变。同时在德国 BERO 本机部署轻量 `workflow_dispatch` 定时唤醒，缓解 GitHub Actions `schedule` 延迟与漏触发。
