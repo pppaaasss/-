@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 1747649239,
+    "bytes": 1814758103,
     "candidates": 500,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 500,
@@ -9,7 +9,7 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 5664.0
+    "seconds": 5904.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -21,7 +21,7 @@
     "day": "20261123",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 64,
+    "formal_or_backup_batches": 65,
     "historical_rechecks_measured": 454,
     "historical_rechecks_qualified": 33,
     "historical_rechecks_reserved": 454,
@@ -31,7 +31,7 @@
     "new_qualified": 1,
     "observed_batch_spacing_seconds": 97.544,
     "qualified": 34,
-    "reason": "WAITING_HOME_RESOURCES",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
@@ -44,7 +44,7 @@
     "day": "20261123",
     "estimate_is_guarantee": false,
     "estimated_additional_window_capacity": 0,
-    "formal_or_backup_batches": 64,
+    "formal_or_backup_batches": 65,
     "historical_rechecks_measured": 454,
     "historical_rechecks_qualified": 33,
     "historical_rechecks_reserved": 454,
@@ -54,16 +54,22 @@
     "new_qualified": 1,
     "observed_batch_spacing_seconds": 97.544,
     "qualified": 34,
-    "reason": "WAITING_HOME_RESOURCES",
+    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
     "target": 500,
     "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-11-23T12:07:15Z",
+  "generated_utc": "2026-11-23T12:32:51Z",
   "history_migrated": true,
-  "issued_task": null,
+  "issued_task": {
+    "batch_id": "b8078350f9d3991594f4ea92bfa32f44cd648dce6b88aa9e478d95dc94a473ef",
+    "created_utc": "2026-11-23T12:32:51Z",
+    "expires_utc": "2026-11-23T13:02:51Z",
+    "meaning": "cloud_issued_not_router_confirmed",
+    "routes": 4
+  },
   "last_heartbeat": {
     "measured_utc": "2026-11-23T12:06:04Z",
     "received_utc": "2026-11-23T12:07:15Z",
@@ -97,7 +103,7 @@
   },
   "queue": 1362,
   "router_enabled": null,
-  "state": "WAITING_HOME_RESOURCES",
+  "state": "WAITING_MEASUREMENTS",
   "tested": 21029,
   "window": {
     "active": true,
