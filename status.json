@@ -1,6 +1,6 @@
 {
   "budget": {
-    "bytes": 3139109901,
+    "bytes": 3072001037,
     "candidates": 500,
     "daily_bytes_limit": 8589934592,
     "daily_candidates_limit": 500,
@@ -9,7 +9,7 @@
     "discovery_bytes_limit": 6442450944,
     "discovery_seconds_limit": 32400,
     "meaning": "used_plus_unsettled_reservations",
-    "seconds": 7416.0
+    "seconds": 7184.0
   },
   "candidate_mode": "drain_queue",
   "candidate_run_kinds": [
@@ -31,7 +31,7 @@
     "new_qualified": 2,
     "observed_batch_spacing_seconds": 111.064,
     "qualified": 4,
-    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
+    "reason": "SLOT_COMPLETE",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
@@ -54,33 +54,27 @@
     "new_qualified": 2,
     "observed_batch_spacing_seconds": 111.064,
     "qualified": 4,
-    "reason": "WAITING_HOUSEHOLD_OBSERVATIONS",
+    "reason": "SLOT_COMPLETE",
     "reserved_candidate_count": 500,
     "settled_candidate_batches": 126,
     "shortfall": 0,
     "target": 500,
     "transition_temporary_measured": 0
   },
-  "generated_utc": "2026-11-24T13:12:10Z",
+  "generated_utc": "2026-11-24T13:13:16Z",
   "history_migrated": true,
-  "issued_task": {
-    "batch_id": "5fae9a44c5c5b401f1ec5cbfbdd4337b3b352f2a26e0168d012f6c243badc618",
-    "created_utc": "2026-11-24T13:12:10Z",
-    "expires_utc": "2026-11-24T13:42:10Z",
-    "meaning": "cloud_issued_not_router_confirmed",
-    "routes": 2
-  },
+  "issued_task": null,
   "last_heartbeat": {
-    "measured_utc": "2026-11-24T13:11:25Z",
-    "received_utc": "2026-11-24T13:12:10Z",
-    "results": 4,
+    "measured_utc": "2026-11-24T13:12:39Z",
+    "received_utc": "2026-11-24T13:13:16Z",
+    "results": 2,
     "stop_reason": "",
     "usage": {
-      "downloaded_bytes": 16778764,
-      "runtime_s": 24.0
+      "downloaded_bytes": 0,
+      "runtime_s": 8.0
     }
   },
-  "last_report_generated_utc": "2026-11-24T05:03:02Z",
+  "last_report_generated_utc": "2026-11-24T12:33:03Z",
   "night_sweep": {
     "complete": true,
     "day": "20261124",
@@ -95,15 +89,15 @@
     "belongs_to_active_window": true,
     "candidate_checks_completed": 0,
     "current_first_pass_completed": 53,
-    "current_rechecks_completed": 36,
+    "current_rechecks_completed": 38,
     "current_rechecks_required": 38,
     "current_total": 53,
-    "report_complete": false,
+    "report_complete": true,
     "slot": "20261124-peak-2000"
   },
   "queue": 1589,
   "router_enabled": null,
-  "state": "WAITING_MEASUREMENTS",
+  "state": "SLOT_COMPLETE",
   "tested": 21275,
   "window": {
     "active": true,
